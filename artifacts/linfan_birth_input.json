@@ -1,0 +1,19 @@
+{
+  "birth": {
+    "name": "林凡",
+    "birth_date": "1978-04-14",
+    "birth_time": "06:50",
+    "gender": "male",
+    "birthplace": "福建省三明市"
+  },
+  "annual_start_year": 1978,
+  "annual_end_year": 2026,
+  "monthly_years": [2024, 2025, 2026],
+  "auspicious_start_date": "2026-06-22",
+  "auspicious_end_date": "2026-06-28",
+  "calendar_provider": "auto",
+  "language": "zh",
+  "llm_synthesis": {
+    "enabled": false
+  }
+}

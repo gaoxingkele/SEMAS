@@ -1,0 +1,123 @@
+{
+  "dataset_id": "example_reviewed_quality_dataset",
+  "version": "2026.06-example",
+  "purpose": "Demonstrate the audited outcome-dataset manifest contract without enabling predictive optimization.",
+  "consent": {
+    "documented": true,
+    "scope": "quality_validation",
+    "withdrawal_process": "Contact the data steward to remove the deidentified record from future validation runs."
+  },
+  "privacy": {
+    "deidentified": true,
+    "direct_identifiers_removed": true,
+    "retention_policy": "bounded_archive"
+  },
+  "external_review": {
+    "reviewed": true,
+    "reviewer": "example independent data steward",
+    "review_date": "2026-06-01",
+    "approval": "approved_for_quality_validation",
+    "protocol_id": "example-quality-validation-protocol-v1"
+  },
+  "data_split": {
+    "strategy": "pre_registered_holdout",
+    "frozen": true,
+    "split_date": "2026-06-01",
+    "train_case_ids": [],
+    "holdout_case_ids": [
+      "example_case_001"
+    ],
+    "leakage_controls": "Holdout labels are not used for prompt, genome, or provider tuning."
+  },
+  "label_collection": {
+    "source": "mixed",
+    "collected_before_analysis": true,
+    "collection_window": "2025-01-01/2025-12-31",
+    "adjudication": "Example steward review resolves label disputes before publication."
+  },
+  "labels": [
+    {
+      "id": "career_change_12m",
+      "type": "life_event_outcome",
+      "definition": "Self-reported job or role change within the measurement window.",
+      "measurement_window": "2025-01-01/2025-12-31"
+    },
+    {
+      "id": "report_quality_boundary",
+      "type": "report_quality",
+      "definition": "Report preserves structure, source grounding, uncertainty, and high-stakes boundary language.",
+      "measurement_window": "2025-01-01/2025-12-31"
+    }
+  ],
+  "baselines": [
+    {
+      "name": "base_rate",
+      "method": "Compare any future predictive claim against the observed label base rate before considering model lift."
+    }
+  ],
+  "statistical_plan": {
+    "hypotheses": [
+      "No predictive lift over base rate should be claimed without an externally reviewed study design."
+    ],
+    "metrics": [
+      "calibration",
+      "base_rate_delta",
+      "report_quality_score"
+    ],
+    "minimum_sample_size": 200,
+    "holdout_strategy": "Pre-registered holdout split with no repeated tuning on holdout labels.",
+    "pre_registered": true,
+    "registration_id": "example-quality-validation-plan-v1",
+    "registered_at": "2026-06-01",
+    "analysis_freeze_date": "2026-06-01",
+    "plan_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "records": [
+    {
+      "case_id": "example_case_001",
+      "birth": {
+        "birth_date": "1980-01-02",
+        "birth_time": "08:30",
+        "gender": "unspecified",
+        "birthplace_region": "province_only",
+        "timezone_offset": 8
+      },
+      "labels": [
+        {
+          "id": "career_change_12m",
+          "type": "life_event_outcome",
+          "value": false,
+          "provenance": {
+            "source": "self_report",
+            "collected_at": "2026-01-10",
+            "collected_before_analysis": true,
+            "reviewer_or_method": "example independent data steward",
+            "audit_only_acknowledged": true
+          }
+        },
+        {
+          "id": "report_quality_boundary",
+          "type": "report_quality",
+          "value": {
+            "satisfaction": 0.86,
+            "corrections": [
+              "must preserve source grounding",
+              "must keep high-stakes boundary explicit"
+            ]
+          },
+          "provenance": {
+            "source": "reviewer_scored",
+            "collected_at": "2026-01-12",
+            "collected_before_analysis": true,
+            "reviewer_or_method": "example-quality-rubric-v1"
+          }
+        }
+      ],
+      "input_overrides": {
+        "annual_start_year": 2025,
+        "annual_end_year": 2026,
+        "language": "zh"
+      }
+    }
+  ]
+}

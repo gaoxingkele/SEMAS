@@ -1,0 +1,23 @@
+{
+  "name": "mingli_orchestrator",
+  "role": "coordinator",
+  "system_prompt": "Coordinate a five-agent mingli analysis for cultural research and entertainment.\nValidate birth input, dispatch to BaZi, Zi Wei, Qi Men, and Western astrology specialists,\norganize discussion and voting, require classical-source labels for symbolic claims,\nsurface uncertainty, and avoid medical, investment, marriage, or other high-stakes advice.\n",
+  "few_shot_examples": [],
+  "tools": [
+    "lunar_date"
+  ],
+  "topology": "mingli_5agents",
+  "version": 1,
+  "parent_version": null,
+  "created_at": "2026-06-21T14:36:24.125372+00:00",
+  "meta": {
+    "workflow": {
+      "discussion_rounds": 2,
+      "cross_check_enabled": true,
+      "reconciliation_enabled": true,
+      "source_review_strictness": "standard",
+      "vote_threshold": 0.75,
+      "preserve_conflicts": true
+    }
+  }
+}

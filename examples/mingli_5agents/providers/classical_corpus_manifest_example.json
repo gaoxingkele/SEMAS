@@ -1,0 +1,42 @@
+{
+  "corpus": "mingli_method_summary_example",
+  "retrieved_at": "2026-06-01T00:00:00+00:00",
+  "records": [
+    {
+      "source_id": "bazi_ziping_method_boundary",
+      "passage_id": "bazi_strength_useful_element_summary",
+      "title": "BaZi strength and useful-element method summary",
+      "tradition": "bazi",
+      "keywords": ["bazi", "strength", "useful_element", "ten_gods", "method_boundary"],
+      "summary": "A curated summary record for BaZi analysis: evaluate day-master strength, seasonal context, visible and hidden stems, ten-god distribution, and balancing hypotheses before making any symbolic interpretation.",
+      "caution": "This record is method metadata for software validation only; it is not a predictive claim and does not replace practitioner review.",
+      "source_url": "https://example.org/mingli-method-summary/bazi-strength",
+      "license": "CC0-1.0",
+      "citation_policy": "paraphrase_only"
+    },
+    {
+      "source_id": "ziwei_palace_method_boundary",
+      "passage_id": "ziwei_palace_sihua_summary",
+      "title": "Zi Wei palace and transformation method summary",
+      "tradition": "ziwei",
+      "keywords": ["ziwei", "palace", "sihua", "method_boundary"],
+      "summary": "A curated summary record for Zi Wei analysis: inspect palace themes, major periods, transformation markers, and cross-palace interactions while preserving source and provider boundaries.",
+      "caution": "This record is a copyright-safe metadata fixture for provider integration and report grounding tests.",
+      "source_url": "https://example.org/mingli-method-summary/ziwei-palace",
+      "license": "CC0-1.0",
+      "citation_policy": "paraphrase_only"
+    },
+    {
+      "source_id": "qimen_timing_method_boundary",
+      "passage_id": "qimen_gate_palace_summary",
+      "title": "Qi Men gate and palace timing method summary",
+      "tradition": "qimen",
+      "keywords": ["qimen", "gate", "palace", "timing", "method_boundary"],
+      "summary": "A curated summary record for Qi Men analysis: treat gate, palace, star, spirit, and timing markers as symbolic timing evidence that must be reconciled with other specialist reports.",
+      "caution": "This record supports deterministic framework tests and must not be presented as production-grade Qi Men calculation evidence.",
+      "source_url": "https://example.org/mingli-method-summary/qimen-timing",
+      "license": "CC0-1.0",
+      "citation_policy": "paraphrase_only"
+    }
+  ]
+}

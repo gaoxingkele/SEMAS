@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "semas"
+version = "0.1.0"
+description = "Self-Evolving Multi-Agent System framework"
+authors = [{name = "SEMAS Contributors"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+    "networkx>=3.0",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "black>=23.0",
+    "ruff>=0.1.0",
+]
+mingli = [
+    "lunar_python>=1.4.8",
+    "sxtwl>=2.0.2",
+]
+llm = [
+    "openai>=1.0",
+]
+astrology = [
+    "pyswisseph>=2.10",
+]
+qimen = [
+    "kinqimen>=0.0.6.6",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["semas*"]
+
+[tool.black]
+line-length = 100
+
+[tool.ruff]
+line-length = 100

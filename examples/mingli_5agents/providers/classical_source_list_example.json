@@ -1,0 +1,16 @@
+{
+  "allow_file_urls": true,
+  "max_bytes": 1000000,
+  "sources": [
+    {
+      "name": "mingli-method-summary-example",
+      "path": "classical_corpus_manifest_example.json",
+      "sha256": "d970970a36c06da31eccb6344e83d249e520c1fafd2a22880af438d51ae0527b",
+      "license": "CC0-1.0",
+      "rights_basis": "bundled demonstration manifest authored for this repository",
+      "review_status": "open_license_reviewed",
+      "reviewed_by": "semas-framework maintainers",
+      "content_scope": "method-summary metadata only; no copyrighted source text"
+    }
+  ]
+}

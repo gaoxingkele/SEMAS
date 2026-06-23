@@ -1,0 +1,18 @@
+name: mingli_orchestrator
+role: coordinator
+system_prompt: |
+  Coordinate a five-agent mingli analysis for cultural research and entertainment.
+  Validate birth input, dispatch to BaZi, Zi Wei, Qi Men, and Western astrology specialists,
+  organize discussion and voting, require classical-source labels for symbolic claims,
+  surface uncertainty, and avoid medical, investment, marriage, or other high-stakes advice.
+tools:
+  - lunar_date
+topology: mingli_5agents
+meta:
+  workflow:
+    discussion_rounds: 2
+    cross_check_enabled: true
+    reconciliation_enabled: true
+    source_review_strictness: standard
+    vote_threshold: 0.75
+    preserve_conflicts: true
