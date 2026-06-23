@@ -637,6 +637,45 @@ files.
 
 ---
 
+## 2026-06-23 — Push SEMAS to https://github.com/gaoxingkele/SEMAS
+
+### Motivation
+
+User requested pushing the current SEMAS framework to the remote GitHub repo
+`https://github.com/gaoxingkele/SEMAS` using account `gaoxingkele`.
+
+### Actions Taken
+
+1. Initialized local git repo in `C:/aicoding/semas_framework`.
+2. Added `.gitignore` (Python cache, temporary runtime data).
+3. Configured git user name/email as `gaoxingkele`.
+4. Added remote `origin https://github.com/gaoxingkele/SEMAS.git`.
+5. Committed with message: "Initial SEMAS framework with plugin architecture and
+   LLM Wiki".
+6. Pushed to `main` using provided credentials via a temporary credential helper
+   file; the file was removed immediately after push.
+
+### Result
+
+- Push succeeded: `main -> main`.
+- Credential helper file cleaned up.
+
+### Notes / Warnings
+
+- The repo contained an embedded git repository `anysearch-skill`; Git committed
+  it as a submodule/gitlink rather than as files. If it should be regular files,
+  remove it from the index and re-add.
+- Several runtime directories (`agents/`, `artifacts/`, `tmp_mingli_unicode_probe/`,
+  `.semas_mingli_repo_sample/`) were committed because they pre-existed before
+  `.gitignore` was created. If you want to clean these from the remote, run:
+  ```bash
+  git rm -r --cached agents artifacts tmp_mingli_unicode_probe .semas_mingli_repo_sample
+  git commit -m "Remove runtime data from repo"
+  git push
+  ```
+
+---
+
 ## 2026-06-23 - Mingli Ziwei/Qimen Provider Lineage Gate
 
 ### Motivation
