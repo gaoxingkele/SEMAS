@@ -1,0 +1,18 @@
+id: math_tool_evolution_v1
+category: tool_evolution
+description: |
+  The framework must evolve a math agent so that it correctly computes the
+  number of days between two ISO dates.
+fixture: benchmarks/semas_self_upgrade/fixtures/math_solver_v1.yaml
+executor: tool_based_math
+input:
+  start: "2024-01-01"
+  end: "2024-01-10"
+expected:
+  output: 9
+evaluation:
+  metrics:
+    - exact_match
+  pass_threshold: 1.0
+  allow_evolution: true
+  max_evolution_rounds: 3

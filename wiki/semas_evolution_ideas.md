@@ -5,6 +5,77 @@
 
 ---
 
+## 2026-06-23 — SEMAS Self-Upgrade: Using Downstream Tasks to Evolve the Framework
+
+Reflexive idea: **SEMAS can use itself to evolve itself**. Instead of only
+evolving business agents, we treat the framework's own prompts, trigger
+policies, sandbox whitelist, and plugin selection as an `AgentGenome` and run a
+meta-evolution loop.
+
+[source: SEMAS_SELF_UPGRADE_DESIGN.md]
+
+### Downstream task categories
+
+| Category | Example task | What it validates |
+|---|---|---|
+| Tool Evolution | Date-diff tool evolution | `Mutator` + `Sandbox` |
+| Prompt Evolution | Shift from country to capital answers | `Mutator.mutate_prompt` |
+| Regression Gate | Old task still passes after prompt update | `Evaluator` regression suite |
+| Plugin Convergence | FunctionEvolve reaches `2*x` | `PluginRegistry` pipeline |
+| Sandbox Safety | Dangerous import rejected | `Sandbox` AST whitelist |
+| Topology | Serial reviewer pipeline | `TopologyGenome` |
+
+### Framework-level metrics
+
+A single task passing is not enough. We track:
+
+- `pass_rate`
+- `mean_evolution_rounds`
+- `total_llm_calls`
+- `regression_rate`
+- `safety_violation_count`
+- `convergence_rate`
+
+[source: benchmarks/semas_self_upgrade/metrics.py]
+
+### Framework Genome
+
+The meta-configuration lives in
+`benchmarks/semas_self_upgrade/framework_genome/framework_config_v1.yaml`:
+
+- mutator prompts
+- trigger policy (cooldown, max versions)
+- sandbox policy (allowed modules)
+- plugin policy (which plugins are enabled)
+
+### Meta-evolution loop
+
+```text
+load framework genome
+    │
+    ▼
+run downstream benchmark
+    │
+    ▼
+if pass_rate < target:
+    mutate framework genome
+    archive new genome
+    repeat
+else:
+    stop
+```
+
+Implemented in `benchmarks/semas_self_upgrade/evolve_semas.py`.
+
+### Key constraint
+
+Recursive self-improvement must have a **hard budget and regression gate**.
+Without them, the meta-loop can overfit to the benchmark or make unsafe
+changes. This is why Gödel-Agent-style full self-modification is kept as a
+research-only plugin behind a strict policy gate.
+
+---
+
 ## 2026-06-23 — SEMAS Core Design
 
 SEMAS is built on a single belief: **when LLM weights are frozen, evolution must

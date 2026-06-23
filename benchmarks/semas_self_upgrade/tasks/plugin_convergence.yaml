@@ -1,0 +1,16 @@
+id: plugin_convergence_v1
+category: plugin_extensibility
+description: |
+  The FunctionEvolve plugin must converge from x * 1 to 2 * x on a small
+  symbolic regression task.
+fixture: null
+executor: function_evolve_plugin
+input: null
+expected:
+  converged: true
+  fitness_threshold: 0.95
+evaluation:
+  metrics:
+    - boolean_pass
+  pass_threshold: 1.0
+  allow_evolution: false

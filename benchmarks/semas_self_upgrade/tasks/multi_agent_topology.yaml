@@ -1,0 +1,17 @@
+id: multi_agent_topology_v1
+category: topology
+description: |
+  The framework must be able to load and execute a simple serial topology with
+  two nodes.
+fixture: null
+executor: topology_check
+input: null
+expected:
+  nodes: ["writer", "reviewer"]
+  execution_mode: "serial"
+evaluation:
+  metrics:
+    - structure_match
+  pass_threshold: 1.0
+  allow_evolution: true
+  max_evolution_rounds: 2

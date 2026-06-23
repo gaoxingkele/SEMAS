@@ -1046,8 +1046,9 @@ def test_cli_init_analyze_evolve_status(tmp_path: Path, capsys, monkeypatch):
     assert len(readiness_unconfigured["readiness_receipt"]["sha256"]) == 64
     assert readiness_unconfigured["readiness_receipt"]["material"]["current_benchmark"]["passed_rate"] == 1.0
     assert readiness_unconfigured["readiness_receipt"]["material"]["evidence_materialization"]["failed_count"] == 0
-    assert readiness_unconfigured["classical_source_refresh"]["status"] == "unconfigured"
-    assert readiness_unconfigured["readiness_receipt"]["material"]["classical_source_refresh"]["status"] == "unconfigured"
+    assert readiness_unconfigured["classical_source_refresh"]["status"] == "ready"
+    assert readiness_unconfigured["classical_refresh_receipt"] is None
+    assert readiness_unconfigured["readiness_receipt"]["material"]["classical_source_refresh"]["status"] == "ready"
     assert (
         readiness_unconfigured["readiness_receipt"]["material"]["capability_audit_receipt"]["sha256"]
         == readiness_unconfigured["capability_audit_receipt"]["sha256"]
@@ -1069,7 +1070,7 @@ def test_cli_init_analyze_evolve_status(tmp_path: Path, capsys, monkeypatch):
     assert readiness_unconfigured["resolution_plan"]["status"] == "actions_required"
     unconfigured_steps = {item["id"] for item in readiness_unconfigured["resolution_plan"]["steps"]}
     assert "configure_outcome_dataset_manifest" in unconfigured_steps
-    assert "configure_classical_source_refresh" in unconfigured_steps
+    assert "run_classical_source_refresh" in unconfigured_steps
     assert "complete_qimen_professional_engine" in unconfigured_steps
     step_by_id = {item["id"]: item for item in readiness_unconfigured["resolution_plan"]["steps"]}
     assert any(
@@ -1107,10 +1108,15 @@ def test_cli_init_analyze_evolve_status(tmp_path: Path, capsys, monkeypatch):
     assert readiness["evidence_materialization"]["unchecked_count"] == 0
     assert readiness["evidence_materialization"]["passed_count"] == readiness["evidence_materialization"]["total_evidence"]
     classical_gate = next(item for item in readiness["gates"] if item["id"] == "classical_source_refresh_ready")
-    assert classical_gate["passed"] is False
-    assert "SEMAS_CLASSIC_SOURCE_LIST" in classical_gate["details"][0]
-    assert "classical_source_refresh_ready" in blocker_gates
-    assert readiness["classical_source_refresh"]["status"] == "unconfigured"
+    assert classical_gate["passed"] is True
+    latest_classical_gate = next(
+        item for item in readiness["gates"] if item["id"] == "classical_source_latest_refresh_receipt_present"
+    )
+    assert latest_classical_gate["passed"] is False
+    assert "latest classical refresh receipt is missing" in latest_classical_gate["details"][0]
+    assert "classical_source_refresh_ready" not in blocker_gates
+    assert "classical_source_latest_refresh_receipt_present" in blocker_gates
+    assert readiness["classical_source_refresh"]["status"] == "ready"
     assert (
         readiness["readiness_receipt"]["material"]["classical_source_refresh"]["status"]
         == readiness["classical_source_refresh"]["status"]
@@ -1444,7 +1450,7 @@ def test_cli_init_analyze_evolve_status(tmp_path: Path, capsys, monkeypatch):
     ]
     step_ids = {item["id"] for item in readiness["resolution_plan"]["steps"]}
     assert "configure_outcome_dataset_manifest" not in step_ids
-    assert "configure_classical_source_refresh" in step_ids
+    assert "run_classical_source_refresh" in step_ids
     assert "complete_qimen_professional_engine" in step_ids
     assert "record_qimen_provider_receipt" in step_ids
     assert "check_provider_receipt_drift" in step_ids
@@ -2375,6 +2381,7 @@ def test_cli_init_analyze_evolve_status(tmp_path: Path, capsys, monkeypatch):
     assert audit_schema["properties"]["outcome_dataset"]["$ref"] == "#/schemas/OutcomeDatasetAudit"
     assert "unsafe_feedback_count" in schema_result["schemas"]["MemoryProfile"]["required"]
     assert "source_receipt" in schema_result["schemas"]["PlanCompliance"]["required"]
+    assert "classical_source_list_path" in schema_result["schemas"]["CapabilityAuditResponse"]["required"]
     assert "classical_source_refresh" in schema_result["schemas"]["CapabilityAuditResponse"]["required"]
     assert (
         schema_result["schemas"]["CapabilityAuditResponse"]["properties"]["classical_source_refresh"]["$ref"]

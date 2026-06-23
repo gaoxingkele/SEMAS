@@ -1,0 +1,16 @@
+id: regression_gate_v1
+category: regression
+description: |
+  After evolving the prompt to answer capitals, the agent must still correctly
+  answer the original training question (which expects the country name).
+fixture: benchmarks/semas_self_upgrade/fixtures/prompt_solver_v1.yaml
+executor: prompt_based_qa
+input:
+  country: "France"
+expected:
+  output: "France"
+evaluation:
+  metrics:
+    - exact_match
+  pass_threshold: 1.0
+  allow_evolution: false

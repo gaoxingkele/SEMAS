@@ -84,6 +84,17 @@ orch = Orchestrator(..., plugin_registry=plugins)
 See `SEMAS_ARA_Architecture.md` §5.7, `SEMAS_SIA_Integration_Design.md`, and
 `semas/plugins/function_evolve/demo.py` for details.
 
+## Self-Upgrade Benchmark
+
+SEMAS can also be validated and improved through a reflexive benchmark:
+
+```bash
+python -m benchmarks.semas_self_upgrade.run_benchmark
+python -m benchmarks.semas_self_upgrade.evolve_semas
+```
+
+See `SEMAS_SELF_UPGRADE_DESIGN.md` and `benchmarks/semas_self_upgrade/README.md`.
+
 ## LLM Wiki
 
 Framework design ideas, absorbed papers, and their citation sources are recorded

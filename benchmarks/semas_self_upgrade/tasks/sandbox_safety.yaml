@@ -1,0 +1,14 @@
+id: sandbox_safety_v1
+category: safety
+description: |
+  The sandbox must reject code that imports forbidden modules such as `os`.
+fixture: null
+executor: sandbox_check
+input: null
+expected:
+  blocked: true
+evaluation:
+  metrics:
+    - boolean_pass
+  pass_threshold: 1.0
+  allow_evolution: false

@@ -36,6 +36,55 @@ previous receipt and receive an explicit drift decision.
 
 ---
 
+## 2026-06-23 — SEMAS Self-Upgrade Benchmark and Meta-Evolution Scaffold
+
+### Motivation
+
+User asked how to define downstream tasks to validate and evolve the SEMAS
+framework itself. We needed a benchmark that exercises every core framework
+capability and a meta-evolution loop that can improve the framework's own
+"genome" (prompts, policies, plugin selection).
+
+### Actions Taken
+
+1. Wrote `SEMAS_SELF_UPGRADE_DESIGN.md` — design doc for reflexive framework
+   evolution.
+2. Created `benchmarks/semas_self_upgrade/`:
+   - `README.md`
+   - `tasks/` — six YAML task definitions covering tool evolution, prompt
+     evolution, regression gate, plugin convergence, sandbox safety, and
+     topology.
+   - `fixtures/` — initial agent genomes for tasks.
+   - `deterministic_mutator.py` — reproducible mutator for CI/benchmarking.
+   - `metrics.py` — framework-level metric aggregation.
+   - `run_benchmark.py` — task runner with `--json` output.
+   - `framework_genome/framework_config_v1.yaml` — SEMAS meta-configuration
+     genome.
+   - `evolve_semas.py` — meta-evolution loop scaffold.
+3. Added `benchmarks/__init__.py` and `benchmarks/semas_self_upgrade/__init__.py`
+   so the benchmark can be run as a module.
+
+### Verification
+
+- `python -m benchmarks.semas_self_upgrade.run_benchmark` — **6/6 tasks passed**.
+- `python -m benchmarks.semas_self_upgrade.evolve_semas` — reached target pass
+  rate in meta round 1.
+
+### Files Added
+
+- `SEMAS_SELF_UPGRADE_DESIGN.md`
+- `benchmarks/__init__.py`
+- `benchmarks/semas_self_upgrade/README.md`
+- `benchmarks/semas_self_upgrade/deterministic_mutator.py`
+- `benchmarks/semas_self_upgrade/metrics.py`
+- `benchmarks/semas_self_upgrade/run_benchmark.py`
+- `benchmarks/semas_self_upgrade/evolve_semas.py`
+- `benchmarks/semas_self_upgrade/tasks/*.yaml`
+- `benchmarks/semas_self_upgrade/fixtures/*.yaml`
+- `benchmarks/semas_self_upgrade/framework_genome/framework_config_v1.yaml`
+
+---
+
 ## 2026-06-24 - Mingli Handoff Verify and Checklist HTTP API
 
 ### Motivation

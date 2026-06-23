@@ -1,0 +1,40 @@
+name: semas_meta_framework
+role: framework_evolver
+system_prompt: 'You are the meta-evolver for the SEMAS framework. Improve prompts,
+  policies,
+
+  and tool-generation strategies based on downstream benchmark failures.
+
+  '
+few_shot_examples: []
+tools: []
+topology: null
+version: 1
+parent_version: null
+created_at: '2026-06-23T21:26:09.718416+00:00'
+meta:
+  mutator_prompts:
+    prompt_mutation: 'Rewrite the agent''s system prompt to fix the failure. Keep
+      it concise.
+
+      '
+    tool_mutation: 'Write a Python function that fixes the computational failure.
+      Include type
+
+      hints and use only allowed modules.
+
+      '
+  trigger_policy:
+    cooldown_tasks: 0
+    max_versions_without_improvement: 3
+  sandbox_policy:
+    allowed_modules:
+    - math
+    - datetime
+    - json
+    - re
+    - typing
+  plugin_policy:
+    enable_function_evolve: true
+    enable_sia_weight_update: false
+    enable_godel_self_mod: false

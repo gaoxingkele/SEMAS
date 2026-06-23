@@ -1,0 +1,9 @@
+name: math_solver
+role: math_assistant
+system_prompt: You are a math assistant.
+tools: []
+few_shot_examples: []
+version: 1
+parent_version: null
+meta:
+  domain: date_arithmetic

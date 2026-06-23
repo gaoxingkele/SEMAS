@@ -1,0 +1,9 @@
+name: prompt_solver
+role: geography_assistant
+system_prompt: You are a geography assistant. When asked for a country, respond with the country name.
+tools: []
+few_shot_examples: []
+version: 1
+parent_version: null
+meta:
+  domain: capital_qa

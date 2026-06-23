@@ -1,0 +1,17 @@
+id: prompt_robustness_v1
+category: prompt_evolution
+description: |
+  The framework must adapt the agent's system prompt when the task shifts from
+  "respond with the country name" to "respond with the capital city".
+fixture: benchmarks/semas_self_upgrade/fixtures/prompt_solver_v1.yaml
+executor: prompt_based_qa
+input:
+  country: "France"
+expected:
+  output: "Paris"
+evaluation:
+  metrics:
+    - exact_match
+  pass_threshold: 1.0
+  allow_evolution: true
+  max_evolution_rounds: 3
