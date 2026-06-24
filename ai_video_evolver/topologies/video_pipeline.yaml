@@ -1,0 +1,13 @@
+name: video_pipeline
+nodes:
+  - scriptwriter
+  - prompt_engineer
+  - asset_generator
+  - editor
+  - critic
+edges:
+  - [scriptwriter, prompt_engineer]
+  - [prompt_engineer, asset_generator]
+  - [asset_generator, editor]
+  - [editor, critic]
+execution_mode: serial

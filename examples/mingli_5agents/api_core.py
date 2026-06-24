@@ -5857,6 +5857,7 @@ def schema_document() -> dict[str, Any]:
                     "image_symbol_analysis",
                     "new_school_simplified_analysis",
                     "data_validation_analysis",
+                    "school_debate",
                 ],
                 "properties": {
                     "provider": {"type": ["string", "null"]},
@@ -5885,6 +5886,7 @@ def schema_document() -> dict[str, Any]:
                     "image_symbol_analysis": {"type": "object"},
                     "new_school_simplified_analysis": {"type": "object"},
                     "data_validation_analysis": {"type": "object"},
+                    "school_debate": {"type": "object"},
                     "method_matrix": {
                         "type": "array",
                         "items": {"$ref": "#/schemas/BaziMethodMatrixItem"},
@@ -9815,6 +9817,18 @@ def schema_document() -> dict[str, Any]:
                     },
                 },
             },
+            "MethodLineageReceiptSummary": {
+                "type": "object",
+                "required": ["schema_version", "sha256", "record_count", "traditions", "implemented_statuses", "material"],
+                "properties": {
+                    "schema_version": {"type": "string", "const": "mingli-method-lineage-v1"},
+                    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                    "record_count": {"type": "integer"},
+                    "traditions": {"type": "array", "items": {"type": "string"}},
+                    "implemented_statuses": {"type": "array", "items": {"type": "string"}},
+                    "material": {"type": "object"},
+                },
+            },
             "KnownGapItem": {
                 "type": "object",
                 "required": [
@@ -9978,6 +9992,7 @@ def schema_document() -> dict[str, Any]:
                     "provider_onboarding",
                     "provider_protocol_governance",
                     "method_surface",
+                    "method_lineage",
                     "audit_receipt",
                     "expected_audit_receipt_sha256",
                     "audit_receipt_matches_expected",
@@ -10011,6 +10026,7 @@ def schema_document() -> dict[str, Any]:
                     "provider_onboarding": {"$ref": "#/schemas/ProviderOnboardingResponse"},
                     "provider_protocol_governance": {"$ref": "#/schemas/ProviderProtocolGovernanceSummary"},
                     "method_surface": {"$ref": "#/schemas/MethodSurfaceReceiptSummary"},
+                    "method_lineage": {"$ref": "#/schemas/MethodLineageReceiptSummary"},
                     "audit_receipt": {"$ref": "#/schemas/CapabilityAuditReceipt"},
                     "expected_audit_receipt_sha256": {
                         "type": ["string", "null"],

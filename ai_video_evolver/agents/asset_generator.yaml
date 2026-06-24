@@ -1,0 +1,12 @@
+name: asset_generator
+role: asset_generator
+system_prompt: |
+  You are an asset generator.
+  Call the video generation backend with the provided prompt and return the
+  resulting clip metadata.
+tools:
+  - video_api_client
+version: 1
+parent_version: null
+meta:
+  domain: video_generation

@@ -95,6 +95,17 @@ python -m benchmarks.semas_self_upgrade.evolve_semas
 
 See `SEMAS_SELF_UPGRADE_DESIGN.md` and `benchmarks/semas_self_upgrade/README.md`.
 
+## AI Video Evolver
+
+A standalone subpackage demonstrating an evolvable, end-to-end AI video
+generation pipeline built on SEMAS:
+
+```bash
+python -m ai_video_evolver.demo
+```
+
+See `ai_video_evolver/README.md`.
+
 ## LLM Wiki
 
 Framework design ideas, absorbed papers, and their citation sources are recorded

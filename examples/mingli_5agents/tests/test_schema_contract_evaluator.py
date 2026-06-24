@@ -844,6 +844,11 @@ def test_schema_contract_score_gates_release_governance_contracts():
     assert schema["schemas"]["CapabilityAuditResponse"]["properties"]["method_surface"]["$ref"] == (
         "#/schemas/MethodSurfaceReceiptSummary"
     )
+    assert "method_lineage" in schema["schemas"]["CapabilityAuditResponse"]["required"]
+    assert schema["schemas"]["CapabilityAuditResponse"]["properties"]["method_lineage"]["$ref"] == (
+        "#/schemas/MethodLineageReceiptSummary"
+    )
+    assert schema["schemas"]["MethodLineageReceiptSummary"]["properties"]["sha256"]["pattern"] == "^[0-9a-f]{64}$"
     assert "provider_example_smoke" in schema["schemas"]["CapabilityAuditResponse"]["required"]
     assert schema["schemas"]["CapabilityAuditResponse"]["properties"]["provider_example_smoke"]["$ref"] == (
         "#/schemas/ProviderExampleSmokeResponse"
@@ -1483,9 +1488,11 @@ def test_schema_contract_score_gates_release_governance_contracts():
     assert "image_symbol_analysis" in bazi_profile["required"]
     assert "new_school_simplified_analysis" in bazi_profile["required"]
     assert "data_validation_analysis" in bazi_profile["required"]
+    assert "school_debate" in bazi_profile["required"]
     assert bazi_profile["properties"]["image_symbol_analysis"]["type"] == "object"
     assert bazi_profile["properties"]["new_school_simplified_analysis"]["type"] == "object"
     assert bazi_profile["properties"]["data_validation_analysis"]["type"] == "object"
+    assert bazi_profile["properties"]["school_debate"]["type"] == "object"
     assert bazi_profile["properties"]["strength_analysis"]["$ref"] == "#/schemas/BaziStrengthAnalysis"
     assert bazi_profile["properties"]["pattern_analysis"]["$ref"] == "#/schemas/BaziPatternAnalysis"
     assert bazi_profile["properties"]["useful_god_analysis"]["$ref"] == "#/schemas/BaziUsefulGodAnalysis"

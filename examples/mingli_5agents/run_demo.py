@@ -223,17 +223,22 @@ class MingliFiveAgentSystem:
         deep = chart["deep_analysis"]
         current_luck = _current_major_luck(deep)
         month_ten_god = deep["ten_gods"]["month"]["stem"]
+        school_debate = deep.get("school_debate", {})
+        debate_consensus = school_debate.get("consensus", {}) if isinstance(school_debate, dict) else {}
+        primary_schools = debate_consensus.get("primary_schools", []) if isinstance(debate_consensus, dict) else []
+        primary_school_text = ", ".join(primary_schools[:3]) if primary_schools else "school debate pending"
         return self._with_layers({
             "agent": self.specialist_names["bazi"],
             "chart": chart,
             "macro": f"BaZi structure is {chart['structure']} with {chart['dominant_element']} emphasis.",
             "micro": (
                 f"Day master: {deep['day_master']}; month stem ten-god: {month_ten_god}; "
-                f"useful element focus: {chart['useful_element']}. Pillars: {chart['pillars']}."
+                f"useful element focus: {chart['useful_element']}. Pillars: {chart['pillars']}. "
+                f"Internal school debate primary schools: {primary_school_text}."
             ),
             "yearly": (
                 "Yearly trend should be read through element balance, ten-god emphasis, "
-                f"and major-luck interaction ({current_luck})."
+                f"major-luck interaction ({current_luck}), and preserved school conflicts."
             ),
             "monthly": "Monthly focus should watch the dominant-useful element tension.",
             "uncertainty": "Symbolic BaZi reading; not deterministic prediction.",
@@ -1390,6 +1395,7 @@ class MingliFiveAgentSystem:
             "new_school_simplified_analysis": deep.get("new_school_simplified_analysis", {}),
             "data_validation_analysis": deep.get("data_validation_analysis", {}),
             "method_matrix": deep.get("method_matrix", []),
+            "school_debate": deep.get("school_debate", {}),
             "luck_start": deep.get("luck_start", {}),
             "major_luck": deep.get("major_luck", []),
             "caution": deep.get("caution"),

@@ -18,6 +18,7 @@ from examples.mingli_5agents.classical_text_index import classical_index_audit
 from examples.mingli_5agents.empirical_validation import empirical_validation_cases, outcome_dataset_audit
 from examples.mingli_5agents.knowledge_base import SOURCE_REGISTRY
 from examples.mingli_5agents.memory import MingliFeedbackMemory
+from examples.mingli_5agents.method_lineage import method_lineage_receipt
 from examples.mingli_5agents.method_surface import method_surface_receipt
 from examples.mingli_5agents.provider_checks import (
     JSON_CLI_CHECK_BY_DOMAIN,
@@ -1836,6 +1837,7 @@ def _capability_audit_receipt_material(response: dict[str, Any]) -> dict[str, An
     protocol_governance = response["provider_protocol_governance"]
     reference_charts = response["reference_chart_checks"]
     method_surface = response["method_surface"]
+    method_lineage = response["method_lineage"]
     classical_index = response["classical_text_index"]
     classical_source_refresh = response["classical_source_refresh"]
     source_audits = classical_source_refresh.get("source_audits", [])
@@ -1896,6 +1898,13 @@ def _capability_audit_receipt_material(response: dict[str, Any]) -> dict[str, An
             "domains": method_surface.get("material", {}).get("domains", {})
             if isinstance(method_surface.get("material"), dict)
             else {},
+        },
+        "method_lineage": {
+            "schema_version": method_lineage.get("schema_version"),
+            "sha256": method_lineage.get("sha256"),
+            "record_count": method_lineage.get("record_count"),
+            "traditions": method_lineage.get("traditions", []),
+            "implemented_statuses": method_lineage.get("implemented_statuses", []),
         },
         "classical_text_index": {
             "status": classical_index.get("status"),
@@ -2063,6 +2072,7 @@ def capability_audit(
     domain_providers = describe_domain_chart_providers()
     reference_charts = run_reference_chart_checks()
     method_surface = method_surface_receipt()
+    method_lineage = method_lineage_receipt()
     classical_index = classical_index_audit()
     resolved_classical_source_list_path = _default_classical_source_list_path(classical_source_list_path)
     classical_source_refresh = source_list_audit(resolved_classical_source_list_path)
@@ -2191,6 +2201,9 @@ def capability_audit(
         "annual_timeline_receipt": True,
         "annual_timeline_topic_evidence_binding": True,
         "bazi_core_profile_schema_contract": True,
+        "bazi_school_debate": True,
+        "method_lineage_receipt": isinstance(method_lineage.get("sha256"), str)
+        and len(method_lineage.get("sha256", "")) == 64,
         "monthly_luck_receipt": True,
         "monthly_luck_topic_evidence_binding": True,
         "monthly_luck_public_schema_contract": True,
@@ -2321,6 +2334,7 @@ def capability_audit(
         },
         "reference_chart_checks": reference_charts,
         "method_surface": method_surface,
+        "method_lineage": method_lineage,
         "request_scoped_provider_contract": {
             "status": "ready"
             if capabilities["request_scoped_full_external_provider_injection"]

@@ -856,6 +856,13 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert result["audit_receipt"]["material"]["method_surface"]["domains"]["bazi"] == sorted(
         result["method_surface"]["material"]["domains"]["bazi"]
     )
+    assert result["method_lineage"]["schema_version"] == "mingli-method-lineage-v1"
+    assert len(result["method_lineage"]["sha256"]) == 64
+    assert result["method_lineage"]["record_count"] >= 10
+    assert "bazi" in result["method_lineage"]["traditions"]
+    assert result["capabilities"]["method_lineage_receipt"] is True
+    assert result["capabilities"]["bazi_school_debate"] is True
+    assert result["audit_receipt"]["material"]["method_lineage"]["sha256"] == result["method_lineage"]["sha256"]
     assert "data_split_record_coverage" in result["audit_receipt"]["material"]["outcome_dataset"]
     assert result["audit_receipt"]["material"]["provider_protocol_governance"]["protocol_hash"] == result[
         "provider_protocol_governance"

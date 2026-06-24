@@ -150,6 +150,51 @@ previous receipt and receive an explicit drift decision.
 
 ---
 
+## 2026-06-23 — Create ai_video_evolver Package
+
+### Motivation
+
+User asked to materialize the AI video generation evolvable scaffold as a
+standalone subpackage/module toolkit.
+
+### Actions Taken
+
+1. Created `ai_video_evolver/` as an independent Python package with its own
+   `pyproject.toml`.
+2. Added agent, tool, topology, and evaluator YAML/Python modules for a full
+   AI video pipeline (scriptwriter → prompt engineer → asset generator → editor
+   → critic).
+3. Implemented `executor.py` to run the topology as a SEMAS `ExecutorFn`.
+4. Implemented `mutator.py` with deterministic mutations for offline demo/CI.
+5. Implemented `run_video_evolution.py` and `demo.py`; demo shows score
+   improving from 0.603 to 0.803 after one SEMAS evolution round.
+6. Added `tests/test_ai_video_evolver.py` with 6 passing tests.
+7. Updated `wiki/semas_evolution_ideas.md` with the package details.
+
+### Files Added
+
+- `ai_video_evolver/pyproject.toml`
+- `ai_video_evolver/README.md`
+- `ai_video_evolver/__init__.py`
+- `ai_video_evolver/bootstrap.py`
+- `ai_video_evolver/executor.py`
+- `ai_video_evolver/mutator.py`
+- `ai_video_evolver/run_video_evolution.py`
+- `ai_video_evolver/demo.py`
+- `ai_video_evolver/agents/*.yaml`
+- `ai_video_evolver/tools/*.py`
+- `ai_video_evolver/topologies/*.yaml`
+- `ai_video_evolver/evaluator/*.py`
+- `ai_video_evolver/examples/sample_task.yaml`
+- `tests/test_ai_video_evolver.py`
+
+### Verification
+
+- `python -m pytest tests/test_ai_video_evolver.py -q` — **6 passed**.
+- `python -m ai_video_evolver.demo` — evolved from score 0.603 to 0.803.
+
+---
+
 ## 2026-06-23 — Domain Fit Assessment: End-to-End AI Video Generation Agent
 
 ### Motivation

@@ -216,6 +216,21 @@ def test_five_agent_executor_returns_required_artifacts(tmp_path: Path):
     assert result["final_report"]["bazi_profile"]["image_symbol_analysis"]
     assert result["final_report"]["bazi_profile"]["new_school_simplified_analysis"]
     assert result["final_report"]["bazi_profile"]["data_validation_analysis"]
+    school_debate = result["final_report"]["bazi_profile"]["school_debate"]
+    assert school_debate["schema_version"] == "bazi-school-debate-v1"
+    assert len(school_debate["sha256"]) == 64
+    assert school_debate["agent_count"] == 6
+    assert len(school_debate["votes"]) == 6
+    assert {item["agent_id"] for item in school_debate["votes"]} == {
+        "ziping_pattern_agent",
+        "strength_support_agent",
+        "tiaohou_agent",
+        "tiyong_circulation_agent",
+        "blind_symbol_agent",
+        "shensha_nayin_agent",
+    }
+    assert school_debate["consensus"]["rule"]
+    assert isinstance(school_debate["conflicts"], list)
     assert {item["method"] for item in result["final_report"]["bazi_profile"]["method_matrix"]} == {
         "ziping_pattern",
         "strength_support",

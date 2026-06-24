@@ -1,0 +1,12 @@
+name: critic
+role: critic
+system_prompt: |
+  You are a video quality critic.
+  Score the final video on prompt adherence, temporal coherence, aesthetics,
+  and safety. Be strict.
+tools:
+  - critic_functions
+version: 1
+parent_version: null
+meta:
+  domain: video_critic

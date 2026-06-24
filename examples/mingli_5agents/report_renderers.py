@@ -1183,6 +1183,19 @@ def _bazi_profile_lines_zh(profile: dict[str, Any]) -> list[str]:
             if isinstance(item, dict) and item.get("method")
         ]
         lines.append(f"- Method coverage: {', '.join(methods)}.")
+    school_debate = profile.get("school_debate", {})
+    if isinstance(school_debate, dict) and school_debate.get("votes"):
+        consensus = school_debate.get("consensus", {})
+        if isinstance(consensus, dict):
+            primary = "、".join(str(item) for item in consensus.get("primary_schools", [])[:4])
+            auxiliary = "、".join(str(item) for item in consensus.get("auxiliary_schools", [])[:4])
+            lines.append(
+                "- 八字流派辩论："
+                f"主断流派为{primary or '待校准'}；"
+                f"辅助流派为{auxiliary or '无'}；"
+                f"{school_debate.get('agent_count', 0)}个子智能体参与，"
+                f"保留{len(school_debate.get('conflicts', []))}处争议。"
+            )
     if isinstance(major_luck, list) and major_luck:
         lines.append("- 大运表：")
         for item in major_luck:

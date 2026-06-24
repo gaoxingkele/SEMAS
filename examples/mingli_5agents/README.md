@@ -886,6 +886,14 @@ strength/support, blind-school workflow hints, Shensha/Na Yin, and Tiaohou
 balancing. These fields make method coverage auditable without claiming that
 symbolic interpretation is empirically predictive.
 
+BaZi deep analysis also includes a deterministic `school_debate` layer. This
+spawns paper sub-agents for Zi Ping pattern, strength/support, Tiaohou,
+body-use circulation, blind-school image reading, and Shensha/Na Yin auxiliary
+reading. Each sub-agent emits a claim, challenge, evidence fields, confidence,
+and vote stance. The BaZi profile keeps conflicts and a consensus rule so the
+final synthesis can preserve disagreements instead of flattening all schools
+into one opaque judgment.
+
 The BaZi specialist now references the day master, month-stem ten god, and
 current major-luck range in its micro/yearly analysis, and the Chinese rendered
 report includes a compact BaZi method-coverage line. The `report_schema` and

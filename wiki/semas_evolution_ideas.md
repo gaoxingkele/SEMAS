@@ -5,6 +5,34 @@
 
 ---
 
+## 2026-06-23 — AI Video Evolver Package
+
+We created `ai_video_evolver/` as a standalone subpackage: an evolvable
+end-to-end AI video generation scaffold built on SEMAS.
+
+[source: ai_video_evolver/README.md]
+
+Components:
+
+- `agents/` — YAML genomes for scriptwriter, prompt engineer, asset generator,
+  editor, critic.
+- `tools/` — Python tool sources for API client, FFmpeg pipeline, prompt
+  templates, critic functions (all stubbed for offline use).
+- `topologies/video_pipeline.yaml` — serial workflow topology.
+- `executor.py` — runs the topology as a SEMAS `ExecutorFn`.
+- `mutator.py` — deterministic mutator that toggles prompt enhancement.
+- `run_video_evolution.py` — high-level runner.
+- `demo.py` — minimal runnable demo.
+
+The demo starts with a basic prompt that produces `score=0.603`; after one
+SEMAS evolution round the pipeline learns to enhance prompts with cinematic
+keywords and reaches `score=0.803`.
+
+This is the canonical example of how to take a domain (AI video) and wrap it
+into a versioned, evolvable SEMAS package.
+
+---
+
 ## 2026-06-23 — Domain Fit: End-to-End AI Video Generation Agent
 
 User asked whether SEMAS can evolve a full-pipeline AI video generation agent.
