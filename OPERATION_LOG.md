@@ -5,6 +5,85 @@
 
 ---
 
+## 2026-06-24 - Mingli Annual Derivation Renderer
+
+### Motivation
+
+User feedback identified that the annual luck table still repeated too much
+language. Each year should be derived from annual pillar, major luck, natal
+branch interactions, and key month relations rather than rendered from fixed
+phrases.
+
+### Actions Taken
+
+1. Added annual stem/branch splitting, ten-god labels, element labels, and
+   branch-relation maps for clash, punishment, harm, combination, and repeated
+   activation.
+2. Rewrote annual prose generation to include annual ten-gods, five-element
+   flow, natal-branch activation, major-luck interaction, and key month
+   relation prompts.
+3. Kept age-stage policy active so minor-year language avoids adult domains.
+4. Added an optional known-event calibration input file:
+   `examples/mingli_5agents/reports/linfan_major_events.json`.
+5. Regenerated the Lin Fan report as an interpreted annual version.
+
+### Verification
+
+- `python examples\mingli_5agents\reports\generate_linfan_assertive_report.py` -
+  **passed**.
+- Text probe on `linfan_20260624_interpreted_annual_zh.report.md` found no
+  ASCII letters, no half-width question marks, no full-width question marks,
+  and no code fences.
+- Annual probe counted 49 unique year entries from 1978 through 2026.
+- Minor-year probe found no adult-domain terms for wealth, finance, career,
+  romance, leadership, or children.
+
+Output files:
+
+- `examples/mingli_5agents/reports/linfan_20260624_interpreted_annual_zh.report.md`
+- `examples/mingli_5agents/reports/linfan_20260624_interpreted_annual_zh.report.pdf`
+
+---
+
+## 2026-06-24 - Mingli Assertive Age-Aware Report Rendering
+
+### Motivation
+
+User feedback showed that a readable Mingli report still needs stronger
+directional judgments and age-aware logic. Childhood years should focus on
+health, parents, household rhythm, temperament, and study rather than adult
+domains such as wealth, career, or marriage.
+
+### Actions Taken
+
+1. Generated an age-aware Chinese narrative report for the Lin Fan case.
+2. Generated a more assertive Chinese narrative version with clearer summary
+   judgments and smoother prose.
+3. Regenerated the assertive version as an annual report with all 49 years from
+   1978 through 2026.
+4. Rendered the latest narrative report to PDF with Chinese font support.
+5. Recorded the adopted five-layer Mingli reasoning method in the wiki as a
+   methodology evolution note.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\reports\generate_linfan_assertive_report.py` -
+  **passed**.
+- Text probe on `linfan_20260624_assertive_annual_zh.report.md` found no ASCII
+  letters, no half-width question marks, no full-width question marks, and no
+  code fences.
+- Annual probe counted 49 year entries, covering 1978 through 2026.
+- Age-stage probe confirmed childhood sections use health, parents, family,
+  temperament, and study language; adult sections can use career, wealth,
+  relationship, leadership, and children language.
+
+Output files:
+
+- `examples/mingli_5agents/reports/linfan_20260624_assertive_annual_zh.report.md`
+- `examples/mingli_5agents/reports/linfan_20260624_assertive_annual_zh.report.pdf`
+
+---
+
 ## 2026-06-24 - Mingli Default Classical Source List Audit
 
 ### Motivation
@@ -68,6 +147,35 @@ previous receipt and receive an explicit drift decision.
 - CLI probe: generated a handoff export, generated a checklist, reran checklist
   generation with `--expected-checklist-receipt-sha256`, and received
   `checklist_receipt_matches_expected=true` with a 64-character receipt hash.
+
+---
+
+## 2026-06-23 — Domain Fit Assessment: End-to-End AI Video Generation Agent
+
+### Motivation
+
+User asked whether SEMAS is reasonable for evolving a full-pipeline AI video
+generation agent.
+
+### Conclusion
+
+- **High fit**. Video generation is a multi-stage, multi-agent pipeline with
+  subjective quality gates and expensive compute — exactly SEMAS's target
+  shape.
+- SEMAS would orchestrate scriptwriter, prompt engineer, asset generator,
+  editor, and critic agents via `TopologyGenome`.
+- `ToolGenome` would wrap video model APIs (Runway, Pika, ComfyUI) and
+  post-processing tools (FFmpeg).
+- `Evaluator` would combine automated metrics (CLIP, temporal coherence,
+  aesthetics, safety) with optional human preference.
+- Main risks: cost, subjectivity, non-determinism, safety/copyright.
+- Recommended plugins: Core SEMAS + SIA for critic fine-tuning; avoid
+  Gödel Agent.
+
+### Files Updated
+
+- `wiki/semas_evolution_ideas.md` — added "End-to-End AI Video Generation Agent"
+  section.
 
 ---
 

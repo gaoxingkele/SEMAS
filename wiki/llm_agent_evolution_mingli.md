@@ -311,6 +311,83 @@ Use for engineering workflow. The useful pattern is issue/task -> inspect code -
 
 Sources: SWE-agent, arXiv:2405.15793, https://arxiv.org/abs/2405.15793; SWE-agent GitHub, https://github.com/SWE-agent/SWE-agent; SWE-bench, arXiv:2310.06770, https://arxiv.org/abs/2310.06770
 
+## v27: Hierarchical Mingli Reasoning Before Narrative Output
+
+User-facing Mingli reports should not be generated as a flat list of life
+domains. A flat template easily produces absurd outputs, such as discussing
+wealth, office politics, or marriage in early childhood. The report generator
+must first infer the age stage and reasoning layer, then choose the right
+domains for that life period.
+
+The adopted reasoning order is five layers:
+
+1. Pattern recognition: identify the chart type, life theme, constitutional
+   strengths and weaknesses.
+2. Macro trend: use ten-year luck cycles to set the dominant life-stage theme.
+3. Annual event: read the annual stem/branch together with the luck cycle and
+   natal chart, then map it to concrete event categories.
+4. Cross-validation: compare BaZi, Zi Wei, and Qi Men signals before assigning
+   confidence.
+5. Fact calibration: compare the inference with known life events, revise the
+   pattern when facts contradict theory.
+
+Three modeling ideas should be promoted into provider contracts and report
+renderers:
+
+- Body-use-protection: the useful element alone does not determine outcome; the
+  protection mechanism decides whether the energy chain can work.
+- Five-element circulation map: the chart should expose circulation paths,
+  breakpoints, and repair paths instead of only saying strong or weak.
+- Ten-god duality matrix: each ten-god has constructive and destructive
+  expressions depending on configuration, age stage, and protection state.
+
+Implementation implication: every annual paragraph should be generated from an
+age-aware domain policy. Childhood focuses on health, parents, household
+rhythm, temperament, and study habits. Adult years can discuss career, wealth,
+marriage, leadership, partnership, and children. The renderer should state
+clear directional judgments, while still keeping confidence and evidence
+boundaries visible.
+
+Source: user-provided `bazi-hierarchical-analysis` methodology note in this
+conversation, 2026-06-24. Related agent reasoning patterns: ReAct for layered
+act/observe/synthesize loops, Reflexion for fact-calibration memory, and
+Voyager for turning repeated reasoning procedures into a reusable skill
+library.
+
+## v28: Annual Reports Must Derive, Not Template
+
+The previous age-aware renderer fixed an obvious category error, but it still
+used too many repeated annual sentences. A Mingli annual report should not be a
+topic template with the year number changed. It should derive each year from
+the interaction graph among natal chart, major luck, annual pillar, and key
+months.
+
+The adopted annual derivation loop is:
+
+1. Split the annual pillar into stem and branch.
+2. Map stem and branch into ten-god roles relative to the day master.
+3. Compare the annual branch against natal year, month, day, and hour branches.
+4. Compare the annual branch against the active major-luck branch.
+5. Mark branch relations as clash, punishment, harm, combination, or repeated
+   activation.
+6. Infer a small set of key month branches from their relation to the annual
+   branch, natal day branch, and major-luck branch.
+7. Translate the result through an age-stage policy before writing user-facing
+   language.
+
+This changes the report generator from "fill every domain every year" to
+"derive the year's pressure points, then choose the right domains." It also
+creates a clean insertion point for factual calibration: known real events
+should be recorded separately and then used to revise pattern recognition,
+major-luck framing, and annual wording.
+
+Source: user feedback in this conversation, 2026-06-24: annual language must
+reflect different yearly and monthly five-element relations, including
+punishment, clash, combination, harm, generation, and control, rather than
+fixed phrases. Related source: user-provided `bazi-hierarchical-analysis`
+methodology note, especially Layer 3 annual event analysis and Layer 5 fact
+calibration.
+
 ## Current Strategy
 
 1. Treat every domain calculation as a provider capability, not an LLM opinion.
@@ -338,6 +415,11 @@ Sources: SWE-agent, arXiv:2405.15793, https://arxiv.org/abs/2405.15793; SWE-agen
 23. Separate safe default configuration fixtures from production evidence receipts.
 24. Let LLM synthesis operate only after structured contracts and evidence summaries exist.
 25. Record methodology changes in wiki at the same time operational changes land in code/tests.
+26. Run Mingli synthesis through five reasoning layers before report narration.
+27. Apply age-aware domain policies before generating annual event language.
+28. Treat user fact feedback as calibration data that can revise the recognized pattern.
+29. Generate annual narratives from branch-relation evidence instead of fixed topic templates.
+30. Keep factual event calibration as a separate input that can override theoretical framing.
 
 ## Migration Recipe
 
@@ -369,6 +451,10 @@ To transplant this framework into another vertical:
 24. Provide safe default fixture configuration only when it cannot be mistaken for production evidence.
 25. Keep production gates tied to executed receipts, not merely configured examples.
 26. Append a wiki note for every imported method idea with source URL.
+27. Define age-stage domain policies so generated annual narratives do not apply adult domains to children.
+28. Store user-supplied domain reasoning frameworks as cited methodology notes before reusing them.
+29. Implement branch-relation derivation before prose rendering.
+30. Add a known-event calibration input and keep reports marked uncalibrated until facts are loaded.
 
 ## Open Method Questions
 

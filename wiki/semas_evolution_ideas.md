@@ -5,6 +5,102 @@
 
 ---
 
+## 2026-06-23 — Domain Fit: End-to-End AI Video Generation Agent
+
+User asked whether SEMAS can evolve a full-pipeline AI video generation agent.
+Short answer: **yes, and it's a very natural fit**.
+
+AI video generation is not a single function; it is a multi-stage pipeline with
+many hyperparameters, subjective quality gates, and expensive compute. That is
+exactly the kind of problem SEMAS is designed for.
+
+### Mapping the video pipeline to SEMAS
+
+```text
+Input prompt / script
+       │
+       ▼
+┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│ Scriptwriter │────▶│ Prompt Engineer  │────▶│ Asset Generator │
+│   agent      │     │     agent        │     │    agent        │
+└─────────────┘     └──────────────────┘     └─────────────────┘
+                                                      │
+                       ┌─────────────┐               │
+                       │    Critic   │◀──────────────┘
+                       │   agent     │
+                       └──────┬──────┘
+                              │
+                              ▼
+                       Feedback loop
+```
+
+SEMAS mapping:
+
+| Video stage | SEMAS concept |
+|---|---|
+| Scriptwriter | `AgentGenome` + system prompt |
+| Prompt engineer | `AgentGenome` with prompt templates |
+| Asset generator | `ToolGenome` wrapping video/image model APIs |
+| Editor | `AgentGenome` + FFmpeg / ComfyUI tool |
+| Critic | `AgentGenome` + quality metrics |
+| Overall workflow | `TopologyGenome` |
+| Good/bad prompt patterns | `Memory` / few-shot examples |
+| Quality scoring | `Evaluator` |
+| Improve prompts/tools/workflow | `Mutator` + `Orchestrator` |
+
+### What would be evolved
+
+1. **Prompts**: text-to-video prompts, negative prompts, style modifiers.
+2. **Tools**: API call wrappers, FFmpeg pipelines, ComfyUI node graphs,
+   caption generators.
+3. **Topology**: add/remove a critic, insert a retry loop, parallelize
+   generation attempts.
+4. **Few-shot**: store successful prompt → video pairs.
+5. **Memory**: per-project or per-style prompt priors.
+
+### Required scaffolding
+
+| Component | Purpose |
+|---|---|
+| Video executor | Call Runway / Pika / Stable Video / ComfyUI |
+| Asset storage | Version generated clips, intermediates, metadata |
+| Quality evaluator | CLIP score, temporal coherence, aesthetic score, prompt adherence, safety |
+| Cost budget | Limit generation calls per evolution round |
+| Surrogate critic | Lightweight model to score candidates without generating full video |
+| Sandbox | Allow `ffmpeg`, `opencv`, `PIL`; restrict arbitrary network writes |
+| Regression tests | Fixed prompt set + reference outputs |
+
+### Key risks
+
+- **Cost**: Video generation is expensive. You cannot afford to generate 100
+  candidates. A surrogate critic / co-evolving value model is essential.
+- **Subjectivity**: Automated metrics (CLIP, FVD) do not always match human
+  taste. Need human-in-the-loop or a learned preference model.
+- **Non-determinism**: Same prompt can yield very different videos. Evaluation
+  must average over multiple seeds or use deterministic seeds.
+- **Safety / copyright**: Generated content can be NSFW or infringe. Safety
+  gates and legal review are mandatory.
+- **Slow feedback loop**: Evolution rounds take minutes/hours. Cache everything.
+
+### Recommended plugin mix
+
+- **Core SEMAS** for topology and prompt evolution.
+- **FunctionEvolve** for optimizing numeric generation parameters (duration,
+  CFG scale, seed ranges) if they can be expressed symbolically.
+- **SIA** for fine-tuning a critic / preference model on human feedback.
+- **Avoid Gödel Agent**: full self-modification is too risky for a pipeline
+  that calls external paid APIs and generates public content.
+
+### Bottom line
+
+SEMAS is a strong fit for an end-to-end AI video agent, not because it generates
+video itself, but because it provides an **evolvable, auditable control layer**
+around existing video models. The hard part is defining good evaluation metrics
+and controlling cost; the framework handles the versioning, mutation, and
+selection loop.
+
+---
+
 ## 2026-06-23 — Domain Fit: Financial Factors / Mingli / OSINT
 
 User asked whether SEMAS is reasonable for evolution-mode applications in three
