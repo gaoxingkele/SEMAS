@@ -5,6 +5,41 @@
 
 ---
 
+## 2026-06-24 - Mingli Default Classical Source List Audit
+
+### Motivation
+
+Close the local classical-source list configuration gap without pretending that
+a bundled demonstration corpus is production evidence. Capability audit needed a
+deterministic, copyright-safe default source-list configuration, while
+production readiness still needed to block until a refresh receipt exists.
+
+### Actions Taken
+
+1. Added an application-level default source list resolver in
+   `capability_audit.py`.
+2. Defaulted Mingli capability audit to
+   `providers/classical_source_list_example.json` when no
+   `SEMAS_CLASSIC_SOURCE_LIST` or explicit source-list path is provided.
+3. Added `classical_source_list_path` to the capability-audit response schema.
+4. Updated CLI, schema, empirical validation, and capability-audit tests to
+   distinguish configured source-list audit from missing latest refresh receipt.
+5. Updated README and wiki methodology notes.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py` -
+  **passed**.
+- `pytest examples\mingli_5agents\tests\test_cli.py::test_cli_init_analyze_evolve_status -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_capability_audit_evaluator.py -q` -
+  **4 passed**.
+- Audit probe: `classical_source_refresh.status=ready`, configured capabilities
+  `112/116`, with remaining false capabilities limited to Zi Wei, Qi Men,
+  ephemeris astrology, and LLM backend configuration.
+
+---
+
 ## 2026-06-24 - Mingli Handoff Checklist Receipt Drift Binding
 
 ### Motivation
@@ -33,6 +68,33 @@ previous receipt and receive an explicit drift decision.
 - CLI probe: generated a handoff export, generated a checklist, reran checklist
   generation with `--expected-checklist-receipt-sha256`, and received
   `checklist_receipt_matches_expected=true` with a 64-character receipt hash.
+
+---
+
+## 2026-06-23 — Domain Fit Assessment: Finance / Mingli / OSINT
+
+### Motivation
+
+User asked whether SEMAS is reasonable for evolution-mode applications in
+financial factor mining,命理 analysis, and open-source intelligence analysis.
+
+### Conclusion
+
+- **Financial factor mining**: very high fit; FunctionEvolve plugin maps
+  directly to symbolic factor discovery, backtesting metrics map to Evaluator.
+  Main risk is overfitting.
+- **命理 analysis**: high fit; already prototyped in `examples/mingli_5agents/`.
+  Main risks are hallucination and cultural sensitivity.
+- **OSINT**: high fit; multi-agent topology and tool evolution match the
+  workflow. Main risks are misinformation and legal/ethical boundaries.
+
+SEMAS is reasonable for all three, but the value is in the generic evolution
+loop; each domain still needs its own executor, metrics, data splits, and
+safety gates.
+
+### Files Updated
+
+- `wiki/semas_evolution_ideas.md` — added "Domain Fit" section.
 
 ---
 

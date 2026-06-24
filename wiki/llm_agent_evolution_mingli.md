@@ -261,6 +261,16 @@ Mapped pattern: `verified handoff export -> checklist receipt -> expected checkl
 
 Sources: SLSA provenance and verification model, https://slsa.dev/spec/v1.0/; in-toto artifact/link verification, https://in-toto.io/; SWE-agent handoff/test loop, https://arxiv.org/abs/2405.15793 and https://github.com/SWE-agent/SWE-agent; Toolformer/API-use framing, https://arxiv.org/abs/2302.04761
 
+### v26: Safe Defaults Close Configuration Gaps, Not Evidence Gaps
+
+Mingli capability audit now uses the bundled copyright-safe, hash-pinned classical source list when no explicit source list or environment variable is configured. This makes the framework auditable out of the box while preserving the production blocker that requires a latest classical-source refresh receipt.
+
+Reasoning change: configuration readiness and evidence readiness are different layers. A default fixture can prove that the pipeline has a valid allowlist contract, source governance metadata, and stable source-list receipt. It cannot prove that an operator has refreshed and accepted a production corpus. Therefore the audit may close `classical_source_refresh_configured`, while production readiness still blocks on `classical_source_latest_refresh_receipt_present`.
+
+Mapped pattern: `safe bundled fixture -> configuration capability closes -> refresh execution -> latest receipt -> production evidence closes`.
+
+Sources: SLSA provenance and build-material separation, https://slsa.dev/spec/v1.0/; in-toto layout/link separation, https://in-toto.io/; SWE-agent reproducible test fixture discipline, https://arxiv.org/abs/2405.15793 and https://github.com/SWE-agent/SWE-agent
+
 ## Absorbed Agent Ideas
 
 ### ReAct: Interleave Thinking and Acting
@@ -325,8 +335,9 @@ Sources: SWE-agent, arXiv:2405.15793, https://arxiv.org/abs/2405.15793; SWE-agen
 20. Convert verified handoffs into implementation checklists.
 21. Expose executable handoff operations through both CLI and HTTP API surfaces.
 22. Add expected-receipt drift binding for generated implementation checklists.
-23. Let LLM synthesis operate only after structured contracts and evidence summaries exist.
-24. Record methodology changes in wiki at the same time operational changes land in code/tests.
+23. Separate safe default configuration fixtures from production evidence receipts.
+24. Let LLM synthesis operate only after structured contracts and evidence summaries exist.
+25. Record methodology changes in wiki at the same time operational changes land in code/tests.
 
 ## Migration Recipe
 
@@ -355,7 +366,9 @@ To transplant this framework into another vertical:
 21. Generate implementation checklists from verified transfer artifacts.
 22. Mirror executable handoff operations in both CLI and API contracts.
 23. Add expected checklist receipt comparison so generated work packets can be replayed and drift-checked.
-24. Append a wiki note for every imported method idea with source URL.
+24. Provide safe default fixture configuration only when it cannot be mistaken for production evidence.
+25. Keep production gates tied to executed receipts, not merely configured examples.
+26. Append a wiki note for every imported method idea with source URL.
 
 ## Open Method Questions
 

@@ -526,6 +526,14 @@ matrix. It separates implemented SEMAS orchestration/evolution/reporting
 features from known professional-grade gaps, such as verified Zi Wei and Qi Men
 calculation providers, ephemeris-backed astrology, external classical-text
 retrieval, and empirical validation datasets.
+When no `SEMAS_CLASSIC_SOURCE_LIST` or `--classical-source-list` is provided,
+the Mingli capability audit uses the bundled
+`providers/classical_source_list_example.json` as a copyright-safe, hash-pinned
+demonstration source list. This closes the source-list configuration capability
+without treating the bundled example as production evidence: production
+readiness and release approval still require a latest classical-source refresh
+receipt, so operators must run `classical-refresh` and bind the resulting
+receipt before the external classical-text gap can close.
 The audit also includes `plan_compliance`, a section-by-section matrix mapped
 to `plan_mingli5agents.md`, with verified implemented requirement IDs and known
 gap IDs for each plan section. `section_gap_resolution_coverage` then binds

@@ -5,6 +5,108 @@
 
 ---
 
+## 2026-06-23 — Domain Fit: Financial Factors / Mingli / OSINT
+
+User asked whether SEMAS is reasonable for evolution-mode applications in three
+very different domains. Short answer: **yes, with domain-specific scaffolding**.
+
+SEMAS is best understood as a generic substrate for "evolve interpretable
+artifacts under constraints". All three domains share this shape:
+
+- **Symbolic/interpretable outputs** (factor formulas,命理 rules, intelligence
+  hypotheses).
+- **Multi-step workflows** (data → analysis → verification → report).
+- **Need for auditability and regression gates** (money, culture, and security
+  are all high-stakes).
+
+### 1. 金融市场因子挖掘 (Financial Factor Mining)
+
+**Fit**: Very high.
+
+- Factor formulas are naturally symbolic → perfect for `ToolGenome` and the
+  `FunctionEvolve` plugin.
+- Backtesting metrics (Sharpe, IC, max drawdown) map cleanly to `Evaluator`.
+- `GenomeRepository` gives lineage for every factor version — critical for
+  regulatory and strategy audit.
+
+**Required scaffolding**:
+
+- A data executor that feeds OHLCV / fundamental data into the agent.
+- A backtest `Evaluator` with train/validation/test split and walk-forward
+  validation.
+- `Regression tests` on a stable set of historical periods to avoid overfitting.
+- `Sandbox` whitelist limited to `numpy`, `pandas`, `scipy`.
+
+**Key risk**: overfitting. The framework will happily evolve a factor that
+works on the past and fails on the future. Mitigation: holdout periods,
+transaction-cost-aware metrics, and a hard rule that live trading requires
+human approval.
+
+[source: examples/mingli_5agents/benchmark.py pattern; FunctionEvolve plugin]
+
+### 2. 命理分析 (Mingli / Destiny Analysis)
+
+**Fit**: High (already prototyped).
+
+- The project already has `examples/mingli_5agents/` showing multi-agent
+  evolution with citation and safety metrics.
+- 命理 has many interpretable rules and schools → good for `ToolGenome` and
+  `TopologyGenome`.
+- Output often needs citation to classical texts → `Evaluator` can enforce
+  citation precision.
+
+**Required scaffolding**:
+
+- A knowledge base / classical-text retriever as a tool.
+- `Metric floors` for safety and citation (already demonstrated in
+  `mingli_5agents/evolution.py`).
+- Human-in-the-loop for final interpretation, because命理 outputs are
+  culturally sensitive and subjective.
+
+**Key risk**: hallucination dressed up as tradition. Mitigation: every claim
+must cite a source; safety metric = 1.0 is a hard gate.
+
+[source: examples/mingli_5agents/evolution.py, examples/mingli_5agents/benchmark.py]
+
+### 3. 开源情报进化分析 (OSINT Evolutionary Analysis)
+
+**Fit**: High.
+
+- OSINT workflows are naturally multi-agent: collector → analyst → verifier →
+  reporter.
+- Sources and APIs change constantly → evolution is not optional, it's required.
+- `ToolGenome` can represent scrapers, API wrappers, enrichment functions.
+- `Memory` can track source reliability over time.
+
+**Required scaffolding**:
+
+- Network-aware `Sandbox` (allow `requests`, `httpx`, but not local file writes).
+- `Evaluator` metrics: source diversity, factual accuracy, timeliness,
+  redundancy.
+- A verifier agent that cross-checks claims against multiple sources.
+- Compliance policy gate: never scrape protected/illegal targets.
+
+**Key risk**: adversarial misinformation and legal/ethical boundary crossing.
+Mitigation: strict `SelfModificationPolicy`, human approval for new data
+sources, and a "deny list" of domains/sources enforced at the sandbox level.
+
+### Recommended plugin mix per domain
+
+| Domain | Primary plugin | Secondary plugin | Avoid |
+|---|---|---|---|
+| Financial factors | `FunctionEvolve` | `SIA` for weight-based market intuition | `Gödel Agent` |
+| Mingli | Core SEMAS + population evolution | `SIA` for stylistic preference learning | `Gödel Agent` |
+| OSINT | Core SEMAS + topology evolution | `FunctionEvolve` for query/rule optimization | `Gödel Agent` |
+
+### Bottom line
+
+SEMAS is **reasonable** for all three, but it is not a turnkey solution. The
+heavy lifting is in defining the domain executor, metrics, data splits, and
+safety constraints. The framework's value is that it gives you a reproducible,
+versioned, regression-gated evolution loop for those domain artifacts.
+
+---
+
 ## 2026-06-23 — SEMAS Self-Upgrade: Using Downstream Tasks to Evolve the Framework
 
 Reflexive idea: **SEMAS can use itself to evolve itself**. Instead of only
