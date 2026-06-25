@@ -24,7 +24,7 @@ from china_a_share_alpha.factor.expression import (
     expr_to_dict,
 )
 
-VARIABLES = ["open", "high", "low", "close", "volume", "vwap"]
+VARIABLES = ["open", "high", "low", "close", "volume", "vwap", "return"]
 ROLLING_OPS = ["ts_mean", "ts_std", "ts_sum", "ts_min", "ts_max", "ts_delta"]
 UNARY_OPS = ["abs", "log", "sign", "neg", "cs_rank", "cs_zscore"]
 BINARY_OPS = ["add", "sub", "mul", "div"]
@@ -41,6 +41,36 @@ def _random_constant() -> Const:
 
 def _random_terminal() -> FactorExpr:
     return random.choice([_random_variable, _random_constant])()
+
+
+def _random_expression(max_depth: int = 3) -> FactorExpr:
+    """Grow a random expression tree from the operator grammar."""
+    if max_depth <= 0:
+        return _random_terminal()
+
+    node_type = random.choice(["terminal", "unary", "binary", "rolling", "rolling_binary"])
+    if node_type == "terminal":
+        return _random_terminal()
+    if node_type == "unary":
+        return UnaryOp(op=random.choice(UNARY_OPS), child=_random_expression(max_depth - 1))
+    if node_type == "binary":
+        return BinaryOp(
+            op=random.choice(BINARY_OPS),
+            left=_random_expression(max_depth - 1),
+            right=_random_expression(max_depth - 1),
+        )
+    if node_type == "rolling":
+        return RollingOp(
+            op=random.choice(ROLLING_OPS),
+            child=_random_expression(max_depth - 1),
+            window=random.choice(WINDOWS),
+        )
+    return RollingBinaryOp(
+        op="ts_corr",
+        left=_random_expression(max_depth - 1),
+        right=_random_expression(max_depth - 1),
+        window=random.choice(WINDOWS),
+    )
 
 
 def _collect_nodes(node: FactorExpr) -> list[FactorExpr]:
@@ -85,9 +115,15 @@ def _replace_random_node(root: FactorExpr, new_node: FactorExpr) -> FactorExpr:
 class FactorMutator(Mutator):
     """SEMAS Mutator that evolves a factor expression stored in agent.meta."""
 
-    def __init__(self, seed: int | None = None):
+    def __init__(self, seed: int | None = None, mode: str = "seed"):
+        """Args:
+            seed: Random seed for reproducibility.
+            mode: 'seed' uses a deterministic known-good first mutation;
+                  'gp' uses random grammar-based expression generation.
+        """
         if seed is not None:
             random.seed(seed)
+        self.mode = mode
 
     @staticmethod
     def _get_expr(agent: AgentGenome) -> FactorExpr:
@@ -107,16 +143,11 @@ class FactorMutator(Mutator):
         return agent.evolve_from(meta=meta)
 
     def mutate_prompt(self, agent: AgentGenome, failure_logs: list[str]) -> AgentGenome:
-        """Apply one structural mutation to the stored factor.
-
-        For demo/CI determinism, the first mutation always transforms a raw
-        variable into a known-good ranked-rolling expression. Later mutations
-        are random GP-style changes.
-        """
+        """Apply one structural mutation to the stored factor."""
         meta = copy.deepcopy(dict(agent.meta))
         stage = meta.get("factor_expression", {}).get("stage", 0)
 
-        if stage == 0:
+        if self.mode == "seed" and stage == 0:
             # Known-good seed expression for the synthetic mean-reversion panel.
             # The synthetic forward return is negatively correlated with the
             # past 5-day return, so we negate the ranked rolling mean.
@@ -124,10 +155,13 @@ class FactorMutator(Mutator):
                 "neg",
                 UnaryOp("cs_rank", RollingOp("ts_mean", Var("return"), 5)),
             )
+        elif self.mode == "gp":
+            # Random grammar-based expression; SEMAS selection retains the best.
+            expr = _random_expression(max_depth=4)
         else:
             expr = self._get_expr(agent).copy()
             mutation = random.choice(
-                ["wrap_unary", "insert_binary", "change_window", "replace_op"]
+                ["wrap_unary", "insert_binary", "change_window", "replace_op", "replace_subtree"]
             )
             if mutation == "wrap_unary":
                 op = random.choice(UNARY_OPS)
@@ -153,6 +187,8 @@ class FactorMutator(Mutator):
                         node.op = random.choice(UNARY_OPS)
                     elif isinstance(node, BinaryOp):
                         node.op = random.choice(BINARY_OPS)
+            elif mutation == "replace_subtree":
+                expr = _replace_random_node(expr, _random_expression(max_depth=2))
 
         evolved = self._set_expr(agent, expr)
         evolved_meta = copy.deepcopy(dict(evolved.meta))

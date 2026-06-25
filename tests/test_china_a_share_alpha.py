@@ -82,7 +82,7 @@ def test_factor_mutator_changes_expression():
 
 
 def test_executor_runs_agent():
-    df = make_synthetic_panel(n_symbols=20, n_days=50, seed=5)
+    train, test = make_synthetic_panel(n_symbols=20, n_days=50, seed=5, split_date="2020-04-01")
     agent = AgentGenome(
         name="factor_miner",
         role="factor_miner",
@@ -94,16 +94,24 @@ def test_executor_runs_agent():
             }
         },
     )
-    executor = create_factor_executor(df)
+    executor = create_factor_executor(train, test, {})
     out = executor(agent, {})
     assert "factor" in out
     assert "forward_return" in out
+    assert "factor_test" in out
 
 
 def test_run_factor_mining():
+    import shutil
     from pathlib import Path
 
     config_path = Path(__file__).parent.parent / "china_a_share_alpha" / "examples" / "sample_config.yaml"
-    result = run(config_path, max_rounds=2)
+    out_dir = Path("./test_alpha_output")
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+    result = run(config_path, max_rounds=2, output_dir=out_dir)
     assert "final_score" in result
-    assert "ic" in result
+    assert "train_ic" in result
+    assert "test_ic" in result
+    assert (out_dir / "factor_report_").parent == out_dir
+    shutil.rmtree(out_dir, ignore_errors=True)

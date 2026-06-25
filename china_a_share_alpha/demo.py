@@ -22,10 +22,13 @@ def main() -> int:
     print("\n=== Result ===")
     print(f"Passed: {result['passed']}")
     print(f"Final score: {result['final_score']:.4f}")
-    print(f"IC: {result['ic']:.4f}")
-    print(f"RankIC: {result['rank_ic']:.4f}")
+    print(f"Train IC: {result['train_ic']:.4f}")
+    print(f"Train RankIC: {result['train_rank_ic']:.4f}")
+    print(f"Test IC: {result['test_ic']:.4f}")
+    print(f"Test RankIC: {result['test_rank_ic']:.4f}")
     print(f"Expression: {result['expression']}")
-    print(f"Backtest: {result['backtest']}")
+    print(f"Train backtest: {result['train_backtest']}")
+    print(f"Test backtest: {result['test_backtest']}")
 
     if result["passed"]:
         print("\n[OK] Factor evolved to meet quality threshold.")

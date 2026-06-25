@@ -3,6 +3,7 @@ data_source: synthetic
 n_symbols: 80
 n_days: 252
 seed: 42
+split_date: "2020-07-01"
 
 # Starting expression: raw close price has no predictive power on our synthetic
 # mean-reverting returns.
@@ -10,6 +11,19 @@ initial_expression:
   type: var
   name: close
 
-# Evolution target.
+# Evolution target and mutator mode.
+# mode: seed  -> deterministic known-good first mutation (demo/CI)
+# mode: gp    -> random grammar-based expression generation (open search)
 threshold: 0.25
+mutator: seed
+
+# Neutralization flags. Synthetic data includes random sector/market_cap.
+neutralize_sector: false
+neutralize_market_cap: false
+
+# Backtest assumptions.
 forward_period: 1
+transaction_cost: 0.001
+
+# Where to write the factor report (optional).
+output_dir: ./china_a_share_alpha_output

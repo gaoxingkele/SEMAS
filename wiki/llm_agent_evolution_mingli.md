@@ -482,6 +482,68 @@ relationship emphasis.
 
 Source: user feedback in this conversation, 2026-06-25: "千万记得不要用任何的重复性的套话，千万不要去套模板，你把这个规则记住，这是全局规则。"
 
+## v32: Monthly Analysis Must Bind Wuxing To Yongshen
+
+Monthly predictions are not complete when they only list branch interactions.
+For exam-focused or study-focused reports, each flowing month must explain:
+
+1. Which five elements appear in the monthly stem and branch.
+2. What those elements mean for the specific chart and age-stage task.
+3. Whether the month directly activates the useful/exam-use chain or only helps indirectly.
+4. How the element movement changes the practical advice.
+
+For the male child Gaokao report, the local exam-use mapping is:
+
+1. Metal: output, answer presentation, expression, and problem-solving hand feel.
+2. Wood: rules, targets, teacher requirements, and exam constraint.
+3. Fire: resource star, comprehension, memory, teachers, and parent support.
+4. Water: time/resource allocation, real pressure, and external pull.
+5. Earth: self-bearing, stable execution, repetition, and persistence.
+
+The renderer must avoid saying only "this month is good for study." It should
+say what element moved, what exam-use function it touches, what it helps, what
+it harms, and what action follows. This makes the monthly line falsifiable and
+portable instead of decorative.
+
+Source: user feedback in this conversation, 2026-06-25: flowing-month five
+elements must be explained against the useful-god relationship.
+
+## v33: Annual Context Must Precede Monthly Tables
+
+For exam-timeline reports, monthly analysis should not stand alone. The reader
+needs the annual container first because a month is judged inside an annual
+flow, a major-luck stage, and the native four-pillar structure.
+
+The report order becomes:
+
+1. Basic birth and exam assumptions.
+2. Annual analysis, including the annual pillar, approximate Gregorian Li Chun
+   start/end dates, annual ten-god and five-element flow, and annual branch
+   relationship to the native four pillars.
+3. Special exam month relation, especially the exam month branch against the
+   native chart and annual branch.
+4. Monthly comparison table.
+
+The monthly table should carry separate columns for:
+
+1. Month.
+2. Flowing month.
+3. Benefit.
+4. Risk.
+5. Ten-god preference/avoidance.
+6. Five-element flow.
+7. Interaction situation, including combination, generation, control,
+   punishment, harm, clash, or repetition.
+8. Action.
+
+This makes the report easier to audit: annual assumptions are visible before
+month-level claims, and repeated prose is replaced by comparable independent
+fields.
+
+Source: user feedback in this conversation, 2026-06-25: monthly analysis should
+use a comparison table and be preceded by annual analysis with Gregorian
+start/end dates and June exam-month relationship to the native four pillars.
+
 ## Current Strategy
 
 1. Treat every domain calculation as a provider capability, not an LLM opinion.
@@ -520,6 +582,8 @@ Source: user feedback in this conversation, 2026-06-25: "千万记得不要用�
 34. Reject long-form reports whose monthly bodies repeat after only the date prefix changes.
 35. Treat anti-template generation as a global report invariant, not a local style preference.
 36. Recalibrate gender as factual input before rerendering child major-luck and relationship language.
+37. Bind monthly wuxing movement to the chart's useful-god or exam-use chain before writing monthly advice.
+38. Put annual context before monthly exam tables, including Gregorian annual boundaries and four-pillar relations.
 
 ## Migration Recipe
 
@@ -561,6 +625,8 @@ To transplant this framework into another vertical:
 34. Add a uniqueness/hygiene check for generated reports: no mojibake, no stray English, no code blocks, and no repeated monthly bodies after date-prefix removal.
 35. For every timeline renderer, add a uniqueness check after stripping only date or period prefixes.
 36. When a user corrects a factual input such as gender, regenerate from source data rather than patching prose by hand.
+37. For monthly reports, add a domain-specific element-to-function map and include it in each period signature.
+38. For exam timelines, render monthly periods as comparison tables after an annual-context section.
 
 ## Open Method Questions
 

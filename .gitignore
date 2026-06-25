@@ -19,3 +19,7 @@ __pycache__/
 examples/mingli_5agents/reports/
 *.report.pdf
 *.report.md
+china_a_share_alpha_output/
+test_alpha_output/
+*.factor_report_*.json
+*.factor_report_*.md

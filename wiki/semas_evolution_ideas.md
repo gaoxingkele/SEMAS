@@ -41,21 +41,43 @@ to interoperate with **Qlib** data/operators and **TA-Lib** indicators.
 
 ### Package components
 
-- `data/` — Qlib loader, synthetic A-share panel, TA-Lib wrappers, Alpha101
-  baseline formulas.
+- `data/` — Qlib loader with train/test split, synthetic A-share panel with
+  sector/market-cap, TA-Lib wrappers, Alpha101 baseline formulas.
 - `factor/` — Expression tree with Qlib-style operators (`ts_*`, `cs_*`),
   serializable to/from dict.
-- `evaluator/` — IC, RankIC, ICIR, turnover, long-short backtest metrics.
-- `backtest/` — Simple quantile long-short backtest.
-- `evolution/` — `FactorMutator` (tree crossover / point mutation) that works
-  as a SEMAS `Mutator`.
+- `evaluator/` — IC, RankIC, ICIR, turnover, sector/market-cap neutralization.
+- `backtest/` — Quantile long-short backtest with transaction costs.
+- `evolution/` — `FactorMutator` with deterministic `seed` mode and random
+  grammar-based `gp` mode.
+- `report/` — JSON/Markdown factor report generator.
 - `run_factor_mining.py` / `demo.py` — end-to-end evolution runner.
 
 ### Demo result
 
 Starting from raw `close`, one SEMAS evolution round produces
-`neg(cs_rank(ts_mean(return, 5)))` with IC ≈ 0.23 on the synthetic
-mean-reversion panel.
+`neg(cs_rank(ts_mean(return, 5)))` with train IC ≈ 0.23 and test IC ≈ 0.23.
+
+---
+
+## 2026-06-24 — China A-Share Alpha Evolver Deepening
+
+We deepened the `china_a_share_alpha/` package with production-oriented
+features:
+
+- **Train / test split** in `data/qlib_loader.py` and `data/synthetic.py`;
+  the executor evaluates the same factor on both sets; the runner reports
+  in-sample and out-of-sample IC.
+- **Sector / market-cap neutralization** stubs in `evaluator/neutralizer.py`
+  and wired into `executor.py` via config flags.
+- **Transaction costs** in `backtest/long_short_backtest.py` using turnover *
+  2 * one-way cost, yielding cost-adjusted returns.
+- **Open GP search** in `evolution/factor_mutator.py`: `mode: gp` generates
+  random expression trees from a grammar instead of the deterministic seed
+  expression.
+- **Factor report generator** in `report/generator.py` writes JSON and
+  Markdown reports with expression, IC, backtest stats, and config.
+
+[source: OPERATION_LOG.md 2026-06-24 — China A-Share Alpha Evolver Deepening]
 
 ---
 

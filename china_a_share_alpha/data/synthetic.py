@@ -6,16 +6,26 @@ import numpy as np
 import pandas as pd
 
 
+SECTOR_NAMES = [
+    "银行", "非银金融", "房地产", "医药生物", "电子", "计算机",
+    "食品饮料", "电力设备", "汽车", "机械", "化工", "有色",
+]
+
+
 def make_synthetic_panel(
     n_symbols: int = 50,
     n_days: int = 252,
     seed: int = 42,
-) -> pd.DataFrame:
+    split_date: str | None = None,
+) -> pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame]:
     """Generate a synthetic OHLCV panel with a weak mean-reversion signal.
 
     The forward return is partially predictable from the 5-day rolling mean
     of the previous day's return, so an evolved `cs_rank(ts_mean(return, 5))`
     should obtain a positive IC.
+
+    Adds synthetic `sector` and `market_cap` columns so neutralization can be
+    demonstrated without real sector mapping data.
     """
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2020-01-01", periods=n_days, freq="B")
@@ -37,6 +47,9 @@ def make_synthetic_panel(
         volume = rng.integers(1_000_000, 10_000_000, size=n_days)
         vwap = (high + low + close) / 3.0 + rng.normal(0, 0.01, size=n_days)
 
+        sector = rng.choice(SECTOR_NAMES)
+        market_cap = rng.lognormal(20, 1.0)
+
         rows.append(
             pd.DataFrame(
                 {
@@ -47,6 +60,8 @@ def make_synthetic_panel(
                     "volume": volume,
                     "vwap": vwap,
                     "return": ret,
+                    "sector": sector,
+                    "market_cap": market_cap,
                 },
                 index=pd.MultiIndex.from_product([[sym], dates], names=["symbol", "date"]),
             )
@@ -54,4 +69,11 @@ def make_synthetic_panel(
 
     df = pd.concat(rows).sort_index()
     df["forward_return"] = df.groupby(level="symbol")["return"].shift(-1)
-    return df.dropna()
+    df = df.dropna()
+
+    if split_date is None:
+        return df
+
+    train = df.loc[pd.IndexSlice[:, :split_date], :]
+    test = df.loc[pd.IndexSlice[:, split_date:], :]
+    return train, test

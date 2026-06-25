@@ -5,6 +5,100 @@
 
 ---
 
+## 2026-06-25 - Gaokao Annual First Monthly Comparison Table
+
+### Motivation
+
+User requested the Gaokao monthly analysis to be reorganized as a comparison
+table with benefit, risk, ten-god preference/avoidance, five-element flow, and
+the interaction situation among combination, generation, control, punishment,
+and harm. User also requested annual analysis before monthly analysis,
+including Gregorian annual start/end dates and the relationship between the
+June exam month, the annual flow, and the native four pillars.
+
+### Actions Taken
+
+1. Added annual Gaokao analysis lines for 2026, 2027, and 2028.
+2. Added approximate Gregorian Li Chun year boundaries:
+   - 2026-02-04 to 2027-02-03.
+   - 2027-02-04 to 2028-02-03.
+   - 2028-02-04 to 2029-02-03.
+3. Added annual-flow versus native four-pillar relationship summaries.
+4. Added a dedicated June 2028 exam-month relationship line:
+   annual flow versus native four pillars, June month branch versus native
+   chart and annual branch, and final five-element/use-god reading.
+5. Replaced the long monthly bullet list with a Markdown comparison table:
+   month, flowing month, benefit, risk, ten-god preference/avoidance,
+   five-element flow, interaction situation, and action.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\reports\generate_linfan_family_reports.py` -
+  **passed**.
+- `python examples\mingli_5agents\reports\generate_linfan_family_reports.py` -
+  **passed**.
+- Gaokao report hygiene check:
+  **no English letters, no question marks, no code fences**.
+- Annual structure check:
+  **3 annual analysis lines**.
+- Monthly table check:
+  **24 unique monthly table rows**.
+- Content check:
+  annual section exists, table header includes ten-god preference/avoidance and
+  five-element flow, and June 2028 relation to the native four pillars is
+  present.
+
+---
+
+## 2026-06-25 - Gaokao Monthly Wuxing Yongshen Mapping
+
+### Motivation
+
+User feedback clarified that monthly exam analysis must not stop at branch
+relations and generic learning advice. Each flowing month must explain its
+five-element movement and how that movement maps to the useful-god or exam-use
+chain.
+
+### Actions Taken
+
+1. Added a dedicated Gaokao twenty-four-month report generator.
+2. Added monthly five-element/use-god explanation:
+   - Metal as output, answer presentation, expression, and problem-solving hand feel.
+   - Wood as rules, targets, teacher requirements, and exam constraint.
+   - Fire as resource star, comprehension, memory, teachers, and parent support.
+   - Water as time/resource allocation, real pressure, and external pull.
+   - Earth as self-bearing, stable execution, repetition, and persistence.
+3. Added per-month independent lines with:
+   - monthly ten-god pair,
+   - flowing month five-element/use-god mapping,
+   - branch interaction,
+   - study score,
+   - exam-execution score,
+   - pressure label,
+   - benefit,
+   - risk,
+   - action.
+4. Generated:
+   - `linfan_child_male_2028_gaokao_24months_wuxing_yongshen_zh.report.md`
+   - `linfan_child_male_2028_gaokao_24months_wuxing_yongshen_zh.report.pdf`
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\reports\generate_linfan_family_reports.py` -
+  **passed**.
+- `python examples\mingli_5agents\reports\generate_linfan_family_reports.py` -
+  **passed**.
+- Gaokao report hygiene check:
+  **no English letters, no question marks, no code fences**.
+- Monthly structure check:
+  **24 monthly rows from 2026-07 through 2028-06**.
+- Anti-template check:
+  **24 unique monthly bodies after removing the date prefix**.
+- Content check:
+  every month includes flowing-month five-element and use-god mapping.
+
+---
+
 ## 2026-06-25 - Male Child Macro Annual Report To Age Thirty
 
 ### Motivation
@@ -376,6 +470,56 @@ libraries (WorldQuant 101, AlphaGen, AlphaAgent, AlphaPROBE).
 - Replace the deterministic seed mutator with a GP or LLM-driven mutator for
   open-ended search.
 - Add industry/market-cap neutralization once sector mappings are available.
+
+---
+
+## 2026-06-24 — China A-Share Alpha Evolver Deepening
+
+### Motivation
+
+User asked to continue deepening the A-share factor mining scaffold.
+
+### Actions Taken
+
+1. **Train / test split**: `data/qlib_loader.py` and `data/synthetic.py` now
+   return `(train, test)`; `executor.py` evaluates the same expression on both
+   panels; `run_factor_mining.py` reports in-sample and out-of-sample IC.
+2. **Sector / market-cap neutralization**: rewrote `evaluator/neutralizer.py`
+   with `apply_neutralization()` and wired it into `executor.py` via config
+   flags. Synthetic data now includes random `sector` and `market_cap`.
+3. **Transaction costs**: enhanced `backtest/long_short_backtest.py` to
+   compute turnover and subtract `2 * one-way_cost * turnover` from returns,
+   yielding cost-adjusted returns.
+4. **Open GP search**: added `mode: gp` to `FactorMutator`; it grows random
+   expression trees from a grammar (`ts_*`, `cs_*`, arithmetic). The default
+   deterministic `seed` mode remains for demo/CI.
+5. **Factor report generator**: added `report/generator.py` that writes JSON
+   and Markdown reports with expression, IC, backtest stats, and full config.
+6. Updated `china_a_share_alpha/examples/sample_config.yaml` and README with
+   the new options.
+7. Updated `tests/test_china_a_share_alpha.py` to cover executor train/test
+   output and report generation.
+
+### Verification
+
+- `python -m pytest tests/ -q` — **30 passed**.
+- `python -m china_a_share_alpha.demo` — train IC 0.227, test IC 0.225,
+  expression `neg(cs_rank(ts_mean(return, 5)))`, report written.
+
+### Files Added/Modified
+
+- `china_a_share_alpha/data/synthetic.py`
+- `china_a_share_alpha/data/qlib_loader.py`
+- `china_a_share_alpha/evaluator/neutralizer.py`
+- `china_a_share_alpha/executor.py`
+- `china_a_share_alpha/backtest/long_short_backtest.py`
+- `china_a_share_alpha/evolution/factor_mutator.py`
+- `china_a_share_alpha/report/{__init__.py,generator.py}`
+- `china_a_share_alpha/run_factor_mining.py`
+- `china_a_share_alpha/demo.py`
+- `china_a_share_alpha/examples/sample_config.yaml`
+- `china_a_share_alpha/README.md`
+- `tests/test_china_a_share_alpha.py`
 
 ---
 

@@ -1,8 +1,8 @@
 """Industry / market-cap neutralization utilities.
 
-These are stubs. In production, supply sector mappings (e.g. from Qlib or
-Tushare) and market-cap data, then regress the factor against dummies + log(mktcap)
-and return residuals.
+In production, supply sector mappings (e.g. from Qlib, Tushare, or Wind) and
+market-cap data, then regress the factor against dummies + log(mktcap) and
+return residuals.
 """
 
 from __future__ import annotations
@@ -14,9 +14,10 @@ import pandas as pd
 def neutralize_by_sector(factor: pd.Series, sector: pd.Series) -> pd.Series:
     """Cross-sectionally demean within each sector per date."""
     df = pd.DataFrame({"factor": factor, "sector": sector})
-    return df.groupby(["sector", pd.Grouper(level="date")])["factor"].transform(
-        lambda s: s - s.mean()
-    )
+    return df.groupby(level="date").apply(
+        lambda g: g["factor"] - g.groupby("sector")["factor"].transform("mean"),
+        include_groups=False,
+    ).reset_index(level=0, drop=True).reindex(factor.index)
 
 
 def neutralize_by_market_cap(factor: pd.Series, market_cap: pd.Series) -> pd.Series:
@@ -26,4 +27,18 @@ def neutralize_by_market_cap(factor: pd.Series, market_cap: pd.Series) -> pd.Ser
         lambda g: g["factor"] - g["log_cap"] * (g["factor"].cov(g["log_cap"]) / g["log_cap"].var()),
         include_groups=False,
     )
-    return residuals.reset_index(level=0, drop=True).reindex(factor.index, fill_value=0.0)
+    return residuals.reset_index(level=0, drop=True).reindex(factor.index)
+
+
+def apply_neutralization(
+    factor: pd.Series,
+    data: pd.DataFrame,
+    neutralize_sector: bool = False,
+    neutralize_market_cap: bool = False,
+) -> pd.Series:
+    """Apply neutralization based on available columns."""
+    if neutralize_sector and "sector" in data.columns:
+        factor = neutralize_by_sector(factor, data["sector"])
+    if neutralize_market_cap and "market_cap" in data.columns:
+        factor = neutralize_by_market_cap(factor, data["market_cap"])
+    return factor
