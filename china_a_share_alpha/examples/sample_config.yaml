@@ -1,0 +1,15 @@
+# Synthetic demo config — no real market data or Qlib required.
+data_source: synthetic
+n_symbols: 80
+n_days: 252
+seed: 42
+
+# Starting expression: raw close price has no predictive power on our synthetic
+# mean-reverting returns.
+initial_expression:
+  type: var
+  name: close
+
+# Evolution target.
+threshold: 0.25
+forward_period: 1

@@ -5,6 +5,60 @@
 
 ---
 
+## 2026-06-24 — China A-Share Alpha Evolver Package
+
+We created `china_a_share_alpha/` as a standalone subpackage: an evolvable
+alpha-factor mining scaffold for China A-shares, built on SEMAS and designed
+to interoperate with **Qlib** data/operators and **TA-Lib** indicators.
+
+[source: china_a_share_alpha/README.md]
+
+### What the literature / open-source landscape says
+
+- **WorldQuant 101 Formulaic Alphas** (Kakushadze 2016) is the canonical
+  starting library for formulaic alpha construction.
+  [source: https://arxiv.org/abs/1601.00991]
+- **AlphaGen** (Yu et al., KDD 2023) uses reinforcement learning to generate
+  synergistic formulaic alpha collections, treating expression generation as an
+  MDP over Reverse Polish Notation tokens.
+  [source: https://github.com/RL-MLDM/alphagen]
+- **AlphaAgent** (Tang et al., KDD 2025) is an LLM-driven multi-agent framework
+  (Idea / Factor / Eval agents) that mines decay-resistant alphas.
+  [source: https://github.com/RndmVariableQ/AlphaAgent]
+- **AlphaPROBE** (Guo et al., 2026) frames alpha mining as DAG navigation with
+  a Bayesian retriever and DAG-aware generator.
+  [source: https://github.com/gta0804/AlphaPROBE]
+- **QuantaAlpha** combines LLM + evolutionary strategies for self-evolving
+  factor mining on Qlib CSI300 data.
+  [source: https://github.com/QuantaAlpha/QuantaAlpha]
+- **Qlib** itself provides the data format, ExpressionOps (`ts_*`, `cs_*`,
+  `Ref`, `Rank`, `Corr`, etc.), processors, and backtest infrastructure for
+  A-share ML quant research.
+  [source: https://qlib.readthedocs.io/]
+- **TA-Lib** is the standard technical-indicator library with 150+ indicators
+  (RSI, MACD, Bollinger Bands, etc.).
+  [source: https://ta-lib.org/]
+
+### Package components
+
+- `data/` — Qlib loader, synthetic A-share panel, TA-Lib wrappers, Alpha101
+  baseline formulas.
+- `factor/` — Expression tree with Qlib-style operators (`ts_*`, `cs_*`),
+  serializable to/from dict.
+- `evaluator/` — IC, RankIC, ICIR, turnover, long-short backtest metrics.
+- `backtest/` — Simple quantile long-short backtest.
+- `evolution/` — `FactorMutator` (tree crossover / point mutation) that works
+  as a SEMAS `Mutator`.
+- `run_factor_mining.py` / `demo.py` — end-to-end evolution runner.
+
+### Demo result
+
+Starting from raw `close`, one SEMAS evolution round produces
+`neg(cs_rank(ts_mean(return, 5)))` with IC ≈ 0.23 on the synthetic
+mean-reversion panel.
+
+---
+
 ## 2026-06-23 — AI Video Evolver Package
 
 We created `ai_video_evolver/` as a standalone subpackage: an evolvable

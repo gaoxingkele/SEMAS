@@ -388,6 +388,100 @@ fixed phrases. Related source: user-provided `bazi-hierarchical-analysis`
 methodology note, especially Layer 3 annual event analysis and Layer 5 fact
 calibration.
 
+## v29: One Specialist Can Contain School Sub-Agents
+
+The original five-agent topology was horizontal: BaZi, Zi Wei, Qi Men,
+astrology, and a coordinator. User feedback clarified that BaZi itself contains
+multiple schools that should not be collapsed into one voice. The BaZi agent
+therefore gains an internal debate layer made of paper sub-agents:
+
+1. Zi Ping pattern agent.
+2. Strength/support agent.
+3. Tiaohou climate-balancing agent.
+4. Body-use circulation agent.
+5. Blind-school image-symbol agent.
+6. Shensha/Na Yin auxiliary agent.
+
+Each sub-agent emits a claim, challenge, evidence fields, confidence, and vote
+stance. The BaZi profile then stores a `school_debate` receipt containing
+votes, conflicts, consensus, and a stable hash. The final BaZi judgment should
+use high-confidence school consensus as the main line, preserve conflicts
+explicitly, and ask for factual calibration when schools disagree.
+
+This mirrors the outer SEMAS pattern at a smaller scale: specialist -> school
+sub-agents -> debate -> vote -> conflict preservation -> synthesis. The same
+pattern can later be applied to Zi Wei schools and Qi Men schools once
+production providers expose their calculation-basis metadata.
+
+Source: user feedback in this conversation, 2026-06-24: BaZi should branch into
+school-specific paper agents that debate and vote, especially where judgments
+conflict. Related framework idea: ReAct-style decomposition and Reflexion-style
+calibration memory, already cited in this wiki.
+
+## v30: Every Period Needs Its Own Computed Signature
+
+User feedback exposed a failure mode in long-form destiny reports: even when the
+underlying annual/monthly rows differ, the renderer can collapse them into
+category templates such as "authority year", "wealth month", or "study month".
+That produces readable but low-value repetition. The fix is to make prose
+generation depend on a computed period signature before any sentence is written.
+
+For each year or month, the Mingli renderer should derive:
+
+1. The current stem-branch and its ten-god pair.
+2. The five-element flow and whether the useful/protective chain is supported or challenged.
+3. The branch interactions against natal branches, current annual branch, and major-luck branch.
+4. A pressure score from clash, punishment, harm, break, combination, or repetition.
+5. Age-aware domain scores, such as study, career preparation, career, resource/wealth, relationship, and family pressure.
+6. A period-specific trigger sentence and a period-specific assertion.
+
+The renderer can still use controlled phrasing, but only after the period
+signature is computed. A sentence is valid when a reader can point back to the
+period's own stem, branch, ten-god, flow, and interaction evidence. A sentence is
+invalid when the same body could be copied to another month without changing
+the reasoning. In practical validation, monthly bodies should remain unique
+after removing only the date prefix.
+
+For minors, the signature must be routed through an age policy before wording:
+childhood years emphasize health, learning, parents, teachers, habits, and
+environment; teen and early adult years emphasize study, exams, credentials,
+skill-building, internships, and direction preparation; full adult wealth,
+career, and marriage language is delayed until the age context supports it.
+
+Source: user feedback in this conversation, 2026-06-25: each year and month
+must be independently calculated and independently evaluated; repeated filler is
+not acceptable. Related local implementation:
+`examples/mingli_5agents/reports/generate_linfan_family_reports.py`.
+
+## v31: Anti-Template Is A Global Report Rule
+
+The anti-template rule is now global, not a one-off formatting preference.
+Whenever the system writes a timeline report, it must assume that repeated
+language is a reasoning failure unless the repeated phrase is a stable factual
+label such as a birth date, a pillar name, or a section heading.
+
+The practical rule is:
+
+1. A report may share structure, but not conclusions.
+2. Each year, month, or phase must carry its own evidence signature.
+3. If two periods share the same category, the renderer must still explain what
+   differs: stem, branch, active major luck, natal branch trigger, age stage,
+   score, pressure, or real-world domain.
+4. A generic phrase such as "suitable for steady progress" is not allowed as a
+   repeated conclusion.
+5. After date prefixes are removed, period bodies should remain unique unless
+   two periods are deliberately marked as the same pattern and the reason is
+   stated.
+
+For child reports, the age-stage policy is also global. Childhood and teen
+years emphasize health, study, parents, teachers, habits, and direction. Adult
+wealth, career, and marriage language only enters when the age stage supports
+it. Gender calibration must be treated as a factual update, not a stylistic
+detail, because it changes how traditional systems frame major luck and
+relationship emphasis.
+
+Source: user feedback in this conversation, 2026-06-25: "千万记得不要用任何的重复性的套话，千万不要去套模板，你把这个规则记住，这是全局规则。"
+
 ## Current Strategy
 
 1. Treat every domain calculation as a provider capability, not an LLM opinion.
@@ -420,6 +514,12 @@ calibration.
 28. Treat user fact feedback as calibration data that can revise the recognized pattern.
 29. Generate annual narratives from branch-relation evidence instead of fixed topic templates.
 30. Keep factual event calibration as a separate input that can override theoretical framing.
+31. Let a domain specialist contain school sub-agents when the tradition has competing methods.
+32. Preserve intra-domain school conflicts as structured evidence, not prose-only caveats.
+33. Require a computed period signature before generating annual or monthly prose.
+34. Reject long-form reports whose monthly bodies repeat after only the date prefix changes.
+35. Treat anti-template generation as a global report invariant, not a local style preference.
+36. Recalibrate gender as factual input before rerendering child major-luck and relationship language.
 
 ## Migration Recipe
 
@@ -455,6 +555,12 @@ To transplant this framework into another vertical:
 28. Store user-supplied domain reasoning frameworks as cited methodology notes before reusing them.
 29. Implement branch-relation derivation before prose rendering.
 30. Add a known-event calibration input and keep reports marked uncalibrated until facts are loaded.
+31. Add a school-debate layer for domains where multiple interpretive schools exist.
+32. Bind school-debate outputs with stable receipts so schema, audit, and reports can track them.
+33. For every repeated timeline report, build a period-signature function before prose templates.
+34. Add a uniqueness/hygiene check for generated reports: no mojibake, no stray English, no code blocks, and no repeated monthly bodies after date-prefix removal.
+35. For every timeline renderer, add a uniqueness check after stripping only date or period prefixes.
+36. When a user corrects a factual input such as gender, regenerate from source data rather than patching prose by hand.
 
 ## Open Method Questions
 

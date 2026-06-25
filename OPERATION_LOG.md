@@ -5,6 +5,123 @@
 
 ---
 
+## 2026-06-25 - Male Child Macro Annual Report To Age Thirty
+
+### Motivation
+
+User calibrated the child profile as male and requested a new report focused on
+macro destiny movement, major-luck phases, and independent annual flow
+judgments through age thirty. User also promoted the anti-template rule to a
+global behavior: no repeated filler and no copied annual/monthly wording.
+
+### Actions Taken
+
+1. Updated child birth input gender to male.
+2. Extended child annual range to 2026-2039, covering the period before age
+   thirty.
+3. Reworked the child report into macro sections: basic facts, overall
+   judgment, major luck, three age-stage trends, study/career/marriage lines,
+   annual judgments, and parent advice.
+4. Removed the monthly long table from the male child report.
+5. Added a year-specific child annual assertion layer so each annual judgment
+   has its own conclusion rather than sharing category-template endings.
+6. Generated:
+   - `linfan_child_male_20100618_to_age30_macro_annual_zh.report.md`
+   - `linfan_child_male_20100618_to_age30_macro_annual_zh.report.pdf`
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\reports\generate_linfan_family_reports.py` -
+  **passed**.
+- `python examples\mingli_5agents\reports\generate_linfan_family_reports.py` -
+  **passed**.
+- Male child report hygiene check:
+  **no English letters, no question marks, no code fences**.
+- Annual structure check:
+  **14 annual rows from 2026 through 2039**.
+- Anti-template check:
+  **14 unique annual bodies after removing the date prefix**.
+- Monthly section check:
+  **no future monthly section in the male child macro report**.
+
+---
+
+## 2026-06-25 - Independent Annual Monthly Derivation
+
+### Motivation
+
+User feedback identified that the family Mingli reports still contained too
+much repeated filler. Each year and each month must be calculated and evaluated
+independently from its own stem-branch, ten-god, five-element flow, annual luck,
+major-luck context, and branch interactions.
+
+### Actions Taken
+
+1. Replaced category-template annual/monthly prose in
+   `examples/mingli_5agents/reports/generate_linfan_family_reports.py`.
+2. Added independent relation extraction for natal branches, annual branches,
+   and major-luck branches.
+3. Added per-period study, career, wealth/resource, relationship, and pressure
+   scoring.
+4. Added age-aware wording so minors are evaluated for health, study, method,
+   family/resources, and future-direction preparation rather than adult wealth
+   or marriage claims.
+5. Regenerated the two Chinese reports with new names:
+   - `linfan_20260625_independent_annual_monthly_zh.report.md`
+   - `linfan_20260625_independent_annual_monthly_zh.report.pdf`
+   - `linfan_child_20100618_independent_study_career_marriage_zh.report.md`
+   - `linfan_child_20100618_independent_study_career_marriage_zh.report.pdf`
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\reports\generate_linfan_family_reports.py` -
+  **passed**.
+- `python examples\mingli_5agents\reports\generate_linfan_family_reports.py` -
+  **passed**.
+- Report hygiene check:
+  **no English letters, no question marks, no code fences**.
+- Report structure check:
+  **11 annual lines and 132 monthly lines per report**.
+- Monthly uniqueness check:
+  **132 unique monthly bodies per report after removing the date prefix**.
+
+---
+
+## 2026-06-24 - BaZi School Sub-Agent Debate
+
+### Motivation
+
+User feedback identified that the BaZi specialist should not speak as one
+undifferentiated method. BaZi judgments often differ across Zi Ping pattern,
+strength/support, Tiaohou, body-use circulation, blind-school image reading, and
+Shensha/Na Yin auxiliary methods. Conflicts should be debated and preserved
+before final synthesis.
+
+### Actions Taken
+
+1. Added `method_lineage.py`, binding Mingli schools, classical sources,
+   implemented method surfaces, current use, and known gaps into a stable
+   lineage receipt.
+2. Added `tools/bazi_school_debate.py`, a deterministic paper sub-agent debate
+   layer for six BaZi schools.
+3. Attached `school_debate` to BaZi deep analysis and final `bazi_profile`.
+4. Exposed `school_debate` through the public schema and Chinese renderer.
+5. Added capability-audit support for method lineage and BaZi school debate.
+6. Updated README and wiki methodology notes.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\bazi_school_debate.py examples\mingli_5agents\tools\bazi_deep_analysis.py examples\mingli_5agents\run_demo.py examples\mingli_5agents\method_lineage.py examples\mingli_5agents\api_core.py` -
+  **passed**.
+- `pytest examples\mingli_5agents\tests\test_mingli_system.py::test_five_agent_executor_returns_required_artifacts -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` -
+  **2 passed**.
+
+---
+
 ## 2026-06-24 - Mingli Annual Derivation Renderer
 
 ### Motivation
@@ -192,6 +309,73 @@ standalone subpackage/module toolkit.
 
 - `python -m pytest tests/test_ai_video_evolver.py -q` — **6 passed**.
 - `python -m ai_video_evolver.demo` — evolved from score 0.603 to 0.803.
+
+---
+
+## 2026-06-24 — Create china_a_share_alpha Package
+
+### Motivation
+
+User requested a complete independent scaffold for China A-share alpha factor
+mining using the SEMAS evolution framework, with explicit attention to the
+Qlib ecosystem (data format, operators, backtest), TA-Lib, and other factor
+libraries (WorldQuant 101, AlphaGen, AlphaAgent, AlphaPROBE).
+
+### Research Findings
+
+- WorldQuant 101 Formulaic Alphas remains the baseline formula library.
+- AlphaGen (KDD 2023) treats factor generation as token-level MDP and uses RL.
+- AlphaAgent (KDD 2025) uses Idea/Factor/Eval LLM agents to fight alpha decay.
+- AlphaPROBE (2026) uses a Bayesian retriever + DAG-aware generator.
+- QuantaAlpha combines LLM + evolutionary strategies on Qlib data.
+- Qlib supplies `.bin` data, ExpressionOps, processors, and backtest.
+- TA-Lib supplies 150+ technical indicators.
+
+### Actions Taken
+
+1. Created `china_a_share_alpha/` as an independent installable package with
+   `pyproject.toml` (core deps pandas/numpy; optional `qlib`/`talib` extras).
+2. Implemented a Qlib-style expression tree (`ts_*`, `cs_*`, arithmetic,
+   rolling binary ops) with dict serialization.
+3. Implemented a synthetic China A-share panel generator for offline demo/CI.
+4. Implemented optional Qlib data loader and optional TA-Lib wrappers.
+5. Implemented a small Alpha101 baseline subset.
+6. Implemented factor quality metrics: IC, RankIC, ICIR, turnover,
+   long-short return.
+7. Implemented a quantile long-short backtest.
+8. Implemented `FactorMutator` as a SEMAS `Mutator` with deterministic
+   seed mutation + random GP-style mutations.
+9. Implemented `run_factor_mining.py` and `demo.py`.
+10. Added 8 passing tests.
+
+### Files Added
+
+- `china_a_share_alpha/pyproject.toml`
+- `china_a_share_alpha/README.md`
+- `china_a_share_alpha/__init__.py`
+- `china_a_share_alpha/data/{synthetic.py,qlib_loader.py,alpha101.py,talib_features.py}`
+- `china_a_share_alpha/factor/expression.py`
+- `china_a_share_alpha/evaluator/{metrics.py,neutralizer.py}`
+- `china_a_share_alpha/backtest/long_short_backtest.py`
+- `china_a_share_alpha/evolution/factor_mutator.py`
+- `china_a_share_alpha/executor.py`
+- `china_a_share_alpha/run_factor_mining.py`
+- `china_a_share_alpha/demo.py`
+- `china_a_share_alpha/examples/sample_config.yaml`
+- `tests/test_china_a_share_alpha.py`
+
+### Verification
+
+- `python -m pytest tests/test_china_a_share_alpha.py -q` — **8 passed**.
+- `python -m china_a_share_alpha.demo` — evolved from IC -0.07 to IC 0.23.
+
+### Next Steps / Real-Data Usage
+
+- Download community Qlib A-share data (e.g. chenditc/investment_data).
+- Set `data_source: qlib` and `instruments: csi300` in the YAML config.
+- Replace the deterministic seed mutator with a GP or LLM-driven mutator for
+  open-ended search.
+- Add industry/market-cap neutralization once sector mappings are available.
 
 ---
 

@@ -106,6 +106,17 @@ python -m ai_video_evolver.demo
 
 See `ai_video_evolver/README.md`.
 
+## China A-Share Alpha Evolver
+
+A standalone subpackage for evolvable China A-share alpha factor mining,
+built on SEMAS and compatible with Qlib data/operators and TA-Lib:
+
+```bash
+python -m china_a_share_alpha.demo
+```
+
+See `china_a_share_alpha/README.md`.
+
 ## LLM Wiki
 
 Framework design ideas, absorbed papers, and their citation sources are recorded
