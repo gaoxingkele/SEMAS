@@ -1,0 +1,25 @@
+# Continuous factor mining loop demo config.
+data_source: synthetic
+n_symbols: 80
+n_days: 252
+seed: 42
+split_date: "2020-07-01"
+
+# Evolution loop parameters.
+population_size: 16
+max_generations: 8
+patience: 3
+elite_fraction: 0.25
+crossover_fraction: 0.25
+mutator: gp
+threshold: 0.05
+
+# Neutralization and backtest.
+neutralize_sector: false
+neutralize_market_cap: false
+transaction_cost: 0.001
+
+# Outputs.
+output_dir: ./china_a_share_alpha_output
+repo_dir: .semas_factor_loop_repo
+leaderboard_size: 10

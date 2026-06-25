@@ -71,7 +71,8 @@ python -m pytest tests/test_china_a_share_alpha.py -q
 - `evolution/` — `FactorMutator` supporting deterministic seed mode and
   random grammar-based (GP) mode.
 - `report/` — JSON/Markdown factor report generator.
-- `run_factor_mining.py` — High-level evolution runner.
+- `run_factor_mining.py` — High-level single-factor evolution runner.
+- `run_factor_loop.py` — Continuous population-based factor mining loop.
 - `demo.py` — Minimal runnable demo.
 
 ## Key features
@@ -85,6 +86,33 @@ python -m pytest tests/test_china_a_share_alpha.py -q
 | Open GP mutator | ✅ | `mutator: gp` for grammar-based random search |
 | Report generator | ✅ | JSON + Markdown reports |
 | Real Qlib data | ✅ | Optional loader; falls back to synthetic |
+
+## Continuous factor mining loop
+
+The loop runner seeds a population of expressions, evaluates them on
+train/test sets, breeds elites via mutation and crossover, and stops on
+convergence or `max_generations`.
+
+```bash
+python -m china_a_share_alpha.run_factor_loop china_a_share_alpha/examples/loop_config.yaml
+```
+
+Outputs:
+
+- `factor_loop_leaderboard.csv` — top factors by test IC.
+- `factor_loop_history.json` — per-generation best/mean test IC.
+- `factor_report_*.json` / `factor_report_*.md` — full report on the best factor.
+
+Key loop parameters:
+
+```yaml
+population_size: 16
+max_generations: 8
+patience: 3                  # early stop if test IC not improving
+elite_fraction: 0.25
+crossover_fraction: 0.25
+mutator: gp                  # "seed" | "gp"
+```
 
 ## Using real Qlib data
 

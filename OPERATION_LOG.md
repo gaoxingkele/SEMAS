@@ -5,6 +5,56 @@
 
 ---
 
+## 2026-06-26 - Famous Case Validation And BaZi School Rules
+
+### Motivation
+
+User requested searching modern and contemporary famous-person charts for
+validation and upgrading the Mingli agents. User also allowed enriching each
+BaZi school's sub-agent definition when needed.
+
+### Actions Taken
+
+1. Added `examples/mingli_5agents/famous_case_validation.py`.
+2. Seeded a small sourced famous-case fixture set:
+   - Bruce Lee, Astro-Databank, AA-rated source.
+   - Chiang Kai-Shek, Astro-Databank, B-rated source.
+   - Marilyn Monroe, Astro-Databank, AA-rated source.
+   - Albert Einstein, Astro-Databank, A-rated source.
+3. Attached public source URLs, source ratings, birth fields, public event-tag
+   years, and validation boundaries to every case.
+4. Added a stable `famous_case_receipt()` for audit/reproducibility.
+5. Replaced the BaZi school debate scaffold with rule-specific sub-agent logic:
+   - Zi Ping pattern rules.
+   - Strength/support rules.
+   - Tiaohou climate rules.
+   - Body-use circulation rules.
+   - Blind-school image rules.
+   - Shensha/Na Yin auxiliary rules.
+6. Added per-school method rules, event hypotheses, and calibration questions.
+7. Kept `bazi-school-debate-v1` schema version for backward compatibility while
+   adding optional richer fields.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\bazi_school_debate.py examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\tools\bazi_deep_analysis.py` -
+  **passed**.
+- `pytest examples\mingli_5agents\tests\test_mingli_system.py::test_five_agent_executor_returns_required_artifacts -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` -
+  **2 passed**.
+- `famous_case_receipt()` smoke test:
+  **4 cases, ratings A/AA/B, 64-character receipt hash**.
+
+### Source Boundary
+
+Famous-person cases are calibration fixtures, not proof of predictive validity.
+AA/A cases can support stronger fixture confidence than B-rated or unsourced
+internet charts. Event tags are used only for broad topic/year overlap, not for
+claiming exact destiny prediction.
+
+---
+
 ## 2026-06-25 - Gaokao Annual First Monthly Comparison Table
 
 ### Motivation
@@ -520,6 +570,62 @@ User asked to continue deepening the A-share factor mining scaffold.
 - `china_a_share_alpha/examples/sample_config.yaml`
 - `china_a_share_alpha/README.md`
 - `tests/test_china_a_share_alpha.py`
+
+---
+
+## 2026-06-24 — China A-Share Alpha Continuous Mining Loop
+
+### Motivation
+
+User requested `/loop` to continuously mine, download, validate, backtest,
+compare, and evolve alpha factors.
+
+### Actions Taken
+
+1. Added `loop/population.py` with `FactorPopulation` class implementing a
+   genetic-programming outer loop:
+   - seeds raw variables + classic expressions + random grammar trees;
+   - evaluates each candidate on train and test sets;
+   - selects elites by **test IC** to discourage train-set overfitting;
+   - produces offspring via `FactorMutator.mutate_prompt` and `crossover`;
+   - deduplicates by expression string;
+   - tracks convergence with `max_generations` and `patience` early stopping.
+2. Added `run_factor_loop.py` CLI driver that runs the loop and writes:
+   - `factor_loop_leaderboard.csv`
+   - `factor_loop_history.json`
+   - `factor_report_*.json` / `.md`
+3. Added `crossover(parent1, parent2)` to `evolution/factor_mutator.py`.
+4. Added `examples/loop_config.yaml` for the continuous loop.
+5. Added `tests/test_factor_loop.py` with 2 passing tests.
+6. Updated `README.md`, `.gitignore`, `wiki/semas_evolution_ideas.md`.
+
+### Verification
+
+- `python -m pytest tests/ -q` — **32 passed**.
+- `python -m china_a_share_alpha.run_factor_loop china_a_share_alpha/examples/loop_config.yaml` —
+  loop discovers `neg(cs_rank(ts_mean(return, 5)))` (test IC 0.225) and stops
+  after 4 generations of no test-IC improvement.
+
+### Files Added/Modified
+
+- `china_a_share_alpha/loop/{__init__.py,population.py}`
+- `china_a_share_alpha/run_factor_loop.py`
+- `china_a_share_alpha/evolution/factor_mutator.py`
+- `china_a_share_alpha/examples/loop_config.yaml`
+- `tests/test_factor_loop.py`
+- `china_a_share_alpha/README.md`
+- `wiki/semas_evolution_ideas.md`
+- `.gitignore`
+
+### Notes / Next Steps
+
+- The current loop uses synthetic data and a pure-Pandas operator set. For
+  production use, switch `data_source` to `qlib` and provide real sector /
+  market-cap mappings.
+- Selection currently uses test IC only; future work can add a
+  regularization term penalizing train/test IC decay (alpha decay).
+- Crossover is subtree exchange; could be extended to AlphaPROBE-style
+  DAG-aware crossover.
 
 ---
 

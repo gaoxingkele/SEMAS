@@ -544,6 +544,64 @@ Source: user feedback in this conversation, 2026-06-25: monthly analysis should
 use a comparison table and be preceded by annual analysis with Gregorian
 start/end dates and June exam-month relationship to the native four pillars.
 
+## v34: Famous Cases Are Weak Calibration Fixtures
+
+Modern and contemporary famous-person charts can help test whether the Mingli
+agent produces coherent, non-template reasoning, but they must not be treated as
+proof of predictive validity. Public celebrity charts have three recurring
+problems:
+
+1. Birth time may be wrong, rounded, or disputed.
+2. Biographical event years are selectively remembered.
+3. Famous lives overrepresent unusual careers and public crises.
+
+Therefore the system should use famous cases only as weak calibration fixtures:
+
+1. Prefer sources with explicit birth-data ratings and provenance, such as
+   Astro-Databank's Rodden-style ratings.
+2. Keep source URL, source rating, birth fields, and event tags attached to the
+   case record.
+3. Compare school-agent hypotheses against broad topic/year tags, such as
+   study, career, migration, public fame, relationship, family, or health risk.
+4. Never count a symbolic sentence as validated just because it sounds similar
+   to a biography.
+5. Keep AA/A-rated cases separate from B-rated or unsourced internet charts.
+
+The first local fixture set lives in
+`examples/mingli_5agents/famous_case_validation.py`. It contains Bruce Lee,
+Chiang Kai-Shek, Marilyn Monroe, and Albert Einstein, all recorded as sourced
+calibration fixtures with source ratings and event tags.
+
+Source: user request in this conversation, 2026-06-26: search contemporary and
+modern historical famous charts for validation and use them to upgrade the
+agents. External source family used for the first fixture set: Astro-Databank
+public pages.
+
+## v35: BaZi School Sub-Agents Need Method Rules
+
+The earlier BaZi school debate layer preserved disagreement, but it still
+behaved too much like a field-availability checker. The upgraded version gives
+each school sub-agent its own method rules:
+
+1. Zi Ping pattern agent: month command, stem exposure, pattern formation, and
+   major-luck continuation or damage.
+2. Strength/support agent: day-master state, useful element, avoid-overweight
+   element, and whether useful support is protected.
+3. Tiaohou agent: seasonal climate bias, cold/heat/dry/wet adjustment, and
+   state-level effects such as sleep, endurance, and learning absorption.
+4. Body-use circulation agent: body, use, support/protection chain, and
+   breakpoints.
+5. Blind-school image agent: pillar position, visible image, branch
+   interactions, and concrete scene hypotheses.
+6. Shensha/Na Yin agent: low-weight auxiliary markers only.
+
+Each sub-agent now emits a claim, challenge, method rules, event hypotheses,
+and calibration questions. This improves portability: future domains can copy
+the same pattern when a specialist contains competing schools or traditions.
+
+Source: user request in this conversation, 2026-06-26: enrich each BaZi school
+sub-agent's judgment logic if necessary.
+
 ## Current Strategy
 
 1. Treat every domain calculation as a provider capability, not an LLM opinion.
@@ -584,6 +642,8 @@ start/end dates and June exam-month relationship to the native four pillars.
 36. Recalibrate gender as factual input before rerendering child major-luck and relationship language.
 37. Bind monthly wuxing movement to the chart's useful-god or exam-use chain before writing monthly advice.
 38. Put annual context before monthly exam tables, including Gregorian annual boundaries and four-pillar relations.
+39. Use famous-person charts only as weak, sourced calibration fixtures with explicit source ratings.
+40. Give each school sub-agent method rules, event hypotheses, and calibration questions, not just a confidence vote.
 
 ## Migration Recipe
 
@@ -627,6 +687,8 @@ To transplant this framework into another vertical:
 36. When a user corrects a factual input such as gender, regenerate from source data rather than patching prose by hand.
 37. For monthly reports, add a domain-specific element-to-function map and include it in each period signature.
 38. For exam timelines, render monthly periods as comparison tables after an annual-context section.
+39. Build a sourced case-fixture module before using public biographies for validation.
+40. For any multi-school specialist, encode school-specific rules and calibration questions inside the sub-agent definition.
 
 ## Open Method Questions
 

@@ -81,6 +81,29 @@ features:
 
 ---
 
+## 2026-06-24 — China A-Share Alpha Continuous Mining Loop
+
+We added a population-based outer loop on top of the single-factor SEMAS
+runner:
+
+- `loop/population.py` — `FactorPopulation` manages seeding, evaluation,
+  selection by **test IC** (to avoid train-set overfitting), mutation,
+  crossover, deduplication, and convergence tracking.
+- `run_factor_loop.py` — CLI that runs generations until `max_generations`
+  or early-stop `patience`, then outputs a leaderboard, generation history,
+  and factor report.
+- `evolution/factor_mutator.py` gained a `crossover(parent1, parent2)`
+  method for subtree exchange.
+- `examples/loop_config.yaml` provides a ready-to-run loop config.
+
+Demo result on synthetic data: the loop discovers
+`neg(cs_rank(ts_mean(return, 5)))` in generation 0 and stops after 4
+generations of no test-IC improvement, returning a leaderboard and report.
+
+[source: china_a_share_alpha/run_factor_loop.py]
+
+---
+
 ## 2026-06-23 — AI Video Evolver Package
 
 We created `ai_video_evolver/` as a standalone subpackage: an evolvable

@@ -204,6 +204,35 @@ class FactorMutator(Mutator):
         """No-op."""
         return agent
 
+    def crossover(self, parent1: FactorExpr, parent2: FactorExpr) -> FactorExpr:
+        """Return a child by swapping a random subtree between parents."""
+        child = parent1.copy()
+        nodes = _collect_nodes(child)
+        if len(nodes) <= 1:
+            return parent2.copy()
+        target = random.choice(nodes[:-1])
+        donor = random.choice(_collect_nodes(parent2.copy()))
+
+        def _walk(node: FactorExpr) -> FactorExpr:
+            if node is target:
+                return donor.copy()
+            if isinstance(node, UnaryOp):
+                return UnaryOp(op=node.op, child=_walk(node.child))
+            if isinstance(node, RollingOp):
+                return RollingOp(op=node.op, child=_walk(node.child), window=node.window)
+            if isinstance(node, BinaryOp):
+                return BinaryOp(op=node.op, left=_walk(node.left), right=_walk(node.right))
+            if isinstance(node, RollingBinaryOp):
+                return RollingBinaryOp(
+                    op=node.op,
+                    left=_walk(node.left),
+                    right=_walk(node.right),
+                    window=node.window,
+                )
+            return node
+
+        return _walk(child)
+
     def mutate_topology(self, agent: AgentGenome, failure_logs: list[str]) -> AgentGenome:
         """No-op."""
         return agent
