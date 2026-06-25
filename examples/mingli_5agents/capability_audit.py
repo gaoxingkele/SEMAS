@@ -16,6 +16,7 @@ from semas.utils.llm_client import llm_backend_status
 from examples.mingli_5agents.classical_corpus_refresh import source_list_audit
 from examples.mingli_5agents.classical_text_index import classical_index_audit
 from examples.mingli_5agents.empirical_validation import empirical_validation_cases, outcome_dataset_audit
+from examples.mingli_5agents.famous_case_validation import famous_case_receipt
 from examples.mingli_5agents.knowledge_base import SOURCE_REGISTRY
 from examples.mingli_5agents.memory import MingliFeedbackMemory
 from examples.mingli_5agents.method_lineage import method_lineage_receipt
@@ -1838,6 +1839,7 @@ def _capability_audit_receipt_material(response: dict[str, Any]) -> dict[str, An
     reference_charts = response["reference_chart_checks"]
     method_surface = response["method_surface"]
     method_lineage = response["method_lineage"]
+    famous_cases = response["famous_case_validation"]
     classical_index = response["classical_text_index"]
     classical_source_refresh = response["classical_source_refresh"]
     source_audits = classical_source_refresh.get("source_audits", [])
@@ -1905,6 +1907,15 @@ def _capability_audit_receipt_material(response: dict[str, Any]) -> dict[str, An
             "record_count": method_lineage.get("record_count"),
             "traditions": method_lineage.get("traditions", []),
             "implemented_statuses": method_lineage.get("implemented_statuses", []),
+        },
+        "famous_case_validation": {
+            "schema_version": famous_cases.get("schema_version"),
+            "sha256": famous_cases.get("sha256"),
+            "case_count": famous_cases.get("case_count"),
+            "domains": famous_cases.get("domains", []),
+            "ratings": famous_cases.get("ratings", []),
+            "sources": famous_cases.get("sources", []),
+            "material": famous_cases.get("material", {}),
         },
         "classical_text_index": {
             "status": classical_index.get("status"),
@@ -2073,6 +2084,7 @@ def capability_audit(
     reference_charts = run_reference_chart_checks()
     method_surface = method_surface_receipt()
     method_lineage = method_lineage_receipt()
+    famous_cases = famous_case_receipt()
     classical_index = classical_index_audit()
     resolved_classical_source_list_path = _default_classical_source_list_path(classical_source_list_path)
     classical_source_refresh = source_list_audit(resolved_classical_source_list_path)
@@ -2202,6 +2214,9 @@ def capability_audit(
         "annual_timeline_topic_evidence_binding": True,
         "bazi_core_profile_schema_contract": True,
         "bazi_school_debate": True,
+        "famous_case_validation_receipt": isinstance(famous_cases.get("sha256"), str)
+        and len(famous_cases.get("sha256", "")) == 64
+        and int(famous_cases.get("case_count", 0)) >= 12,
         "method_lineage_receipt": isinstance(method_lineage.get("sha256"), str)
         and len(method_lineage.get("sha256", "")) == 64,
         "monthly_luck_receipt": True,
@@ -2335,6 +2350,7 @@ def capability_audit(
         "reference_chart_checks": reference_charts,
         "method_surface": method_surface,
         "method_lineage": method_lineage,
+        "famous_case_validation": famous_cases,
         "request_scoped_provider_contract": {
             "status": "ready"
             if capabilities["request_scoped_full_external_provider_injection"]

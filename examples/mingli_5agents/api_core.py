@@ -9421,6 +9421,7 @@ def schema_document() -> dict[str, Any]:
                     "provider_production_guidance",
                     "github_comparison_receipt_sha256",
                     "plan_compliance_receipt_sha256",
+                    "famous_case_validation",
                 ],
                 "properties": {
                     "schema_version": {"type": "string", "const": "capability-audit-receipt-v1"},
@@ -9440,6 +9441,7 @@ def schema_document() -> dict[str, Any]:
                         "type": ["string", "null"],
                         "pattern": "^[0-9a-f]{64}$",
                     },
+                    "famous_case_validation": {"$ref": "#/schemas/FamousCaseValidationReceiptSummary"},
                 },
             },
             "BlockedCapabilityCoverageEntry": {
@@ -9829,6 +9831,19 @@ def schema_document() -> dict[str, Any]:
                     "material": {"type": "object"},
                 },
             },
+            "FamousCaseValidationReceiptSummary": {
+                "type": "object",
+                "required": ["schema_version", "sha256", "case_count", "domains", "sources", "ratings", "material"],
+                "properties": {
+                    "schema_version": {"type": "string", "const": "mingli-famous-case-validation-v2"},
+                    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                    "case_count": {"type": "integer"},
+                    "domains": {"type": "array", "items": {"type": "string"}},
+                    "sources": {"type": "array", "items": {"type": "string"}},
+                    "ratings": {"type": "array", "items": {"type": "string"}},
+                    "material": {"type": "object"},
+                },
+            },
             "KnownGapItem": {
                 "type": "object",
                 "required": [
@@ -9993,6 +10008,7 @@ def schema_document() -> dict[str, Any]:
                     "provider_protocol_governance",
                     "method_surface",
                     "method_lineage",
+                    "famous_case_validation",
                     "audit_receipt",
                     "expected_audit_receipt_sha256",
                     "audit_receipt_matches_expected",
@@ -10027,6 +10043,7 @@ def schema_document() -> dict[str, Any]:
                     "provider_protocol_governance": {"$ref": "#/schemas/ProviderProtocolGovernanceSummary"},
                     "method_surface": {"$ref": "#/schemas/MethodSurfaceReceiptSummary"},
                     "method_lineage": {"$ref": "#/schemas/MethodLineageReceiptSummary"},
+                    "famous_case_validation": {"$ref": "#/schemas/FamousCaseValidationReceiptSummary"},
                     "audit_receipt": {"$ref": "#/schemas/CapabilityAuditReceipt"},
                     "expected_audit_receipt_sha256": {
                         "type": ["string", "null"],

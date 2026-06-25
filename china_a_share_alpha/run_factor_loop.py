@@ -20,6 +20,7 @@ from semas.genome.repository import GenomeRepository
 from china_a_share_alpha.data.qlib_loader import load_data
 from china_a_share_alpha.evaluator.metrics import combined_factor_score
 from china_a_share_alpha.evolution.factor_mutator import FactorMutator
+from china_a_share_alpha.evolution.llm_mutator import LLMFactorMutator
 from china_a_share_alpha.loop.population import FactorPopulation
 from china_a_share_alpha.report.generator import generate_report
 
@@ -40,7 +41,11 @@ def run(config_path: Path) -> dict[str, Any]:
     evaluator = Evaluator(threshold=cfg.get("threshold", 0.1))
     evaluator.register_metric("combined_factor_score", combined_factor_score)
 
-    mutator = FactorMutator(seed=cfg.get("seed"), mode=cfg.get("mutator", "gp"))
+    mutator_type = cfg.get("mutator", "gp")
+    if mutator_type == "llm":
+        mutator = LLMFactorMutator(seed=cfg.get("seed"))
+    else:
+        mutator = FactorMutator(seed=cfg.get("seed"), mode=mutator_type)
 
     pop = FactorPopulation(
         repo=repo,

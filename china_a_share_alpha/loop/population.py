@@ -225,6 +225,14 @@ class FactorPopulation:
             }
         )
 
+        from china_a_share_alpha.loop.decay_monitor import decay_summary
+
+        decay = decay_summary(self.history)
+        if decay.get("decaying"):
+            print(
+                f"  [decay warning] test IC slope 3-gen = {decay['ic_decay_slope_3gen']:.4f}"
+            )
+
         self.population = self.select_and_breed(evaluated)
         self._generation += 1
         return evaluated

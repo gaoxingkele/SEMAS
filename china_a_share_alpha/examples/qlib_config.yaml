@@ -1,0 +1,32 @@
+# Example config for real Qlib China A-share data.
+# First download data with:
+#   python -m china_a_share_alpha.scripts.download_qlib_cn_data
+#
+data_source: qlib
+data_dir: ~/.qlib/qlib_data/cn_data
+instruments: csi300
+start_time: "2018-01-01"
+end_time: "2023-12-31"
+split_date: "2021-01-04"
+
+# Optional real sector / market-cap CSV.
+# Generate a template with:
+#   python -m china_a_share_alpha.scripts.generate_sector_template --instrument csi300 --output sectors.csv
+# sector_csv: sectors.csv
+neutralize_sector: false
+neutralize_market_cap: false
+
+population_size: 20
+max_generations: 15
+patience: 4
+elite_fraction: 0.2
+crossover_fraction: 0.3
+mutator: gp
+threshold: 0.02
+
+forward_period: 5
+transaction_cost: 0.001
+
+output_dir: ./china_a_share_alpha_output
+repo_dir: .semas_factor_loop_repo
+leaderboard_size: 20

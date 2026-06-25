@@ -1,0 +1,6 @@
+"expression"
+"cs_rank(ts_mean(return,5))"
+"neg(cs_rank(ts_mean(return,10)))"
+"ts_corr(close,volume,20)"
+"cs_rank(ts_std(return,5))"
+"div(sub(close,open),open)"

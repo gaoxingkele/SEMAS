@@ -12,6 +12,7 @@ from typing import Any
 
 import pandas as pd
 
+from china_a_share_alpha.data.sector_mapping import merge_sector_market_cap
 from china_a_share_alpha.data.synthetic import make_synthetic_panel
 
 
@@ -81,6 +82,8 @@ def _load_qlib_data(config: dict[str, Any]) -> tuple[pd.DataFrame, pd.DataFrame]
     df = df.rename(columns={"instrument": "symbol"})
     df["date"] = pd.to_datetime(df["date"])
     df = df.set_index(["symbol", "date"]).sort_index().dropna()
+
+    df = merge_sector_market_cap(df, config)
 
     train = df.loc[pd.IndexSlice[:, :split_date], :]
     test = df.loc[pd.IndexSlice[:, split_date:], :]

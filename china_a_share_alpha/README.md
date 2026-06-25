@@ -54,25 +54,41 @@ Run a full evolution experiment with report generation:
 python -m china_a_share_alpha.run_factor_mining china_a_share_alpha/examples/sample_config.yaml
 ```
 
+Run the continuous factor mining loop:
+
+```bash
+python -m china_a_share_alpha.run_factor_loop china_a_share_alpha/examples/loop_config.yaml
+```
+
+Evolve a multi-factor portfolio from a factor library:
+
+```bash
+python -m china_a_share_alpha.run_portfolio_evolution china_a_share_alpha/examples/portfolio_config.yaml
+```
+
 Run tests:
 
 ```bash
-python -m pytest tests/test_china_a_share_alpha.py -q
+python -m pytest tests/ -q
 ```
 
 ## Architecture
 
-- `data/` — Qlib loader with train/test split, TA-Lib wrappers, Alpha101
-  baseline formulas, synthetic A-share panel with sector/market-cap.
-- `factor/` — Factor expression tree and operator library (Qlib-style
-  `ts_*`, `cs_*`, arithmetic).
-- `evaluator/` — IC, RankIC, ICIR, turnover, neutralization.
+- `data/` — Qlib loader with train/test split, synthetic A-share panel with
+  sector/market-cap, TA-Lib wrappers, Alpha101 baseline formulas.
+- `factor/` — Factor expression tree, operator library (`ts_*`, `cs_*`), and
+  a DSL parser.
+- `evaluator/` — IC, RankIC, ICIR, turnover, sector/market-cap neutralization.
 - `backtest/` — Quantile long-short backtest with transaction costs.
-- `evolution/` — `FactorMutator` supporting deterministic seed mode and
-  random grammar-based (GP) mode.
+- `evolution/` — `FactorMutator` (seed/GP/crossover) and `LLMFactorMutator`
+  for LLM-driven expression generation.
+- `loop/` — `FactorPopulation` continuous mining loop, `PortfolioPopulation`
+  multi-factor weight evolution, and alpha decay monitoring.
 - `report/` — JSON/Markdown factor report generator.
+- `scripts/` — Qlib data downloader and sector-template generator.
 - `run_factor_mining.py` — High-level single-factor evolution runner.
 - `run_factor_loop.py` — Continuous population-based factor mining loop.
+- `run_portfolio_evolution.py` — Multi-factor portfolio weight evolution.
 - `demo.py` — Minimal runnable demo.
 
 ## Key features
@@ -84,8 +100,11 @@ python -m pytest tests/test_china_a_share_alpha.py -q
 | Transaction costs | ✅ | Long-short backtest with turnover-based cost |
 | Deterministic seed mutator | ✅ | Fast demo/CI |
 | Open GP mutator | ✅ | `mutator: gp` for grammar-based random search |
+| LLM-driven mutator | ✅ | `mutator: llm` via SEMAS LLM client |
 | Report generator | ✅ | JSON + Markdown reports |
-| Real Qlib data | ✅ | Optional loader; falls back to synthetic |
+| Real Qlib data | ✅ | Optional loader + downloader script |
+| Multi-factor portfolio evolution | ✅ | `run_portfolio_evolution.py` |
+| Alpha decay monitoring | ✅ | Tracks IC slope and warns on decay |
 
 ## Continuous factor mining loop
 
@@ -114,10 +133,63 @@ crossover_fraction: 0.25
 mutator: gp                  # "seed" | "gp"
 ```
 
+## Multi-factor portfolio evolution
+
+After running the factor loop, use the top expressions as a library and evolve
+weighted portfolios:
+
+```bash
+python -m china_a_share_alpha.run_factor_loop china_a_share_alpha/examples/loop_config.yaml
+python -m china_a_share_alpha.run_portfolio_evolution china_a_share_alpha/examples/portfolio_config.yaml
+```
+
+The portfolio runner treats each portfolio as a weighted, z-scored combination
+of factors and maximizes out-of-sample Sharpe ratio.
+
+## LLM-driven factor mutation
+
+Set `mutator: llm` in any factor config to let a language model propose new
+expressions. The prompt uses the same DSL (`ts_*`, `cs_*`, arithmetic). If the
+LLM response is not parseable, the mutator falls back to random GP mutation.
+
+Supported LLM backends are configured via SEMAS environment variables:
+`SEMAS_LLM_API_KEY`, `SEMAS_LLM_MODEL`, `SEMAS_LLM_BASE_URL` (or OpenAI / Kimi /
+DeepSeek equivalents). Without an API key, the SEMAS stub client is used and
+falls back to GP.
+
+## Alpha decay monitoring
+
+The loop tracks per-generation best test IC and computes a rolling slope. When
+the slope turns negative, it prints a decay warning so you can trigger
+re-evolution or retire the factor.
+
+## Downloading real Qlib data
+
+A helper script downloads and extracts the community Qlib A-share dataset:
+
+```bash
+python -m china_a_share_alpha.scripts.download_qlib_cn_data --target ~/.qlib/qlib_data/cn_data
+```
+
+> The tarball is large; use `--dry-run` to verify the URL first.
+
+## Sector / market-cap mapping
+
+For real neutralization, provide a CSV with columns `symbol, sector, market_cap`
+and set `sector_csv: path/to/sectors.csv` in the config. Generate a template
+from a Qlib instrument list:
+
+```bash
+python -m china_a_share_alpha.scripts.generate_sector_template --instrument csi300 --output sectors.csv
+```
+
+If no CSV is provided, a deterministic synthetic mapping is used for demo
+purposes.
+
 ## Using real Qlib data
 
-1. Download community Qlib A-share data, e.g.
-   [chenditc/investment_data](https://github.com/chenditc/investment_data).
+1. Download community Qlib A-share data with the script above (or manually from
+   [chenditc/investment_data](https://github.com/chenditc/investment_data)).
 2. Point `data_dir` in your config to the `cn_data` folder.
 3. Set `data_source: qlib` in the config.
 

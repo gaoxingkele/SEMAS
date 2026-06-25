@@ -862,7 +862,17 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert "bazi" in result["method_lineage"]["traditions"]
     assert result["capabilities"]["method_lineage_receipt"] is True
     assert result["capabilities"]["bazi_school_debate"] is True
+    assert result["capabilities"]["famous_case_validation_receipt"] is True
+    assert result["famous_case_validation"]["schema_version"] == "mingli-famous-case-validation-v2"
+    assert len(result["famous_case_validation"]["sha256"]) == 64
+    assert result["famous_case_validation"]["case_count"] >= 12
+    assert {"体育", "影视", "歌手"}.issubset(set(result["famous_case_validation"]["domains"]))
+    assert {"甲甲", "甲", "乙"}.issubset(set(result["famous_case_validation"]["ratings"]))
     assert result["audit_receipt"]["material"]["method_lineage"]["sha256"] == result["method_lineage"]["sha256"]
+    assert (
+        result["audit_receipt"]["material"]["famous_case_validation"]["sha256"]
+        == result["famous_case_validation"]["sha256"]
+    )
     assert "data_split_record_coverage" in result["audit_receipt"]["material"]["outcome_dataset"]
     assert result["audit_receipt"]["material"]["provider_protocol_governance"]["protocol_hash"] == result[
         "provider_protocol_governance"

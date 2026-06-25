@@ -5,6 +5,46 @@
 
 ---
 
+## 2026-06-26 - Sports Film Music Famous Case Expansion
+
+### Motivation
+
+User asked whether sports, film, and music celebrities can be found and used for
+validation. These domains provide clearer public event tags: championship
+peaks, award years, fame breakout years, career transitions, injuries, public
+controversies, and relationship events.
+
+### Actions Taken
+
+1. Rewrote `examples/mingli_5agents/famous_case_validation.py` as clean UTF-8
+   Chinese data.
+2. Expanded the famous-case fixture set from 4 to 12 cases.
+3. Added domain labels and event tags for:
+   - Sports: Arthur Ashe, Mark Spitz, Roger Federer.
+   - Film/television: Bruce Lee, Marilyn Monroe, Lucille Ball, Sean Penn.
+   - Music: Aretha Franklin, Michael Jackson, Madonna.
+   - Existing non-entertainment comparison cases: Chiang Kai-Shek and Albert Einstein.
+4. Upgraded the receipt schema to `mingli-famous-case-validation-v2`.
+5. Expanded school-topic hints to cover sports peak, transition, public
+   controversy, and business power style tags.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py` -
+  **passed**.
+- `famous_case_receipt()` smoke test:
+  **12 cases, domains include sports/film/music, ratings AA/A/B, 64-character
+  receipt hash**.
+
+### Source Boundary
+
+The expanded cases continue to use Astro-Databank pages as source links and
+retain source ratings. They remain weak calibration fixtures, not predictive
+proof. Unsourced celebrity charts and unverified birth times should remain out
+of the main validation fixture set.
+
+---
+
 ## 2026-06-26 - Famous Case Validation And BaZi School Rules
 
 ### Motivation
@@ -624,8 +664,74 @@ compare, and evolve alpha factors.
   market-cap mappings.
 - Selection currently uses test IC only; future work can add a
   regularization term penalizing train/test IC decay (alpha decay).
-- Crossover is subtree exchange; could be extended to AlphaPROBE-style
+ - Crossover is subtree exchange; could be extended to AlphaPROBE-style
   DAG-aware crossover.
+
+---
+
+## 2026-06-24 — China A-Share Alpha: All Target Directions Completed
+
+### Motivation
+
+User asked to complete all the previously listed deepening directions for the
+A-share factor mining scaffold.
+
+### Actions Taken
+
+1. **Real Qlib data download**
+   - Added `scripts/download_qlib_cn_data.py` to download and extract the
+     community `qlib_bin.tar.gz` from `chenditc/investment_data`.
+   - Added `examples/qlib_config.yaml` demonstrating real-data usage.
+
+2. **Real sector / market-cap mapping**
+   - Added `data/sector_mapping.py` supporting a user CSV (`symbol, sector,
+     market_cap`) with synthetic fallback.
+   - Added `scripts/generate_sector_template.py` to create a CSV template from
+     a Qlib instrument list.
+   - Wired neutralization into `data/qlib_loader.py` and `executor.py`.
+
+3. **Alpha decay monitoring**
+   - Added `loop/decay_monitor.py` computing rolling test-IC slopes.
+   - `FactorPopulation.run_generation()` prints a decay warning when the slope
+     is negative.
+
+4. **Multi-factor portfolio evolution**
+   - Added `loop/portfolio.py` with `PortfolioPopulation` storing portfolios
+     inside SEMAS `AgentGenome` as expression lists + weights.
+   - Added `run_portfolio_evolution.py` and `examples/portfolio_config.yaml`.
+   - Added `examples/sample_factor_library.csv` for quick testing.
+
+5. **LLM-driven factor mutation + DSL parser**
+   - Added `factor/parser.py` to parse expressions such as
+     `neg(cs_rank(ts_mean(return, 5)))`.
+   - Added `evolution/llm_mutator.py` prompting an LLM and falling back to GP
+     on parse failure.
+   - Integrated with SEMAS `LLMClient` (OpenAI / Kimi / DeepSeek via env).
+
+### Verification
+
+- `python -m pytest tests/ -q` — **39 passed**.
+- `python -m china_a_share_alpha.run_factor_loop china_a_share_alpha/examples/loop_config.yaml` —
+  discovers `neg(cs_rank(ts_mean(return, 5)))` and stops on convergence.
+- `python -m china_a_share_alpha.run_portfolio_evolution china_a_share_alpha/examples/portfolio_config.yaml` —
+  evolves a weighted portfolio from the sample factor library.
+
+### Files Added/Modified
+
+- `china_a_share_alpha/scripts/{download_qlib_cn_data.py,generate_sector_template.py}`
+- `china_a_share_alpha/data/sector_mapping.py`
+- `china_a_share_alpha/data/qlib_loader.py`
+- `china_a_share_alpha/loop/decay_monitor.py`
+- `china_a_share_alpha/loop/portfolio.py`
+- `china_a_share_alpha/run_portfolio_evolution.py`
+- `china_a_share_alpha/factor/parser.py`
+- `china_a_share_alpha/evolution/llm_mutator.py`
+- `china_a_share_alpha/run_factor_loop.py`
+- `china_a_share_alpha/examples/{qlib_config.yaml,portfolio_config.yaml,sample_factor_library.csv}`
+- `china_a_share_alpha/README.md`
+- `tests/test_china_a_share_alpha_advanced.py`
+- `wiki/semas_evolution_ideas.md`
+- `.gitignore`
 
 ---
 

@@ -5,6 +5,62 @@
 
 ---
 
+## 2026-06-24 — China A-Share Alpha: Completing All Target Directions
+
+We implemented the five post-loop deepening directions in one coherent push.
+
+[source: china_a_share_alpha/README.md]
+
+### 1. Real Qlib data download
+
+Added `scripts/download_qlib_cn_data.py` which downloads the community
+`qlib_bin.tar.gz` from `chenditc/investment_data` and extracts it to
+`~/.qlib/qlib_data/cn_data`.
+
+[source: https://github.com/chenditc/investment_data]
+
+### 2. Real sector / market-cap mapping
+
+- Added `data/sector_mapping.py` to load a user-provided CSV (`symbol, sector,
+  market_cap`) or fall back to deterministic synthetic mappings.
+- Added `scripts/generate_sector_template.py` to create a CSV template from a
+  Qlib instrument list.
+- Wired neutralization into `data/qlib_loader.py` and `executor.py`.
+
+### 3. Alpha decay monitoring
+
+- Added `loop/decay_monitor.py` to compute rolling test-IC slopes.
+- `FactorPopulation.run_generation()` now prints a decay warning when the 3-gen
+  slope is negative.
+
+### 4. Multi-factor portfolio evolution
+
+- Added `loop/portfolio.py` with `PortfolioPopulation`.
+- Portfolios are stored as SEMAS `AgentGenome` with a list of factor
+  expressions + weights.
+- Selection maximizes out-of-sample Sharpe; mutators adjust weights,
+  add/remove/swap factors from a factor library.
+- Added `run_portfolio_evolution.py` and `examples/portfolio_config.yaml`.
+
+### 5. LLM-driven factor mutation + DSL parser
+
+- Added `factor/parser.py` to parse expressions such as
+  `neg(cs_rank(ts_mean(return, 5)))`.
+- Added `evolution/llm_mutator.py` which prompts an LLM for a new expression
+  and falls back to GP if the response is not parseable.
+- Integrated with the SEMAS `LLMClient` abstraction (OpenAI / Kimi / DeepSeek
+  via environment variables).
+
+### Verification
+
+- `python -m pytest tests/ -q` — **39 passed**.
+- `python -m china_a_share_alpha.run_factor_loop china_a_share_alpha/examples/loop_config.yaml` —
+  discovers `neg(cs_rank(ts_mean(return, 5)))` and stops on convergence.
+- `python -m china_a_share_alpha.run_portfolio_evolution china_a_share_alpha/examples/portfolio_config.yaml` —
+  evolves a weighted portfolio from the sample factor library.
+
+---
+
 ## 2026-06-24 — China A-Share Alpha Evolver Package
 
 We created `china_a_share_alpha/` as a standalone subpackage: an evolvable

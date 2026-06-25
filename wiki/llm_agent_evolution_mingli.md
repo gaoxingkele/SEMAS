@@ -602,6 +602,34 @@ the same pattern when a specialist contains competing schools or traditions.
 Source: user request in this conversation, 2026-06-26: enrich each BaZi school
 sub-agent's judgment logic if necessary.
 
+## v36: Sports, Film, And Music Cases Improve Event Diversity
+
+Sports, film, and music celebrities are useful additions to the validation
+fixture set because their public events are often dated and domain-specific:
+
+1. Sports cases provide championship peaks, injury windows, retirement, and
+   performance cycles.
+2. Film and television cases provide breakout roles, awards, public image,
+   relationship events, and career transitions.
+3. Music cases provide album breakthroughs, tours, public fame, controversy,
+   and health-risk windows.
+
+This improves calibration coverage beyond political or intellectual biographies.
+However, the same boundary applies: celebrity charts are only weak calibration
+fixtures. The system should compare structured topic/year tags, not retrofit
+dramatic biography language into destiny claims.
+
+The local fixture set now includes twelve sourced cases:
+
+1. Sports: Arthur Ashe, Mark Spitz, Roger Federer.
+2. Film/television: Bruce Lee, Marilyn Monroe, Lucille Ball, Sean Penn.
+3. Music: Aretha Franklin, Michael Jackson, Madonna.
+4. Other comparison domains: Chiang Kai-Shek and Albert Einstein.
+
+Source: user request in this conversation, 2026-06-26: find sports, film, and
+music stars for validation. Source family used for the fixture links:
+Astro-Databank public pages with source ratings.
+
 ## Current Strategy
 
 1. Treat every domain calculation as a provider capability, not an LLM opinion.
@@ -644,6 +672,7 @@ sub-agent's judgment logic if necessary.
 38. Put annual context before monthly exam tables, including Gregorian annual boundaries and four-pillar relations.
 39. Use famous-person charts only as weak, sourced calibration fixtures with explicit source ratings.
 40. Give each school sub-agent method rules, event hypotheses, and calibration questions, not just a confidence vote.
+41. Include sports, film, and music cases to diversify event tags before drawing calibration conclusions.
 
 ## Migration Recipe
 
@@ -689,6 +718,7 @@ To transplant this framework into another vertical:
 38. For exam timelines, render monthly periods as comparison tables after an annual-context section.
 39. Build a sourced case-fixture module before using public biographies for validation.
 40. For any multi-school specialist, encode school-specific rules and calibration questions inside the sub-agent definition.
+41. Segment validation fixtures by domain so model upgrades do not overfit to political or intellectual biographies.
 
 ## Open Method Questions
 

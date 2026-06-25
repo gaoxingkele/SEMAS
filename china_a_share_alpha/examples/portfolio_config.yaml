@@ -1,0 +1,24 @@
+# Multi-factor portfolio evolution config.
+# Requires a factor library CSV produced by run_factor_loop.py.
+
+data_source: synthetic
+n_symbols: 80
+n_days: 252
+seed: 42
+split_date: "2020-07-01"
+
+factor_library_csv: ./china_a_share_alpha_output/factor_loop_leaderboard.csv
+portfolio_library_size: 20
+
+portfolio_population_size: 12
+portfolio_n_factors: 5
+portfolio_max_generations: 10
+portfolio_patience: 3
+portfolio_elite_fraction: 0.25
+
+threshold: 0.05
+transaction_cost: 0.001
+
+output_dir: ./china_a_share_alpha_output
+repo_dir: .semas_portfolio_repo
+portfolio_leaderboard_size: 5

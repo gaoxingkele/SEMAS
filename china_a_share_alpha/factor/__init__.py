@@ -13,6 +13,7 @@ from china_a_share_alpha.factor.expression import (
     expr_from_dict,
     expr_to_dict,
 )
+from china_a_share_alpha.factor.parser import parse_expression
 
 __all__ = [
     "BinaryOp",
@@ -24,4 +25,5 @@ __all__ = [
     "Var",
     "expr_from_dict",
     "expr_to_dict",
+    "parse_expression",
 ]
