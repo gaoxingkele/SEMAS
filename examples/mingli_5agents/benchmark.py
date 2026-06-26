@@ -262,6 +262,16 @@ def run_benchmark(repo: GenomeRepository, version: int | None = None) -> Benchma
                         rendered_zh,
                         level="monthly",
                     ),
+                    "chinese_render_annual_branch_interaction_anchor_ratio": _topic_branch_interaction_anchor_ratio(
+                        final_report.get("topic_synthesis", {}),
+                        rendered_zh,
+                        level="annual",
+                    ),
+                    "chinese_render_monthly_branch_interaction_anchor_ratio": _topic_branch_interaction_anchor_ratio(
+                        final_report.get("topic_synthesis", {}),
+                        rendered_zh,
+                        level="monthly",
+                    ),
                     "chinese_render_ascii_letter_count": sum(
                         1 for char in rendered_zh if char.isascii() and char.isalpha()
                     ),
@@ -797,6 +807,48 @@ def _topic_useful_state_anchor_ratio(topic_synthesis: Any, rendered_zh: str, *, 
             required.append(_USEFUL_STATE_TO_ZH.get(useful_state, useful_state))
     if not required:
         return 0.0
+    matched = 0
+    for label in sorted(set(required)):
+        matched += min(required.count(label), rendered_zh.count(label))
+    return round(matched / len(required), 3)
+
+
+_BRANCH_INTERACTION_TO_ZH = {
+    "clash": "冲",
+    "combine": "合",
+    "punishment": "刑",
+    "harm": "害",
+    "break": "破",
+}
+
+
+def _branch_zh(value: Any) -> str:
+    return _BRANCH_PINYIN_TO_ZH.get(str(value), str(value or ""))
+
+
+def _topic_branch_interaction_anchor_ratio(topic_synthesis: Any, rendered_zh: str, *, level: str) -> float:
+    if not isinstance(topic_synthesis, dict) or not rendered_zh:
+        return 1.0
+    required: list[str] = []
+    for topic in topic_synthesis.values():
+        if not isinstance(topic, dict):
+            continue
+        timing = topic.get("timing_evidence", {})
+        timing_level = timing.get(level, {}) if isinstance(timing, dict) else {}
+        interactions = timing_level.get("branch_interactions") if isinstance(timing_level, dict) else []
+        if not isinstance(interactions, list):
+            continue
+        for item in interactions:
+            if not isinstance(item, dict):
+                continue
+            relation = _BRANCH_INTERACTION_TO_ZH.get(str(item.get("relation")), "")
+            current_branch = item.get("annual_branch") or item.get("monthly_branch")
+            current = _branch_zh(current_branch)
+            natal = _branch_zh(item.get("natal_branch"))
+            if relation and current and natal:
+                required.append(f"{current}{relation}{natal}")
+    if not required:
+        return 1.0
     matched = 0
     for label in sorted(set(required)):
         matched += min(required.count(label), rendered_zh.count(label))

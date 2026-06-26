@@ -793,6 +793,8 @@ def test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors(
                         "chinese_render_monthly_ten_god_anchor_ratio": 0.0,
                         "chinese_render_annual_useful_state_anchor_ratio": 0.5,
                         "chinese_render_monthly_useful_state_anchor_ratio": 0.0,
+                        "chinese_render_annual_branch_interaction_anchor_ratio": 0.5,
+                        "chinese_render_monthly_branch_interaction_anchor_ratio": 0.0,
                         "chinese_render_ascii_letter_count": 0,
                         "chinese_render_ascii_question_present": False,
                         "chinese_render_code_marker_present": False,
@@ -808,6 +810,8 @@ def test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors(
     assert "pillar_probe Chinese monthly ten-god anchor ratio=0.000" in failures
     assert "pillar_probe Chinese annual useful-state anchor ratio=0.500" in failures
     assert "pillar_probe Chinese monthly useful-state anchor ratio=0.000" in failures
+    assert "pillar_probe Chinese annual branch-interaction anchor ratio=0.500" in failures
+    assert "pillar_probe Chinese monthly branch-interaction anchor ratio=0.000" in failures
 
 
 def test_capability_audit_reports_outcome_dataset_configuration(tmp_path, monkeypatch):
@@ -2761,6 +2765,8 @@ def test_production_readiness_gates_birth_profile_import_preview(tmp_path):
             assert features["chinese_render_monthly_ten_god_anchor_ratio"] == 1.0
             assert features["chinese_render_annual_useful_state_anchor_ratio"] == 1.0
             assert features["chinese_render_monthly_useful_state_anchor_ratio"] == 1.0
+            assert features["chinese_render_annual_branch_interaction_anchor_ratio"] == 1.0
+            assert features["chinese_render_monthly_branch_interaction_anchor_ratio"] == 1.0
     assert famous_routing_gate["passed"] is True
     assert famous_routing_gate["details"] == []
     assert famous_queue_gate["passed"] is True

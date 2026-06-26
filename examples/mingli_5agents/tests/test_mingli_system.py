@@ -106,6 +106,7 @@ def test_five_agent_executor_returns_required_artifacts(tmp_path: Path):
     assert result["final_report"]["annual_luck"]["rows"][0]["year"] == 2024
     assert result["final_report"]["annual_luck"]["rows"][0]["bazi_evidence"]["annual_ten_gods"]["stem"]
     assert result["final_report"]["annual_luck"]["rows"][0]["bazi_evidence"]["active_major_luck"]
+    assert result["final_report"]["annual_luck"]["rows"][0]["bazi_evidence"]["branch_interactions"]
     assert result["final_report"]["annual_luck"]["phase_summary"][0]["source"] == "annual_luck.rows"
     assert result["final_report"]["annual_luck"]["phase_summary"][0]["source_row_indexes"] == [0, 1, 2]
     assert result["final_report"]["annual_luck"]["phase_summary"][0]["topic_highlights"]["career"][
@@ -347,6 +348,7 @@ def test_five_agent_executor_returns_required_artifacts(tmp_path: Path):
     assert "zh" in result["final_report"]["rendered_reports"]
     assert "## 主题综合" in result["final_report"]["rendered_reports"]["zh"]
     assert "交叉证据" in result["final_report"]["rendered_reports"]["zh"]
+    assert "地支关系" in result["final_report"]["rendered_reports"]["zh"]
     assert result["final_report"]["llm_synthesis"]["enabled"] is False
     assert result["final_report"]["llm_synthesis"]["generated"] is False
     assert len(result["final_report"]["llm_synthesis"]["prompt_fingerprint"]) == 16

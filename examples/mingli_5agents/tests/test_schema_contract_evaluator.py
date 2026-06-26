@@ -632,6 +632,8 @@ def test_schema_contract_score_gates_release_governance_contracts():
     assert benchmark_features["chinese_render_monthly_ten_god_anchor_ratio"]["type"] == "number"
     assert benchmark_features["chinese_render_annual_useful_state_anchor_ratio"]["type"] == "number"
     assert benchmark_features["chinese_render_monthly_useful_state_anchor_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_annual_branch_interaction_anchor_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_monthly_branch_interaction_anchor_ratio"]["type"] == "number"
     assert benchmark_features["chinese_render_ascii_letter_count"]["type"] == "integer"
     assert benchmark_features["chinese_render_ascii_question_present"]["type"] == "boolean"
     assert benchmark_features["chinese_render_code_marker_present"]["type"] == "boolean"
@@ -762,6 +764,8 @@ def test_schema_contract_score_gates_release_governance_contracts():
     assert schema["schemas"]["TopicSynthesisTimingSignal"]["properties"]["ten_gods"]["$ref"] == (
         "#/schemas/AnnualLuckTenGodPair"
     )
+    assert "branch_interactions" in schema["schemas"]["TopicSynthesisTimingSignal"]["required"]
+    assert schema["schemas"]["TopicSynthesisTimingSignal"]["properties"]["branch_interactions"]["type"] == "array"
     assert "risk_notes" in schema["schemas"]["TopicSynthesisAnnualFocus"]["required"]
     assert "month" in schema["schemas"]["TopicSynthesisMonthlyFocus"]["required"]
     assert "annual" in schema["schemas"]["TopicSynthesisTimingEvidence"]["required"]
@@ -1821,6 +1825,7 @@ def test_schema_contract_score_gates_release_governance_contracts():
         "#/schemas/AnnualLuckTenGodPair"
     )
     assert "monthly_ten_gods" in schema["schemas"]["MonthlyLuckBaziEvidence"]["required"]
+    assert "branch_interactions" in schema["schemas"]["MonthlyLuckBaziEvidence"]["required"]
     assert "topics" in schema["schemas"]["MonthlyLuckRow"]["required"]
     assert schema["schemas"]["AnalyzeResponse"]["properties"]["result"]["properties"]["final_report"]["properties"][
         "monthly_luck_receipt"
@@ -1929,6 +1934,7 @@ def test_schema_contract_score_gates_release_governance_contracts():
     assert schema["schemas"]["AnnualLuckBaziEvidence"]["properties"]["natal_pillar_matches"]["items"]["$ref"] == (
         "#/schemas/AnnualLuckNatalPillarMatch"
     )
+    assert "branch_interactions" in schema["schemas"]["AnnualLuckBaziEvidence"]["required"]
     assert "finance" in schema["schemas"]["AnnualLuckRow"]["required"]
     assert "event_markers" in schema["schemas"]["AnnualLuckRow"]["required"]
     assert "career_launch" in schema["schemas"]["AnnualEventMarkers"]["required"]

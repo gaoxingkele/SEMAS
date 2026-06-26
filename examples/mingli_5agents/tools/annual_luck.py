@@ -13,6 +13,7 @@ from typing import Any
 
 from examples.mingli_5agents.tools.calendar_core import (
     BRANCH_ELEMENTS,
+    BRANCHES,
     ELEMENTS,
     STEM_ELEMENTS,
     STEMS,
@@ -42,6 +43,54 @@ TEN_YEAR_PHASES = [
     "relationship calibration",
     "legacy consolidation",
 ]
+
+BRANCH_INTERACTION_PAIRS = {
+    "clash": {
+        ("Zi", "Wu"),
+        ("Chou", "Wei"),
+        ("Yin", "Shen"),
+        ("Mao", "You"),
+        ("Chen", "Xu"),
+        ("Si", "Hai"),
+    },
+    "combine": {
+        ("Zi", "Chou"),
+        ("Yin", "Hai"),
+        ("Mao", "Xu"),
+        ("Chen", "You"),
+        ("Si", "Shen"),
+        ("Wu", "Wei"),
+    },
+    "harm": {
+        ("Zi", "Wei"),
+        ("Chou", "Wu"),
+        ("Yin", "Si"),
+        ("Mao", "Chen"),
+        ("Shen", "Hai"),
+        ("You", "Xu"),
+    },
+    "break": {
+        ("Zi", "You"),
+        ("Chou", "Chen"),
+        ("Yin", "Hai"),
+        ("Mao", "Wu"),
+        ("Si", "Shen"),
+        ("Wei", "Xu"),
+    },
+    "punishment": {
+        ("Zi", "Mao"),
+        ("Yin", "Si"),
+        ("Si", "Shen"),
+        ("Yin", "Shen"),
+        ("Chou", "Xu"),
+        ("Xu", "Wei"),
+        ("Chou", "Wei"),
+        ("Chen", "Chen"),
+        ("Wu", "Wu"),
+        ("You", "You"),
+        ("Hai", "Hai"),
+    },
+}
 
 
 def build_annual_luck(
@@ -152,6 +201,7 @@ def _bazi_evidence(
     }
     active_luck = _active_major_luck(age, year, deep_analysis.get("major_luck"))
     natal_matches = _natal_matches(label, context.get("pillars", {}))
+    branch_interactions = _branch_interactions(branch, context.get("pillars", {}))
     useful_state = _useful_state(focus, [STEM_ELEMENTS[stem], BRANCH_ELEMENTS[branch]], useful, dominant)
     return {
         "annual_pillar": label,
@@ -159,11 +209,12 @@ def _bazi_evidence(
         "active_major_luck": active_luck,
         "useful_state": useful_state,
         "natal_pillar_matches": natal_matches,
+        "branch_interactions": branch_interactions,
         "interpretation_basis": [
             "annual stem/branch ten-god relationship to day master",
             "active major-luck period when available",
             "useful-element and dominant-element interaction",
-            "direct natal pillar match flags",
+            "direct natal pillar match and branch-interaction flags",
         ],
     }
 
@@ -206,6 +257,40 @@ def _natal_matches(label: str, pillars: object) -> list[dict[str, str]]:
                 }
             )
     return matches
+
+
+def _branch_interactions(branch: str, pillars: object) -> list[dict[str, str]]:
+    if not branch or not isinstance(pillars, dict):
+        return []
+    interactions = []
+    for pillar, natal_label in pillars.items():
+        natal_branch = _branch_from_ganzhi(str(natal_label))
+        if not natal_branch:
+            continue
+        for relation, pairs in BRANCH_INTERACTION_PAIRS.items():
+            if _branch_pair(branch, natal_branch) not in pairs:
+                continue
+            interactions.append(
+                {
+                    "pillar": str(pillar),
+                    "annual_branch": branch,
+                    "natal_branch": natal_branch,
+                    "relation": relation,
+                }
+            )
+    return interactions
+
+
+def _branch_pair(left: str, right: str) -> tuple[str, str]:
+    if left == right:
+        return left, right
+    return tuple(sorted((left, right), key=BRANCHES.index))  # type: ignore[return-value]
+
+
+def _branch_from_ganzhi(label: str) -> str:
+    stem = next((candidate for candidate in STEMS if label.startswith(candidate)), "")
+    branch = label[len(stem) :] if stem else ""
+    return branch if branch in BRANCHES else ""
 
 
 def _useful_state(focus: str, annual_elements: list[str], useful: str, dominant: str) -> str:

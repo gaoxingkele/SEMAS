@@ -3503,6 +3503,12 @@ def _benchmark_chinese_render_quality_failures(benchmark_result: dict[str, Any])
         monthly_ten_god_ratio = float(features.get("chinese_render_monthly_ten_god_anchor_ratio", 0.0) or 0.0)
         annual_useful_state_ratio = float(features.get("chinese_render_annual_useful_state_anchor_ratio", 0.0) or 0.0)
         monthly_useful_state_ratio = float(features.get("chinese_render_monthly_useful_state_anchor_ratio", 0.0) or 0.0)
+        annual_branch_interaction_ratio = float(
+            features.get("chinese_render_annual_branch_interaction_anchor_ratio", 1.0) or 0.0
+        )
+        monthly_branch_interaction_ratio = float(
+            features.get("chinese_render_monthly_branch_interaction_anchor_ratio", 1.0) or 0.0
+        )
         ascii_count = int(features.get("chinese_render_ascii_letter_count", 0) or 0)
         if duplicate_ratio > 0.02:
             failures.append(f"{case.get('name')} Chinese annual/monthly duplicate ratio={duplicate_ratio:.3f}")
@@ -3522,6 +3528,14 @@ def _benchmark_chinese_render_quality_failures(benchmark_result: dict[str, Any])
             failures.append(f"{case.get('name')} Chinese annual useful-state anchor ratio={annual_useful_state_ratio:.3f}")
         if monthly_useful_state_ratio < 1.0:
             failures.append(f"{case.get('name')} Chinese monthly useful-state anchor ratio={monthly_useful_state_ratio:.3f}")
+        if annual_branch_interaction_ratio < 1.0:
+            failures.append(
+                f"{case.get('name')} Chinese annual branch-interaction anchor ratio={annual_branch_interaction_ratio:.3f}"
+            )
+        if monthly_branch_interaction_ratio < 1.0:
+            failures.append(
+                f"{case.get('name')} Chinese monthly branch-interaction anchor ratio={monthly_branch_interaction_ratio:.3f}"
+            )
         if ascii_count != 0:
             failures.append(f"{case.get('name')} Chinese render ASCII letter count={ascii_count}")
         if features.get("chinese_render_ascii_question_present") is True:
@@ -13682,6 +13696,7 @@ def schema_document() -> dict[str, Any]:
                     "active_major_luck",
                     "useful_state",
                     "natal_pillar_matches",
+                    "branch_interactions",
                     "interpretation_basis",
                 ],
                 "properties": {
@@ -13693,6 +13708,7 @@ def schema_document() -> dict[str, Any]:
                         "type": "array",
                         "items": {"$ref": "#/schemas/AnnualLuckNatalPillarMatch"},
                     },
+                    "branch_interactions": {"type": "array", "items": {"type": "object"}},
                     "interpretation_basis": {"type": "array", "items": {"type": "string"}},
                 },
             },
@@ -13832,6 +13848,7 @@ def schema_document() -> dict[str, Any]:
                     "active_major_luck",
                     "useful_state",
                     "natal_pillar_matches",
+                    "branch_interactions",
                     "month",
                     "interpretation_basis",
                 ],
@@ -13844,6 +13861,7 @@ def schema_document() -> dict[str, Any]:
                         "type": "array",
                         "items": {"$ref": "#/schemas/AnnualLuckNatalPillarMatch"},
                     },
+                    "branch_interactions": {"type": "array", "items": {"type": "object"}},
                     "month": {"type": "integer"},
                     "interpretation_basis": {"type": "array", "items": {"type": "string"}},
                 },
@@ -14396,6 +14414,7 @@ def schema_document() -> dict[str, Any]:
                     "active_major_luck",
                     "useful_state",
                     "natal_match_count",
+                    "branch_interactions",
                 ],
                 "properties": {
                     "level": {"type": "string", "enum": ["annual", "monthly"]},
@@ -14404,6 +14423,7 @@ def schema_document() -> dict[str, Any]:
                     "active_major_luck": {"type": ["string", "null"]},
                     "useful_state": {"type": "string"},
                     "natal_match_count": {"type": "integer"},
+                    "branch_interactions": {"type": "array", "items": {"type": "object"}},
                 },
             },
             "TopicSynthesisTimingEvidence": {
@@ -15203,6 +15223,8 @@ def schema_document() -> dict[str, Any]:
                     "chinese_render_monthly_ten_god_anchor_ratio": {"type": "number"},
                     "chinese_render_annual_useful_state_anchor_ratio": {"type": "number"},
                     "chinese_render_monthly_useful_state_anchor_ratio": {"type": "number"},
+                    "chinese_render_annual_branch_interaction_anchor_ratio": {"type": "number"},
+                    "chinese_render_monthly_branch_interaction_anchor_ratio": {"type": "number"},
                     "chinese_render_ascii_letter_count": {"type": "integer"},
                     "chinese_render_ascii_question_present": {"type": "boolean"},
                     "chinese_render_code_marker_present": {"type": "boolean"},

@@ -918,6 +918,9 @@ def _clean_contextual_topic_line(label: str, message: Any, row: dict[str, Any], 
     ten_gods = evidence.get(ten_god_key) if isinstance(evidence.get(ten_god_key), dict) else {}
     active_luck = evidence.get("active_major_luck") if isinstance(evidence.get("active_major_luck"), dict) else {}
     matches = evidence.get("natal_pillar_matches") if isinstance(evidence.get("natal_pillar_matches"), list) else []
+    branch_interactions = (
+        evidence.get("branch_interactions") if isinstance(evidence.get("branch_interactions"), list) else []
+    )
     title = f"{row.get('year', '')}-{int(row.get('month', 0)):02d}" if monthly else str(row.get("year", ""))
     pillar = _ganzhi_zh(str(row.get("ganzhi", "")))
     stem_ten = _ten_god_zh(ten_gods.get("stem", ""))
@@ -927,11 +930,12 @@ def _clean_contextual_topic_line(label: str, message: Any, row: dict[str, Any], 
     match_text = "、".join(
         _pillar_name_zh(str(item.get("pillar", ""))) for item in matches if isinstance(item, dict) and item.get("pillar")
     ) or "无"
+    branch_text = _branch_interaction_text(branch_interactions)
     scope = "本月" if monthly else "本年"
     return (
         f"- {label}：判断：{_clean_message(message)}；"
         f"依据：{scope}{title}{pillar}，天干{stem_ten}、地支{branch_ten}，"
-        f"大运{luck_label}，用神{useful_state}，原局同柱{match_text}。"
+        f"大运{luck_label}，用神{useful_state}，原局同柱{match_text}，地支关系{branch_text}。"
     )
 
 
@@ -943,10 +947,14 @@ def _clean_bazi_evidence_lines(row: dict[str, Any], *, monthly: bool = False) ->
     ten_gods = evidence.get(ten_god_key) if isinstance(evidence.get(ten_god_key), dict) else {}
     active_luck = evidence.get("active_major_luck") if isinstance(evidence.get("active_major_luck"), dict) else {}
     matches = evidence.get("natal_pillar_matches") if isinstance(evidence.get("natal_pillar_matches"), list) else []
+    branch_interactions = (
+        evidence.get("branch_interactions") if isinstance(evidence.get("branch_interactions"), list) else []
+    )
     luck_label = _ganzhi_zh(active_luck.get("ganzhi", "")) if active_luck.get("ganzhi") else "未匹配"
     match_text = "、".join(
         _pillar_name_zh(str(item.get("pillar", ""))) for item in matches if isinstance(item, dict) and item.get("pillar")
     ) or "无"
+    branch_text = _branch_interaction_text(branch_interactions)
     label = "流月依据" if monthly else "八字依据"
     title = f"{row.get('year', '')}-{int(row.get('month', 0)):02d}" if monthly else str(row.get("year", ""))
     pillar = _ganzhi_zh(str(row.get("ganzhi", "")))
@@ -954,7 +962,7 @@ def _clean_bazi_evidence_lines(row: dict[str, Any], *, monthly: bool = False) ->
         (
             f"- {label}：{title}{pillar}，十神 天干={_ten_god_zh(ten_gods.get('stem', ''))}、"
             f"地支={_ten_god_zh(ten_gods.get('branch', ''))}；大运={luck_label}；"
-            f"用神状态={_useful_state_zh(evidence.get('useful_state', ''))}；原局同柱={match_text}。"
+            f"用神状态={_useful_state_zh(evidence.get('useful_state', ''))}；原局同柱={match_text}；地支关系={branch_text}。"
         )
     ]
 
@@ -1267,11 +1275,15 @@ def _bazi_evidence_lines_zh(row: dict[str, Any], *, monthly: bool = False) -> li
     ten_gods = evidence.get(ten_god_key) if isinstance(evidence.get(ten_god_key), dict) else {}
     active_luck = evidence.get("active_major_luck") if isinstance(evidence.get("active_major_luck"), dict) else {}
     matches = evidence.get("natal_pillar_matches") if isinstance(evidence.get("natal_pillar_matches"), list) else []
+    branch_interactions = (
+        evidence.get("branch_interactions") if isinstance(evidence.get("branch_interactions"), list) else []
+    )
     luck_label = _ganzhi_zh(active_luck.get("ganzhi", "")) if active_luck.get("ganzhi") else "未匹配"
     match_text = "、".join(_pillar_name_zh(str(item.get("pillar", ""))) for item in matches if isinstance(item, dict)) or "无"
+    branch_text = _branch_interaction_text(branch_interactions)
     label = "流月依据" if monthly else "八字依据"
     return [
-        f"- {label}：十神 天干={_ten_god_zh(ten_gods.get('stem', ''))}、地支={_ten_god_zh(ten_gods.get('branch', ''))}；大运={luck_label}；用神状态={_useful_state_zh(evidence.get('useful_state', ''))}；原局同柱={match_text}。"
+        f"- {label}：十神 天干={_ten_god_zh(ten_gods.get('stem', ''))}、地支={_ten_god_zh(ten_gods.get('branch', ''))}；大运={luck_label}；用神状态={_useful_state_zh(evidence.get('useful_state', ''))}；原局同柱={match_text}；地支关系={branch_text}。"
     ]
 
 
@@ -1286,6 +1298,31 @@ def _useful_state_zh(value: Any) -> str:
         "useful_element_present": "用神出现",
         "neutral_or_indirect": "中性或间接",
     }.get(str(value), str(value or ""))
+
+
+BRANCH_INTERACTION_ZH = {
+    "clash": "冲",
+    "combine": "合",
+    "punishment": "刑",
+    "harm": "害",
+    "break": "破",
+}
+
+def _branch_interaction_text(interactions: Any) -> str:
+    if not isinstance(interactions, list) or not interactions:
+        return "无"
+    rendered = []
+    for item in interactions:
+        if not isinstance(item, dict):
+            continue
+        relation = BRANCH_INTERACTION_ZH.get(str(item.get("relation")), str(item.get("relation") or ""))
+        current_branch = item.get("annual_branch") or item.get("monthly_branch")
+        current = BRANCH_ZH.get(str(current_branch), str(current_branch or ""))
+        natal = BRANCH_ZH.get(str(item.get("natal_branch")), str(item.get("natal_branch") or ""))
+        pillar = _pillar_name_zh(str(item.get("pillar", "")))
+        if relation and current and natal:
+            rendered.append(f"{current}{relation}{natal}({pillar})")
+    return "、".join(rendered) if rendered else "无"
 
 
 def _pillar_name_zh(value: str) -> str:

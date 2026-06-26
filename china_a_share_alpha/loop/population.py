@@ -176,11 +176,19 @@ class FactorPopulation:
         n_crossover = int(pop_size * crossover_frac)
         n_mutate = pop_size - n_elites - n_crossover
 
-        # Select by test IC to reduce overfitting; drop NaN/constant factors.
-        evaluated_sorted = sorted(evaluated, key=lambda c: c.test_ic, reverse=True)
-        elites = [c.agent for c in evaluated_sorted[:n_elites] if np.isfinite(c.test_ic)]
+        # Robust selection: reward test IC only when train/test signs agree,
+        # otherwise penalize the candidate to avoid unstable sign-flipping alphas.
+        def _robust_ic(c: FactorCandidate) -> float:
+            if not np.isfinite(c.train_ic) or not np.isfinite(c.test_ic):
+                return -np.inf
+            if np.sign(c.train_ic) != np.sign(c.test_ic):
+                return -1.0
+            return float(c.test_ic)
+
+        evaluated_sorted = sorted(evaluated, key=_robust_ic, reverse=True)
+        elites = [c.agent for c in evaluated_sorted[:n_elites] if _robust_ic(c) > -0.5]
         if not elites:
-            elites = [c.agent for c in evaluated_sorted if np.isfinite(c.test_ic)][:n_elites]
+            elites = [c.agent for c in evaluated_sorted if _robust_ic(c) > -0.5][:n_elites]
         if not elites:
             elites = [self._make_agent(_random_expression(max_depth=4), generation=self._generation + 1)]
 
@@ -222,11 +230,20 @@ class FactorPopulation:
     def run_generation(self) -> list[FactorCandidate]:
         """Run one full generation: evaluate, select, breed."""
         evaluated = self.evaluate_population()
-        best = max(evaluated, key=lambda c: c.test_ic)
 
-        # Convergence tracking on test IC.
-        if best.test_ic > self._best_test_ic + 1e-6:
-            self._best_test_ic = best.test_ic
+        def _robust(c: FactorCandidate) -> float:
+            if not np.isfinite(c.train_ic) or not np.isfinite(c.test_ic):
+                return -np.inf
+            if np.sign(c.train_ic) != np.sign(c.test_ic):
+                return -1.0
+            return float(c.test_ic)
+
+        best = max(evaluated, key=_robust)
+
+        # Convergence tracking on robust test IC (train/test sign must agree).
+        robust_best = _robust(best)
+        if robust_best > self._best_test_ic + 1e-6:
+            self._best_test_ic = robust_best
             self._generations_without_improvement = 0
         else:
             self._generations_without_improvement += 1
@@ -264,8 +281,15 @@ class FactorPopulation:
         return False
 
     def leaderboard(self, n: int = 10) -> pd.DataFrame:
-        """Return top-N candidates by test IC from the archive."""
-        best = sorted(self.archive, key=lambda c: c.test_ic, reverse=True)[:n]
+        """Return top-N robust candidates (train/test sign agreement)."""
+        def _robust(c: FactorCandidate) -> float:
+            if not np.isfinite(c.train_ic) or not np.isfinite(c.test_ic):
+                return -np.inf
+            if np.sign(c.train_ic) != np.sign(c.test_ic):
+                return -1.0
+            return float(c.test_ic)
+
+        best = sorted(self.archive, key=_robust, reverse=True)[:n]
         rows = []
         for c in best:
             rows.append(

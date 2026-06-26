@@ -163,6 +163,15 @@ def main() -> int:
         from china_a_share_alpha.factor.parser import parse_expression
 
         evolved_df = pd.read_csv(args.evolved_csv)
+        # Keep only candidates whose train/test IC signs agree (avoid sign-flipping alphas).
+        if "train_ic" in evolved_df.columns and "test_ic" in evolved_df.columns:
+            evolved_df = evolved_df[
+                evolved_df["train_ic"].notna()
+                & evolved_df["test_ic"].notna()
+                & (evolved_df["train_ic"] * evolved_df["test_ic"] >= 0)
+            ]
+        # Deduplicate identical expressions.
+        evolved_df = evolved_df.drop_duplicates(subset=["expression"], keep="first")
         evolved_exprs = []
         for idx, expr_str in enumerate(evolved_df["expression"].head(args.evolved_top_n)):
             try:

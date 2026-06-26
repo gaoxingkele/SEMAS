@@ -182,12 +182,17 @@ def _monthly_bazi_evidence(
     )
     evidence["monthly_pillar"] = evidence.pop("annual_pillar")
     evidence["monthly_ten_gods"] = evidence.pop("annual_ten_gods")
+    interactions = evidence.get("branch_interactions")
+    if isinstance(interactions, list):
+        for item in interactions:
+            if isinstance(item, dict) and "annual_branch" in item:
+                item["monthly_branch"] = item.pop("annual_branch")
     evidence["month"] = month
     evidence["interpretation_basis"] = [
         "monthly stem/branch ten-god relationship to day master",
         "active major-luck period when available",
         "useful-element and dominant-element interaction",
-        "direct natal pillar match flags",
+        "direct natal pillar match and branch-interaction flags",
     ]
     return evidence
 

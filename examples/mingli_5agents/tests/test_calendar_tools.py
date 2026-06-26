@@ -373,6 +373,13 @@ def test_annual_luck_builds_structured_year_rows():
     assert annual["rows"][0]["bazi_evidence"]["annual_pillar"] == annual["rows"][0]["ganzhi"]
     assert set(annual["rows"][0]["bazi_evidence"]["annual_ten_gods"]) == {"stem", "branch"}
     assert annual["rows"][0]["bazi_evidence"]["useful_state"]
+    assert {
+        (item["annual_branch"], item["natal_branch"], item["relation"], item["pillar"])
+        for item in annual["rows"][0]["bazi_evidence"]["branch_interactions"]
+    } == {
+        ("Chen", "Chen", "punishment", "month"),
+        ("Chen", "Mao", "harm", "hour"),
+    }
     assert "interpretation_basis" in annual["rows"][0]["bazi_evidence"]
     assert set(annual["rows"][0]["event_markers"]) == {
         "career_launch",
@@ -446,6 +453,15 @@ def test_monthly_luck_builds_selected_year_rows():
     assert set(monthly["rows"][0]["bazi_evidence"]["monthly_ten_gods"]) == {"stem", "branch"}
     assert monthly["rows"][0]["bazi_evidence"]["active_major_luck"]
     assert monthly["rows"][0]["bazi_evidence"]["useful_state"]
+    assert monthly["rows"][0]["bazi_evidence"]["branch_interactions"] == []
+    assert {
+        (item["monthly_branch"], item["natal_branch"], item["relation"], item["pillar"])
+        for item in monthly["rows"][1]["bazi_evidence"]["branch_interactions"]
+    } == {
+        ("Mao", "Wu", "break", "year"),
+        ("Mao", "Chen", "harm", "month"),
+        ("Mao", "Wu", "break", "day"),
+    }
     assert monthly["rows"][-1]["year"] == 2026
     assert monthly["rows"][-1]["month"] == 12
     assert {

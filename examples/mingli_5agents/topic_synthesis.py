@@ -202,6 +202,9 @@ def _compact_bazi_timing(evidence: object, level: str) -> dict[str, Any]:
     pillar_key = "monthly_pillar" if level == "monthly" else "annual_pillar"
     active_luck = evidence.get("active_major_luck") if isinstance(evidence.get("active_major_luck"), dict) else {}
     matches = evidence.get("natal_pillar_matches") if isinstance(evidence.get("natal_pillar_matches"), list) else []
+    branch_interactions = (
+        evidence.get("branch_interactions") if isinstance(evidence.get("branch_interactions"), list) else []
+    )
     return {
         "level": level,
         "pillar": evidence.get(pillar_key),
@@ -209,6 +212,7 @@ def _compact_bazi_timing(evidence: object, level: str) -> dict[str, Any]:
         "active_major_luck": active_luck.get("ganzhi"),
         "useful_state": evidence.get("useful_state"),
         "natal_match_count": len(matches),
+        "branch_interactions": branch_interactions,
     }
 
 

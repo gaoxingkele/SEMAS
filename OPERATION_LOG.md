@@ -1348,13 +1348,15 @@ stopping.
 
 | Factor | IC | RankIC | Sharpe | Source |
 |---|---|---|---|---|
-| evolved_1 | 0.0139 | 0.0503 | 0.923 | GP-discovered |
+| evolved_3 | 0.0064 | 0.0063 | 1.155 | GP-discovered (robust) |
+| evolved_7 | 0.0116 | 0.0297 | 0.307 | GP-discovered (robust) |
+| evolved_1 | 0.0110 | 0.0216 | 0.714 | GP-discovered (robust) |
 | momentum_20 | 0.0040 | -0.0138 | 0.406 | hand-designed |
 | value_pb | 0.0097 | 0.0335 | 0.108 | hand-designed |
 | ic_weighted_train | 0.0091 | 0.0376 | -0.057 | hand-designed combination |
 
-The best evolved expression was:
-`cs_rank(ts_mean(sub(cs_rank(ts_mean(cs_rank(ts_mean(log(volume), 5)), 5)), sub(ts_min(-0.714, 5), cs_zscore(0.494))), 5))`
+The best evolved expression by Sharpe was:
+`cs_rank(add(-0.309, div(ts_corr(ts_delta(vwap, 3), low, 3), ts_mean(low, 20))))`
 
 - `python -m pytest tests/ -q` — **39 passed, 2 skipped**.
 
@@ -1375,6 +1377,9 @@ The best evolved expression was:
 - The evolved factor library now has 50+ candidates; the top 10 were evaluated
   alongside the original six. The loop can be restarted with different seeds
   or an LLM mutator to keep expanding.
+- Added a **robustness guard**: candidates whose train/test IC signs disagree
+  are penalized, which prevents the loop from overfitting to a sign-flipping
+  alpha.
 - Future work: combine the top evolved factors into a portfolio evolution
   step and add sector/market-cap neutralization.
 
@@ -8857,3 +8862,150 @@ ten-god, and useful-state anchor ratios.
 
 This gate verifies rendered text carries useful-state anchors from structured
 topic evidence. It does not prove predictive truth or replace human review.
+
+## 2026-06-26 - Chinese Render Branch Interaction Anchor Gate
+
+### Motivation
+
+Chinese report quality gates now covered annual/monthly pillar, ten-god, and
+useful-state anchors. The next missing layer was branch interaction: whether a
+year or month forms clash, combination, punishment, harm, or break relations
+with natal branches. User feedback explicitly asked for independent annual and
+monthly reasoning using relations such as 合、冲、刑、害.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/tools/annual_luck.py`:
+   - Added branch interaction tables for `clash`, `combine`, `punishment`,
+     `harm`, and `break`.
+   - Added `branch_interactions` to annual BaZi evidence.
+
+2. Updated `examples/mingli_5agents/tools/monthly_luck.py`:
+   - Preserved `branch_interactions` in monthly evidence.
+   - Normalized `annual_branch` to `monthly_branch` for monthly rows.
+
+3. Updated `examples/mingli_5agents/topic_synthesis.py`:
+   - Added `branch_interactions` to compact annual/monthly timing evidence.
+
+4. Updated `examples/mingli_5agents/report_renderers.py`:
+   - Rendered branch interactions in evidence lines and contextual topic rows.
+   - Uses Chinese relation labels: 冲、合、刑、害、破.
+
+5. Updated `examples/mingli_5agents/benchmark.py`:
+   - Added `chinese_render_annual_branch_interaction_anchor_ratio`.
+   - Added `chinese_render_monthly_branch_interaction_anchor_ratio`.
+   - The ratio defaults to `1.0` only when no branch interaction exists.
+
+6. Updated `examples/mingli_5agents/api_core.py` and tests:
+   - Production Chinese render quality gate now fails when branch-interaction
+     anchors are missing.
+   - Public schema exposes branch interaction fields.
+   - Schema contract requires `branch_interactions` on annual/monthly BaZi
+     evidence and topic timing signals.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\annual_luck.py examples\mingli_5agents\tools\monthly_luck.py examples\mingli_5agents\topic_synthesis.py examples\mingli_5agents\report_renderers.py examples\mingli_5agents\benchmark.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `1 passed`.
+
+### Snapshot
+
+- All Chinese benchmark cases have annual branch-interaction anchor ratio `1.0`.
+- All Chinese benchmark cases have monthly branch-interaction anchor ratio `1.0`.
+- Sample annual evidence includes `Wu` punishment with natal `Wu` and
+  `Wu` combination with natal `Wei`.
+- Sample monthly evidence includes `Yin` harm with natal `Si` and `Yin`
+  punishment with natal `Si`.
+
+### Boundary
+
+This change adds deterministic symbolic branch-interaction evidence and render
+anchors. It does not claim empirical predictive accuracy and does not replace a
+professional calendar provider.
+
+## 2026-06-26 - Branch Interaction Structural Regression Tests
+
+### Motivation
+
+Branch interactions were added to annual/monthly evidence and Chinese render
+quality gates, but the calendar tool tests still did not assert specific
+relations. Without structural tests, a future change could keep the render
+metric green while breaking the underlying interaction calculation.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/tests/test_calendar_tools.py`:
+   - Annual luck test now asserts 2024 `JiaChen` produces:
+     - `Chen` punishment with natal `Chen` on the month pillar.
+     - `Chen` harm with natal `Mao` on the hour pillar.
+   - Monthly luck test now asserts:
+     - First selected month has no branch interactions.
+     - 2025-02 `BingMao` produces `Mao` break with natal `Wu`,
+       `Mao` harm with natal `Chen`, and another `Mao` break with natal `Wu`.
+
+2. Updated `examples/mingli_5agents/tests/test_mingli_system.py`:
+   - Full executor artifact test now asserts annual row evidence contains
+     `branch_interactions`.
+   - Chinese rendered report must contain `地支关系`.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\annual_luck.py examples\mingli_5agents\tools\monthly_luck.py examples\mingli_5agents\topic_synthesis.py examples\mingli_5agents\report_renderers.py examples\mingli_5agents\benchmark.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_calendar_tools.py examples\mingli_5agents\tests\test_mingli_system.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_calendar_tools.py::test_annual_luck_builds_structured_year_rows examples\mingli_5agents\tests\test_calendar_tools.py::test_monthly_luck_builds_selected_year_rows -q`
+  passed: `2 passed`.
+- `pytest examples\mingli_5agents\tests\test_mingli_system.py::test_five_agent_executor_returns_required_artifacts -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `1 passed`.
+
+### Boundary
+
+These tests protect deterministic branch-interaction computation and rendering.
+They do not expand the interaction model beyond the currently implemented
+冲、合、刑、害、破 tables.
+
+## 2026-06-26 - Sports Film Music Famous-Case Validation Status
+
+### Motivation
+
+User asked whether sports, film, and music celebrities can be found and used for
+validation. The framework already has a famous-case validation lane, so the
+right next step was to confirm the current fixture breadth, source quality, and
+event-year scoring boundaries before adding more names.
+
+### Actions Taken
+
+1. Checked `examples/mingli_5agents/famous_case_validation.py`.
+2. Confirmed the local fixture set contains 12 sourced famous-person cases.
+3. Confirmed the public-life domains include sports, film, and music.
+4. Confirmed the current source-quality gate separates high-confidence
+   hour-sensitive cases from caution cases.
+5. Re-ran the famous-case receipts to inspect domain coverage, event counts,
+   and annual event calibration slices.
+6. Cross-checked representative external source pages for Roger Federer,
+   Marilyn Monroe, Michael Jackson, and Aretha Franklin.
+
+### Snapshot
+
+- Current fixture count: 12 cases.
+- Current hour-pillar eligible count: 11 cases.
+- Current annual event labels: 130 event-year tags.
+- Sports fixture cases: Arthur Ashe, Mark Spitz, Roger Federer.
+- Film fixture cases: Marilyn Monroe, Lucille Ball, Sean Penn.
+- Music fixture cases: Aretha Franklin, Michael Jackson, Madonna.
+
+### Boundary
+
+Famous-person fixtures are useful for regression testing, source-routing,
+industry-event label expansion, and weak calibration. They are not statistical
+proof of predictive validity. New candidates should enter through the source
+review and event-label review path before they are allowed to adjust rules.
