@@ -11,6 +11,11 @@ from typing import Any
 from semas.genome.repository import GenomeRepository
 
 from examples.mingli_5agents.empirical_validation import run_empirical_validation
+from examples.mingli_5agents.evaluators.chinese_render_evaluator import (
+    _tail_section_duplicate_bullet_ratio,
+    _tail_section_topic_evidence_anchor_ratio,
+    _tail_section_topic_judgment_structure_ratio,
+)
 from examples.mingli_5agents.evolution import reproducibility_manifest
 from examples.mingli_5agents.reference_charts import reference_chart_cases, run_reference_chart_checks
 from examples.mingli_5agents.run_demo import (
@@ -142,6 +147,8 @@ def run_benchmark(repo: GenomeRepository, version: int | None = None) -> Benchma
         bazi_context = result.get("specialists", {}).get("bazi", {}).get("chart", {}).get("context", {})
         provider_summary = final_report.get("provider_summary", {})
         topic_confidence = topic_confidence_summary(final_report.get("topic_synthesis", {}))
+        rendered_zh = final_report.get("rendered_reports", {}).get("zh", "")
+        rendered_zh = rendered_zh if isinstance(rendered_zh, str) else ""
         case_results.append(
             {
                 "name": case["name"],
@@ -211,6 +218,27 @@ def run_benchmark(repo: GenomeRepository, version: int | None = None) -> Benchma
                     ),
                     "auspicious_calendar_count": final_report.get("auspicious_calendar", {}).get("range", {}).get("count", 0),
                     "has_chinese_render": "zh" in final_report.get("rendered_reports", {}),
+                    "chinese_render_duplicate_bullet_ratio": _tail_section_duplicate_bullet_ratio(
+                        rendered_zh,
+                        section_count=2,
+                    ),
+                    "chinese_render_topic_evidence_anchor_ratio": _tail_section_topic_evidence_anchor_ratio(
+                        rendered_zh,
+                        section_count=2,
+                    ),
+                    "chinese_render_topic_judgment_structure_ratio": (
+                        _tail_section_topic_judgment_structure_ratio(
+                            rendered_zh,
+                            section_count=2,
+                        )
+                    ),
+                    "chinese_render_ascii_letter_count": sum(
+                        1 for char in rendered_zh if char.isascii() and char.isalpha()
+                    ),
+                    "chinese_render_ascii_question_present": "?" in rendered_zh,
+                    "chinese_render_code_marker_present": any(
+                        marker in rendered_zh for marker in ("```", "python -m ", "SEMAS_")
+                    ),
                     "provider_quality": bazi_context.get("provider_quality"),
                     "provider_summary_status": provider_summary.get("status"),
                     "provider_blocker_count": len(provider_summary.get("production_blockers", []))

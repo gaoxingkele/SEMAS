@@ -5,6 +5,50 @@
 
 ---
 
+## 2026-06-26 — China A-Share Alpha: Tushare Historical Backtest Comparison
+
+We added a real-data historical backtest pipeline using Tushare Pro data over
+a 5-year window for CSI300 constituents.
+
+[source: china_a_share_alpha/scripts/run_tushare_backtest.py]
+
+### What it covers
+
+- **Single factors**: momentum_20, reversal_5, volume_price_20, low_vol_20,
+  value_pb, liquidity_20. Each has an explicit behavioral/economic
+  interpretation.
+- **Combined factors**:
+  - `multi_timeframe`: momentum + short-term reversal across horizons.
+  - `multi_style_equal`: equal-weighted blend of all six styles.
+  - `ic_weighted_train`: data-driven weights proportional to in-sample IC,
+    preserving sign so positive-IC factors are longed and negative-IC factors
+    are shorted.
+- **Metrics**: IC, RankIC, ICIR, turnover, annualized long-sector long-short
+  return, Sharpe, max drawdown, cost-adjusted return, plus train/test IC gap
+  for overfit diagnostics.
+
+### Data source
+
+Tushare Pro API token is supplied via the `TUSHARE_TOKEN` environment
+variable or `--token`. Data is cached under `china_a_share_alpha_output/`.
+
+[source: https://tushare.pro/]
+
+### Empirical result (sample run 2021-06 to 2026-06, CSI300)
+
+| Metric | Winner | Value |
+|---|---|---|
+| Best Sharpe | momentum_20 | 0.41 |
+| Best IC | value_pb | 0.0097 |
+| Highest RankIC | ic_weighted_train | 0.0376 |
+
+The report notes that simple style factors were relatively weak over this
+period; combining by IC weight improved IC but not necessarily long-short
+Sharpe, highlighting the importance of cost/turnover control and risk
+neutralization in live deployment.
+
+---
+
 ## 2026-06-24 — China A-Share Alpha: Completing All Target Directions
 
 We implemented the five post-loop deepening directions in one coherent push.

@@ -9,8 +9,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from examples.mingli_5agents.api_core import _provider_recertification_commands
+from examples.mingli_5agents.api_core import _provider_recertification_commands, schema_validation_errors
 from examples.mingli_5agents.cli import main
+from examples.mingli_5agents.industry_event_candidates import build_candidate_pool_fetch_cache_plan
 
 
 def write_json(path: Path, data: dict) -> None:
@@ -20,6 +21,15 @@ def write_json(path: Path, data: dict) -> None:
 def read_stdout_json(capsys) -> dict:
     captured = capsys.readouterr()
     return json.loads(captured.out)
+
+
+def materialize_cached_responses(batch_plan: dict, response_path: Path) -> None:
+    payload = response_path.read_bytes()
+    for plan in batch_plan.get("plans", []):
+        for entry in plan.get("cache_entries", []):
+            cache_path = Path(entry["cache_path"])
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            cache_path.write_bytes(payload)
 
 
 def source_governance_fields() -> dict[str, str]:
@@ -46,6 +56,207 @@ def test_provider_recertification_commands_are_domain_specific(tmp_path: Path):
     assert any("certify-provider qimen --command" in command and "--record" in command for command in commands)
     assert not any("certify-provider ziwei --command" in command for command in commands)
     assert commands[-1].endswith("provider-ledger")
+
+
+def test_cli_birth_profile_review_status(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+
+    assert main(["--repo", str(repo), "birth-profile-review"]) == 0
+    result = read_stdout_json(capsys)
+
+    assert result["audit"]["request_count"] == 8
+    assert result["audit"]["blocked_label_count"] == 257
+    assert result["audit"]["ready_for_import"] is False
+    assert result["production_gate"]["passed"] is False
+    assert len(result["birth_profile_review_manifest_receipt"]["sha256"]) == 64
+    assert "GET /birth-profile-review" in result["configuration_guidance"]["http_query"]
+
+
+def test_cli_birth_profile_source_review_workplan(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+
+    assert main(["--repo", str(repo), "birth-profile-source-review-workplan"]) == 0
+    result = read_stdout_json(capsys)
+
+    assert result["source_review_workplan"]["status"] == "ready_for_human_source_review"
+    assert result["source_review_workplan"]["would_fetch_live_sources"] is False
+    assert result["source_review_workplan"]["would_write_review_manifest"] is False
+    assert result["source_review_workplan"]["work_item_count"] == 8
+    assert result["source_review_workplan"]["source_review_gate"]["passed"] is False
+    assert len(result["source_review_workplan"]["source_review_workplan_receipt"]["sha256"]) == 64
+    assert "GET /birth-profile-source-review-workplan" in result["configuration_guidance"]["http_query"]
+
+
+def test_cli_birth_profile_source_lookup_plan(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    cache_dir = tmp_path / "birth_source_cache"
+
+    assert main(
+        [
+            "--repo",
+            str(repo),
+            "birth-profile-source-lookup-plan",
+            "--cache-dir",
+            str(cache_dir),
+            "--domain",
+            "film",
+        ]
+    ) == 0
+    result = read_stdout_json(capsys)
+
+    plan = result["source_lookup_plan"]
+    assert plan["status"] == "ready_for_manual_lookup"
+    assert plan["would_fetch_live_sources"] is False
+    assert plan["would_write_cache"] is False
+    assert plan["would_write_review_manifest"] is False
+    assert plan["selected_work_item_count"] == 3
+    assert plan["query_count"] == 6
+    assert plan["lookup_gate"]["passed"] is False
+    assert len(plan["source_lookup_plan_receipt"]["sha256"]) == 64
+    assert "GET /birth-profile-source-lookup-plan" in result["configuration_guidance"]["http_query"]
+
+
+def test_cli_birth_profile_source_cache_audit(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    cache_dir = tmp_path / "birth_source_cache"
+
+    assert main(
+        [
+            "--repo",
+            str(repo),
+            "birth-profile-source-cache-audit",
+            "--cache-dir",
+            str(cache_dir),
+            "--domain",
+            "music",
+        ]
+    ) == 0
+    result = read_stdout_json(capsys)
+
+    audit = result["source_cache_audit"]
+    assert audit["status"] == "waiting_for_manual_cache"
+    assert audit["would_fetch_live_sources"] is False
+    assert audit["would_write_cache"] is False
+    assert audit["would_write_review_manifest"] is False
+    assert audit["would_import_profiles"] is False
+    assert audit["expected_cache_count"] == 6
+    assert audit["missing_cache_count"] == 6
+    assert audit["cache_audit_gate"]["passed"] is False
+    assert len(audit["source_cache_audit_receipt"]["sha256"]) == 64
+    assert "GET /birth-profile-source-cache-audit" in result["configuration_guidance"]["http_query"]
+
+
+def test_cli_birth_profile_source_cache_template_preview(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    cache_dir = tmp_path / "birth_source_cache"
+
+    assert main(
+        [
+            "--repo",
+            str(repo),
+            "birth-profile-source-cache-template-preview",
+            "--cache-dir",
+            str(cache_dir),
+            "--domain",
+            "sports",
+        ]
+    ) == 0
+    result = read_stdout_json(capsys)
+
+    preview = result["source_cache_template_preview"]
+    assert preview["status"] == "ready_for_manual_cache_fill"
+    assert preview["template_count"] == 4
+    assert preview["would_write_cache"] is False
+    assert preview["template_preview_gate"]["passed"] is False
+    assert len(preview["source_cache_template_preview_receipt"]["sha256"]) == 64
+    assert "GET /birth-profile-source-cache-template-preview" in result["configuration_guidance"]["http_query"]
+
+
+def test_cli_birth_profile_reviewed_manifest_draft_preview(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    cache_dir = tmp_path / "birth_source_cache"
+
+    assert main(
+        [
+            "--repo",
+            str(repo),
+            "birth-profile-reviewed-manifest-draft-preview",
+            "--cache-dir",
+            str(cache_dir),
+            "--domain",
+            "film",
+        ]
+    ) == 0
+    result = read_stdout_json(capsys)
+
+    preview = result["reviewed_manifest_draft_preview"]
+    assert preview["status"] == "blocked_waiting_for_complete_source_cache"
+    assert preview["would_write_review_manifest"] is False
+    assert preview["would_import_profiles"] is False
+    assert preview["draft_ready_for_human_approval"] is False
+    assert preview["review_request_count"] == 3
+    assert preview["draft_gate"]["passed"] is False
+    assert len(preview["reviewed_manifest_draft_preview_receipt"]["sha256"]) == 64
+    assert "GET /birth-profile-reviewed-manifest-draft-preview" in result["configuration_guidance"]["http_query"]
+
+
+def test_cli_birth_profile_reviewed_manifest_file_preview(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    cache_dir = tmp_path / "birth_source_cache"
+    target = tmp_path / "reviewed_birth_profiles.json"
+
+    assert main(
+        [
+            "--repo",
+            str(repo),
+            "birth-profile-reviewed-manifest-file-preview",
+            "--cache-dir",
+            str(cache_dir),
+            "--domain",
+            "sports",
+            "--target",
+            str(target),
+        ]
+    ) == 0
+    result = read_stdout_json(capsys)
+
+    preview = result["reviewed_manifest_file_preview"]
+    assert preview["status"] == "blocked_waiting_for_approved_draft"
+    assert preview["would_write_file"] is False
+    assert preview["would_import_profiles"] is False
+    assert preview["write_ready_for_human_approval"] is False
+    assert preview["target_file"] == str(target)
+    assert preview["file_preview_gate"]["passed"] is False
+    assert len(preview["reviewed_manifest_file_preview_receipt"]["sha256"]) == 64
+    assert "GET /birth-profile-reviewed-manifest-file-preview" in result["configuration_guidance"]["http_query"]
+
+
+def test_cli_birth_profile_import_preview_blocks_writes(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+
+    assert main(["--repo", str(repo), "birth-profile-import-preview"]) == 0
+    result = read_stdout_json(capsys)
+
+    assert result["import_preview"]["status"] == "blocked_not_ready_for_import"
+    assert result["import_preview"]["would_write_file"] is False
+    assert result["import_preview"]["import_allowed"] is False
+    assert result["import_preview"]["import_gate"]["passed"] is False
+    assert len(result["import_preview"]["import_preview_receipt"]["sha256"]) == 64
+    assert "GET /birth-profile-import-preview" in result["configuration_guidance"]["http_query"]
+
+
+def test_cli_birth_profile_fixture_patch_preview_blocks_writes(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+
+    assert main(["--repo", str(repo), "birth-profile-fixture-patch-preview"]) == 0
+    result = read_stdout_json(capsys)
+
+    assert result["fixture_patch_preview"]["status"] == "blocked_not_ready_for_patch_preview"
+    assert result["fixture_patch_preview"]["would_write_file"] is False
+    assert result["fixture_patch_preview"]["patch_ready_for_review"] is False
+    assert result["fixture_patch_preview"]["patch_gate"]["passed"] is False
+    assert len(result["fixture_patch_preview"]["fixture_patch_preview_receipt"]["sha256"]) == 64
+    assert "GET /birth-profile-fixture-patch-preview" in result["configuration_guidance"]["http_query"]
 
 
 def test_cli_provider_examples_emits_protocol_receipt(tmp_path: Path, capsys):
@@ -86,6 +297,355 @@ def test_cli_provider_onboarding_emits_gap_receipt(tmp_path: Path, capsys):
     assert "certify-provider ziwei" in ziwei["certification_command"]
     assert ziwei["bundled_example_smoke"]["live_passed"] is True
     assert ziwei["bundled_example_smoke"]["production_certification_allowed"] is False
+
+
+def test_cli_industry_events_audits_example_manifest(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    manifest = Path("examples/mingli_5agents/providers/industry_event_source_manifest_example.json")
+
+    assert main(["--repo", str(repo), "industry-events", "--manifest", str(manifest)]) == 0
+    result = read_stdout_json(capsys)
+
+    assert result["configured"] is True
+    assert result["audit"]["valid"] is True
+    assert result["audit"]["domains"] == ["film", "music", "sports"]
+    assert result["audit"]["positive_event_count"] == 3
+    assert result["audit"]["negative_event_count"] == 3
+    assert result["production_gate"]["passed"] is False
+    assert result["production_gate"]["production_evidence"] is False
+    assert len(result["industry_event_manifest_receipt"]["sha256"]) == 64
+
+
+def test_cli_industry_event_labels_adapts_example_manifest(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    manifest = Path("examples/mingli_5agents/providers/industry_event_source_manifest_example.json")
+
+    assert main(["--repo", str(repo), "industry-event-labels", "--manifest", str(manifest)]) == 0
+    result = read_stdout_json(capsys)
+    label_table = result["validation_label_table"]
+
+    assert result["configured"] is True
+    assert label_table["valid"] is True
+    assert label_table["record_count"] == 6
+    assert label_table["positive_label_count"] == 3
+    assert label_table["negative_label_count"] == 3
+    assert len(label_table["validation_label_table_receipt"]["sha256"]) == 64
+
+
+def test_cli_industry_event_scoring_readiness_checks_birth_profiles(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    manifest = Path("examples/mingli_5agents/providers/industry_event_source_manifest_example.json")
+
+    assert main(["--repo", str(repo), "industry-event-scoring-readiness", "--manifest", str(manifest)]) == 0
+    result = read_stdout_json(capsys)
+    readiness = result["symbolic_scoring_readiness"]
+
+    assert result["configured"] is True
+    assert readiness["valid"] is True
+    assert readiness["label_count"] == 6
+    assert readiness["ready_label_count"] == 4
+    assert readiness["blocked_label_count"] == 2
+    assert len(readiness["symbolic_scoring_readiness_receipt"]["sha256"]) == 64
+
+
+def test_cli_industry_event_symbolic_score_scores_ready_labels(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    manifest = Path("examples/mingli_5agents/providers/industry_event_source_manifest_example.json")
+
+    assert main(["--repo", str(repo), "industry-event-symbolic-score", "--manifest", str(manifest)]) == 0
+    result = read_stdout_json(capsys)
+    score = result["symbolic_annual_score"]
+
+    assert result["configured"] is True
+    assert score["valid"] is True
+    assert score["scored_label_count"] == 4
+    assert score["blocked_label_count"] == 2
+    assert len(score["symbolic_annual_score_receipt"]["sha256"]) == 64
+
+
+def test_cli_industry_event_evidence_workplan_projects_collection_commands(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    manifest = Path("examples/mingli_5agents/providers/industry_event_source_manifest_example.json")
+    candidates = Path("examples/mingli_5agents/providers/industry_event_candidate_cases_example.json")
+    query_plan = Path("examples/mingli_5agents/providers/industry_event_source_query_plan_example.json")
+
+    assert (
+        main(
+            [
+                "--repo",
+                str(repo),
+                "industry-event-evidence-workplan",
+                "--manifest",
+                str(manifest),
+                "--candidates",
+                str(candidates),
+                "--query-plan",
+                str(query_plan),
+                "--cache-dir",
+                str(tmp_path / "cache"),
+            ]
+        )
+        == 0
+    )
+    result = read_stdout_json(capsys)
+    workplan = result["evidence_workplan"]
+
+    assert result["configured"] is True
+    assert workplan["valid"] is True
+    assert workplan["work_item_count"] == 2
+    assert workplan["deferred_task_count"] == 1
+    assert workplan["domains"] == ["film", "sports"]
+    assert workplan["draft_import_ready"] is False
+    assert workplan["draft_import_readiness_gate"]["passed"] is False
+    assert workplan["draft_import_readiness_gate"]["missing_cache_count"] == 6
+    assert workplan["readiness_summary"]["status"] == "blocked"
+    assert workplan["readiness_summary"]["deferred_blocked_gate_count"] == 15
+    assert workplan["readiness_summary"]["integrity_check"]["status"] == "passed"
+    assert len(workplan["evidence_workplan_receipt"]["sha256"]) == 64
+
+
+def test_cli_industry_event_queries_audits_example_query_plan(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    query_plan = Path("examples/mingli_5agents/providers/industry_event_source_query_plan_example.json")
+
+    assert main(["--repo", str(repo), "industry-event-queries", "--query-plan", str(query_plan)]) == 0
+    result = read_stdout_json(capsys)
+
+    assert result["configured"] is True
+    assert result["audit"]["valid"] is True
+    assert result["audit"]["source_id"] == "wikidata_query_service"
+    assert result["audit"]["template_count"] == 3
+    assert result["audit"]["domains"] == ["film", "music", "sports"]
+    assert result["audit"]["required_manifest_fields_mapped"] is True
+    assert result["collection_gate"]["passed"] is False
+    assert result["collection_gate"]["collection_ready"] is False
+    assert len(result["industry_event_query_plan_receipt"]["sha256"]) == 64
+
+
+def test_cli_industry_event_candidates_audits_example_candidate_pool(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    candidates = Path("examples/mingli_5agents/providers/industry_event_candidate_cases_example.json")
+
+    assert main(["--repo", str(repo), "industry-event-candidates", "--candidates", str(candidates)]) == 0
+    result = read_stdout_json(capsys)
+
+    assert result["configured"] is True
+    assert result["audit"]["valid"] is True
+    assert result["audit"]["candidate_count"] == 9
+    assert result["audit"]["domain_counts"] == {"film": 3, "music": 3, "sports": 3}
+    assert result["candidate_pool_gate"]["passed"] is False
+    assert result["candidate_pool_gate"]["production_ready"] is False
+    assert len(result["industry_event_candidate_cases_receipt"]["sha256"]) == 64
+
+
+def test_cli_industry_event_candidate_fetch_cache_dry_run(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    candidates = Path("examples/mingli_5agents/providers/industry_event_candidate_cases_example.json")
+    query_plan = Path("examples/mingli_5agents/providers/industry_event_source_query_plan_example.json")
+    cache_dir = tmp_path / "cache"
+
+    assert (
+        main(
+            [
+                "--repo",
+                str(repo),
+                "industry-event-candidate-fetch-cache",
+                "--candidates",
+                str(candidates),
+                "--query-plan",
+                str(query_plan),
+                "--cache-dir",
+                str(cache_dir),
+                "--domain",
+                "film",
+            ]
+        )
+        == 0
+    )
+    result = read_stdout_json(capsys)
+    batch_plan = result["candidate_pool_fetch_cache_plan"]
+
+    assert result["live_requested"] is False
+    assert batch_plan["status"] == "dry_run"
+    assert batch_plan["candidate_count"] == 3
+    assert batch_plan["domains"] == ["film"]
+    assert batch_plan["total_planned_cache_count"] == 3
+    assert batch_plan["total_cache_write_count"] == 0
+    assert len(batch_plan["candidate_pool_fetch_cache_receipt"]["sha256"]) == 64
+
+
+def test_cli_industry_event_candidate_draft_import_from_cached_responses(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    candidates = Path("examples/mingli_5agents/providers/industry_event_candidate_cases_example.json")
+    query_plan = Path("examples/mingli_5agents/providers/industry_event_source_query_plan_example.json")
+    response = Path("examples/mingli_5agents/providers/wikidata_sports_response_example.json")
+    cache_dir = tmp_path / "cache"
+    batch_plan = build_candidate_pool_fetch_cache_plan(
+        candidates,
+        query_plan_path=query_plan,
+        cache_dir=cache_dir,
+        domain="sports",
+    )
+    materialize_cached_responses(batch_plan, response)
+
+    assert (
+        main(
+            [
+                "--repo",
+                str(repo),
+                "industry-event-candidate-draft-import",
+                "--candidates",
+                str(candidates),
+                "--query-plan",
+                str(query_plan),
+                "--cache-dir",
+                str(cache_dir),
+                "--domain",
+                "sports",
+            ]
+        )
+        == 0
+    )
+    result = read_stdout_json(capsys)
+    draft_import = result["candidate_pool_draft_import"]
+
+    assert draft_import["valid"] is True
+    assert draft_import["draft_count"] == 3
+    assert draft_import["missing_response_count"] == 0
+    assert draft_import["positive_record_count"] == 3
+    assert draft_import["negative_record_count"] == 70
+    assert draft_import["combined_manifest_valid"] is True
+    assert draft_import["combined_manifest_record_count"] == 73
+    assert len(draft_import["candidate_pool_draft_import_receipt"]["sha256"]) == 64
+
+
+def test_cli_industry_event_requests_builds_offline_bundle(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    query_plan = Path("examples/mingli_5agents/providers/industry_event_source_query_plan_example.json")
+
+    assert (
+        main(
+            [
+                "--repo",
+                str(repo),
+                "industry-event-requests",
+                "--query-plan",
+                str(query_plan),
+                "--case-id",
+                "roger_federer",
+                "--public-name",
+                "Roger Federer",
+                "--person-qid",
+                "Q1426",
+                "--start-year",
+                "2002",
+                "--end-year",
+                "2004",
+                "--split-role",
+                "holdout",
+                "--domain",
+                "sports",
+            ]
+        )
+        == 0
+    )
+    result = read_stdout_json(capsys)
+    bundle = result["request_bundle"]
+
+    assert result["offline_only"] is True
+    assert bundle["valid"] is True
+    assert bundle["request_count"] == 1
+    assert bundle["domains"] == ["sports"]
+    assert bundle["execution_gate"]["passed"] is False
+    assert bundle["requests"][0]["query_url"].startswith("https://query.wikidata.org/sparql?")
+    assert len(bundle["bundle_receipt"]["sha256"]) == 64
+
+
+def test_cli_industry_event_fetch_cache_dry_run(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    query_plan = Path("examples/mingli_5agents/providers/industry_event_source_query_plan_example.json")
+    cache_dir = tmp_path / "cache"
+
+    assert (
+        main(
+            [
+                "--repo",
+                str(repo),
+                "industry-event-fetch-cache",
+                "--query-plan",
+                str(query_plan),
+                "--cache-dir",
+                str(cache_dir),
+                "--case-id",
+                "roger_federer",
+                "--public-name",
+                "Roger Federer",
+                "--person-qid",
+                "Q1426",
+                "--start-year",
+                "2002",
+                "--end-year",
+                "2004",
+                "--split-role",
+                "holdout",
+                "--domain",
+                "sports",
+            ]
+        )
+        == 0
+    )
+    result = read_stdout_json(capsys)
+    fetch_plan = result["fetch_cache_plan"]
+
+    assert result["live_requested"] is False
+    assert fetch_plan["status"] == "dry_run"
+    assert fetch_plan["planned_cache_count"] == 1
+    assert fetch_plan["cache_write_count"] == 0
+    assert fetch_plan["cache_entries"][0]["cache_path"].startswith(str(cache_dir))
+    assert len(fetch_plan["fetch_cache_receipt"]["sha256"]) == 64
+
+
+def test_cli_industry_event_draft_manifest_from_cached_response(tmp_path: Path, capsys):
+    repo = tmp_path / "repo"
+    query_plan = Path("examples/mingli_5agents/providers/industry_event_source_query_plan_example.json")
+    response = Path("examples/mingli_5agents/providers/wikidata_sports_response_example.json")
+
+    assert (
+        main(
+            [
+                "--repo",
+                str(repo),
+                "industry-event-draft-manifest",
+                "--query-plan",
+                str(query_plan),
+                "--response",
+                str(response),
+                "--case-id",
+                "roger_federer",
+                "--public-name",
+                "Roger Federer",
+                "--person-qid",
+                "Q1426",
+                "--start-year",
+                "2002",
+                "--end-year",
+                "2004",
+                "--split-role",
+                "holdout",
+                "--domain",
+                "sports",
+            ]
+        )
+        == 0
+    )
+    result = read_stdout_json(capsys)
+    draft = result["draft"]
+
+    assert result["offline_only"] is True
+    assert draft["valid"] is True
+    assert draft["draft_manifest_audit"]["positive_event_count"] == 1
+    assert draft["draft_manifest_audit"]["negative_event_count"] == 2
+    assert len(draft["draft_receipt"]["sha256"]) == 64
 
 
 def test_cli_known_gap_handoff_exports_portable_bundle(tmp_path: Path, capsys):
@@ -432,6 +992,37 @@ def test_cli_init_analyze_evolve_status(tmp_path: Path, capsys, monkeypatch):
     assert audit_result["classical_source_list_path"].endswith("classical_source_list_example.json")
     assert audit_result["capabilities"]["classical_source_refresh_configured"] is True
     assert len(audit_result["classical_source_refresh"]["source_list_receipt"]["sha256"]) == 64
+    assert main(["--repo", str(repo), "schema"]) == 0
+    audit_schema_result = read_stdout_json(capsys)
+    fixture_receipt = audit_result["industry_event_cross_domain_fixture_import"]
+    audit_material_fixture = audit_result["audit_receipt"]["material"]["industry_event_cross_domain_fixture_import"]
+    assert audit_result["capabilities"]["industry_event_cross_domain_fixture_import"] is True
+    assert fixture_receipt["schema_version"] == "industry-event-cross-domain-fixture-import-receipt-v1"
+    assert fixture_receipt["material"]["candidate_count"] == 9
+    assert fixture_receipt["material"]["positive_record_count"] == 9
+    assert fixture_receipt["material"]["negative_record_count"] == 273
+    assert fixture_receipt["material"]["cross_domain_coverage_gate_passed"] is True
+    assert audit_material_fixture["sha256"] == fixture_receipt["sha256"]
+    assert (
+        audit_material_fixture["material"]["validation_label_table_receipt_sha256"]
+        == fixture_receipt["material"]["validation_label_table_receipt_sha256"]
+    )
+    assert (
+        schema_validation_errors(
+            fixture_receipt,
+            schema_name="IndustryEventCrossDomainFixtureImportReceipt",
+            schema_doc=audit_schema_result,
+        )
+        == []
+    )
+    assert (
+        schema_validation_errors(
+            audit_material_fixture,
+            schema_name="IndustryEventCrossDomainFixtureImportReceipt",
+            schema_doc=audit_schema_result,
+        )
+        == []
+    )
     audit_source_list = tmp_path / "audit_classical_sources.json"
     write_json(
         audit_source_list,
@@ -979,6 +1570,26 @@ def test_cli_init_analyze_evolve_status(tmp_path: Path, capsys, monkeypatch):
     assert outcome_result["audit"]["quality_task_projection"]["projected_task_count"] == 1
     assert outcome_result["evolution_gate"]["passed"] is True
     assert outcome_result["evolution_gate"]["predictive_optimization_enabled"] is False
+
+    industry_manifest = Path("examples/mingli_5agents/providers/industry_event_source_manifest_example.json")
+    assert main(["--repo", str(repo), "industry-events"]) == 0
+    default_industry_result = read_stdout_json(capsys)
+    assert default_industry_result["configured"] is False
+    assert default_industry_result["audit"]["valid"] is True
+    assert default_industry_result["production_gate"]["passed"] is False
+    assert default_industry_result["configuration_guidance"]["example_is_demonstration_only"] is True
+
+    assert main(["--repo", str(repo), "industry-events", "--manifest", str(industry_manifest)]) == 0
+    industry_result = read_stdout_json(capsys)
+    assert industry_result["configured"] is True
+    assert industry_result["manifest_path"] == str(industry_manifest)
+    assert industry_result["audit"]["status"] == "ready_for_review"
+    assert industry_result["audit"]["domains"] == ["film", "music", "sports"]
+    assert industry_result["audit"]["positive_event_count"] == 3
+    assert industry_result["audit"]["negative_event_count"] == 3
+    assert industry_result["production_gate"]["id"] == "industry_event_source_provider_reviewed_manifest"
+    assert industry_result["production_gate"]["production_evidence"] is False
+    assert len(industry_result["industry_event_manifest_receipt"]["sha256"]) == 64
 
     assert main(["--repo", str(repo), "classical-sources"]) == 0
     unconfigured_classical_sources = read_stdout_json(capsys)
@@ -2120,6 +2731,8 @@ def test_cli_init_analyze_evolve_status(tmp_path: Path, capsys, monkeypatch):
     assert "ProviderCertificationDriftStatus" in schema_result["schemas"]
     assert "ProviderProtocolsResponse" in schema_result["schemas"]
     assert "CapabilityAuditResponse" in schema_result["schemas"]
+    assert "IndustryEventCrossDomainFixtureImportMaterial" in schema_result["schemas"]
+    assert "IndustryEventCrossDomainFixtureImportReceipt" in schema_result["schemas"]
     assert "ProviderReadinessCheck" in schema_result["schemas"]
     assert "ProviderReadinessMatrixItem" in schema_result["schemas"]
     assert "ProviderProvenanceAudit" in schema_result["schemas"]
@@ -2175,6 +2788,18 @@ def test_cli_init_analyze_evolve_status(tmp_path: Path, capsys, monkeypatch):
     provider_plan_schema = schema_result["schemas"]["ProviderIntegrationPlan"]
     provider_target_schema = schema_result["schemas"]["ProviderIntegrationTarget"]
     audit_schema = schema_result["schemas"]["CapabilityAuditResponse"]
+    audit_material_schema = schema_result["schemas"]["CapabilityAuditReceiptMaterial"]
+    assert "industry_event_cross_domain_fixture_import" in audit_schema["required"]
+    assert audit_schema["properties"]["industry_event_cross_domain_fixture_import"]["$ref"] == (
+        "#/schemas/IndustryEventCrossDomainFixtureImportReceipt"
+    )
+    assert "industry_event_cross_domain_fixture_import" in audit_material_schema["required"]
+    assert audit_material_schema["properties"]["industry_event_cross_domain_fixture_import"]["$ref"] == (
+        "#/schemas/IndustryEventCrossDomainFixtureImportReceipt"
+    )
+    assert schema_result["schemas"]["IndustryEventCrossDomainFixtureImportReceipt"]["properties"]["material"]["$ref"] == (
+        "#/schemas/IndustryEventCrossDomainFixtureImportMaterial"
+    )
     assert "action_plan" in provider_summary_schema["required"]
     assert "readiness_matrix" in provider_summary_schema["required"]
     assert "professional_domain_count" in provider_summary_schema["required"]
@@ -3020,6 +3645,12 @@ def test_cli_init_analyze_evolve_status(tmp_path: Path, capsys, monkeypatch):
         "auspicious_calendar_receipt_bound_to_provenance"
         in benchmark_features
     )
+    assert "chinese_render_duplicate_bullet_ratio" in benchmark_features
+    assert "chinese_render_topic_evidence_anchor_ratio" in benchmark_features
+    assert "chinese_render_topic_judgment_structure_ratio" in benchmark_features
+    assert "chinese_render_ascii_letter_count" in benchmark_features
+    assert "chinese_render_ascii_question_present" in benchmark_features
+    assert "chinese_render_code_marker_present" in benchmark_features
     assert (
         "external_payload_receipt_domains"
         in benchmark_features
@@ -3067,6 +3698,22 @@ def test_cli_init_analyze_evolve_status(tmp_path: Path, capsys, monkeypatch):
     assert "GET /provider-protocols" in schema_result["endpoints"]
     assert "GET /history" in schema_result["endpoints"]
     assert "GET /outcome-dataset" in schema_result["endpoints"]
+    assert "GET /industry-events" in schema_result["endpoints"]
+    assert "GET /industry-event-labels" in schema_result["endpoints"]
+    assert "GET /industry-event-scoring-readiness" in schema_result["endpoints"]
+    assert "GET /industry-event-symbolic-score" in schema_result["endpoints"]
+    assert "GET /industry-event-evidence-workplan" in schema_result["endpoints"]
+    assert "GET /birth-profile-review" in schema_result["endpoints"]
+    assert "GET /birth-profile-source-review-workplan" in schema_result["endpoints"]
+    assert "GET /birth-profile-import-preview" in schema_result["endpoints"]
+    assert "GET /birth-profile-fixture-patch-preview" in schema_result["endpoints"]
+    assert "GET /industry-event-queries" in schema_result["endpoints"]
+    assert "GET /industry-event-candidates" in schema_result["endpoints"]
+    assert "GET /industry-event-candidate-fetch-cache" in schema_result["endpoints"]
+    assert "GET /industry-event-candidate-draft-import" in schema_result["endpoints"]
+    assert "GET /industry-event-requests" in schema_result["endpoints"]
+    assert "GET /industry-event-fetch-cache" in schema_result["endpoints"]
+    assert "GET /industry-event-draft-manifest" in schema_result["endpoints"]
     assert "GET /classical-refresh" in schema_result["endpoints"]
     assert "GET /classical-sources" in schema_result["endpoints"]
     assert "GET /production-readiness" in schema_result["endpoints"]

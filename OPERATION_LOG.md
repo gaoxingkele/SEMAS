@@ -5,6 +5,527 @@
 
 ---
 
+## 2026-06-26 - Annual Event Markers Schema
+
+### Motivation
+
+Career launch and role-power evidence had been derived from annual prose. That
+was useful for calibration, but brittle. The next step was to promote weak text
+signals into structured annual row markers.
+
+### Actions Taken
+
+1. Added `event_markers` to annual luck rows in
+   `examples/mingli_5agents/tools/annual_luck.py`.
+2. Added structured markers:
+   - `career_launch`
+   - `role_power`
+   - `business_power`
+   - `relationship`
+   - `movement`
+   - `study_exam`
+   - `public_visibility`
+   - `health_pressure`
+   - `adult_career_stage`
+   - `basis`
+3. Added `AnnualEventMarkers` to the public API schema.
+4. Added schema-contract evaluator coverage for `AnnualLuckRow.event_markers`.
+5. Updated annual-luck tests to require the marker set.
+6. Updated famous-case calibration evidence to prefer structured markers and
+   keep text mining only as fallback.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\annual_luck.py examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\api_core.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py` -
+  **passed**.
+- `pytest examples\mingli_5agents\tests\test_calendar_tools.py::test_annual_luck_builds_structured_year_rows -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` -
+  **2 passed**.
+
+### Source Boundary
+
+These markers are symbolic internal features, not validated event predictions.
+They make calibration more auditable by replacing prose scraping with typed
+annual row fields.
+
+---
+
+## 2026-06-26 - Career Launch And Role Power Evidence
+
+### Motivation
+
+The strong-career-evidence pass reduced false positives but made career-project
+recall too low. Career events need project-launch and role-power evidence
+instead of only counting career-domain ten-gods.
+
+### Actions Taken
+
+1. Extended annual event evidence in
+   `examples/mingli_5agents/famous_case_validation.py` with:
+   - `career_launch_signal`
+   - `role_power_signal`
+2. Derived those signals from existing annual career, official-career,
+   leadership, theme, and phase text.
+3. Tightened `career_power` to require authority plus role-power signal.
+4. Adjusted `career_project` to require project-launch signal, at least one
+   career-domain ten-god, and support/activation.
+5. Updated tests to require both new evidence fields in event samples.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py` -
+  **passed**.
+- `famous_case_annual_event_calibration_receipt()` smoke test:
+  **strict recall 0.138, strict precision 0.111, strict false-positive rate 0.102**.
+- Career topic diagnostics:
+  - `career_project`: strict hit rate 0.125, strict precision 0.060, strict false-positive rate 0.222.
+  - `career_power`: strict hit rate 0.000, strict precision 0.000, strict false-positive rate 0.085.
+  - `business_power`: strict false-positive rate 0.000.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` -
+  **2 passed**.
+
+### Source Boundary
+
+Project-launch evidence restored some career-project recall, but precision
+remains low. Role-power evidence remains too weak for career-power events.
+Future work should add explicit title/institution/authority-transition markers.
+
+---
+
+## 2026-06-26 - Career Event Strong Evidence Tightening
+
+### Motivation
+
+Career project and career power remained high-priority weak topics after the
+movement-evidence pass. The previous strict rule accepted any career-domain
+ten-god plus broad support, which still fired in many non-event years.
+
+### Actions Taken
+
+1. Added `career_signal_strength` to annual event evidence in
+   `examples/mingli_5agents/famous_case_validation.py`.
+2. Tightened career strict matching:
+   - `career_power` now requires authority ten-god and career/wealth category.
+   - `business_power` now requires authority or wealth plus major-luck/natal
+     confirmation.
+   - `career_project` now requires at least two career-domain ten-god signals
+     plus support/activation.
+3. Updated tests to require `career_signal_strength` in event evidence.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py` -
+  **passed**.
+- `famous_case_annual_event_calibration_receipt()` smoke test:
+  **strict recall 0.123, strict precision 0.115, strict false-positive rate 0.087**.
+- Career topic diagnostics:
+  - `career_project`: strict hit rate 0.062, strict precision 0.045, strict false-positive rate 0.148.
+  - `career_power`: strict hit rate 0.000, strict precision 0.000, strict false-positive rate 0.085.
+  - `business_power`: strict false-positive rate 0.000.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` -
+  **2 passed**.
+
+### Source Boundary
+
+The career rules are now more conservative. False positives dropped, but career
+event recall also dropped. Future work should add project-launch and role-power
+evidence rather than relaxing the generic career signal again.
+
+---
+
+## 2026-06-26 - Migration Movement Evidence Tightening
+
+### Motivation
+
+The annual event evidence bundle improved recall but still allowed major-luck
+or natal activation to over-trigger migration and transition events. Migration
+needs movement-specific evidence before broad support signals can confirm it.
+
+### Actions Taken
+
+1. Imported `STEMS` and `BRANCHES` into
+   `examples/mingli_5agents/famous_case_validation.py` for local branch parsing.
+2. Added `BRANCH_CLASHES` and branch-clash extraction helpers.
+3. Extended annual event evidence with:
+   - `annual_branch`
+   - `branch_clashes`
+   - `movement_signal`
+4. Passed natal pillars into event-year and negative-year scoring.
+5. Tightened `migration` and `transition` strict matching so movement signal is
+   required before volatility, useful-state, major-luck, or natal activation can
+   confirm the event.
+6. Updated tests to require movement evidence fields in event samples.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py` -
+  **passed**.
+- `famous_case_annual_event_calibration_receipt()` smoke test:
+  **strict recall 0.169, strict precision 0.089, strict false-positive rate 0.158**.
+- Migration topic diagnostic:
+  **strict precision 0.048, strict false-positive rate 0.169, strict hit rate 0.200**.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` -
+  **2 passed**.
+
+### Source Boundary
+
+Branch clash is still a symbolic movement proxy, not proof of relocation. It
+now acts as a required movement signal for migration/transition strict matches,
+while major-luck and natal activation remain confirmation signals.
+
+---
+
+## 2026-06-26 - Annual Event Evidence Bundle
+
+### Motivation
+
+The rule-refinement queue showed that career, relationship, migration, and fame
+events need stronger evidence than broad annual category/intensity signals. The
+next step was to attach an auditable evidence bundle to each event-year and
+negative-year sample.
+
+### Actions Taken
+
+1. Added `_annual_event_evidence()` to
+   `examples/mingli_5agents/famous_case_validation.py`.
+2. Each annual event and negative sample now records:
+   - annual ten-gods
+   - expression/authority/wealth/resource/peer flags
+   - active major-luck flag
+   - natal-pillar activation flag and pillars
+   - useful-state
+3. Strict matching now uses the evidence bundle for public fame, career,
+   relationship, sports, study, migration, transition, and pressure topics.
+4. Updated tests to assert that event evidence is present in calibration
+   samples.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py` -
+  **passed**.
+- `famous_case_annual_event_calibration_receipt()` smoke test:
+  **loose recall 0.754, loose precision 0.084, loose false-positive rate 0.754, strict recall 0.185, strict precision 0.080, strict false-positive rate 0.195**.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` -
+  **2 passed**.
+
+### Source Boundary
+
+The evidence bundle improves auditability and raises strict recall, but it also
+increases strict false positives. Major-luck and natal activation should remain
+supporting evidence, not standalone permission for exact-year claims.
+
+---
+
+## 2026-06-26 - Annual Event Rule Refinement Queue
+
+### Motivation
+
+Topic-level annual diagnostics identified weak event categories, but the system
+still needed to convert those diagnostics into an executable improvement queue.
+The next evolution step should know which event rules to refine first and what
+extra evidence each rule needs.
+
+### Actions Taken
+
+1. Added `_annual_rule_refinement_queue()` to
+   `examples/mingli_5agents/famous_case_validation.py`.
+2. The annual calibration receipt now includes `rule_refinement_queue`.
+3. Queue priority is based on event count, strict precision, and strict
+   false-positive rate.
+4. Added event-specific recommended evidence bundles, such as:
+   - public fame: expression ten-god, useful-element activation, output-to-public-image chain.
+   - career project: career-domain ten-god, major-luck continuation, natal pillar activation.
+   - relationship: day-branch or relationship-palace activation, relationship ten-god, branch interaction.
+   - migration: branch clash/movement signal and residence-axis activation.
+5. Added the queue to capability-audit receipt material and public schema.
+6. Updated capability-audit and schema-contract tests.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py` -
+  **passed**.
+- `famous_case_annual_event_calibration_receipt()` smoke test:
+  high-priority topics include `career_power`, `career_project`,
+  `relationship`, `migration`, and `public_fame`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` -
+  **2 passed**.
+
+### Source Boundary
+
+The refinement queue is a diagnostic planning artifact. It prioritizes rule
+improvement work; it is not itself a predictive validation result.
+
+---
+
+## 2026-06-26 - Annual Calibration Topic Diagnostics
+
+### Motivation
+
+The strict annual-event matcher reduced false positives, but the aggregate
+precision remained low. Aggregate metrics did not explain which event topics
+were responsible, so the calibration receipt needed topic-level diagnostics.
+
+### Actions Taken
+
+1. Added `_annual_topic_summary()` to
+   `examples/mingli_5agents/famous_case_validation.py`.
+2. The annual calibration receipt now aggregates each `event_topic` with:
+   - event count
+   - negative-year count
+   - loose exact/window recall
+   - loose precision and false-positive rate
+   - strict recall, precision, and false-positive rate
+   - case ids
+3. Added `topic_summary` to capability-audit receipt material.
+4. Added `topic_summary` to `FamousCaseAnnualEventCalibrationReceiptSummary`.
+5. Updated capability-audit and schema-contract tests.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py` -
+  **passed**.
+- `famous_case_annual_event_calibration_receipt()` smoke test:
+  **13 event topics summarized**.
+- Diagnostic highlights:
+  - `health_risk`: strict precision 0.222, strict false-positive rate 0.036.
+  - `sports_peak`: strict precision 0.250, strict false-positive rate 0.261.
+  - `public_fame`: strict precision 0.077, strict false-positive rate 0.119.
+  - `career_project`: strict precision 0.048, strict false-positive rate 0.352.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` -
+  **2 passed**.
+
+### Source Boundary
+
+Topic-level diagnostics are still weak calibration. Their value is prioritizing
+which event rules to refine next. They do not convert celebrity biographies
+into validated prediction evidence.
+
+---
+
+## 2026-06-26 - Strict Annual Event Signal Calibration
+
+### Motivation
+
+Negative-year calibration showed that the loose annual-event signal mapping had
+high recall but very high false-positive rate. The next step was to add a
+stricter parallel matcher that requires event-specific signal combinations
+instead of accepting any one broad signal.
+
+### Actions Taken
+
+1. Added strict annual-event matching in
+   `examples/mingli_5agents/famous_case_validation.py`.
+2. Kept the loose matcher for recall comparison.
+3. Added strict metrics:
+   - `strict_exact_hit_count`
+   - `strict_false_positive_count`
+   - `strict_exact_hit_rate`
+   - `strict_exact_precision`
+   - `strict_false_positive_rate`
+4. Added strict metrics to capability-audit receipt material.
+5. Added strict metrics to `FamousCaseAnnualEventCalibrationReceiptSummary`.
+6. Updated tests to require strict false-positive rate to be no worse than the
+   loose false-positive rate.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py` -
+  **passed**.
+- `famous_case_annual_event_calibration_receipt()` smoke test:
+  **loose recall 0.754, loose precision 0.084, loose false-positive rate 0.754, strict recall 0.131, strict precision 0.070, strict false-positive rate 0.159**.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` -
+  **2 passed**.
+
+### Source Boundary
+
+The strict matcher substantially reduces false positives, but precision remains
+low. This means event-specific evidence is still too weak for predictive
+claims. The next useful step is to add stronger domain evidence per event
+type, not to tune thresholds for cosmetic scores.
+
+---
+
+## 2026-06-26 - Famous Case Annual Negative-Year Calibration
+
+### Motivation
+
+The annual event calibration layer produced high event-year signal coverage, but
+that could be caused by overbroad annual categories. The next step was to add
+non-event years as negative samples and compute precision-oriented diagnostics.
+
+### Actions Taken
+
+1. Extended `famous_case_annual_event_calibration_receipt()` with negative-year
+   samples for each event topic.
+2. Added `negative_year_count`, `false_positive_count`, `exact_precision`, and
+   `false_positive_rate` to the annual calibration receipt.
+3. Added the same fields to capability-audit receipt material.
+4. Added the new fields to `FamousCaseAnnualEventCalibrationReceiptSummary`.
+5. Updated capability-audit and schema-contract tests to require the precision
+   diagnostics.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py` -
+  **passed**.
+- `famous_case_annual_event_calibration_receipt()` smoke test:
+  **12 cases, 130 event tags, 1418 negative samples, exact recall 0.754, window recall 0.954, exact precision 0.084, false-positive rate 0.754**.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` -
+  **2 passed**.
+
+### Source Boundary
+
+The low precision is a useful failure signal. It means the current annual
+event-signal mapping is broad enough to cover many event years, but also fires
+in many non-event years. Future evolution should narrow event-specific signals
+before using this layer for stronger claims.
+
+---
+
+## 2026-06-26 - Famous Case Annual Event Calibration Receipt
+
+### Motivation
+
+The previous famous-case calibration checked school-topic coverage only. The
+next useful step was to test whether annual luck rows expose the expected
+symbolic signal around sourced public event years.
+
+### Actions Taken
+
+1. Added `famous_case_annual_event_calibration_receipt()` to
+   `examples/mingli_5agents/famous_case_validation.py`.
+2. Added `EVENT_TOPIC_ANNUAL_SIGNALS`, mapping public event tags such as
+   `sports_peak`, `public_fame`, `health_risk`, `relationship`, and
+   `study_exam` to expected annual categories and intensities.
+3. For each famous case, the new receipt builds the BaZi chart, generates
+   annual rows from the first public event year to the last, and scores exact
+   year plus +/-1-year window signal coverage.
+4. Connected the annual-event calibration receipt to `capability_audit()`.
+5. Added `famous_case_annual_event_calibration_receipt` to capability flags.
+6. Added `FamousCaseAnnualEventCalibrationReceiptSummary` to the public API
+   schema.
+7. Updated schema-contract evaluator coverage and tests.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py` -
+  **passed**.
+- `famous_case_annual_event_calibration_receipt()` smoke test:
+  **12 cases, 130 public event-year tags, exact signal coverage 0.754, +/-1-year window signal coverage 0.954, 64-character receipt hash**.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` -
+  **2 passed**.
+
+### Source Boundary
+
+This is annual signal coverage, not prediction accuracy. A high coverage score
+can mean the annual categories are broad. Use it to find blind spots and
+overbroad mappings before attempting stricter exact-year validation.
+
+---
+
+## 2026-06-26 - Famous Case School Calibration Receipt
+
+### Motivation
+
+The sports, film, and music celebrity fixtures were already present and audited,
+but the system still needed an executable step that actually runs each case
+through BaZi school debate and records how the schools cover public event-tag
+categories.
+
+### Actions Taken
+
+1. Added `famous_case_school_calibration_receipt()` to
+   `examples/mingli_5agents/famous_case_validation.py`.
+2. The new receipt runs all 12 famous cases through `build_bazi_chart()`, reads
+   each case's `school_debate`, and scores school-topic overlap with sourced
+   event tags.
+3. Added case-level, school-level, and domain-level summaries, plus
+   `mean_topic_recall`, low-coverage cases, fixture hash binding, and a clear
+   weak-calibration boundary.
+4. Connected the calibration receipt to `capability_audit()`.
+5. Added `famous_case_school_calibration_receipt` to capability flags.
+6. Added `FamousCaseSchoolCalibrationReceiptSummary` to the public API schema.
+7. Updated schema-contract evaluator coverage and tests.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py` -
+  **passed**.
+- `famous_case_school_calibration_receipt()` smoke test:
+  **12 cases, mean topic recall 0.389, domains include sports/film/music, 64-character receipt hash**.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` -
+  **2 passed**.
+
+### Source Boundary
+
+The score is topic-coverage recall across public event tags, not prediction
+accuracy. It should be used to expose blind spots in school-agent reasoning and
+to guide future calibration, not to claim validated fortune-telling.
+
+---
+
+## 2026-06-26 - Famous Case Validation Capability Binding
+
+### Motivation
+
+User asked whether sports, film, and music stars can be found and used for
+validation. The fixture set already existed, but it still needed to be bound
+into the executable capability audit so it could not remain an informal side
+file.
+
+### Actions Taken
+
+1. Connected `famous_case_receipt()` to `capability_audit()`.
+2. Added `famous_case_validation_receipt` to the capability flags.
+3. Added the famous-case summary into the capability audit response and audit
+   receipt material.
+4. Added `FamousCaseValidationReceiptSummary` to the public API schema.
+5. Updated schema-contract evaluator coverage so the response and receipt both
+   require the famous-case validation reference.
+6. Added tests requiring at least 12 cases and coverage of sports, film, and
+   music domains.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\tools\bazi_school_debate.py` -
+  **passed**.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` -
+  **1 passed**.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` -
+  **2 passed**.
+
+### Source Boundary
+
+The famous-person data remains weak calibration evidence. The upgrade here is
+governance-level: the system now proves that the sourced fixture set is present
+and hashed during capability audit; it does not claim statistical predictive
+validity.
+
+---
+
 ## 2026-06-26 - Sports Film Music Famous Case Expansion
 
 ### Motivation
@@ -732,6 +1253,68 @@ A-share factor mining scaffold.
 - `tests/test_china_a_share_alpha_advanced.py`
 - `wiki/semas_evolution_ideas.md`
 - `.gitignore`
+
+---
+
+## 2026-06-26 — China A-Share Alpha: Tushare 5-Year Backtest Comparison
+
+### Motivation
+
+User requested historical backtest evaluation and comparison of single vs
+combined A-share factors over the past 5 years, using Tushare as the data
+source.
+
+### Actions Taken
+
+1. **Tushare data loader**: added `china_a_share_alpha/data/tushare_loader.py`
+   to fetch daily price, valuation (`daily_basic`), and sector data for CSI300
+   constituents, with local Parquet caching.
+2. **Explainable factor library**: added
+   `china_a_share_alpha/examples/tushare_factors.py` with six single factors
+   (momentum, short-term reversal, volume-price correlation, low-volatility,
+   PB value, liquidity) and two rule-based combinations (multi-timeframe,
+   multi-style equal).
+3. **IC-weighted composite**: the backtest script computes in-sample IC for
+   each single factor and builds a transparent combined factor whose weights
+   are proportional to signed IC.
+4. **Backtest comparison script**: added
+   `china_a_share_alpha/scripts/run_tushare_backtest.py` which evaluates all
+   factors on the full 5-year panel and reports IC, RankIC, ICIR, turnover,
+   long-short return, Sharpe, max drawdown, cost-adjusted return, and
+   train/test IC gap.
+5. **Report generation**: outputs CSV, Markdown, and JSON summary to
+   `china_a_share_alpha_output/tushare_backtest/`.
+6. Added optional `tushare` dependency to `pyproject.toml`.
+7. Added `tests/test_tushare_backtest.py` (skipped if `TUSHARE_TOKEN` is not
+   set).
+
+### Verification
+
+- Ran full 5-year backtest on CSI300 constituents (2021-06-01 to 2026-06-01):
+  - 300 symbols, 1,210 trading days, 356,207 rows.
+  - Best Sharpe: `momentum_20` (0.406).
+  - Best IC: `value_pb` (0.0097).
+  - Highest RankIC: `ic_weighted_train` (0.0376).
+- `python -m pytest tests/ -q` — **39 passed** (Tushare tests skipped without
+  token).
+
+### Files Added/Modified
+
+- `china_a_share_alpha/data/tushare_loader.py`
+- `china_a_share_alpha/examples/tushare_factors.py`
+- `china_a_share_alpha/scripts/run_tushare_backtest.py`
+- `china_a_share_alpha/pyproject.toml`
+- `tests/test_tushare_backtest.py`
+- `china_a_share_alpha/README.md`
+- `wiki/semas_evolution_ideas.md`
+
+### Notes
+
+- Simple style factors were relatively weak over this 5-year sample; the
+  IC-weighted combination improved IC but not always long-short Sharpe,
+  underscoring the importance of transaction costs and risk neutralization.
+- For production use, add sector/market-cap neutralization and consider
+  barra-style risk model constraints.
 
 ---
 
@@ -1595,3 +2178,5976 @@ local LLM Wiki to record absorbed ideas and citations.
 - Implement `semas.plugins.godel` behind a strict policy gate (research-only).
 - Consider adding optional dependencies groups in `pyproject.toml` for
   `function_evolve`, `sia`, and `godel` plugins.
+
+## 2026-06-26 - Evidence-Driven Annual Event Markers
+
+### Motivation
+
+The famous-case calibration had structured annual event markers, but the first
+version still depended too much on broad annual category and life-stage labels.
+That was not enough to reduce repeated or weak annual reasoning. The next step
+was to make each event marker inspect the same symbolic evidence used by the
+annual-luck engine.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/tools/annual_luck.py`:
+   - Annual rows now build `bazi_evidence` before `event_markers`.
+   - `_event_markers()` reads annual ten-gods, useful-state, active major luck,
+     natal pillar activation, intensity, phase, and age.
+   - Career launch, role power, business power, relationship, movement,
+     study/exam, visibility, and health-pressure markers are now booleans
+     derived from structured evidence.
+   - Fixed a JSON-serialization bug where set intersections could leak into
+     marker fields.
+
+2. Updated tests and schemas already covering annual marker fields:
+   - Calendar row test checks marker basis entries.
+   - Capability audit and schema contract tests verify the marker fields remain
+     exposed through receipts.
+
+3. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v49, recording that typed markers must be computed from evidence,
+     not from prose or labels alone.
+   - Added strategy/migration rule 54.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\annual_luck.py examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\api_core.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py` passed.
+- `pytest examples\mingli_5agents\tests\test_calendar_tools.py::test_annual_luck_builds_structured_year_rows -q` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Calibration Snapshot
+
+- Overall strict exact hit rate: `0.138`.
+- Overall strict precision: `0.111`.
+- Overall strict false-positive rate: `0.102`.
+- Topic false-positive rates still needing refinement:
+  - `career_project`: `0.222`.
+  - `migration`: `0.169`.
+  - `career_power`: `0.085`.
+
+### Boundary
+
+This iteration improves the intermediate representation and auditability. It
+does not yet prove higher predictive accuracy. The next useful evolution is to
+tune event-topic predicates against false positives rather than changing report
+wording.
+
+## 2026-06-26 - Strict Annual Rule Variant Sweep
+
+### Motivation
+
+After annual event markers became structured, the highest remaining problem was
+strict-rule overfiring. Career-project and migration rules were still too broad
+in negative years. The improvement needed to compare alternative predicates
+against the same famous-case fixture set before selecting stricter rules.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `rule_variant_sweep` to the annual event calibration receipt.
+   - Added candidate predicates for `career_project` and `migration`.
+   - Tightened `career_project` strict matching to require structured
+     `career_launch` plus useful-state or natal activation.
+   - Tightened `migration` and `transition` strict matching to require movement
+     signal, at least two core-pillar branch clashes, and major-luck or natal
+     confirmation.
+   - Added reusable helpers for core branch-clash counting and variant scoring.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Exposed `rule_variant_sweep` in
+     `FamousCaseAnnualEventCalibrationReceiptSummary`.
+
+3. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Included `rule_variant_sweep` in the audit receipt material.
+
+4. Updated tests:
+   - Empirical validation now requires selected variants for career-project and
+     migration, and checks selected migration false-positive rate against the
+     legacy variant.
+   - Schema contract test now requires `rule_variant_sweep`.
+
+5. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v50 and strategy/migration rule 55.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+- `pytest examples\mingli_5agents\tests\test_calendar_tools.py::test_annual_luck_builds_structured_year_rows -q` passed.
+
+### Calibration Snapshot
+
+- Overall strict exact hit rate: `0.108`.
+- Overall strict precision: `0.177`.
+- Overall strict false-positive rate: `0.046`.
+- Overall strict exact hits: `14`.
+- Overall strict false positives: `65`.
+- Career-project selected variant:
+  - `structured_launch_with_useful_or_natal`
+  - hit rate `0.031`, precision `0.143`, false-positive rate `0.021`
+  - legacy broad-launch variant false-positive rate was `0.222`
+- Migration selected variant:
+  - `core_double_clash`
+  - hit rate `0.2`, precision `0.5`, false-positive rate `0.008`
+  - legacy any-clash variant false-positive rate was `0.169`
+
+### Boundary
+
+This improves strict-rule precision by accepting lower recall in exact-year
+claims. Loose and window metrics remain available for recall diagnostics. This
+is still weak calibration on public celebrity fixtures, not statistical proof
+of predictive accuracy.
+
+## 2026-06-26 - Rejected Low-Recall Rule Variants
+
+### Motivation
+
+After strict annual rules reduced false positives, the next risk was
+over-correcting toward recall. Career-power and study/exam had zero strict
+recall, so they needed candidate scans before any rule relaxation.
+
+### Actions Taken
+
+1. Extended `rule_variant_sweep` in
+   `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `career_power` variants:
+     - `current_role_power`
+     - `authority_peer_resource`
+     - `broad_authority_transition`
+   - Added `study_exam` variants:
+     - `current_formal_study`
+     - `formal_marker_or_natal`
+     - `broad_resource_authority`
+
+2. Kept the conservative selected variants:
+   - `career_power`: `current_role_power`
+   - `study_exam`: `current_formal_study`
+
+3. Updated empirical validation tests:
+   - Require selected variants for `career_power` and `study_exam`.
+   - Assert selected variants have no higher false-positive rate than broad
+     relaxed alternatives.
+
+4. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v51.
+   - Added strategy/migration rule 56.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+
+### Calibration Snapshot
+
+- Overall strict exact hit rate: `0.108`.
+- Overall strict precision: `0.177`.
+- Overall strict false-positive rate: `0.046`.
+- `career_power`:
+  - selected `current_role_power`: hit rate `0.0`, precision `0.0`, false-positive rate `0.085`
+  - rejected `authority_peer_resource`: hit rate `0.5`, precision `0.2`, false-positive rate `0.17`
+  - rejected `broad_authority_transition`: hit rate `0.5`, precision `0.105`, false-positive rate `0.362`
+- `study_exam`:
+  - selected `current_formal_study`: hit rate `0.0`, precision `0.0`, false-positive rate `0.083`
+  - rejected `formal_marker_or_natal`: hit rate `0.333`, precision `0.2`, false-positive rate `0.111`
+  - rejected `broad_resource_authority`: hit rate `0.667`, precision `0.143`, false-positive rate `0.333`
+
+### Boundary
+
+This is a deliberate non-adoption pass. The system now records noisy recall
+variants so future agents do not repeat the same loose-rule changes without new
+evidence.
+
+## 2026-06-26 - Annual Evolution Task Plan
+
+### Motivation
+
+The annual calibration receipt had topic diagnostics, rule refinement queues,
+and variant sweeps, but future agents still had to infer the next implementation
+step manually. The next evolution was to convert those diagnostics into a
+machine-readable work packet.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `evolution_task_plan` to
+     `famous_case_annual_event_calibration_receipt()`.
+   - Added `_annual_evolution_task_plan()`.
+   - Added task fields for topic, priority, task type, selected variant,
+     selected/rejected metrics, next evidence to add, acceptance criteria,
+     source, and boundary.
+   - Added topic-specific evidence recommendations for career power, study
+     exams, public fame, relationship, and career projects.
+
+2. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Bound `evolution_task_plan` into the audit receipt material.
+
+3. Updated `examples/mingli_5agents/api_core.py`:
+   - Exposed `evolution_task_plan` in
+     `FamousCaseAnnualEventCalibrationReceiptSummary`.
+
+4. Updated tests:
+   - Schema contract now requires `evolution_task_plan`.
+   - Empirical validation now requires non-empty task plans, evidence
+     requirements, acceptance criteria, and audit-receipt binding.
+
+5. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v52.
+   - Added strategy/migration rule 57.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Calibration Snapshot
+
+- Generated evolution task count: `13`.
+- First task: `annual-career_power-add_specific_evidence`.
+- Second task: `annual-study_exam-add_specific_evidence`.
+- Overall strict exact hit rate remains `0.108`.
+- Overall strict precision remains `0.177`.
+- Overall strict false-positive rate remains `0.046`.
+
+### Boundary
+
+This does not change prediction rules directly. It packages the next evidence
+work so later evolution can proceed from explicit, testable tasks instead of
+reinterpreting metric tables.
+
+## 2026-06-26 - Role Transition Evidence Marker
+
+### Motivation
+
+The annual evolution task plan identified `career_power` as a low-recall topic
+that needs title/command transition evidence separated from ordinary authority
+pressure. The next step was to add a structured feature and test it as a
+candidate, not to immediately relax strict rules.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/tools/annual_luck.py`:
+   - Added `role_transition` to annual `event_markers`.
+   - The marker looks for adult-stage authority/peer/resource transition
+     conditions in friends, learning, or wealth contexts with major-luck or
+     natal activation.
+
+2. Updated public contracts and tests:
+   - Added `role_transition` to `AnnualEventMarkers` in `api_core.py`.
+   - Updated annual-luck row tests.
+
+3. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `role_transition_signal` to annual event evidence.
+   - Added `role_transition_marker` as a `career_power` rule variant.
+   - Kept `current_role_power` as the selected strict rule because the new
+     marker overfires.
+
+4. Updated empirical tests:
+   - Require `role_transition_signal` in event evidence.
+   - Require `role_transition_marker` to be recorded among rejected
+     career-power variants.
+
+5. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v53.
+   - Added strategy/migration rule 58.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\annual_luck.py examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\api_core.py` passed.
+- `pytest examples\mingli_5agents\tests\test_calendar_tools.py::test_annual_luck_builds_structured_year_rows -q` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Calibration Snapshot
+
+- Overall strict exact hit rate remains `0.108`.
+- Overall strict precision remains `0.177`.
+- Overall strict false-positive rate remains `0.046`.
+- `career_power` selected variant remains `current_role_power`:
+  - hit rate `0.0`, precision `0.0`, false-positive rate `0.085`
+- Rejected `role_transition_marker`:
+  - hit rate `1.0`, precision `0.129`, false-positive rate `0.574`
+
+### Boundary
+
+`role_transition` is now an observable feature, not a strict prediction rule.
+It should be combined with stronger event subtype or authority-axis evidence
+before being used for exact-year career-power claims.
+
+## 2026-06-26 - Event Subtype Calibration Labels
+
+### Motivation
+
+`role_transition` captured all current career-power events but produced too many
+false positives. The next required evidence layer is event subtype, so future
+rules can distinguish command succession, military command, leadership
+consolidation, recognition, and other power events instead of treating them as
+one generic category.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `EVENT_SUBTYPE_BY_CASE_TOPIC_YEAR`.
+   - Added `EVENT_SUBTYPE_BY_TOPIC` fallback labels.
+   - Added `event_subtype` to event-year samples.
+   - Added `event_subtype: None` to negative samples to avoid using subtype as
+     a prediction feature.
+   - Added `event_subtype_summary` to the annual calibration receipt.
+   - Added local `_counts()` helper for deterministic subtype summaries.
+
+2. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Bound `event_subtype_summary` into the audit receipt material.
+
+3. Updated `examples/mingli_5agents/api_core.py`:
+   - Exposed `event_subtype_summary` in
+     `FamousCaseAnnualEventCalibrationReceiptSummary`.
+
+4. Updated tests:
+   - Empirical validation requires event samples to carry `event_subtype`.
+   - Empirical validation checks career-power explicit subtype coverage.
+   - Schema contract requires `event_subtype_summary`.
+
+5. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v54.
+   - Added strategy/migration rule 59.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Calibration Snapshot
+
+- Overall strict exact hit rate remains `0.108`.
+- Overall strict precision remains `0.177`.
+- Overall strict false-positive rate remains `0.046`.
+- `career_power`: explicit subtype coverage `1.0`.
+- `study_exam`: explicit subtype coverage `1.0`.
+- `career_project`: explicit subtype coverage `0.094`.
+
+### Boundary
+
+Subtypes are calibration labels for sourced event years. They are not available
+for negative years or future predictions, and should not be used as direct
+strict-matching inputs.
+
+## 2026-06-26 - Career Project Subtype Expansion
+
+### Motivation
+
+The event subtype receipt showed that `career_project` had only `0.094`
+explicit subtype coverage. This made project events too coarse for later rule
+learning because film releases, album releases, sports titles, theory
+publications, and production launches were all compressed into one fallback
+label.
+
+### Actions Taken
+
+1. Updated `EVENT_SUBTYPE_BY_CASE_TOPIC_YEAR` in
+   `examples/mingli_5agents/famous_case_validation.py`:
+   - Added Bruce Lee project subtypes.
+   - Added Arthur Ashe and Mark Spitz sports project subtypes.
+   - Added Lucille Ball and Sean Penn film/TV project subtypes.
+   - Added Aretha Franklin, Michael Jackson, and Madonna music project
+     subtypes.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires `career_project` subtype coverage to be at least `0.9`.
+   - Checks representative music and sports subtype labels.
+
+3. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v55.
+   - Added strategy/migration rule 60.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Calibration Snapshot
+
+- Overall strict exact hit rate remains `0.108`.
+- Overall strict precision remains `0.177`.
+- Overall strict false-positive rate remains `0.046`.
+- `career_power` subtype coverage: `1.0`.
+- `study_exam` subtype coverage: `1.0`.
+- `career_project` subtype coverage improved from `0.094` to `0.938`.
+
+### Boundary
+
+This is a dataset-label quality improvement, not a strict-rule change. Subtypes
+remain calibration labels and must not be used directly as prediction inputs.
+
+## 2026-06-26 - Subtype-Aware Evolution Task Scheduling
+
+### Motivation
+
+After expanding `career_project` subtypes, subtype coverage became a useful
+dataset-quality metric. The annual task plan still treated low subtype coverage
+as a passive report field. The next step was to let subtype coverage change the
+next work item before any rule tuning occurs.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Reused `event_subtype_summary` when building `evolution_task_plan`.
+   - Added `subtype_coverage_rate` and `default_subtype_count` to each task.
+   - Added `expand_subtypes` task type.
+   - Added subtype-expansion evidence recommendations and acceptance criteria.
+   - Sorted low subtype coverage tasks ahead of rule tuning when event count is
+     large enough.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires at least one `expand_subtypes` task.
+   - Requires `public_fame` to be scheduled for subtype expansion while subtype
+     coverage is below `0.5`.
+
+3. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v56.
+   - Added strategy/migration rule 61.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Calibration Snapshot
+
+- Overall strict exact hit rate remains `0.108`.
+- Overall strict precision remains `0.177`.
+- Overall strict false-positive rate remains `0.046`.
+- Top generated tasks:
+  - `annual-public_fame-expand_subtypes`: coverage `0.061`, default count `31`.
+  - `annual-relationship-expand_subtypes`: coverage `0.0`, default count `15`.
+  - `annual-public_controversy-expand_subtypes`: coverage `0.0`, default count `6`.
+
+### Boundary
+
+This changes evolution scheduling, not prediction rules. It prevents the system
+from tuning symbolic predicates while labels are still too coarse.
+
+## 2026-06-26 - Public Fame Subtype Expansion
+
+### Motivation
+
+The subtype-aware scheduler moved `public_fame` to the top of the evolution
+task plan because its subtype coverage was only `0.061`. Public fame covers
+different event types: film breakthrough, TV recognition, music chart success,
+sports title recognition, award recognition, and cultural visibility.
+
+### Actions Taken
+
+1. Updated `EVENT_SUBTYPE_BY_CASE_TOPIC_YEAR` in
+   `examples/mingli_5agents/famous_case_validation.py`:
+   - Added Bruce Lee public-fame subtypes.
+   - Added Marilyn Monroe film-star subtypes.
+   - Added sports public-recognition subtypes for Arthur Ashe, Mark Spitz, and
+     Roger Federer.
+   - Added TV/film public-recognition subtypes for Lucille Ball and Sean Penn.
+   - Added music public-fame subtypes for Aretha Franklin, Michael Jackson, and
+     Madonna.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires `public_fame` subtype coverage to be `1.0`.
+   - Requires representative music and sports public-fame subtypes.
+   - Requires `public_fame` to graduate from `expand_subtypes` to
+     `refine_precision` in `evolution_task_plan`.
+
+3. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v57.
+   - Added strategy/migration rule 62.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Calibration Snapshot
+
+- Overall strict exact hit rate remains `0.108`.
+- Overall strict precision remains `0.177`.
+- Overall strict false-positive rate remains `0.046`.
+- `public_fame` subtype coverage improved from `0.061` to `1.0`.
+- `public_fame` task type changed to `refine_precision`.
+- Current top subtype tasks:
+  - `relationship`: coverage `0.0`, default count `15`.
+  - `public_controversy`: coverage `0.0`, default count `6`.
+  - `sports_peak`: coverage `0.0`, default count `12`.
+
+### Boundary
+
+This is still a calibration-label improvement, not a direct prediction-rule
+change. Subtypes are not used for negative years or strict matching.
+
+## 2026-06-26 - Relationship Subtype Expansion
+
+### Motivation
+
+After `public_fame` subtype coverage reached `1.0`, the task scheduler moved
+`relationship` to the top subtype-expansion slot. Relationship events were all
+still using the fallback `relationship_event` label.
+
+### Actions Taken
+
+1. Updated `EVENT_SUBTYPE_BY_CASE_TOPIC_YEAR` in
+   `examples/mingli_5agents/famous_case_validation.py`:
+   - Added Marilyn Monroe relationship subtypes.
+   - Added Lucille Ball relationship subtypes.
+   - Added Sean Penn relationship subtypes.
+   - Added Aretha Franklin relationship subtypes.
+   - Added Madonna relationship subtypes.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires `relationship` subtype coverage to be `1.0`.
+   - Requires representative `celebrity_marriage` and
+     `divorce_or_relationship_end` subtype labels.
+   - Requires `relationship` to graduate from `expand_subtypes` to
+     `refine_precision` in `evolution_task_plan`.
+
+3. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v58.
+   - Added strategy/migration rule 63.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Calibration Snapshot
+
+- Overall strict exact hit rate remains `0.108`.
+- Overall strict precision remains `0.177`.
+- Overall strict false-positive rate remains `0.046`.
+- `relationship` subtype coverage improved from `0.0` to `1.0`.
+- `relationship` task type changed to `refine_precision`.
+- Current top subtype tasks:
+  - `public_controversy`: coverage `0.0`, default count `6`.
+  - `sports_peak`: coverage `0.0`, default count `12`.
+
+### Boundary
+
+This is a calibration-label improvement. Relationship subtypes are not used as
+prediction inputs or negative-year features.
+
+## 2026-06-26 - Public Controversy Subtype Expansion
+
+### Motivation
+
+`public_controversy` was the next subtype-expansion task after relationship.
+All six controversy events still used the fallback `controversy_event` label,
+which was too broad for later authority-expression conflict rules.
+
+### Actions Taken
+
+1. Updated `EVENT_SUBTYPE_BY_CASE_TOPIC_YEAR` in
+   `examples/mingli_5agents/famous_case_validation.py`:
+   - Added Sean Penn controversy subtypes.
+   - Added Michael Jackson controversy subtypes.
+   - Added Madonna controversy subtypes.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires `public_controversy` subtype coverage to be `1.0`.
+   - Requires representative criminal-allegation and religious-media
+     controversy subtypes.
+   - Requires `public_controversy` to graduate from `expand_subtypes` to
+     `add_specific_evidence`.
+
+3. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v59.
+   - Added strategy/migration rule 64.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Calibration Snapshot
+
+- Overall strict exact hit rate remains `0.108`.
+- Overall strict precision remains `0.177`.
+- Overall strict false-positive rate remains `0.046`.
+- `public_controversy` subtype coverage improved from `0.0` to `1.0`.
+- `public_controversy` task type changed to `add_specific_evidence`.
+- Remaining major subtype gaps:
+  - `sports_peak`: coverage `0.0`, event count `12`.
+  - `health_risk`: coverage `0.0`, event count `12`.
+
+### Boundary
+
+This is a calibration-label improvement. Controversy subtypes are not used as
+strict matching inputs or negative-year features.
+
+## 2026-06-26 - Sports Peak Subtype Expansion
+
+### Motivation
+
+`sports_peak` still used the fallback `competition_peak_event` label for all
+events. This made championship, Olympic, ranking, record, and comeback peaks
+indistinguishable for later rule work.
+
+### Actions Taken
+
+1. Updated `EVENT_SUBTYPE_BY_CASE_TOPIC_YEAR` in
+   `examples/mingli_5agents/famous_case_validation.py`:
+   - Added Arthur Ashe sports-peak subtypes.
+   - Added Mark Spitz sports-peak subtypes.
+   - Added Roger Federer sports-peak subtypes.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires `sports_peak` subtype coverage to be `1.0`.
+   - Requires representative Olympic-record and comeback-title subtypes.
+   - Requires `sports_peak` to graduate from `expand_subtypes` to
+     `reduce_false_positive`.
+
+3. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v60.
+   - Added strategy/migration rule 65.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Calibration Snapshot
+
+- Overall strict exact hit rate remains `0.108`.
+- Overall strict precision remains `0.177`.
+- Overall strict false-positive rate remains `0.046`.
+- `sports_peak` subtype coverage improved from `0.0` to `1.0`.
+- `sports_peak` task type changed to `reduce_false_positive`.
+- Remaining major subtype gap:
+  - `health_risk`: coverage `0.0`, event count `12`.
+
+### Boundary
+
+This is a calibration-label improvement. Sports subtypes are not used as strict
+matching inputs or negative-year features.
+
+## 2026-06-26 - Health Risk Subtype Expansion
+
+### Motivation
+
+`health_risk` was the remaining major high-count subtype gap. All twelve health
+events used the fallback `health_risk_event` label. Health events require extra
+care because subtype granularity should improve calibration, not encourage
+stronger medical claims in reports.
+
+### Actions Taken
+
+1. Updated `EVENT_SUBTYPE_BY_CASE_TOPIC_YEAR` in
+   `examples/mingli_5agents/famous_case_validation.py`:
+   - Added Bruce Lee health-risk subtype.
+   - Added Marilyn Monroe health-risk subtypes.
+   - Added Arthur Ashe health-risk subtypes.
+   - Added Roger Federer injury subtypes.
+   - Added Aretha Franklin cancer-related subtypes.
+   - Added Michael Jackson health-risk subtype.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires `health_risk` subtype coverage to be `1.0`.
+   - Requires representative acute-death and sports-injury subtypes.
+   - Allows `expand_subtypes` to disappear when no large low-coverage topic
+     remains.
+
+3. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v61.
+   - Added strategy/migration rule 66.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Calibration Snapshot
+
+- Overall strict exact hit rate remains `0.108`.
+- Overall strict precision remains `0.177`.
+- Overall strict false-positive rate remains `0.046`.
+- `health_risk` subtype coverage improved from `0.0` to `1.0`.
+- `health_risk` task type changed to `refine_precision`.
+- Current `expand_subtypes` task list is empty.
+- Remaining low subtype coverage topics:
+  - `business_power`: event count `1`, coverage `0.0`.
+  - `career_project`: event count `32`, coverage `0.938`.
+  - `migration`: event count `5`, coverage `0.6`.
+  - `transition`: event count `2`, coverage `0.0`.
+
+### Boundary
+
+This is a calibration-label improvement. Health subtypes are not medical
+guidance and are not used as strict matching inputs or report wording
+amplifiers.
+
+## 2026-06-26 - Domain-Stratified Celebrity Fixture Coverage
+
+### Motivation
+
+The famous-case fixture set already included sports, film, and music cases, but
+the receipt only exposed an aggregate domain list. That was too weak: a future
+change could preserve total case count while silently reducing one public-life
+domain.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `domain_coverage` to `famous_case_receipt()`.
+   - Added per-domain case count, event count, case ids, source names, source
+     ratings, event topics, and event-topic counts.
+   - Kept the boundary that domain coverage proves fixture breadth only, not
+     predictive validity.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires sports, film, and music fixture domains to each have at least
+     three cases and ten event labels.
+   - Requires Astro-Databank source provenance for those domains.
+   - Requires representative event topics for each domain.
+   - Requires material-level `domain_coverage` to match the top-level receipt.
+
+3. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `domain_coverage` to the public
+     `FamousCaseValidationReceiptSummary` schema.
+
+4. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v62.
+   - Added strategy/migration rule 67.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\api_core.py examples\mingli_5agents\capability_audit.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Coverage Snapshot
+
+- Sports domain: 3 cases, 32 event labels.
+- Film domain: 3 cases, 33 event labels.
+- Music domain: 3 cases, 33 event labels.
+- Film-martial-arts bridge domain: Bruce Lee remains separate.
+- Famous-case fixture receipt sha256:
+  `91c51fc3e12bda82f22cce96bbdd3eb9def4ac86eff6b7dfb79e4329334f8f75`.
+- Annual calibration receipt sha256:
+  `9cf95760958869e78daec90cfad67807faa9d52adbbc43deb4aae05f25f61b07`.
+
+### Calibration Snapshot
+
+- Overall strict exact hit rate remains `0.108`.
+- Overall strict precision remains `0.177`.
+- Overall strict false-positive rate remains `0.046`.
+
+### Boundary
+
+This is a fixture-governance improvement. It makes sports, film, and music
+coverage auditable before rule changes, but it does not claim statistical
+predictive validity.
+
+## 2026-06-26 - Domain-Topic Annual Calibration Slices
+
+### Motivation
+
+Domain-level annual metrics were useful, but still too coarse. Sports peak,
+film fame, film relationship events, and music fame should not be forced through
+one shared celebrity-event rule. The framework needed a cross-table by public
+domain and event topic before making later rule changes.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `domain_topic_summary` to
+     `famous_case_annual_event_calibration_receipt()`.
+   - Added `_annual_domain_topic_summary()` with per-slice case count, event
+     count, negative-year count, loose hit rate, strict hit rate, precision,
+     false-positive rate, case ids, and boundary text.
+
+2. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Included `domain_topic_summary` in the capability-audit receipt material.
+   - Included top-level famous-case `domain_coverage` in the audit material
+     summary.
+
+3. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `domain_topic_summary` to the public
+     `FamousCaseAnnualEventCalibrationReceiptSummary` schema.
+
+4. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires domain-topic slices for sports `sports_peak`, film
+     `relationship`, and music `public_fame`.
+   - Requires sports `sports_peak` to cover all three sports cases.
+   - Requires the audit receipt material to bind `domain_topic_summary`.
+
+5. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v63.
+   - Added strategy/migration rule 68.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Calibration Snapshot
+
+- Annual calibration receipt sha256:
+  `fb0423b233af6338e05c363e8f354047a505b9f169e0f34b352859581bb70eb1`.
+- Sports `sports_peak`: 3 cases, 12 events, strict hit rate `0.333`,
+  strict precision `0.333`, strict false-positive rate `0.174`.
+- Film `relationship`: 3 cases, 9 events, strict hit rate `0.111`,
+  strict precision `0.091`, strict false-positive rate `0.141`.
+- Film `public_fame`: 3 cases, 10 events, strict hit rate `0.0`,
+  strict precision `0.0`, strict false-positive rate `0.086`.
+- Music `public_fame`: 3 cases, 11 events, strict hit rate `0.273`,
+  strict precision `0.2`, strict false-positive rate `0.104`.
+- Music `career_project`: 3 cases, 9 events, strict hit rate `0.111`,
+  strict precision `0.167`, strict false-positive rate `0.043`.
+
+### Boundary
+
+Domain-topic slices are diagnostics for rule design. They are not statistical
+proof and should not be used to claim predictive validity.
+
+## 2026-06-26 - Domain-Topic Refinement Queue
+
+### Motivation
+
+The domain-topic annual slices showed that film `public_fame` and film
+`career_project` have zero strict exact-year hits in the current local sample.
+Relaxing strict rules immediately would risk raising false positives. The safer
+next step is to turn weak slices into explicit evidence-design tasks.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `domain_topic_refinement_queue` to
+     `famous_case_annual_event_calibration_receipt()`.
+   - Added `_domain_topic_refinement_queue()`.
+   - Added domain-specific evidence suggestions for:
+     - film `public_fame`
+     - film `career_project`
+     - music `public_fame`
+     - music `career_project`
+     - sports `sports_peak`
+   - Added acceptance criteria for adding evidence, reducing false positives,
+     and refining precision.
+
+2. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Bound `domain_topic_refinement_queue` into the capability-audit receipt
+     material.
+
+3. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `domain_topic_refinement_queue` to the public
+     `FamousCaseAnnualEventCalibrationReceiptSummary` schema.
+
+4. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires film `public_fame` and film `career_project` to appear in the
+     queue.
+   - Requires film `public_fame` to be an `add_domain_specific_evidence` task.
+   - Requires film-specific release/recognition evidence suggestions.
+   - Requires audit material to bind the queue.
+
+5. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v64.
+   - Added strategy/migration rule 69.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Queue Snapshot
+
+- Annual calibration receipt sha256:
+  `7df653d685d46601eda3d19a32b254758a1e928333e7fadfb8a8f9a7f0c00fa8`.
+- Domain-topic refinement queue count: `15`.
+- Top queue items:
+  - Film `public_fame`: add domain-specific evidence, 10 events, strict hit
+    rate `0.0`, strict precision `0.0`, strict false-positive rate `0.086`.
+  - Film `career_project`: add domain-specific evidence, 9 events, strict hit
+    rate `0.0`, strict precision `0.0`, strict false-positive rate `0.014`.
+  - Sports `public_fame`: add domain-specific evidence, 6 events, strict hit
+    rate `0.0`, strict precision `0.0`, strict false-positive rate `0.019`.
+
+### Boundary
+
+This iteration changes diagnostics and next-step planning only. It does not
+relax strict annual rules and does not improve predictive-validity claims.
+
+## 2026-06-26 - Domain-Topic Candidate Variant Sweep
+
+### Motivation
+
+The domain-topic refinement queue identified weak slices, especially film
+`public_fame` and film `career_project`. Before changing strict rules, the
+framework needed candidate metrics that show whether existing symbolic evidence
+can improve those slices without expanding false positives.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `domain_topic_variant_sweep` to
+     `famous_case_annual_event_calibration_receipt()`.
+   - Added `_domain_topic_variant_sweep()`.
+   - Added candidate predicates for:
+     - film `public_fame`
+     - film `career_project`
+     - music `public_fame`
+     - music `career_project`
+     - sports `sports_peak`
+   - Added helper `_domain_topic_items()`.
+   - Kept all domain-topic variants unselected.
+
+2. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Bound `domain_topic_variant_sweep` into the capability-audit receipt
+     material.
+
+3. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `domain_topic_variant_sweep` to the public
+     `FamousCaseAnnualEventCalibrationReceiptSummary` schema.
+
+4. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires film `public_fame` candidate variants.
+   - Requires all domain-topic variants to remain unselected.
+   - Requires current film fame strict metrics to remain at zero.
+   - Requires audit material to bind the candidate sweep.
+
+5. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v65.
+   - Added strategy/migration rule 70.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Candidate Snapshot
+
+- Annual calibration receipt sha256:
+  `4c14418ff8abf39fd69b3cde7294eb4ac5bd856a08d55a49f76941813722e467`.
+- Domain-topic variant count: `15`.
+- Film `public_fame`:
+  - `current_strict`: strict hit rate `0.0`, precision `0.0`,
+    false-positive rate `0.086`.
+  - `expression_visibility_with_support`: strict hit rate `0.0`,
+    precision `0.0`, false-positive rate `0.014`.
+  - `expression_visibility_or_major_luck`: strict hit rate `0.0`,
+    precision `0.0`, false-positive rate `0.086`.
+- Film `career_project`:
+  - `current_strict`: strict hit rate `0.0`, precision `0.0`,
+    false-positive rate `0.014`.
+  - `project_launch_or_visibility_with_support`: strict hit rate `0.0`,
+    precision `0.0`, false-positive rate `0.014`.
+  - `broad_project_channel_with_major_luck`: strict hit rate `0.0`,
+    precision `0.0`, false-positive rate `0.085`.
+
+### Boundary
+
+The candidate sweep proves that existing symbolic evidence is insufficient for
+film fame and film project timing. The next aligned step is to add a sourced
+industry-event evidence layer, not to relax strict annual rules.
+
+## 2026-06-26 - Industry-Event Evidence Layer
+
+### Motivation
+
+The domain-topic candidate sweep showed that existing symbolic evidence could
+not improve film `public_fame` or film `career_project`. The missing layer was
+not another broad BaZi predicate; it was sourced industry-event evidence such as
+film release, screen role, award, nomination, ratings, box office, press
+recognition, music chart success, album release, broadcast performance, tour
+peak, sports title, ranking, record, medal, season, and comeback.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `industry_event_evidence` to each sourced event row.
+   - Added `_industry_event_evidence()`.
+   - Added `_industry_event_evidence_summary()`.
+   - Added `industry_event_evidence_summary` to
+     `famous_case_annual_event_calibration_receipt()`.
+   - Added missing Marilyn Monroe film `career_project` subtypes for 1953 and
+     1959.
+   - Added industry-project and sports-peak markers.
+
+2. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Bound `industry_event_evidence_summary` into the capability-audit receipt
+     material.
+
+3. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `industry_event_evidence_summary` to the public
+     `FamousCaseAnnualEventCalibrationReceiptSummary` schema.
+
+4. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires event rows to carry `industry_event_evidence`.
+   - Requires film fame and film project industry evidence coverage to reach
+     `1.0`.
+   - Requires music fame to expose commercial/chart markers.
+   - Requires sports peak to expose competition markers for all sports-peak
+     events.
+   - Requires audit material to bind `industry_event_evidence_summary`.
+
+5. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v66.
+   - Added strategy/migration rule 71.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Evidence Snapshot
+
+- Annual calibration receipt sha256:
+  `1c61aa8e491b6492beb9e0238b757c5ef156cd57b9c6893089f4ef39e1f7d855`.
+- Film `career_project`: 14 events, evidence coverage `1.0`.
+- Film `public_fame`: 14 events, evidence coverage `1.0`.
+- Music `career_project`: 9 events, evidence coverage `1.0`.
+- Music `public_fame`: 11 events, evidence coverage `1.0`.
+- Sports `sports_peak`: 12 events, evidence coverage `1.0`.
+
+### Boundary
+
+Industry-event evidence is extracted from sourced fixture subtypes for
+calibration only. It is not available for future predictions unless a separate,
+reviewed event-source provider is added.
+
+## 2026-06-26 - Industry-Evidence Upper-Bound Candidate Sweep
+
+### Motivation
+
+After adding `industry_event_evidence`, the next question was whether the new
+evidence layer can actually represent the known celebrity outcomes that the
+symbolic annual rules failed to time. This required a candidate sweep, but not a
+strict-rule promotion.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `_variant_industry_evidence()`.
+   - Added fixture-industry candidate predicates:
+     - `_variant_industry_fame_marker()`
+     - `_variant_industry_project_marker()`
+     - `_variant_industry_sports_peak_marker()`
+   - Added fixture-industry variants to `domain_topic_variant_sweep` for:
+     - film `public_fame`
+     - film `career_project`
+     - music `public_fame`
+     - music `career_project`
+     - sports `sports_peak`
+   - Updated `selection_basis` to state that these are upper-bound diagnostics
+     and cannot be promoted to prediction rules without a separate reviewed
+     event-source provider and false-positive checks.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires film `public_fame` to include `fixture_industry_fame_marker`.
+   - Requires that fixture-industry candidate to show strict hit rate `1.0`,
+     precision `1.0`, and false-positive rate `0.0`.
+   - Requires all domain-topic variants to remain unselected.
+   - Requires every selection basis to warn that candidates cannot be promoted
+     to prediction rules directly.
+
+3. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v67.
+   - Added strategy/migration rule 72.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Candidate Snapshot
+
+- Annual calibration receipt sha256:
+  `ef434855a711a8d9ef1eed75382f60e6ec4d58102db44ef3ddea797ebf9b88c4`.
+- Film `public_fame` fixture-industry candidate: hit rate `1.0`, precision
+  `1.0`, false-positive rate `0.0`.
+- Film `career_project` fixture-industry candidate: hit rate `1.0`, precision
+  `1.0`, false-positive rate `0.0`.
+- Music `public_fame` fixture-industry candidate: hit rate `1.0`, precision
+  `1.0`, false-positive rate `0.0`.
+- Music `career_project` fixture-industry candidate: hit rate `1.0`,
+  precision `1.0`, false-positive rate `0.0`.
+- Sports `sports_peak` fixture-industry candidate: hit rate `1.0`, precision
+  `1.0`, false-positive rate `0.0`.
+
+### Boundary
+
+These are upper-bound diagnostics over sourced fixture labels. They prove that
+the event ontology is expressive enough; they do not prove predictive timing.
+No fixture-industry variant is selected.
+
+## 2026-06-26 - Industry Negative-Year Source Coverage Gate
+
+### Motivation
+
+Fixture-industry variants reached perfect scores because they read sourced
+event-year labels. That proves ontology coverage, but not false-positive
+control: negative years do not yet have equivalent industry records saying
+whether there was no release, no award, no ranking title, no chart event, and so
+on.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `industry_event_source_coverage` to
+     `famous_case_annual_event_calibration_receipt()`.
+   - Added `_industry_event_source_coverage()`.
+   - Records positive event count, negative-year count, negative industry-label
+     coverage, required external source families, provider contract fields, and
+     required domain-topic slices.
+   - Marks fixture-industry rule promotion as blocked until external
+     negative-year industry labels exist.
+
+2. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Bound `industry_event_source_coverage` into the capability-audit receipt
+     material.
+
+3. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `industry_event_source_coverage` to the public
+     `FamousCaseAnnualEventCalibrationReceiptSummary` schema.
+
+4. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires `industry_event_source_coverage.status` to be
+     `needs_external_event_source`.
+   - Requires negative-year industry-label coverage to be `0.0`.
+   - Requires rule promotion to be blocked.
+   - Requires source URL and review fields in the provider contract.
+   - Requires film `public_fame` to be listed as a required slice.
+   - Requires audit material to bind the coverage object.
+
+5. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v68.
+   - Added strategy/migration rule 73.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Coverage Snapshot
+
+- Annual calibration receipt sha256:
+  `f52b1b64c4fc2909e6d7e46161f5de37169a4d8b0af8a0c669f8c2d281c78f9d`.
+- Positive event count: `130`.
+- Negative-year sample count: `1418`.
+- Negative-year industry label coverage rate: `0.0`.
+- Required domain-topic slice count: `9`.
+- Fixture-industry rule promotion: blocked.
+
+### Boundary
+
+This is a source-coverage gate, not a prediction improvement. It prevents
+fixture-derived industry labels from being mistaken for future-usable
+prediction features.
+
+## 2026-06-26 - Industry-Event Source Provider Handoff Gap
+
+### Motivation
+
+`industry_event_source_coverage` blocked fixture-industry rule promotion, but
+the blocker was still local to the annual calibration receipt. Because this
+blocker affects future rule promotion, it needs to appear in the global
+known-gap and handoff systems.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added known gap `industry_event_source_provider`.
+   - Added resolution blueprint with owner domain `industry_events`.
+   - Added verification commands through existing `outcome-dataset`,
+     `production-readiness`, and `release-manifest` CLI paths.
+   - Added production gates from the reviewed outcome-dataset gate family.
+   - Added candidate source entries:
+     - IMDb Non-Commercial Datasets
+     - MusicBrainz Database
+     - Wikidata Query Service
+     - Olympedia
+   - Filtered GitHub comparison `candidate_projects` to GitHub URLs so
+     non-GitHub industry data sources remain in external integration candidates
+     without polluting the GitHub comparison receipt.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires industry-event external candidates to appear.
+   - Requires known gap `industry_event_source_provider` with owner domain,
+     blocking scope, gates, and verification commands.
+   - Requires the known-gap resolution plan and handoff bundle to include the
+     industry-event source provider gap.
+   - Requires the handoff bundle to include Wikidata Query Service as a
+     candidate source.
+
+3. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Added v69.
+   - Added strategy/migration rule 74.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\capability_audit.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Handoff Snapshot
+
+- Known gap: `industry_event_source_provider`.
+- Owner domain: `industry_events`.
+- Blocking scope: `externally_reviewed_industry_event_manifest`.
+- Verification command count: `3`.
+- Handoff ready: `True`.
+- Candidate source count: `4`.
+- Candidate sources:
+  - IMDb Non-Commercial Datasets
+  - MusicBrainz Database
+  - Wikidata Query Service
+  - Olympedia
+- Capability audit receipt sha256:
+  `cd07ff4cb1a2606d578fe4b48b34e9f5a0abed5056adcbc7b318af3c6babecb5`.
+
+### Boundary
+
+These are candidate source families, not accepted providers. Licensing,
+coverage, source references, identity matching, refresh cadence, and
+negative-year semantics must pass review before the gap can close.
+
+## 2026-06-26 - Industry-Event Manifest Example Contract
+
+### Motivation
+
+The `industry_event_source_provider` gap had candidate sources and runbook
+commands, but no local contract file showing how sports, film/television, and
+music event years and non-event years should be represented. This made the gap
+handoff readable but not yet implementation-ready.
+
+### Actions Taken
+
+1. Added
+   `examples/mingli_5agents/providers/industry_event_source_manifest_example.json`:
+   - Defines schema version `industry-event-source-manifest-v1`.
+   - Covers film/television, music, and sports source families.
+   - Lists candidate sources: IMDb Non-Commercial Datasets, MusicBrainz
+     Database, Wikidata Query Service, and Olympedia.
+   - Provides six example records: three positive industry-event years and
+     three explicit negative years.
+   - Marks the file as example-only, not production evidence.
+
+2. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added `INDUSTRY_EVENT_SOURCE_MANIFEST_EXAMPLE`.
+   - Added `_industry_event_source_manifest_example_receipt()`.
+   - Bound the receipt into `capability_audit()` and the main audit receipt.
+   - Added capability bit `industry_event_source_manifest_example`.
+   - Updated the industry-event known-gap verification commands to reference
+     the local example manifest path.
+
+3. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Added `test_industry_event_source_manifest_example_receipt`.
+   - Requires positive and negative examples, source-family coverage, candidate
+     source coverage, stable receipt binding, and explicit non-production
+     status.
+   - Updated known-gap assertions to require the local example manifest path.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\capability_audit.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_source_manifest_example_receipt -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Receipt Snapshot
+
+- Capability audit receipt sha256:
+  `e891e30b541c191d4667ab06311eed2f690d1209b7f1389ccc77f5e0f502cfd3`.
+- Industry manifest example receipt sha256:
+  `ec310f6b8047bda611b924a52a5617f5538762856aa0bbe77c5b593bc1957aa9`.
+- Industry manifest example content hash:
+  `d2fdce862ef73a1416a055a53cb48e2f81a0c46c93c8af148b4ac1acaaef6682`.
+- Example record count: `6`.
+- Positive event count: `3`.
+- Negative event count: `3`.
+- Status: `ready_example`.
+
+### Boundary
+
+This closes the local handoff-contract gap, not the evidence-source gap. The
+main known gap remains open until reviewed external manifests or providers
+cover licensing, source references, identity matching, refresh cadence, and
+negative-year semantics.
+
+## 2026-06-26 - Industry-Event Manifest Audit CLI/API
+
+### Motivation
+
+The industry-event manifest example made the provider handoff concrete, but it
+still needed an executable audit surface. Without a validator, future sports,
+film/television, and music source manifests could drift away from the contract
+before being used for famous-case calibration.
+
+### Actions Taken
+
+1. Added `examples/mingli_5agents/industry_event_manifest.py`:
+   - Validates required top-level fields.
+   - Validates required record fields.
+   - Requires positive event years and explicit negative years.
+   - Requires `https://` source URLs.
+   - Requires negative-year explanations.
+   - Requires split roles `train` and `holdout`.
+   - Keeps production evidence blocked unless external review marks the
+     manifest as `reviewed_production_evidence`.
+   - Emits `industry-event-manifest-audit-receipt-v1`.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `industry_event_manifest_status()`.
+   - Added configuration guidance and production gate
+     `industry_event_source_provider_reviewed_manifest`.
+   - Added `GET /industry-events` to schema endpoint metadata.
+
+3. Updated `examples/mingli_5agents/cli.py`:
+   - Added CLI command `industry-events --manifest <path>`.
+
+4. Updated `examples/mingli_5agents/api_server.py`:
+   - Added HTTP route `GET /industry-events?manifest=<path>`.
+
+5. Updated tests:
+   - `test_industry_event_manifest_audit_accepts_example_contract`
+   - `test_industry_event_manifest_audit_rejects_missing_negative_year_reason`
+   - `test_industry_event_manifest_status_exposes_gate_and_guidance`
+   - `test_cli_industry_events_audits_example_manifest`
+   - `test_http_api_industry_events_route`
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_manifest.py examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py examples\mingli_5agents\capability_audit.py` passed.
+- `pytest examples\mingli_5agents\tests\test_cli.py::test_cli_industry_events_audits_example_manifest -q` passed.
+- `pytest examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_events_route -q` passed.
+- `pytest examples\mingli_5agents\tests\test_api_server.py::test_http_api_status_schema_analyze_and_benchmark -q` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_source_manifest_example_receipt examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_manifest_audit_accepts_example_contract examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_manifest_audit_rejects_missing_negative_year_reason examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_manifest_status_exposes_gate_and_guidance -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Receipt Snapshot
+
+- Industry manifest audit receipt sha256:
+  `d75d385266c8350f2010753cc42e17e433ab26c1a7a4d2c81418da8dd1a8a0aa`.
+- Industry example receipt sha256:
+  `f48b292b0c1d31eac284e333ffce3c4b7a406d05237617c98c7181c685a195f0`.
+- Capability audit receipt sha256:
+  `ca7d230a3a8593d69111511c266305e8e012b328fea117cb46d827822d705ef8`.
+- Content hash:
+  `d2fdce862ef73a1416a055a53cb48e2f81a0c46c93c8af148b4ac1acaaef6682`.
+- Example records: `6`.
+- Positive event years: `3`.
+- Negative years: `3`.
+
+### Boundary
+
+The audit path is now executable, but the example manifest is still not
+production evidence. The known gap remains open until reviewed external
+manifests or providers pass the same audit and explicitly satisfy production
+review.
+
+## 2026-06-26 - Industry-Event Source Query Plan Audit
+
+### Motivation
+
+The industry-event manifest audit made collected celebrity event data
+machine-checkable, but the collection side still lacked a reproducible query
+contract. Before integrating live sources such as Wikidata, the project needs
+auditable query templates that say how film, music, and sports events should be
+collected and mapped into manifest records.
+
+### Actions Taken
+
+1. Added
+   `examples/mingli_5agents/providers/industry_event_source_query_plan_example.json`:
+   - Defines schema version `industry-event-source-query-plan-v1`.
+   - Uses Wikidata Query Service as the example source.
+   - Provides SPARQL templates for:
+     - film public-fame events
+     - music public-fame events
+     - sports peak/career events
+   - Requires placeholders `PERSON_QID`, `START_YEAR`, and `END_YEAR`.
+   - Maps query results into the industry-event manifest record fields.
+   - Marks live collection as disabled until external review.
+
+2. Added `examples/mingli_5agents/industry_event_query_plan.py`:
+   - Validates query-plan top-level fields.
+   - Validates source endpoint metadata.
+   - Validates collection-policy controls.
+   - Validates template fields, SPARQL placeholders, `SELECT`/`LIMIT`, and
+     manifest field mappings.
+   - Emits `industry-event-query-plan-audit-receipt-v1`.
+
+3. Updated service surfaces:
+   - `api_core.industry_event_query_plan_status`.
+   - CLI command `industry-event-queries --query-plan <path>`.
+   - HTTP route `GET /industry-event-queries?query_plan=<path>`.
+   - Schema endpoint listing.
+
+4. Updated capability audit:
+   - Added `industry_event_source_query_plan_example`.
+   - Added capability bit `industry_event_source_query_plan_example`.
+   - Bound query-plan receipt into the capability-audit receipt material.
+
+5. Updated tests:
+   - Query-plan audit accepts the example contract.
+   - Query-plan audit rejects missing placeholders.
+   - Query-plan status exposes collection gate and guidance.
+   - CLI and HTTP endpoints audit the example query plan.
+   - Capability audit exposes the query-plan example receipt.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_query_plan.py examples\mingli_5agents\industry_event_manifest.py examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py examples\mingli_5agents\capability_audit.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_source_query_plan_example_receipt examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_query_plan_audit_accepts_example_contract examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_query_plan_audit_rejects_missing_placeholder examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_query_plan_status_exposes_gate_and_guidance -q` passed.
+- `pytest examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_queries_audits_example_query_plan examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_queries_route -q` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_source_manifest_example_receipt examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_source_query_plan_example_receipt examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_manifest_status_exposes_gate_and_guidance -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Receipt Snapshot
+
+- Query-plan audit receipt sha256:
+  `556b7dc6ba7f3d3726af8d143a4eb84ddd14969e474dd8f14d4171876a730504`.
+- Query-plan example receipt sha256:
+  `84bfba789553304f3cde7de7a2c1c0726d6a4ea0865f98d9b3aa9ecd149f5f45`.
+- Capability audit receipt sha256:
+  `df7e315b111ab3e3c62bfcc91f4fcedd99ccad7760f77f2797e8a69b3f6ae652`.
+- Query-plan content hash:
+  `3167726bf4c8e0f5fd93ae168b784b468c49058663f9d1390c1cbeeb20fcc182`.
+- Template count: `3`.
+- Domains: `film`, `music`, `sports`.
+
+### Boundary
+
+The query plan is executable as an audit target, but live collection remains
+blocked. External review must approve identity matching, statement-reference
+requirements, rate-limit handling, and negative-year source-window semantics
+before any live collection can feed production evidence.
+
+## 2026-06-26 - Industry-Event Offline Collection Request Bundles
+
+### Motivation
+
+The query-plan audit made source templates reviewable, but there was still no
+reproducible artifact for a specific famous person and year range. Before live
+collection, the framework needs an offline request bundle that expands the
+template, records the exact SPARQL/query URL, and binds it to the future
+manifest row preview.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_query_plan.py`:
+   - Added `build_industry_event_collection_request_bundle`.
+   - Added `industry_event_collection_request_bundle_receipt`.
+   - Validates `case_id`, `public_name`, Wikidata `person_qid`, year range,
+     split role, and optional domain filter.
+   - Expands `PERSON_QID`, `START_YEAR`, and `END_YEAR` placeholders.
+   - Emits per-request `request_sha256`.
+   - Emits bundle receipt
+     `industry-event-collection-request-bundle-receipt-v1`.
+   - Keeps `execution_gate.passed` false because this is not live collection
+     authorization.
+
+2. Updated service surfaces:
+   - `api_core.industry_event_collection_requests`.
+   - CLI command `industry-event-requests`.
+   - HTTP route `GET /industry-event-requests`.
+   - Schema endpoint listing.
+
+3. Updated tests:
+   - Offline request bundle expands Roger Federer sports query.
+   - Bad Wikidata QID is rejected.
+   - CLI builds the offline bundle.
+   - HTTP route builds the offline bundle.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_query_plan.py examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_collection_request_bundle_expands_queries_offline examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_collection_request_bundle_rejects_bad_qid -q` passed.
+- `pytest examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_requests_builds_offline_bundle examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_requests_route -q` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_source_query_plan_example_receipt examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_query_plan_audit_accepts_example_contract examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_query_plan_status_exposes_gate_and_guidance -q` passed.
+- `pytest examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_queries_audits_example_query_plan examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_queries_route -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Receipt Snapshot
+
+- Example offline bundle receipt sha256:
+  `67c386f10cd4a2a14204b911ae2276962bddc12b872b316b93dfe081c9722f9a`.
+- Example request sha256:
+  `a6f5918b5855f3da8a08ea75f44a7e38c50eb7c3d05a44438bf052d1cf0d2025`.
+- Query-plan content hash:
+  `3167726bf4c8e0f5fd93ae168b784b468c49058663f9d1390c1cbeeb20fcc182`.
+- Query-plan receipt sha256:
+  `9e02db8a7ae6f84009fe536f3af334c120a885f2149955024320d483505dddcd`.
+- Example case: `roger_federer`, QID `Q1426`, `2002-2004`,
+  domain `sports`, split role `holdout`.
+
+### Boundary
+
+This is still offline-only. It does not fetch Wikidata and does not certify the
+resulting evidence. It creates a reproducible request package that must be
+reviewed before live collection is enabled.
+
+## 2026-06-26 - Cached Response To Draft Industry Manifest
+
+### Motivation
+
+Offline request bundles made exact source queries reviewable, but the framework
+still could not turn a cached source response into auditable industry-event
+records. The next step was to add a no-network import path that maps a
+Wikidata-like JSON response into a draft manifest, including explicit negative
+years.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_manifest.py`:
+   - Added `audit_industry_event_manifest_payload` so generated in-memory
+     manifests can use the same audit rules as file manifests.
+
+2. Updated `examples/mingli_5agents/industry_event_query_plan.py`:
+   - Added `build_industry_event_manifest_draft_from_wikidata_response`.
+   - Converts cached response bindings into positive event records.
+   - Adds explicit negative-year records for years in the requested window with
+     no matching positive result.
+   - Preserves request-bundle receipt hash, response hash, request hash, and
+     template id.
+   - Emits `industry-event-manifest-draft-receipt-v1`.
+   - Runs the generated draft through the existing manifest audit.
+
+3. Added fixture:
+   - `examples/mingli_5agents/providers/wikidata_sports_response_example.json`
+
+4. Updated service surfaces:
+   - `api_core.industry_event_manifest_draft_from_response`.
+   - CLI command `industry-event-draft-manifest`.
+   - HTTP route `GET /industry-event-draft-manifest`.
+   - Schema endpoint listing.
+
+5. Updated tests:
+   - Draft manifest generation adds one positive year and two negative years.
+   - CLI builds the draft manifest from cached response.
+   - HTTP route builds the draft manifest from cached response.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_manifest.py examples\mingli_5agents\industry_event_query_plan.py examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_manifest_draft_from_cached_response_adds_negative_years -q` passed.
+- `pytest examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_draft_manifest_from_cached_response examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_draft_manifest_route -q` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_collection_request_bundle_expands_queries_offline examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_query_plan_audit_accepts_example_contract -q` passed.
+- `pytest examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_requests_builds_offline_bundle examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_requests_route -q` passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q` passed.
+
+### Receipt Snapshot
+
+- Draft receipt sha256:
+  `eb54b858fb147df61749315045e97040184218a17ebedafd4db7cf804f258408`.
+- Draft manifest audit receipt sha256:
+  `fbb04582af3b2f8d119f03aceb926ded849c00c49824abe9c4919da11baa1c7e`.
+- Response sha256:
+  `9b362dba0a1b5b6ba75ada4349d6368e46735e14223b9265679f5da2c1c80ec1`.
+- Request bundle receipt sha256:
+  `67c386f10cd4a2a14204b911ae2276962bddc12b872b316b93dfe081c9722f9a`.
+- Generated record counts:
+  - Positive: `1`.
+  - Negative: `2`.
+  - Total: `3`.
+
+### Boundary
+
+This is still offline-only and uses a fixture response. It does not fetch live
+Wikidata data, does not certify identity matching, and does not promote the
+draft manifest to production evidence.
+
+## 2026-06-26 - Controlled Industry Event Fetch Cache Gate
+
+### Motivation
+
+The framework can now describe celebrity-event query plans and import cached
+responses, but sports, film, and music validation still needed a controlled
+fetch/cache gate. Without that gate, live collection could bypass review and
+make future calibration hard to reproduce.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_query_plan.py`:
+   - Added `build_industry_event_fetch_cache_plan`.
+   - Added deterministic cache filenames derived from case id, template id,
+     year window, and request hash.
+   - Added dry-run behavior as the default: no public source is contacted.
+   - Added live execution blocking unless the query plan is externally reviewed
+     and marked `collection_ready`.
+   - Added `industry-event-fetch-cache-receipt-v1` binding request-bundle
+     receipt, cache paths, live flag, failures, and write counts.
+
+2. Updated service surfaces:
+   - `api_core.industry_event_fetch_cache`.
+   - CLI command `industry-event-fetch-cache`.
+   - HTTP route `GET /industry-event-fetch-cache`.
+   - Schema endpoint listing.
+
+3. Updated tests:
+   - Dry-run fetch/cache planning does not fetch or write cache files.
+   - Live fetch is blocked for the bundled example because it is not externally
+     reviewed.
+   - CLI dry-run exposes planned cache path and receipt.
+   - HTTP dry-run exposes planned cache path and receipt.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_query_plan.py examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_fetch_cache_plan_dry_run_does_not_fetch examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_fetch_cache_plan_live_requires_reviewed_collection_ready examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_fetch_cache_dry_run examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_fetch_cache_route_dry_run -q` passed.
+- `python -m examples.mingli_5agents.cli --repo .semas_mingli_repo schema | Select-String -Pattern 'industry-event-fetch-cache'` returned the new endpoint.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_collection_request_bundle_expands_queries_offline examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_fetch_cache_plan_dry_run_does_not_fetch examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_fetch_cache_plan_live_requires_reviewed_collection_ready examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_manifest_draft_from_cached_response_adds_negative_years examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_requests_builds_offline_bundle examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_fetch_cache_dry_run examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_draft_manifest_from_cached_response examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_requests_route examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_fetch_cache_route_dry_run examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_draft_manifest_route -q` passed.
+- Dry-run example receipt sha256:
+  `1484aefa5c8ba29b2c67a1d4fa45744b9254616471006f85ee613f15446bfda0`.
+
+### Boundary
+
+This does not yet collect real celebrity data. It makes sports, film, and music
+public-event collection executable only as a dry-run by default, and blocks live
+fetch unless source-query governance is reviewed.
+
+## 2026-06-26 - Celebrity Candidate Pool Audit
+
+### Motivation
+
+The framework can plan and cache public industry-event collection, but it still
+needed an auditable answer to which sports, film, and music celebrities should
+enter validation first. Candidate choice itself can introduce sampling bias, so
+the next step was to make the candidate pool explicit and receipt-bound.
+
+### Actions Taken
+
+1. Added `examples/mingli_5agents/providers/industry_event_candidate_cases_example.json`:
+   - 9 candidate public figures.
+   - 3 sports candidates, 3 film candidates, and 3 music candidates.
+   - Each candidate includes case id, public name, domain, industry, Wikidata
+     QID, source URL, split role, collection window, and selection reason.
+
+2. Added `examples/mingli_5agents/industry_event_candidates.py`:
+   - Validates required candidate fields.
+   - Requires film/music/sports coverage.
+   - Requires a minimum number of candidates per domain.
+   - Checks QID shape, Wikidata entity URLs, split roles, collection windows,
+     and identity-review boundary.
+   - Emits `industry-event-candidate-cases-audit-receipt-v1`.
+
+3. Updated service surfaces:
+   - `api_core.industry_event_candidate_cases_status`.
+   - CLI command `industry-event-candidates`.
+   - HTTP route `GET /industry-event-candidates`.
+   - Schema endpoint listing.
+   - Capability audit receipt material and capability flags.
+
+4. Verified candidate QIDs through Wikidata `wbsearchentities` lookup:
+   - Roger Federer: `Q1426`.
+   - Serena Williams: `Q11459`.
+   - Michael Jordan: `Q41421`.
+   - Jackie Chan: `Q36970`.
+   - Meryl Streep: `Q873`.
+   - Tom Hanks: `Q2263`.
+   - Taylor Swift: `Q26876`.
+   - Beyonce: `Q36153`.
+   - Jay Chou: `Q238819`.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py examples\mingli_5agents\capability_audit.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_candidate_cases_audit_accepts_example_contract examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_candidate_cases_status_exposes_gate_and_guidance examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_candidate_cases_example_receipt examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_candidates_audits_example_candidate_pool examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_candidates_route -q` passed.
+- `python -m examples.mingli_5agents.cli --repo .semas_mingli_repo industry-event-candidates --candidates examples\mingli_5agents\providers\industry_event_candidate_cases_example.json` passed.
+- `python -m examples.mingli_5agents.cli --repo .semas_mingli_repo schema | Select-String -Pattern 'industry-event-candidates'` returned the new endpoint.
+
+### Receipt Snapshot
+
+- Candidate pool receipt sha256:
+  `635ac7ccefd07898e93e6e3ba3543bf58a5a8237371d28b346024f239d057c63`.
+- Candidate pool content hash:
+  `7c70e351ace85a7c5b3799c43b88b5ebb10fc08ceb25111ac14dd9fc2911f153`.
+- Candidate count: `9`.
+- Domain counts: `film=3`, `music=3`, `sports=3`.
+
+### Boundary
+
+This is an example candidate pool, not production validation evidence. It does
+not certify birth data or event labels. Production use still requires external
+identity review, reviewed event collection, and positive/negative year
+manifests.
+
+## 2026-06-26 - Candidate Pool Batch Fetch Cache Plan
+
+### Motivation
+
+After the celebrity candidate pool became auditable, the next gap was execution
+friction: every candidate still had to be manually copied into a single-person
+fetch/cache command. The framework needed a batch dry-run that expands the
+candidate pool into per-person event collection plans without contacting live
+sources.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `build_candidate_pool_fetch_cache_plan`.
+   - Reads candidate case ids, QIDs, domains, split roles, and collection
+     windows from the candidate manifest.
+   - Supports optional `domain` and `split_role` filters.
+   - Calls the existing per-candidate fetch/cache planner for each selected
+     candidate.
+   - Emits `industry-event-candidate-pool-fetch-cache-receipt-v1`.
+   - Defaults to dry-run and does not contact public sources.
+
+2. Updated service surfaces:
+   - `api_core.industry_event_candidate_pool_fetch_cache`.
+   - CLI command `industry-event-candidate-fetch-cache`.
+   - HTTP route `GET /industry-event-candidate-fetch-cache`.
+   - Schema endpoint listing.
+
+3. Updated tests:
+   - Batch plan expands selected sports candidates.
+   - API exposes music-domain batch plan.
+   - CLI exposes film-domain dry-run batch plan.
+   - HTTP exposes sports-domain dry-run batch plan.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py examples\mingli_5agents\industry_event_query_plan.py examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_candidate_pool_fetch_cache_plan_expands_selected_candidates examples\mingli_5agents\tests\test_empirical_validation.py::test_candidate_pool_fetch_cache_api_exposes_batch_plan examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_candidate_fetch_cache_dry_run examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_candidate_fetch_cache_route_dry_run -q` passed.
+- `python -m examples.mingli_5agents.cli --repo .semas_mingli_repo industry-event-candidate-fetch-cache --candidates examples\mingli_5agents\providers\industry_event_candidate_cases_example.json --query-plan examples\mingli_5agents\providers\industry_event_source_query_plan_example.json --cache-dir .semas_mingli_repo\industry_event_cache` passed.
+- `python -m examples.mingli_5agents.cli --repo .semas_mingli_repo schema | Select-String -Pattern 'industry-event-candidate-fetch-cache'` returned the new endpoint.
+
+### Receipt Snapshot
+
+- Candidate pool batch fetch/cache receipt sha256:
+  `56222f1ff1933ab98200672fa264c948dd8160dea6ea4a1a1e0e3254d9e8b5cf`.
+- Candidate receipt sha256:
+  `635ac7ccefd07898e93e6e3ba3543bf58a5a8237371d28b346024f239d057c63`.
+- Candidate count: `9`.
+- Planned request count: `9`.
+- Planned cache count: `9`.
+- Cache write count: `0`.
+
+### Boundary
+
+This is still a dry-run by default. It generates auditable collection plans and
+cache paths for selected celebrity candidates but does not fetch live data and
+does not promote any event evidence into calibration.
+
+## 2026-06-26 - Candidate Pool Cached Response Draft Import
+
+### Motivation
+
+The framework could batch-plan celebrity source collection, but cached responses
+still had to be imported one person at a time. The next step was to batch-import
+available cached responses into draft industry-event manifests, while explicitly
+reporting missing cache files.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `build_candidate_pool_manifest_drafts_from_cache`.
+   - Reuses candidate-pool fetch/cache dry-run plans to locate expected cache
+     files.
+   - Imports existing cached responses through the existing per-candidate
+     Wikidata response importer.
+   - Summarizes draft count, missing cache count, positive records, negative
+     records, total records, per-draft receipts, and failures.
+   - Emits `industry-event-candidate-pool-draft-import-receipt-v1`.
+
+2. Updated service surfaces:
+   - `api_core.industry_event_candidate_pool_draft_import`.
+   - CLI command `industry-event-candidate-draft-import`.
+   - HTTP route `GET /industry-event-candidate-draft-import`.
+   - Schema endpoint listing.
+
+3. Updated tests:
+   - Batch import succeeds when sports candidate cache files exist.
+   - Batch import reports missing cache files.
+   - API exposes draft-import summary.
+   - CLI imports cached responses.
+   - HTTP imports cached responses.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_candidate_pool_manifest_drafts_from_cache_imports_selected_candidates examples\mingli_5agents\tests\test_empirical_validation.py::test_candidate_pool_manifest_draft_import_reports_missing_cache examples\mingli_5agents\tests\test_empirical_validation.py::test_candidate_pool_manifest_draft_import_api_exposes_summary examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_candidate_draft_import_from_cached_responses examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_candidate_draft_import_route -q` passed.
+- `python -m examples.mingli_5agents.cli --repo .semas_mingli_repo industry-event-candidate-draft-import --candidates examples\mingli_5agents\providers\industry_event_candidate_cases_example.json --query-plan examples\mingli_5agents\providers\industry_event_source_query_plan_example.json --cache-dir .semas_mingli_repo\industry_event_cache_demo --domain sports` passed after materializing fixture cache files from the dry-run plan.
+- `python -m examples.mingli_5agents.cli --repo .semas_mingli_repo schema | Select-String -Pattern 'industry-event-candidate-draft-import'` returned the new endpoint.
+
+### Receipt Snapshot
+
+- Candidate pool draft import receipt sha256:
+  `4f2d97ef1a079596bd9f2e8e076629507ff29760e15de3d8aba7837eef2133c9`.
+- Candidate pool fetch/cache receipt sha256:
+  `7244d6fb844b2bcc0859c4517b8ce342d184b7260fa03d407127949ae0b91529`.
+- Candidate receipt sha256:
+  `635ac7ccefd07898e93e6e3ba3543bf58a5a8237371d28b346024f239d057c63`.
+- Imported sports candidates: `3`.
+- Positive records: `3`.
+- Negative records: `70`.
+- Total records: `73`.
+- Missing responses: `0`.
+
+### Boundary
+
+This imports cached source responses only. The demonstration used the existing
+fixture response for sports candidates, so it proves the batch import pipeline
+but does not certify real celebrity event facts. Draft manifests still require
+source review before calibration use.
+
+## 2026-06-26 - Candidate Pool Combined Draft Manifest Audit
+
+### Motivation
+
+The candidate-pool draft importer produced per-candidate draft summaries, but a
+future calibration step needs a single auditable event-label artifact. The next
+step was to merge imported candidate drafts into one combined draft manifest and
+run the normal industry-event manifest audit over that combined object.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Batch draft import now preserves imported draft manifest records.
+   - Added a combined candidate-pool draft manifest.
+   - Deduplicates source-family declarations across imported drafts.
+   - Runs `audit_industry_event_manifest_payload` on the combined manifest.
+   - Exposes `combined_draft_manifest`, `combined_draft_manifest_audit`, and
+     `combined_draft_manifest_audit_receipt`.
+   - Adds combined manifest counts and audit receipt hash to the batch import
+     receipt material.
+
+2. Updated tests:
+   - Core batch import asserts combined manifest audit validity and counts.
+   - API summary exposes combined manifest validity and record count.
+   - CLI and HTTP paths assert combined manifest validity and record count.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_candidate_pool_manifest_drafts_from_cache_imports_selected_candidates examples\mingli_5agents\tests\test_empirical_validation.py::test_candidate_pool_manifest_draft_import_api_exposes_summary examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_candidate_draft_import_from_cached_responses examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_candidate_draft_import_route -q` passed.
+- Replayed the sports candidate cache-import demo and confirmed combined
+  manifest counts.
+
+### Receipt Snapshot
+
+- Candidate pool draft import receipt sha256:
+  `4186ea0718c0e46e9db3678554ee73e0a6ba297a69aa124e6329c6aad4620186`.
+- Combined draft manifest audit receipt sha256:
+  `2f18110d4bb37ababa20ef848f6d48ea0ff605b89ee71b9528a422b0a000cf7c`.
+- Combined record count: `73`.
+- Positive records: `3`.
+- Negative records: `70`.
+
+### Boundary
+
+The combined manifest is still a draft from cached responses and is explicitly
+not production evidence. It gives future calibration one auditable input object,
+but source review and identity review remain required before using it as
+validated evidence.
+
+## 2026-06-26 - Industry Event Validation Label Adapter
+
+### Motivation
+
+The combined industry-event manifest is auditable, but timing-rule scoring needs
+a stable validation-label table. This step separates factual labels from later
+symbolic rule scoring so sports, film, and music celebrity cases can be tested
+against the same input boundary.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_manifest.py`:
+   - Added a validation-label-table builder for manifest files.
+   - Added a payload variant so candidate-pool imports can convert in-memory
+     combined draft manifests.
+   - Normalizes each manifest record into positive or negative annual labels.
+   - Adds domain-topic summaries and a deterministic label-table receipt.
+
+2. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Batch candidate-pool draft import now emits `validation_label_table`.
+   - Import receipts include validation label receipt hash and label counts.
+
+3. Updated CLI/API/HTTP surfaces:
+   - Added `industry-event-labels --manifest`.
+   - Added API helper `industry_event_validation_labels`.
+   - Added HTTP route `GET /industry-event-labels`.
+   - Added schema exposure for the new endpoint.
+
+4. Updated tests:
+   - Core manifest-to-label adapter test.
+   - Candidate-pool import test for embedded label table.
+   - CLI route test.
+   - HTTP route test.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_manifest.py examples\mingli_5agents\industry_event_candidates.py examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_validation_label_table_adapts_manifest_records examples\mingli_5agents\tests\test_empirical_validation.py::test_candidate_pool_manifest_drafts_from_cache_imports_selected_candidates examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_labels_adapts_example_manifest examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_labels_route -q` passed.
+- `python -m examples.mingli_5agents.cli --repo .semas_mingli_repo industry-event-labels --manifest examples\mingli_5agents\providers\industry_event_source_manifest_example.json` returned the expected label summary.
+- `python -m examples.mingli_5agents.cli --repo .semas_mingli_repo schema | Select-String -Pattern 'industry-event-labels'` returned the new endpoint.
+
+### Receipt Snapshot
+
+- Validation label table receipt sha256:
+  `3e8289b00a4181605273622b76aeea0ed79fbefb4a819befd2a15d6da620ab46`.
+- Example manifest label count: `6`.
+- Positive labels: `3`.
+- Negative labels: `3`.
+- Candidate-pool combined validation labels from the sports demo: `73`.
+- Candidate-pool positive labels: `3`.
+- Candidate-pool negative labels: `70`.
+
+### Boundary
+
+The label table does not score Bazi, Ziwei, Qimen, or any symbolic rule. It only
+turns reviewed or draft event manifests into stable annual fact labels. Actual
+timing-rule validation still needs the next scoring adapter and production
+source review before any case is treated as certified evidence.
+
+## 2026-06-26 - Cross-Domain Celebrity Label Coverage Gate
+
+### Motivation
+
+The framework can now find and plan sports, film, and music celebrity validation
+cases, but a single-domain import should not be reported as cross-domain
+evidence. The next guardrail was to make the validation label table state
+whether all three celebrity domains have positive and negative annual labels.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_manifest.py`:
+   - Added `domain_coverage_summary` to validation label tables.
+   - Added `cross_domain_coverage_gate`.
+   - The gate requires `film`, `music`, and `sports`.
+   - Each required domain must include at least one positive label and one
+     negative label.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - The example manifest now proves the cross-domain gate passes.
+   - The sports-only candidate-pool import remains valid, but now explicitly
+     reports missing `film` and `music` for cross-domain validation.
+
+3. Updated `wiki/llm_agent_evolution_mingli.md`:
+   - Rewrote the v80 label-table section in readable Chinese.
+   - Added v81 for cross-domain celebrity coverage.
+   - Added migration rule 86.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_manifest.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_validation_label_table_adapts_manifest_records examples\mingli_5agents\tests\test_empirical_validation.py::test_candidate_pool_manifest_drafts_from_cache_imports_selected_candidates -q` passed.
+
+### Boundary
+
+This is a coverage gate, not a predictive score. It does not prove that Mingli
+rules predict celebrity outcomes. It prevents the weaker mistake of treating a
+partial domain sample as if it supported sports, film, and music together.
+
+## 2026-06-26 - Industry Event Symbolic Scoring Readiness
+
+### Motivation
+
+Industry-event labels contain public people, years, domains, and event topics,
+but they do not necessarily contain birth data. The next step was to prevent the
+framework from treating a factual event label as scoreable unless it can be
+matched to a reviewed local birth profile.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_manifest.py`:
+   - Added `build_industry_event_symbolic_scoring_readiness`.
+   - Added a payload variant for in-memory manifests.
+   - Each label now receives `scoring_ready`, `birth_profile_available`, and
+     explicit `blocking_reasons`.
+   - Added case-level and domain-topic readiness summaries.
+   - Added gates for label-table validity, birth-profile coverage, and
+     positive/negative ready-label coverage.
+   - Added a deterministic symbolic-scoring-readiness receipt.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `industry_event_symbolic_scoring_readiness`.
+   - Uses `famous_case_records()` as the local reviewed birth-profile source.
+
+3. Updated CLI/API surfaces:
+   - Added CLI command `industry-event-scoring-readiness --manifest`.
+   - Added HTTP route `GET /industry-event-scoring-readiness`.
+   - Added schema endpoint exposure.
+
+4. Updated tests:
+   - Core readiness test checks matched and blocked labels.
+   - CLI test checks the new command.
+   - HTTP test checks the new route.
+   - Schema tests check endpoint discoverability.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_manifest.py examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_symbolic_scoring_readiness_matches_birth_profiles examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_scoring_readiness_checks_birth_profiles examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_scoring_readiness_route -q` passed.
+- `python -m examples.mingli_5agents.cli --repo .semas_mingli_repo industry-event-scoring-readiness --manifest examples\mingli_5agents\providers\industry_event_source_manifest_example.json` returned the readiness summary below.
+
+### Receipt Snapshot
+
+- Symbolic scoring readiness receipt sha256:
+  `c171f87120228421b8f28dd55bccbdfd32297f40ff54dd652e12152f66d0508b`.
+- Total labels: `6`.
+- Ready labels: `4`.
+- Blocked labels: `2`.
+- Positive ready labels: `2`.
+- Negative ready labels: `2`.
+- Ready cases: `marilyn_monroe`, `roger_federer`.
+- Blocked case: `bob_dylan`, reason `missing reviewed birth profile for case_id`.
+
+### Boundary
+
+This is still not a predictive score. It only proves which event labels have
+enough local birth-profile coverage to be sent into the symbolic annual scoring
+layer. Missing birth data remains an explicit blocker rather than an inferred or
+fabricated chart.
+
+## 2026-06-26 - Industry Event Symbolic Annual Score
+
+### Motivation
+
+After the readiness gate identified labels with matching birth profiles, the
+next step was to actually run those ready labels through the symbolic annual
+row diagnostics. This moves the public celebrity pipeline from "label prepared"
+to "label scored", while still keeping the result clearly bounded as a
+diagnostic rather than predictive proof.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_manifest.py`:
+   - Added `build_industry_event_symbolic_annual_score`.
+   - Builds BaZi charts and annual rows only for labels that passed readiness.
+   - Scores positive labels as exact/strict hits.
+   - Scores negative labels as false positives.
+   - Emits case and domain-topic metric summaries.
+   - Adds explicit topic mapping:
+     - sports `career_peak` -> `sports_peak`.
+     - non-sports `career_peak` -> `career_project`.
+   - Adds a deterministic symbolic annual score receipt.
+
+2. Updated API/CLI/HTTP surfaces:
+   - Added API helper `industry_event_symbolic_annual_score`.
+   - Added CLI command `industry-event-symbolic-score --manifest`.
+   - Added HTTP route `GET /industry-event-symbolic-score`.
+   - Added schema endpoint exposure.
+
+3. Updated tests:
+   - Core scoring test verifies ready labels are scored and blocked labels stay
+     blocked.
+   - CLI scoring test verifies command output.
+   - HTTP scoring test verifies route output.
+   - Schema endpoint assertions include the new route.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_manifest.py examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_symbolic_annual_score_scores_ready_labels examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_symbolic_score_scores_ready_labels examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_symbolic_score_route -q` passed.
+- `python -m examples.mingli_5agents.cli --repo .semas_mingli_repo industry-event-symbolic-score --manifest examples\mingli_5agents\providers\industry_event_source_manifest_example.json` returned the metric snapshot below.
+
+### Receipt Snapshot
+
+- Symbolic annual score receipt sha256:
+  `78e926aac7ec521234eeeb4c14b1e29f4570cc686ea77089acd0b9f1a08d0d51`.
+- Scored labels: `4`.
+- Blocked labels: `2`.
+- Loose exact hit rate: `0.5`.
+- Strict exact hit rate: `0.0`.
+- Loose false-positive rate: `0.5`.
+- Strict false-positive rate: `0.0`.
+- Domain-topic slices:
+  - `film/public_fame`: scored `2`, strict hit `0.0`, strict false-positive `0.0`.
+  - `sports/sports_peak`: scored `2`, strict hit `0.0`, strict false-positive `0.0`.
+
+### Boundary
+
+This diagnostic does not prove predictive validity. The current example shows
+that loose signals can hit some event years while also firing in negative years,
+and that strict signals are currently too conservative for the small ready-label
+set. The correct next evolution is stronger event evidence and more reviewed
+birth profiles, not relaxing strict rules for cosmetic scores.
+
+## 2026-06-26 - Industry Symbolic Evidence Refinement Queue
+
+### Motivation
+
+The industry symbolic annual score produced metrics, but the next evolution step
+should not be chosen by intuition. The score receipt now needs to explain
+whether to expand ready labels, reduce false positives, or add event-specific
+evidence before changing symbolic rules.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_manifest.py`:
+   - Added `evidence_refinement_queue` to symbolic annual score output.
+   - Added `evolution_task_plan` derived from that queue.
+   - Queue priority uses ready positive/negative counts, strict hit rate, and
+     strict false-positive rate.
+   - Recommended evidence is domain-topic specific:
+     - `public_fame` asks for structured visibility markers and negative-year
+       source windows.
+     - `sports_peak` asks for structured competition result markers, achievement
+       subtypes, and non-peak season evidence.
+     - `career_project` and `business_power` have their own future evidence
+       requirements.
+   - Acceptance criteria are attached to every task.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Symbolic annual score must now include a refinement queue and task plan.
+   - The current example must emit high-priority `expand_ready_labels` tasks for
+     `film/public_fame` and `sports/sports_peak`.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_manifest.py examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_symbolic_annual_score_scores_ready_labels examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_symbolic_score_scores_ready_labels examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_symbolic_score_route -q` passed.
+- `python -m examples.mingli_5agents.cli --repo .semas_mingli_repo industry-event-symbolic-score --manifest examples\mingli_5agents\providers\industry_event_source_manifest_example.json` returned the queue snapshot below.
+
+### Receipt Snapshot
+
+- Updated symbolic annual score receipt sha256:
+  `3ef1571d667532df9827f43e9c8e8e71e47a5cb0150eb787257df3042ed24a3b`.
+- Refinement queue count: `2`.
+- High-priority task:
+  `industry-symbolic-film-public_fame-expand_ready_labels`.
+- High-priority task:
+  `industry-symbolic-sports-sports_peak-expand_ready_labels`.
+
+### Boundary
+
+The queue is a work planner, not a scoring improvement by itself. Its current
+answer is deliberately conservative: expand ready positive/negative labels and
+reviewed birth profiles before tuning strict symbolic rules.
+
+## 2026-06-26 - Industry Evidence Workplan From Score Tasks
+
+### Motivation
+
+The symbolic annual score can now produce evidence-refinement tasks, but those
+tasks still need to become executable collection work. The next step was to bind
+score-derived tasks to the reviewed candidate pool, query plan, cache directory,
+and exact CLI commands needed for future evidence collection.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `build_industry_event_evidence_workplan_from_symbolic_score`.
+   - Converts `expand_ready_labels` tasks into candidate-pool work items.
+   - Selects candidates by domain.
+   - Emits target positive/negative label counts.
+   - Emits dry-run fetch/cache and draft-import CLI commands.
+   - Adds a deterministic evidence-workplan receipt.
+
+2. Updated API/CLI/HTTP surfaces:
+   - Added API helper `industry_event_evidence_workplan`.
+   - Added CLI command `industry-event-evidence-workplan`.
+   - Added HTTP route `GET /industry-event-evidence-workplan`.
+   - Added schema endpoint exposure.
+
+3. Updated tests:
+   - Core workplan test verifies film and sports work items.
+   - CLI workplan test verifies command output.
+   - HTTP workplan test verifies route output.
+   - Schema endpoint assertions include the new route.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+- `python -m examples.mingli_5agents.cli --repo .semas_mingli_repo industry-event-evidence-workplan --manifest examples\mingli_5agents\providers\industry_event_source_manifest_example.json --candidates examples\mingli_5agents\providers\industry_event_candidate_cases_example.json --query-plan examples\mingli_5agents\providers\industry_event_source_query_plan_example.json --cache-dir .semas_mingli_repo\industry_event_cache_workplan` returned the workplan snapshot below.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `c814e435e64409c57e03044b637ae64b2100dfb99a64094abdc7f8216e970c03`.
+- Work item count: `2`.
+- Domains: `film`, `sports`.
+- Film candidates: `jackie_chan`, `meryl_streep`, `tom_hanks`.
+- Sports candidates: `roger_federer`, `serena_williams`, `michael_jordan`.
+- Commands per work item: `2`.
+
+### Boundary
+
+The workplan does not fetch live data. It converts score tasks into reviewable
+dry-run and draft-import commands so future agents can execute evidence
+collection without inventing the next step by hand.
+
+## 2026-06-26 - Embedded Dry-Run Plans In Evidence Workplans
+
+### Motivation
+
+The evidence workplan generated commands, but a future agent still had to run
+those commands to see request counts, cache paths, and fetch/cache receipts. The
+next step was to embed a compact dry-run plan summary inside every work item.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Each evidence work item now runs the corresponding candidate-pool dry-run
+     fetch/cache planner.
+   - Adds `fetch_cache_plan_summary` to each work item.
+   - Includes fetch/cache receipt hash, candidate count, request count, planned
+     cache count, planned cache paths, and failures.
+   - Workplan-level material now includes `planned_request_count` and
+     `planned_cache_count`.
+   - Candidate receipt consistency is checked between the workplan and embedded
+     dry-run plan.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Workplan test now requires six planned requests and six planned cache paths
+     across film and sports.
+   - Verifies per-domain embedded fetch/cache receipt hashes.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+- `python -m examples.mingli_5agents.cli --repo .semas_mingli_repo industry-event-evidence-workplan --manifest examples\mingli_5agents\providers\industry_event_source_manifest_example.json --candidates examples\mingli_5agents\providers\industry_event_candidate_cases_example.json --query-plan examples\mingli_5agents\providers\industry_event_source_query_plan_example.json --cache-dir .semas_mingli_repo\industry_event_cache_workplan` returned the snapshot below.
+
+### Receipt Snapshot
+
+- Updated evidence workplan receipt sha256:
+  `bf5727cb163dcfc83fe0ca74392607b0bebc4e5fdc534690e9049b0e907568f5`.
+- Planned requests: `6`.
+- Planned cache paths: `6`.
+- Film fetch/cache receipt sha256:
+  `b84f49de1d91d5550f107e24b0f9e34ca953cbabaad52f5fd052df21c1817dae`.
+- Sports fetch/cache receipt sha256:
+  `680b80eda813ed8ab7f1f6223847f30c1a7f5207701db77c683d17256cd99343`.
+
+### Boundary
+
+This still does not fetch live data. It makes the next evidence step more
+reviewable by showing exactly how many source requests and cache artifacts each
+work item would create.
+
+## 2026-06-26 - Evidence Workplan Cache Materialization Status
+
+### Motivation
+
+The evidence workplan listed planned cache paths, but it did not say whether
+those cache files already existed. The next step was to make cache materiality
+visible before draft import, so future agents can tell whether the workplan is
+ready for import or still needs source collection.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added per-work-item `cache_materialization_summary`.
+   - Added top-level `cache_materialization_summary`.
+   - Added `existing_cache_count` and `missing_cache_count`.
+   - Records existing and missing cache paths.
+   - Keeps the workplan non-fetching and dry-run only.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Workplan test now checks that an empty cache directory reports all planned
+     cache files as missing.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+- `python -m examples.mingli_5agents.cli --repo .semas_mingli_repo industry-event-evidence-workplan --manifest examples\mingli_5agents\providers\industry_event_source_manifest_example.json --candidates examples\mingli_5agents\providers\industry_event_candidate_cases_example.json --query-plan examples\mingli_5agents\providers\industry_event_source_query_plan_example.json --cache-dir .semas_mingli_repo\industry_event_cache_workplan_empty` returned the snapshot below.
+
+### Receipt Snapshot
+
+- Updated evidence workplan receipt sha256:
+  `b80b864bb3486fb978b703f759f6309a54ba735878707ae65b58bebd3472ecb3`.
+- Planned cache count: `6`.
+- Existing cache count: `0`.
+- Missing cache count: `6`.
+- All cache files present: `False`.
+
+### Boundary
+
+This is a materialization check, not collection. It lets the system distinguish
+"planned evidence" from "locally available cached evidence" before attempting
+draft import.
+
+## 2026-06-26 - Evidence Workplan Draft-Import Readiness Gate
+
+### Motivation
+
+The workplan could report missing cache files, but downstream agents still had
+to infer whether draft import was allowed. This made it too easy to treat a
+reviewed collection plan as if it were already sourced evidence.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added top-level `draft_import_ready`.
+   - Added top-level and per-work-item `draft_import_readiness_gate`.
+   - Added `next_action` so empty-cache workplans point back to fetch/cache
+     review instead of draft import.
+   - The gate passes only when every planned source response cache file exists.
+
+2. Updated focused tests:
+   - `examples/mingli_5agents/tests/test_empirical_validation.py`
+   - `examples/mingli_5agents/tests/test_cli.py`
+   - `examples/mingli_5agents/tests/test_api_server.py`
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+- `python -m examples.mingli_5agents.cli --repo .semas_mingli_repo industry-event-evidence-workplan --manifest examples\mingli_5agents\providers\industry_event_source_manifest_example.json --candidates examples\mingli_5agents\providers\industry_event_candidate_cases_example.json --query-plan examples\mingli_5agents\providers\industry_event_source_query_plan_example.json --cache-dir .semas_mingli_repo\industry_event_cache_workplan_empty` returned the snapshot below.
+
+### Receipt Snapshot
+
+- Updated evidence workplan receipt sha256:
+  `864efde4ab3ae42168a3075ca6a94ee051485bec75745cc0fa1bcd45dc1d2333`.
+- Draft import ready: `False`.
+- Gate passed: `False`.
+- Missing cache count: `6`.
+- Next action:
+  `run industry-event-candidate-fetch-cache after reviewing the query plan and source policy`.
+
+### Boundary
+
+This still does not collect public celebrity evidence by itself. It adds the
+import gate that blocks scoring expansion until reviewed source responses have
+actually been cached.
+
+## 2026-06-26 - Blocked Music Evidence Tasks Remain Visible
+
+### Motivation
+
+Sports, film, and music candidates all exist in the celebrity candidate pool,
+but the symbolic score only generated executable event-collection tasks for
+film and sports. Music labels were blocked because the example Bob Dylan labels
+do not have a matching reviewed birth profile in the current fixture set. The
+system needed to expose that blocked state instead of silently dropping music
+from the evolution workplan.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_manifest.py`:
+   - Added `blocked_readiness_domain_topic_summary`.
+   - Added `blocked_readiness_refinement_queue`.
+   - Added `add_reviewed_birth_profiles` task type.
+   - Added blocked case ids, public names, blocking reasons, and acceptance
+     criteria to `evolution_task_plan`.
+
+2. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `deferred_tasks` to evidence workplans.
+   - Added `deferred_task_count`.
+   - Keeps event-cache work items limited to ready `expand_ready_labels` tasks.
+   - Carries music readiness blockers forward as non-collection work.
+
+3. Updated focused tests:
+   - `examples/mingli_5agents/tests/test_empirical_validation.py`
+   - `examples/mingli_5agents/tests/test_cli.py`
+   - `examples/mingli_5agents/tests/test_api_server.py`
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_manifest.py examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_symbolic_annual_score_scores_ready_labels examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `52693bf6d46ffe196f9be74c37624513107385850799d95f61b7dede04a4844f`.
+- Source collection task count: `2`.
+- Deferred task count: `1`.
+- Source collection domains: `film,sports`.
+- Deferred task:
+  `industry-symbolic-music-career_project-add_reviewed_birth_profiles`.
+- Draft import ready: `False`.
+- Missing cache count: `6`.
+
+### Boundary
+
+This does not claim music validation is ready. It makes the missing step
+explicit: add reviewed music birth profiles before music event labels can enter
+symbolic annual scoring.
+
+## 2026-06-26 - Local Music Birth-Profile Suggestions For Deferred Tasks
+
+### Motivation
+
+The music deferred task correctly said Bob Dylan's industry-event labels were
+blocked by missing reviewed birth data, but it did not help the next agent find
+available local singer fixtures. The repository already has reviewed singer
+birth profiles for Aretha Franklin, Madonna, and Michael Jackson. The workplan
+needed a bridge from "blocked music slice" to "local birth-profile candidates"
+without automatically rewriting event labels.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Reads local famous-case birth fixtures through `famous_case_records()`.
+   - Maps local famous cases into industry domains.
+   - Adds `local_birth_profile_suggestions` to deferred tasks.
+   - Filters suggestions by supported symbolic event topic.
+   - Keeps suggestions advisory; it does not replace Bob Dylan labels or create
+     production evidence.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - The music deferred task now requires three local singer suggestions:
+     `aretha_franklin`, `madonna`, and `michael_jackson`.
+   - Each suggestion must support `career_project`.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py examples\mingli_5agents\industry_event_manifest.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `f6c8d7f6e114c6c03131380b83e690210a69c22e801a4fcc30dbc38ef3ab33f6`.
+- Deferred task:
+  `industry-symbolic-music-career_project-add_reviewed_birth_profiles`.
+- Local birth-profile suggestion count: `3`.
+- Suggestions:
+  `aretha_franklin,madonna,michael_jackson`.
+
+### Boundary
+
+This is an advisory bridge only. It helps the next evolution step choose
+whether to add Bob Dylan birth data or switch to already reviewed singer
+fixtures, but it does not silently alter the validation label table.
+
+## 2026-06-26 - Deferred Music Completion Work Order
+
+### Motivation
+
+The music deferred task had local singer birth-profile suggestions, but it still
+left the next agent to infer how to act. The next step was to turn suggestions
+into an explicit completion work order while keeping the validation label table
+unchanged.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `local_completion_work_order` to deferred tasks.
+   - Added two strategy options:
+     - preserve the blocked Bob Dylan case by adding reviewed birth data.
+     - use local singer fixtures by adding reviewed music event labels for
+       Aretha Franklin, Madonna, and Michael Jackson.
+   - Added an advisory acceptance gate that remains failed until reviewed
+     artifacts are actually added.
+   - Removed dependence on local Chinese domain strings in industry-domain
+     mapping; stable case ids now drive the local suggestion mapping.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires the deferred music work order to expose both strategy options.
+   - Requires the local singer strategy to list all three local singer fixtures.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `1e6b78a5db03b3b6620c28bdc89945a9eabaf0c03b3fcbf6cb1171314f09e865`.
+- Work order status: `ready_for_human_review`.
+- Acceptance gate passed: `False`.
+- Strategy options:
+  `preserve_blocked_case,use_local_singer_fixtures`.
+- Local singer cases:
+  `aretha_franklin,madonna,michael_jackson`.
+
+### Boundary
+
+The work order is not evidence and does not change scoring. It narrows the next
+human-reviewed action needed to make music validation scoreable.
+
+## 2026-06-26 - Local Music Draft Label Plan
+
+### Motivation
+
+The deferred music completion work order identified local singer fixtures, but
+it still did not show what industry-event labels would need review. The next
+step was to generate a draft label plan from local famous-case event tags while
+keeping those draft labels outside the validation manifest.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `event_years_by_symbolic_event_topic` to local birth-profile
+     suggestions.
+   - Added `draft_label_plan` under the `use_local_singer_fixtures` strategy.
+   - Draft plan creates one positive and one adjacent negative draft label for
+     each suggested singer.
+   - Draft records are marked with
+     `local_fixture_requires_industry_event_source_review`.
+   - Draft acceptance gate remains failed until industry-event sources are
+     reviewed.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires six draft music records: three positive and three negative.
+   - Requires every draft record to target `career_project`.
+   - Requires the source-review acceptance gate to remain failed.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `32d968199e90a166d7c122994c4c64c1c434e3fa8c0c315c60bb9674084b8c1f`.
+- Draft status: `draft_requires_source_review`.
+- Draft record count: `6`.
+- Positive draft records: `3`.
+- Negative draft records: `3`.
+- Source-review gate passed: `False`.
+
+### Boundary
+
+The draft records are not validation labels. They are a review queue that says
+which local singer years need independent industry-event source evidence before
+music validation can enter symbolic annual scoring.
+
+## 2026-06-26 - Local Music Draft Label Plan Receipt
+
+### Motivation
+
+The local music draft label plan exposed draft records, but it did not have its
+own stable receipt or record hash. Without that, future agents could not tell
+whether the draft label queue had drifted between runs.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `draft_label_plan_receipt` to the local music draft label plan.
+   - Added `draft_records_sha256`.
+   - Added module-local `_stable_sha256()` using the same normalized JSON
+     encoding as `_receipt()`.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires 64-character draft-record and draft-plan receipt hashes.
+   - Verifies the receipt material records the same record count and failed
+     source-review gate.
+
+### Verification
+
+- Initial focused test run failed because `_stable_sha256` was not defined in
+  this module.
+- After adding `_stable_sha256`, `python -m py_compile examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `5818a3738e132dbb8a065101e8ed465abd0792d0d9e66ff562141406b6192bda`.
+- Local music draft label plan receipt sha256:
+  `2c87b0606feee8e9e8f39bbbb980e37bd0fce5f6033daec8d73655e298aa1765`.
+- Draft records sha256:
+  `4b3f403a32be2877cfe55bafd59ae75368afb110f02a9547a45c05a01745aa73`.
+- Draft records: `6`.
+- Source-review gate passed: `False`.
+
+### Boundary
+
+The receipt makes the draft queue reproducible. It still does not make the
+draft labels evidence; source review and manifest import remain required before
+symbolic scoring.
+
+## 2026-06-26 - Local Music Draft Label Plan Integrity Check
+
+### Motivation
+
+The draft label plan had a receipt and record hash, but downstream agents still
+had to trust that the nested draft content matched those hashes. The next step
+was to expose a self-check summary inside the workplan.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `integrity_check` to the local music draft label plan.
+   - Recomputes the draft-plan receipt from current material.
+   - Recomputes the draft-record hash from current records.
+   - Reports whether both recomputed values match the stored values.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires integrity status to be `passed`.
+   - Requires receipt and draft-record hash matches to be true.
+   - Requires recomputed hashes to equal stored hashes.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `32f5f05448d407cee40a8abbc5c715294735c92a866e9a940af0137ac4ebb6c8`.
+- Local music draft label plan receipt sha256:
+  `2c87b0606feee8e9e8f39bbbb980e37bd0fce5f6033daec8d73655e298aa1765`.
+- Draft records sha256:
+  `4b3f403a32be2877cfe55bafd59ae75368afb110f02a9547a45c05a01745aa73`.
+- Integrity status: `passed`.
+- Receipt matches current material: `True`.
+- Draft records hash matches current records: `True`.
+
+### Boundary
+
+The integrity check only verifies internal consistency of the draft queue. It
+does not validate the factual correctness of the draft labels.
+
+## 2026-06-26 - Local Music Source Review Request Plan
+
+### Motivation
+
+The local music draft labels had receipts and integrity checks, but they did
+not yet tell the next agent exactly what source-review actions were required.
+They also risked silently reusing the existing music `public_fame` query
+template for `career_project` draft labels. The next step was to expose that
+template mismatch explicitly.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `source_review_request_plan` to the local music draft label plan.
+   - Added one review request per draft record.
+   - Each request names suggested sources: MusicBrainz Database and Wikidata
+     Query Service.
+   - Each request includes source-window guidance and required manifest fields.
+   - Added query-template alignment metadata showing no exact music
+     `career_project` template exists yet.
+   - Keeps the review-plan gate failed until source-window review and query
+     template alignment are completed.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires six source-review requests.
+   - Requires the nearest existing template to be
+     `wikidata_music_public_fame_events`.
+   - Requires exact event-topic template availability to be false.
+   - Requires the review-plan acceptance gate to remain failed.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `c1c0217fe78a65a08b2c246e67d773f1f7594ef5fcc996124fe1ff8941a9f2fb`.
+- Local music draft label plan receipt sha256:
+  `4c9d82eeda5b83b656c484cb0b0d787982617d7a09e14d309803affb6f54d573`.
+- Source review status: `requires_query_template_review`.
+- Source review request count: `6`.
+- Exact event-topic query template available: `False`.
+- Nearest existing query template:
+  `wikidata_music_public_fame_events`.
+- Source-review gate passed: `False`.
+
+### Boundary
+
+This remains an offline review plan. It does not query MusicBrainz or Wikidata
+and does not import the draft labels into the validation manifest.
+
+## 2026-06-26 - Local Music Career-Project Query Template Draft
+
+### Motivation
+
+The source-review plan exposed that no exact music `career_project` query
+template exists. The next step was to provide a concrete draft template so the
+gap can be reviewed and patched without guessing from prose.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Imported `REQUIRED_TEMPLATE_FIELDS` from the query-plan module.
+   - Added `query_template_draft` to the local music source-review plan.
+   - Draft template id:
+     `wikidata_music_career_project_events_draft`.
+   - Draft includes all required query-template fields.
+   - Added a stable `template_sha256`.
+   - Added a failed acceptance gate requiring query-plan review before use.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires the draft template id, event topic, symbolic topic, field
+     completeness, 64-character hash, and failed gate.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `64ba83072451ef7a7b076ab2adfa8a6b8e012ec29336c43175eb6345c6acaa00`.
+- Local music draft label plan receipt sha256:
+  `d2a717f41e30dc7c06a898f5d5c2b76b8e13919baf6c5a47cfa0137a2931b5d2`.
+- Query template draft status:
+  `draft_requires_query_plan_review`.
+- Query template draft id:
+  `wikidata_music_career_project_events_draft`.
+- Query template draft sha256:
+  `a48c011d1ecc131974f8d41aefc0dc297d4fedea619ba47bd8783f6925d910ad`.
+- Missing required template fields: none.
+- Query-template review gate passed: `False`.
+
+### Boundary
+
+The template is a draft. It is not inserted into the provider query-plan JSON
+and cannot authorize live or cached collection until reviewed.
+
+## 2026-06-26 - Query Template Draft Integrity Check
+
+### Motivation
+
+The local music `career_project` query template draft had a stable hash, but it
+did not yet prove that the current nested template still matched that hash or
+that required query-template fields remained complete. The next step was to add
+self-check metadata to the template draft itself.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `integrity_check` to `query_template_draft`.
+   - Recomputes the template hash from current template content.
+   - Checks required query-template field completeness separately from hash
+     matching.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires template draft integrity status to be `passed`.
+   - Requires template hash match to be true.
+   - Requires required-field completeness to be true.
+   - Requires recomputed template hash to equal stored `template_sha256`.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `9ee2f8cf867acdf5b313b427367b0114785500fbea0586c3e6d4fadb29bb8ec3`.
+- Query template draft sha256:
+  `a48c011d1ecc131974f8d41aefc0dc297d4fedea619ba47bd8783f6925d910ad`.
+- Integrity status: `passed`.
+- Template hash matches current template: `True`.
+- Required query-template fields complete: `True`.
+- Query-template review gate passed: `False`.
+
+### Boundary
+
+The integrity check only proves the draft template is internally consistent. It
+does not review the SPARQL semantics, source licensing, or live collection
+fitness.
+
+## 2026-06-26 - Query Template Draft Patch Plan
+
+### Motivation
+
+The music `career_project` template draft was internally consistent, but the
+next agent still had to infer how it should be installed into the query-plan
+manifest. The next step was to expose a non-mutating patch plan.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `query_plan_patch_plan` to the query template draft.
+   - Patch operation is `append_query_template`.
+   - Target is the example industry-event source query-plan JSON.
+   - Insert point is after `wikidata_music_public_fame_events`.
+   - Expected template count changes from `3` to `4`.
+   - Added review-required fields and post-patch validation commands.
+   - Patch acceptance gate remains failed until the manifest is actually edited
+     and reviewed.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires patch status, operation, insert point, template count change,
+     template hash alignment, and failed gate.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `13e2832903d0acf4233f99abd61d5237bf270a449880b64060a3f9b02975b913`.
+- Query template draft sha256:
+  `a48c011d1ecc131974f8d41aefc0dc297d4fedea619ba47bd8783f6925d910ad`.
+- Patch status: `draft_patch_requires_review`.
+- Patch operation: `append_query_template`.
+- Target path:
+  `C:\aicoding\semas_framework\examples\mingli_5agents\providers\industry_event_source_query_plan_example.json`.
+- Expected template count after patch: `4`.
+- Patch gate passed: `False`.
+
+### Boundary
+
+This is a patch plan only. It does not edit the query-plan JSON and does not
+promote the draft template to reviewed collection capability.
+
+## 2026-06-26 - Query Template Patch Plan Receipt And Integrity
+
+### Motivation
+
+The query-template patch plan described how to append the draft template, but it
+did not yet have a receipt or a self-check. Future agents need to know whether
+the patch plan itself has drifted before editing provider manifests.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `patch_plan_receipt`.
+   - Added `patch_plan_sha256`.
+   - Added `integrity_check` to the patch plan.
+   - Integrity check verifies receipt/material match, patch-plan hash/material
+     match, and template-hash alignment with the template draft.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires patch-plan receipt and hash.
+   - Requires receipt material to preserve the template hash.
+   - Requires all patch-plan integrity checks to pass.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `18019159e50b08abbde19b759011d759123651653187e55eefc1532d30965219`.
+- Patch-plan receipt sha256:
+  `5479dec4258b50ecad5249564bb1994cdd0a2cb680ab3d806d368b191402e854`.
+- Patch-plan sha256:
+  `5479dec4258b50ecad5249564bb1994cdd0a2cb680ab3d806d368b191402e854`.
+- Integrity status: `passed`.
+- Receipt/material match: `True`.
+- Patch/material hash match: `True`.
+- Template-hash alignment: `True`.
+
+### Boundary
+
+This still does not edit the provider query-plan manifest. It makes the proposed
+edit reproducible and drift-checkable before any file mutation.
+
+## 2026-06-26 - Query Template Patch Plan Applicability Check
+
+### Motivation
+
+The patch plan was reproducible, but it did not check whether the current
+target query-plan manifest still matched the assumptions in the plan. A stable
+plan is not necessarily applicable if the target file has already changed.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `applicability_check` to the query-template patch plan.
+   - Reads the current target query-plan manifest.
+   - Checks current template count against expected count.
+   - Checks that the insert-after template exists.
+   - Checks that the draft template is not already present.
+   - Keeps execution gate failed even when the plan is applicable.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires applicability status to be `applicable` for the current fixture.
+   - Requires current template count `3`, insert point present, draft template
+     absent, and execution gate failed.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `06581778891731de3a354a04d53ccdd06b59fd270da76bbebf0da40bdcd00b0f`.
+- Patch-plan receipt sha256:
+  `5479dec4258b50ecad5249564bb1994cdd0a2cb680ab3d806d368b191402e854`.
+- Applicability status: `applicable`.
+- Current template count: `3`.
+- Insert point present: `True`.
+- Draft template absent: `True`.
+- Execution gate passed: `False`.
+
+### Boundary
+
+Applicability is a precondition check, not permission to mutate the query-plan
+manifest. Query-plan review remains required.
+
+## 2026-06-26 - Query Template Patch Preview
+
+### Motivation
+
+The patch plan could prove the target file was applicable, but reviewers still
+could not see the exact non-mutating result of applying the patch. The next step
+was to add an in-memory patch preview showing the resulting template order and
+expected query-plan content hash.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `patch_preview` to the query-template patch plan.
+   - Reads the target query-plan manifest and inserts the draft template in
+     memory only.
+   - Reports patched template order, patched template count, patched query-plan
+     hash, and preview hash.
+   - Keeps `would_write_file` false and execution gate failed.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires preview status `preview_ready`.
+   - Requires patched template count `4`.
+   - Requires expected template order with the draft template inserted after
+     `wikidata_music_public_fame_events`.
+   - Requires 64-character patched query-plan and preview hashes.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `3e69c2d9cf0f24ddf0cc34d006f93cbef660cb1ca950ba51f53684a63202db20`.
+- Patch preview status: `preview_ready`.
+- Would write file: `False`.
+- Patched template count: `4`.
+- Patched query-plan sha256:
+  `c87c0fa14df8b1fadb6a464fcdecfbc9ced91188b435e7be5df6b0c3ff72e337`.
+- Patch preview sha256:
+  `650f7e71b503299172ecb962f6b09dfc000a54be4fc5c4a0d97ed128f13e5a7c`.
+- Execution gate passed: `False`.
+
+### Boundary
+
+The preview is computed in memory. It does not mutate the query-plan manifest
+and does not make the draft template reviewed.
+
+## 2026-06-26 - Query Template Patch Preview Receipt And Integrity
+
+### Motivation
+
+The patch preview showed the expected in-memory result, but the preview itself
+did not yet have a receipt or self-check. Future agents need to verify that the
+preview hash, patched query-plan hash, and preview material still agree.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `patch_preview_receipt`.
+   - Added `integrity_check` to `patch_preview`.
+   - Integrity check recomputes preview receipt and preview hash.
+   - Confirms the patched query-plan hash stored in preview material matches
+     the exposed patched query-plan hash.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires preview receipt hash.
+   - Requires receipt material to preserve patched template count.
+   - Requires all preview integrity checks to pass.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `47fce62f035e8841950784d8db0242847e3f8f925a08b3ac8063a84c61e4e757`.
+- Patch preview receipt sha256:
+  `b1c33d3dc9e32053d2af88ca24b28b2306cec45ed8aba0d67a4112aad25d91f2`.
+- Patch preview sha256:
+  `b1c33d3dc9e32053d2af88ca24b28b2306cec45ed8aba0d67a4112aad25d91f2`.
+- Patched query-plan sha256:
+  `c87c0fa14df8b1fadb6a464fcdecfbc9ced91188b435e7be5df6b0c3ff72e337`.
+- Integrity status: `passed`.
+- Preview receipt/material match: `True`.
+- Preview hash/material match: `True`.
+- Patched query-plan hash match: `True`.
+
+### Boundary
+
+This validates only the in-memory preview artifact. It still does not write the
+query-plan manifest.
+
+## 2026-06-26 - Deferred Music Gate Summary
+
+### Motivation
+
+The deferred music workplan had many nested gates and integrity checks. Future
+agents had to inspect the completion work order, draft label plan, source
+review plan, query template draft, patch plan, applicability check, and patch
+preview to understand the current blocker state. The next step was to summarize
+those gates at the deferred-task level.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `gate_summary` to deferred evidence tasks.
+   - Recursively collects nested `acceptance_gate` and `execution_gate`
+     objects.
+   - Recursively collects nested `integrity_check` objects.
+   - Reports blocked gate count, failed integrity count, blocked gate list, and
+     next action.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires the music deferred task to be blocked.
+   - Requires no failed integrity checks.
+   - Requires key blocker gates to appear in the summary.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `45b491a97da31059b3fd68ecedf3e894c3a8aeb873265b28327a3a3c09046725`.
+- Deferred gate summary status: `blocked`.
+- Gate count: `15`.
+- Blocked gate count: `15`.
+- Integrity check count: `7`.
+- Failed integrity check count: `0`.
+- Next action:
+  `resolve blocked review gates before promoting music draft labels or query templates`.
+
+### Boundary
+
+The summary does not change any gate state. It is an observability layer that
+makes the current blocker stack easier to review.
+
+## 2026-06-26 - Deferred Music Gate Summary Receipt
+
+### Motivation
+
+The deferred music gate summary made blockers visible, but it did not yet have
+its own receipt or integrity check. Future agents need to know whether the
+summarized blocker stack has changed without re-walking the entire nested
+workplan.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `gate_summary_receipt`.
+   - Added `gate_summary_sha256`.
+   - Added `integrity_check` to `gate_summary`.
+   - Integrity check recomputes the summary receipt and summary hash from the
+     current summary material.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Requires gate-summary receipt and hash.
+   - Requires receipt material to preserve blocked gate count.
+   - Requires gate-summary integrity checks to pass.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q` passed.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `2eef4ca2c1af300766489cf811bf7befd03d87ef242ff6bdf5b5b7917dfc0065`.
+- Gate summary receipt sha256:
+  `03745dd5c1bbbb02cefa483657be9694147170a475300554f66a6ec5dcfcdb97`.
+- Gate summary sha256:
+  `03745dd5c1bbbb02cefa483657be9694147170a475300554f66a6ec5dcfcdb97`.
+- Gate summary status: `blocked`.
+- Blocked gate count: `15`.
+- Integrity status: `passed`.
+- Receipt/material match: `True`.
+- Summary hash/material match: `True`.
+
+### Boundary
+
+The receipt verifies the summary artifact only. It does not resolve any nested
+review gate.
+
+## 2026-06-26 - Evidence Workplan Readiness Summary
+
+### Motivation
+
+The evidence workplan already had a draft-import gate for cache materialization
+and a deferred-task gate summary for music evidence. It still lacked a single
+top-level readiness view that tells an executor whether the full celebrity
+validation workpack can move forward.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/industry_event_candidates.py`:
+   - Added `readiness_summary` to the evidence workplan.
+   - Combined cache blockers, deferred review blockers, failed integrity
+     checks, and validation failures into one top-level status.
+   - Added `readiness_summary_receipt`, `readiness_summary_sha256`, and an
+     integrity check that recomputes both values from the summary material.
+
+2. Updated focused tests:
+   - `examples/mingli_5agents/tests/test_empirical_validation.py`
+   - `examples/mingli_5agents/tests/test_cli.py`
+   - `examples/mingli_5agents/tests/test_api_server.py`
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\industry_event_candidates.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_cli.py::test_cli_industry_event_evidence_workplan_projects_collection_commands examples\mingli_5agents\tests\test_api_server.py::test_http_api_industry_event_evidence_workplan_route -q`
+  passed: `3 passed`.
+
+### Receipt Snapshot
+
+- Evidence workplan receipt sha256:
+  `c1aaca71bfc805b47d8d5a6aa0ae37645f029114fdf8b79d6265342a3bd7c4a6`.
+- Readiness summary receipt sha256:
+  `b184566a84d0a65a822f7b946c3d21dfe223e3ac581919192108eb8dd3e9d4f2`.
+- Readiness status: `blocked`.
+- Missing cache count: `6`.
+- Deferred blocked gate count: `15`.
+- Failed deferred integrity check count: `0`.
+- Readiness integrity status: `passed`.
+
+### Boundary
+
+This is an observability and execution-control layer only. It does not fetch
+source data, promote music draft labels, edit query templates, or mark the
+celebrity validation workpack as ready.
+
+## 2026-06-26 - Cross-Domain Celebrity Fixture Import
+
+### Motivation
+
+The candidate pool contained sports, film, and music public figures, but only
+the sports domain had a local cached-response example. The next step was to
+prove that all three domains can pass through the offline cache-import path
+without live collection.
+
+### Actions Taken
+
+1. Added provider fixtures:
+   - `examples/mingli_5agents/providers/wikidata_film_response_example.json`
+   - `examples/mingli_5agents/providers/wikidata_music_response_example.json`
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Added domain-specific fixture constants.
+   - Added a helper that materializes cached responses by candidate domain.
+   - Added a cross-domain import test covering all 9 celebrity candidates.
+
+3. Materialized a local all-domain fixture cache snapshot under:
+   - `.semas_mingli_repo/industry_event_cache_all_domains_fixture`
+
+### Verification
+
+- `python -m json.tool examples\mingli_5agents\providers\wikidata_film_response_example.json`
+  passed.
+- `python -m json.tool examples\mingli_5agents\providers\wikidata_music_response_example.json`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_candidate_pool_manifest_drafts_from_cache_imports_selected_candidates examples\mingli_5agents\tests\test_empirical_validation.py::test_candidate_pool_manifest_drafts_from_cache_imports_all_domains examples\mingli_5agents\tests\test_empirical_validation.py::test_candidate_pool_manifest_draft_import_api_exposes_summary -q`
+  passed: `3 passed`.
+
+### Receipt Snapshot
+
+- Draft import status: `ready_for_review`.
+- Candidate count: `9`.
+- Draft count: `9`.
+- Positive record count: `9`.
+- Negative record count: `273`.
+- Total record count: `282`.
+- Cross-domain coverage gate: `True`.
+- Domains: `film,music,sports`.
+- Candidate-pool draft-import receipt sha256:
+  `68654a8254a878adfea02dcec5e26b8db61c02c9aa176a987ace42a1533cc7e7`.
+- Validation-label-table receipt sha256:
+  `e1d414970daa2e7ce00cff74d17721e0a7bca193cb382ab2b0137ea68d4e67fe`.
+
+### Boundary
+
+These are repository-authored fixture responses for offline pipeline
+validation. They do not certify real Wikidata result completeness, production
+source review, or factual event-label correctness.
+
+## 2026-06-26 - Cross-Domain Fixture Import Audit Receipt
+
+### Motivation
+
+The cross-domain celebrity fixture import was covered by tests, but capability
+audit did not expose it as a reusable machine-readable artifact. Future agents
+need to discover that the sports, film, and music offline import loop exists
+without reading the test suite.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added fixed fixture response paths for film, music, and sports.
+   - Added a fixed audit fixture cache path.
+   - Added `_industry_event_cross_domain_fixture_import_receipt()`.
+   - Added `industry_event_cross_domain_fixture_import` to capabilities,
+     audit response, and audit receipt material.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Added `test_industry_event_cross_domain_fixture_import_receipt`.
+   - Required the audit receipt to bind candidate count, label counts,
+     cross-domain coverage, and validation-label-table receipt.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\capability_audit.py` passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_empirical_validation.py::test_candidate_pool_manifest_drafts_from_cache_imports_all_domains -q`
+  passed: `3 passed`.
+
+### Receipt Snapshot
+
+- Capability audit receipt sha256:
+  `f8f37844d4998e713e51dcce05049e2125bb1acada5452be830c1cd06846fcd9`.
+- Cross-domain fixture import receipt sha256:
+  `5e0af9b6808b1ee043a0ace74b8ccbc77a6b6a0ad338ea953b84a5c98cfbf43b`.
+- Capability flag: `True`.
+- Status: `ready_example`.
+- Candidate count: `9`.
+- Draft count: `9`.
+- Positive record count: `9`.
+- Negative record count: `273`.
+- Total record count: `282`.
+- Cross-domain coverage gate: `True`.
+- Validation-label-table receipt sha256:
+  `22bb4a9a007534f177f835f2f153e29960174c30a8779a7f5a6d55982f1bc0db`.
+
+### Boundary
+
+This audit receipt proves the offline fixture import loop is reproducible and
+discoverable by the capability audit. It still does not promote fixture labels
+to production evidence.
+
+## 2026-06-26 - Cross-Domain Fixture Import Schema Contract
+
+### Motivation
+
+The cross-domain celebrity fixture import was exposed through capability audit,
+but the public schema did not yet make that field contractual. External callers
+and future agents need a stable schema reference for the response field and its
+audit-receipt material.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `IndustryEventCrossDomainFixtureImportMaterial`.
+   - Added `IndustryEventCrossDomainFixtureImportReceipt`.
+   - Required `industry_event_cross_domain_fixture_import` in
+     `CapabilityAuditResponse`.
+   - Required the same receipt in `CapabilityAuditReceiptMaterial`.
+
+2. Updated `examples/mingli_5agents/evaluators/schema_contract_evaluator.py`:
+   - Added the new schemas to required schema coverage.
+   - Added response/material `$ref` checks.
+
+3. Updated `examples/mingli_5agents/tests/test_schema_contract_evaluator.py`:
+   - Required the public response reference.
+   - Required the audit material reference.
+   - Required core material fields such as label counts, coverage gate, and
+     validation-label-table receipt hash.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt -q`
+  passed: `3 passed`.
+
+### Receipt Snapshot
+
+- Schema contract score: `1.0`.
+- CapabilityAuditResponse ref:
+  `#/schemas/IndustryEventCrossDomainFixtureImportReceipt`.
+- CapabilityAuditReceiptMaterial ref:
+  `#/schemas/IndustryEventCrossDomainFixtureImportReceipt`.
+- Cross-domain fixture import receipt sha256:
+  `5e0af9b6808b1ee043a0ace74b8ccbc77a6b6a0ad338ea953b84a5c98cfbf43b`.
+- Capability audit receipt sha256:
+  `f8f37844d4998e713e51dcce05049e2125bb1acada5452be830c1cd06846fcd9`.
+- Validation-label-table receipt sha256:
+  `22bb4a9a007534f177f835f2f153e29960174c30a8779a7f5a6d55982f1bc0db`.
+
+### Boundary
+
+This makes the audit artifact portable through the public schema. It does not
+change the fixture labels' non-production status.
+
+## 2026-06-26 - Cross-Domain Fixture Import Runtime Schema Validation
+
+### Motivation
+
+The cross-domain fixture import schema contract existed, but the actual
+capability-audit runtime output still needed a focused validation check. A
+runtime check found that the audit receipt material carried a summary while the
+schema expected the full receipt object.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Changed `audit_receipt.material.industry_event_cross_domain_fixture_import`
+     to carry the full fixture-import receipt.
+   - This keeps the top-level response artifact and audit material artifact on
+     the same schema.
+
+2. Updated tests:
+   - `examples/mingli_5agents/tests/test_empirical_validation.py`
+   - `examples/mingli_5agents/tests/test_schema_contract_evaluator.py`
+   - Added runtime schema validation for both the top-level fixture receipt and
+     the audit-material fixture receipt.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\capability_audit.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_industry_fixture_import_runtime_output_matches_public_schema_contract examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt -q`
+  passed: `3 passed`.
+
+### Receipt Snapshot
+
+- Top-level fixture receipt schema error count: `0`.
+- Audit-material fixture receipt schema error count: `0`.
+- Cross-domain fixture import receipt sha256:
+  `5e0af9b6808b1ee043a0ace74b8ccbc77a6b6a0ad338ea953b84a5c98cfbf43b`.
+- Audit-material fixture receipt sha256:
+  `5e0af9b6808b1ee043a0ace74b8ccbc77a6b6a0ad338ea953b84a5c98cfbf43b`.
+- Capability audit receipt sha256:
+  `08e7af184aa0eca4c9d90d7ea06eab492e23bb1cdb67b8112300ef0bd3b8ff19`.
+- Validation-label-table receipt sha256:
+  `22bb4a9a007534f177f835f2f153e29960174c30a8779a7f5a6d55982f1bc0db`.
+
+### Boundary
+
+This validates the new fixture-import artifact only. The broader capability
+audit response still has older schema-validation gaps outside this change.
+
+## 2026-06-26 - Cross-Domain Fixture Import HTTP Schema Validation
+
+### Motivation
+
+The fixture-import runtime schema check covered direct Python output. The public
+HTTP API also needs to preserve the same object shape because downstream tools
+normally consume `/audit` and `/schema` rather than importing Python functions.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/tests/test_api_server.py`:
+   - Imported `schema_validation_errors`.
+   - Added `/audit` assertions for `industry_event_cross_domain_fixture_import`.
+   - Validated both the top-level fixture receipt and the audit-material fixture
+     receipt against the `/schema` response.
+   - Required the two fixture receipt hashes to match.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tests\test_api_server.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_industry_fixture_import_runtime_output_matches_public_schema_contract examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt -q`
+  passed: `2 passed`.
+- `pytest examples\mingli_5agents\tests\test_api_server.py::test_http_api_status_schema_analyze_and_benchmark -q`
+  passed: `1 passed` in `191.29s`.
+
+### HTTP Snapshot
+
+- HTTP top-level fixture receipt schema error count: `0`.
+- HTTP audit-material fixture receipt schema error count: `0`.
+- Cross-domain fixture import receipt sha256:
+  `5e0af9b6808b1ee043a0ace74b8ccbc77a6b6a0ad338ea953b84a5c98cfbf43b`.
+- Audit-material fixture receipt sha256:
+  `5e0af9b6808b1ee043a0ace74b8ccbc77a6b6a0ad338ea953b84a5c98cfbf43b`.
+- Capability audit receipt sha256:
+  `08e7af184aa0eca4c9d90d7ea06eab492e23bb1cdb67b8112300ef0bd3b8ff19`.
+- Candidate count: `9`.
+- Record count: `282`.
+
+### Boundary
+
+This verifies the new fixture-import artifact over HTTP. It does not claim that
+the full `/audit` response is schema-clean, and it does not change the
+non-production fixture boundary.
+
+## 2026-06-26 - Cross-Domain Fixture Import CLI Schema Validation
+
+### Motivation
+
+HTTP validation covered the service boundary, but automation and release scripts
+also consume the CLI `audit` and `schema` commands. The cross-domain celebrity
+fixture import should therefore be validated through the CLI surface too.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/tests/test_cli.py`:
+   - Imported `schema_validation_errors`.
+   - Added CLI `audit` assertions for `industry_event_cross_domain_fixture_import`.
+   - Validated the top-level fixture receipt and audit-material fixture receipt
+     against the CLI `schema` output.
+   - Added CLI schema assertions for
+     `IndustryEventCrossDomainFixtureImportMaterial` and
+     `IndustryEventCrossDomainFixtureImportReceipt`.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tests\test_cli.py` passed.
+- `pytest examples\mingli_5agents\tests\test_cli.py::test_cli_init_analyze_evolve_status examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_industry_fixture_import_runtime_output_matches_public_schema_contract -q`
+  passed: `2 passed` in `280.27s`.
+
+### CLI Snapshot
+
+- CLI top-level fixture receipt schema error count: `0`.
+- CLI audit-material fixture receipt schema error count: `0`.
+- Cross-domain fixture import receipt sha256:
+  `5e0af9b6808b1ee043a0ace74b8ccbc77a6b6a0ad338ea953b84a5c98cfbf43b`.
+- Audit-material fixture receipt sha256:
+  `5e0af9b6808b1ee043a0ace74b8ccbc77a6b6a0ad338ea953b84a5c98cfbf43b`.
+- Capability audit receipt sha256:
+  `08e7af184aa0eca4c9d90d7ea06eab492e23bb1cdb67b8112300ef0bd3b8ff19`.
+- Candidate count: `9`.
+- Record count: `282`.
+
+### Boundary
+
+This verifies the fixture-import artifact over the CLI interface. It does not
+change source-review status or promote fixture labels to production evidence.
+
+## 2026-06-26 - Cross-Domain Fixture Import Implemented Requirement
+
+### Motivation
+
+The cross-domain fixture import was exposed through capability audit and public
+interfaces, but it was not yet listed as a named implemented requirement. That
+made the capability discoverable as a field but not as a tracked engineering
+deliverable with materialized evidence.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added `industry_event_cross_domain_fixture_import` to
+     `IMPLEMENTED_REQUIREMENTS`.
+   - Bound the requirement to the fixture-import receipt builder, public schema
+     fields, fixture response files, and Python/HTTP/CLI tests.
+
+2. Updated `examples/mingli_5agents/tests/test_capability_audit_evaluator.py`:
+   - Required the capability flag.
+   - Required the implemented requirement id.
+   - Required key evidence entries in the implemented requirement.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\capability_audit.py examples\mingli_5agents\tests\test_capability_audit_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q`
+  passed: `2 passed`.
+
+### Audit Snapshot
+
+- Capability audit receipt sha256:
+  `c2080e695637c68ee1c8c1d95fb8b2835a7fd334fca104da3fbb46d4d5369cea`.
+- Capability flag: `True`.
+- Implemented requirement count: `70`.
+- Requirement status: `implemented`.
+- Requirement evidence count: `11`.
+- Materialization status: `passed`.
+- Materialized evidence count: `11`.
+- Evidence materialization failed count: `0`.
+- Evidence materialization unchecked count: `0`.
+- Evidence materialization passed count: `436`.
+
+### Boundary
+
+This records the fixture-import loop as an implemented engineering capability.
+It still remains a non-production evidence path until source review and real
+event-label governance are completed.
+
+## 2026-06-26 - Cross-Domain Celebrity Symbolic Readiness Gate
+
+### Motivation
+
+The project could now import sports, film, and music celebrity event-label
+fixtures, but that alone did not prove the labels could enter BaZi symbolic
+annual scoring. Event labels also need matching reviewed birth profiles. Without
+that second gate, the system could overstate the value of celebrity samples.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added a cross-domain fixture symbolic-readiness summary to the fixture
+     import receipt.
+   - Reused `build_industry_event_symbolic_scoring_readiness_payload` with
+     `famous_case_records()`.
+   - Exposed ready labels, blocked labels, ready cases, missing birth-profile
+     cases, domain/topic summaries, gates, and the readiness receipt hash.
+   - Added the readiness test evidence to the implemented requirement.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `symbolic_scoring_readiness_summary` to
+     `IndustryEventCrossDomainFixtureImportMaterial`.
+   - Required the summary in the public schema.
+
+3. Updated tests:
+   - `test_industry_event_cross_domain_fixture_import_receipt` now asserts the
+     readiness counts and missing birth-profile cases.
+   - `test_schema_contract_evaluator.py` now asserts the public schema exposes
+     the readiness summary.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q`
+  passed: `2 passed`.
+- `pytest examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_industry_fixture_import_runtime_output_matches_public_schema_contract -q`
+  passed: `1 passed`.
+
+### Audit Snapshot
+
+- Cross-domain fixture import receipt sha256:
+  `d168c37706e26ad3631c279e80f42509b0e518e51bd1c9088028b195eaa22eb8`.
+- Capability audit receipt sha256:
+  `71949b1c5889335bacb0391acb5f28b13017f36f269b593a0d545d81d6e99fef`.
+- Imported event labels: `282`.
+- Ready symbolic-scoring labels: `25`.
+- Blocked labels: `257`.
+- Ready cases: `1` (`roger_federer`).
+- Missing reviewed birth-profile cases:
+  `beyonce`, `jackie_chan`, `jay_chou`, `meryl_streep`,
+  `michael_jordan`, `serena_williams`, `taylor_swift`, `tom_hanks`.
+- Readiness receipt sha256:
+  `bb60003625dac34072b9479303308560d6be4e0306f55e0acf3b85ade08f03d0`.
+
+### Boundary
+
+The sports/film/music event-label pipeline is importable, but only labels with
+reviewed birth profiles can enter symbolic annual scoring. Current fixture
+coverage supports scoring Roger Federer only; film and music labels remain
+blocked until reviewed birth profiles are added.
+
+## 2026-06-26 - Cross-Domain Birth Profile Completion Task Plan
+
+### Motivation
+
+The cross-domain readiness gate identified missing reviewed birth profiles, but
+future agents still needed an executable queue. A missing-data diagnosis should
+be converted into explicit evidence tasks with case ids, blocked label counts,
+and acceptance criteria.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Reused `build_industry_event_symbolic_annual_score_payload` inside the
+     cross-domain fixture readiness summary.
+   - Added `birth_profile_completion_task_plan` to expose compact
+     `add_reviewed_birth_profiles` tasks.
+   - Added `symbolic_annual_score_receipt_sha256` to bind the task plan to the
+     scoring receipt.
+   - Added `_cross_domain_birth_profile_completion_task_plan`.
+   - Added the helper to the implemented-requirement evidence list.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Required `birth_profile_completion_task_plan`.
+   - Required `symbolic_annual_score_receipt_sha256`.
+   - Added schema fields for task ids, blocked cases, evidence to add,
+     acceptance criteria, blocking reasons, and task boundaries.
+
+3. Updated tests:
+   - Runtime audit test now asserts all three task ids and blocked case ids.
+   - Schema test now asserts the task-plan contract.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_industry_fixture_import_runtime_output_matches_public_schema_contract -q`
+  passed: `3 passed`.
+- `pytest examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance -q`
+  passed: `1 passed`.
+
+### Audit Snapshot
+
+- Capability audit receipt sha256:
+  `41df129ec08c2a6ff5896a4a755b181699446097aa7147cbc3af30d802cfb3d9`.
+- Cross-domain fixture import receipt sha256:
+  `50d43541edf9466f939cfa2e03f58c8d1dd99b0148ca144a6064672bf833f5a9`.
+- Symbolic readiness receipt sha256:
+  `bb60003625dac34072b9479303308560d6be4e0306f55e0acf3b85ade08f03d0`.
+- Symbolic annual score receipt sha256:
+  `318aa3dfd7efd49ed06b1b2d66a9b16f1082d83f5daf80f49f30e47ea07a554d`.
+- Birth-profile completion tasks: `3`.
+- Task ids:
+  - `industry-symbolic-film-public_fame-add_reviewed_birth_profiles`
+  - `industry-symbolic-music-public_fame-add_reviewed_birth_profiles`
+  - `industry-symbolic-sports-sports_peak-add_reviewed_birth_profiles`
+- Blocked labels covered by the task plan: `257`.
+- Implemented requirement evidence count: `13`.
+
+### Boundary
+
+The task plan tells the next agent exactly which reviewed birth profiles to add.
+It does not itself add or certify those birth profiles, and it does not promote
+the blocked celebrity labels into symbolic scoring.
+
+## 2026-06-26 - Cross-Domain Birth Profile Workplan Summary
+
+### Motivation
+
+The cross-domain fixture receipt exposed missing birth-profile tasks, but the
+task list did not yet connect to the existing evidence-workplan machinery. The
+next agent still needed to know whether there are local substitute fixtures,
+which review gates are blocked, and which receipt anchors the workplan.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Reused `build_industry_event_evidence_workplan_from_symbolic_score`.
+   - Added `birth_profile_completion_workplan_summary`.
+   - Added `evidence_workplan_receipt_sha256`.
+   - Added `_cross_domain_birth_profile_completion_workplan_summary`.
+   - Added the helper to implemented-requirement evidence.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Required the workplan summary inside the symbolic-readiness summary.
+   - Required deferred task summaries, local suggestion case ids, work-order
+     status, gate status, and blocked-gate counts.
+   - Required `evidence_workplan_receipt_sha256`.
+
+3. Updated tests:
+   - Runtime audit test now asserts the local suggestion case ids for film,
+     music, and sports.
+   - Schema test now asserts the workplan-summary public contract.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_industry_fixture_import_runtime_output_matches_public_schema_contract -q`
+  passed: `3 passed`.
+- `pytest examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance -q`
+  passed: `1 passed`.
+
+### Audit Snapshot
+
+- Capability audit receipt sha256:
+  `a419acf8ffad97629efb93f363117840a7d66c95c43b45f624b5ff026631bcd7`.
+- Cross-domain fixture import receipt sha256:
+  `b58762fac16f64352e4ac197fd12a2ce580acd3dd720243d2d6579b94536bb40`.
+- Evidence workplan receipt sha256:
+  `639caae6adf93c174769dc1bcd22c3466834ebc3ebb0d43bbf1589085602fbd7`.
+- Deferred birth-profile tasks: `3`.
+- Workplan readiness status: `blocked`.
+- Deferred blocked gates: `3`.
+- Work items: `1`.
+- Local suggestion slices:
+  - film blocked cases `jackie_chan`, `meryl_streep`, `tom_hanks`; local
+    suggestions `bruce_lee`, `lucille_ball`, `marilyn_monroe`.
+  - music blocked cases `beyonce`, `jay_chou`, `taylor_swift`; local
+    suggestions `aretha_franklin`, `madonna`, `michael_jackson`.
+  - sports blocked cases `michael_jordan`, `serena_williams`; local
+    suggestions `arthur_ashe`, `mark_spitz`, `roger_federer`.
+- Implemented requirement evidence count: `14`.
+
+### Boundary
+
+The workplan summary is an audit artifact. It shows local suggestions and
+blocked review gates, but it does not convert suggestions into reviewed birth
+profiles and does not unlock symbolic scoring for blocked celebrity labels.
+
+## 2026-06-26 - Birth Profile Review Manifest Contract
+
+### Motivation
+
+The cross-domain celebrity workplan identified eight missing reviewed birth
+profiles. Directly editing hard-coded famous-case fixtures would blur reviewed
+data and planned data. The next step was to create a review-manifest contract so
+birth-profile collection can be audited before any profile is imported.
+
+### Actions Taken
+
+1. Added `examples/mingli_5agents/providers/birth_profile_review_manifest_example.json`:
+   - Covers the eight missing celebrity birth-profile cases.
+   - Records required profile fields, source policy, identity anchors, search
+     queries, blocked symbolic topics, and blocked label counts.
+   - Keeps `externally_reviewed` false and `ready_for_import` false.
+
+2. Added `examples/mingli_5agents/birth_profile_review.py`:
+   - `audit_birth_profile_review_manifest`.
+   - `birth_profile_review_manifest_receipt`.
+   - Field, duplicate-case, domain, source-policy, identity URL, review-status,
+     and blocked-label checks.
+
+3. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added the birth-profile review manifest summary to the cross-domain
+     symbolic-readiness summary.
+   - Added `birth_profile_review_manifest_receipt_sha256`.
+   - Added the audit function and manifest file to implemented evidence.
+
+4. Updated `examples/mingli_5agents/api_core.py` and tests:
+   - Added public schema fields for the review-manifest summary and receipt.
+   - Added runtime audit tests for the manifest and cross-domain audit binding.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\birth_profile_review.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_review_manifest_audits_missing_cross_domain_profiles examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_industry_fixture_import_runtime_output_matches_public_schema_contract -q`
+  passed: `4 passed`.
+- `pytest examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance -q`
+  passed: `1 passed`.
+
+### Audit Snapshot
+
+- Capability audit receipt sha256:
+  `e1035fad593c1ed1e9d901d96a9840593938e04e14461e5fcd38d9809fe68b56`.
+- Cross-domain fixture import receipt sha256:
+  `dab329822d117649dc8a223e22ac7e306d26a56c6a25d62e82f4b32f8845befd`.
+- Birth-profile review manifest receipt sha256:
+  `ea9e6e1df15a795af82ec6502e6fc4fc957048e931d2def7308e9dd8c57ef31e`.
+- Review requests: `8`.
+- Blocked labels covered: `257`.
+- Domains: `film`, `music`, `sports`.
+- Ready for import: `False`.
+- Implemented requirement evidence count: `16`.
+
+### Boundary
+
+The review manifest is a collection contract, not sourced birth-profile data.
+It does not change famous-case fixtures and does not unlock symbolic scoring.
+External review is still required before importing any celebrity birth profile.
+
+## 2026-06-26 - Birth Profile Review API And CLI Surface
+
+### Motivation
+
+The birth-profile review manifest could be audited internally and through the
+cross-domain capability audit, but operators and future agents still needed a
+direct interface. Birth-profile collection should be auditable before touching
+famous-case fixtures, without requiring a full capability audit run.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `birth_profile_review_status`.
+   - Added `BirthProfileReviewStatusResponse` to the public schema.
+   - Added `GET /birth-profile-review` to endpoint documentation.
+
+2. Updated `examples/mingli_5agents/cli.py`:
+   - Added `birth-profile-review`.
+   - Supports optional `--manifest`.
+
+3. Updated `examples/mingli_5agents/api_server.py`:
+   - Added `/birth-profile-review`.
+
+4. Updated tests:
+   - Added API runtime schema validation for `BirthProfileReviewStatusResponse`.
+   - Added CLI command coverage.
+   - Added HTTP route coverage.
+   - Added schema-contract coverage for the new response and endpoint.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_cli.py examples\mingli_5agents\tests\test_api_server.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_review_status_exposes_non_import_gate examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_review_status examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q`
+  passed: `3 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_review_manifest_audits_missing_cross_domain_profiles examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_industry_fixture_import_runtime_output_matches_public_schema_contract -q`
+  passed: `3 passed`.
+- `pytest examples\mingli_5agents\tests\test_api_server.py::test_http_api_birth_profile_review_route examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_review_status examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_review_status_exposes_non_import_gate -q`
+  passed: `3 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q`
+  passed: `2 passed`.
+
+### API Snapshot
+
+- Birth-profile review summary receipt sha256:
+  `a0255e906902148df180b1d5483df6f63c9f98e72f887423f895afbe52582dd2`.
+- Review requests: `8`.
+- Blocked labels covered: `257`.
+- Production gate passed: `False`.
+- Ready for import: `False`.
+- Schema endpoint present: `True`.
+- Schema response present: `True`.
+
+### Boundary
+
+The new API/CLI surface audits collection worklists only. It does not import
+birth profiles, does not change famous-case fixtures, and does not unlock
+symbolic scoring for blocked celebrity labels.
+
+## 2026-06-26 - Birth Profile Import Preview Gate
+
+### Motivation
+
+After adding a review manifest and direct API/CLI audit surface, the next
+missing step was an import preview. Future agents need to know what would happen
+after review, but the system must not write famous-case fixtures while the
+manifest is still unreviewed and incomplete.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/birth_profile_review.py`:
+   - Added `build_birth_profile_import_preview`.
+   - Added non-mutating import material, receipt, stable hash, integrity check,
+     import gate, blocking reasons, and next action.
+   - Kept `would_write_file` false and `import_allowed` false for the bundled
+     unreviewed manifest.
+
+2. Updated API/CLI/HTTP surfaces:
+   - Added `birth_profile_import_preview` in `api_core.py`.
+   - Added CLI command `birth-profile-import-preview`.
+   - Added HTTP route `/birth-profile-import-preview`.
+   - Added public schema `BirthProfileImportPreviewResponse`.
+   - Added endpoint documentation.
+
+3. Updated tests:
+   - Added direct preview tests.
+   - Added runtime schema validation.
+   - Added CLI and HTTP route tests.
+   - Added schema-contract assertions for the response and import gate.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\birth_profile_review.py examples\mingli_5agents\api_core.py examples\mingli_5agents\api_server.py examples\mingli_5agents\cli.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_cli.py examples\mingli_5agents\tests\test_api_server.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_import_preview_blocks_unreviewed_manifest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_import_preview_status_exposes_runtime_schema examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_import_preview_blocks_writes examples\mingli_5agents\tests\test_api_server.py::test_http_api_birth_profile_import_preview_route examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields -q`
+  passed: `5 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_review_status_exposes_non_import_gate examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_review_status examples\mingli_5agents\tests\test_api_server.py::test_http_api_birth_profile_review_route -q`
+  passed: `3 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `1 passed`.
+
+### Preview Snapshot
+
+- Status: `blocked_not_ready_for_import`.
+- Import preview receipt sha256:
+  `35d0b95a5e1839d59f515299c5159af371cec22a6aeed92ad5227cd82d09de34`.
+- Import preview sha256:
+  `35d0b95a5e1839d59f515299c5159af371cec22a6aeed92ad5227cd82d09de34`.
+- Would write file: `False`.
+- Import allowed: `False`.
+- Review requests: `8`.
+- Blocked requests: `8`.
+- Import-ready requests: `0`.
+- Import gate passed: `False`.
+- Blocking reasons:
+  - manifest is not marked `ready_for_import`;
+  - manifest is not production evidence;
+  - manifest has not been externally reviewed;
+  - 8 requests still list `missing_profile_fields`;
+  - 8 requests are not `externally_reviewed`.
+- Schema endpoint present: `True`.
+- Schema response present: `True`.
+
+### Boundary
+
+The import preview is intentionally non-mutating. It creates a verifiable
+blocked state and next action, but it does not create a fixture patch, import
+birth profiles, or unlock symbolic scoring.
+
+## 2026-06-26 - Birth Profile Import Preview Bound To Capability Audit
+
+### Motivation
+
+The birth-profile import preview had API/CLI/HTTP surfaces, but the cross-domain
+celebrity capability audit still only exposed the review manifest and workplan.
+Future agents should see the whole birth-profile chain from the same capability
+receipt: missing labels, completion tasks, review manifest, and blocked import
+preview.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Imported `build_birth_profile_import_preview`.
+   - Added `birth_profile_import_preview_summary` to the cross-domain symbolic
+     readiness summary.
+   - Added `birth_profile_import_preview_receipt_sha256`.
+   - Added `_cross_domain_birth_profile_import_preview_summary`.
+   - Added the import-preview builder to implemented evidence.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Required `birth_profile_import_preview_summary` in the fixture import
+     material schema.
+   - Required `birth_profile_import_preview_receipt_sha256`.
+
+3. Updated tests:
+   - Runtime cross-domain audit test now asserts blocked import-preview state.
+   - Schema contract test now asserts the import-preview summary contract.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_industry_fixture_import_runtime_output_matches_public_schema_contract -q`
+  passed: `3 passed`.
+- `pytest examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance -q`
+  passed: `1 passed`.
+
+### Audit Snapshot
+
+- Capability audit receipt sha256:
+  `7c5aea18123af8704c210fc5c4b2410532bd66ebe472e116d49fb121b641dfec`.
+- Cross-domain fixture import receipt sha256:
+  `fad576c955f12b39d65543412a903127aba8df50028299c24c4ffaf2530820b6`.
+- Birth-profile import preview receipt sha256:
+  `35d0b95a5e1839d59f515299c5159af371cec22a6aeed92ad5227cd82d09de34`.
+- Preview status: `blocked_not_ready_for_import`.
+- Would write file: `False`.
+- Import allowed: `False`.
+- Blocked requests: `8`.
+- Import-ready requests: `0`.
+- Import gate passed: `False`.
+- Integrity check: `passed`.
+- Implemented requirement evidence count: `17`.
+
+### Boundary
+
+The capability audit now exposes the blocked import preview, but it still does
+not import birth profiles, write fixtures, or unlock symbolic scoring.
+
+## 2026-06-26 - Birth Profile Import Preview Production Gate
+
+### Motivation
+
+The birth-profile import preview was visible in capability audit, API, CLI, and
+HTTP surfaces. Production readiness still needed a hard gate so a future release
+cannot accidentally allow unreviewed celebrity birth profiles to be imported.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/production_gates.py`:
+   - Added `birth_profile_import_preview_blocked`.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added the production-readiness gate.
+   - The gate passes only when the import preview is valid, non-mutating,
+     import-disallowed, gate-blocked, integrity-passed, has blocked requests,
+     and has zero import-ready requests.
+   - Added helper diagnostics for gate failures.
+
+3. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added known gap `celebrity_birth_profile_review`.
+   - Added the known-gap resolution blueprint with CLI verification commands
+     for `birth-profile-review`, `birth-profile-import-preview`, and
+     `production-readiness`.
+
+4. Updated tests:
+   - Added production-readiness gate coverage.
+   - Added known-gap command/gate coverage assertions.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\production_gates.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_capability_audit_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance -q`
+  passed: `2 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `1 passed`.
+
+### Snapshot
+
+- Production gate:
+  `birth_profile_import_preview_blocked`.
+- Gate passed: `True`.
+- Gate blocker present: `False`.
+- Production gate registry current: `True`.
+- Known gap present:
+  `celebrity_birth_profile_review`.
+- Known-gap verification commands:
+  `birth-profile-import-preview`, `birth-profile-review`,
+  `production-readiness`.
+- Gate is registered in valid production gates: `True`.
+- Known-gap gate count: `2`.
+- Capability audit receipt sha256:
+  `9c39708b77cbf056a38e5f57fbd41aafda5f4312b30769bb87538dd3633c1bab`.
+- Production readiness receipt sha256:
+  `24956c8d2d1b03cc8f4fc89143e364771415cd327a0094df5fd3b123d2212330`.
+
+### Boundary
+
+This gate proves that the current unreviewed birth-profile import path remains
+blocked and non-mutating. It does not mean celebrity birth profiles are ready to
+import.
+
+## 2026-06-26 - Reviewed Birth Profile Import Plan Contract
+
+### Motivation
+
+The birth-profile review path could prove that unreviewed celebrity birth
+profiles remain blocked, but it did not yet prove the next state: after a
+reviewed manifest is supplied, the system can produce a structured import plan
+without writing fixtures.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/birth_profile_review.py`:
+   - Added manifest status `reviewed_ready_for_import`.
+   - Kept the bundled example manifest blocked by default.
+   - Added reviewed-manifest checks for external review, approval, empty
+     missing fields, complete birth fields, and complete source fields.
+   - Added `candidate_profiles` to the non-mutating import preview.
+   - Kept `would_write_file` as `False` even when the reviewed manifest is
+     import-ready.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `candidate_profiles` to the public
+     `BirthProfileImportPreviewResponse` schema.
+
+3. Updated tests:
+   - Added a synthetic reviewed-manifest contract test.
+   - Added schema assertions for `candidate_profiles`.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\birth_profile_review.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_review_manifest_audits_missing_cross_domain_profiles examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_import_preview_blocks_unreviewed_manifest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_import_preview_accepts_reviewed_manifest_without_writing examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `5 passed`.
+
+### Snapshot
+
+- Default bundled manifest status:
+  `blocked_not_ready_for_import`.
+- Default import allowed:
+  `False`.
+- Default would write file:
+  `False`.
+- Default candidate profiles:
+  `0`.
+- Default import preview receipt sha256:
+  `9375b9beef5c86c1b9a31727a220b6f4f7ee74bdda6f5695edf6f050d29f5cab`.
+- Default integrity check:
+  `passed`.
+
+### Boundary
+
+The reviewed-manifest test uses a synthetic contract fixture. It proves the
+import-plan state machine, not any real celebrity birth data. Real celebrity
+profiles still require external source review before they can enter fixtures.
+
+## 2026-06-26 - Birth Profile Fixture Patch Preview
+
+### Motivation
+
+The reviewed birth-profile import plan could generate candidate profiles, but
+there was still no explicit patch-review step before touching
+`FAMOUS_CASES`. The next evolution step was to make the fixture edit itself a
+non-mutating, hashable preview.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/birth_profile_review.py`:
+   - Added `build_birth_profile_fixture_patch_preview`.
+   - Added target-file hashing for `famous_case_validation.py`.
+   - Added `patch_text`, `patch_text_sha256`, `candidate_case_ids`, patch
+     gate, receipt, and integrity check.
+   - Kept `would_write_file` as `False` for both blocked and ready states.
+
+2. Updated API/CLI/HTTP surfaces:
+   - Added API function `birth_profile_fixture_patch_preview`.
+   - Added CLI command `birth-profile-fixture-patch-preview`.
+   - Added HTTP route `/birth-profile-fixture-patch-preview`.
+   - Added public schema `BirthProfileFixturePatchPreviewResponse`.
+   - Added endpoint documentation in `/schema`.
+
+3. Updated schema governance:
+   - Added the new response schema and endpoint to the schema-contract
+     evaluator.
+
+4. Updated tests:
+   - Added low-level patch-preview tests for blocked and reviewed contract
+     states.
+   - Added runtime schema, CLI, HTTP, and schema-contract assertions.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\birth_profile_review.py examples\mingli_5agents\api_core.py examples\mingli_5agents\cli.py examples\mingli_5agents\api_server.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_review_manifest_audits_missing_cross_domain_profiles examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_import_preview_blocks_unreviewed_manifest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_import_preview_accepts_reviewed_manifest_without_writing examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_fixture_patch_preview_renders_reviewed_candidates_without_writing examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_import_preview_status_exposes_runtime_schema examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_fixture_patch_preview_status_exposes_runtime_schema examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_review_status examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_import_preview_blocks_writes examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_fixture_patch_preview_blocks_writes examples\mingli_5agents\tests\test_api_server.py::test_http_api_birth_profile_review_route examples\mingli_5agents\tests\test_api_server.py::test_http_api_birth_profile_import_preview_route examples\mingli_5agents\tests\test_api_server.py::test_http_api_birth_profile_fixture_patch_preview_route examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `14 passed`.
+
+### Snapshot
+
+- Default fixture patch preview status:
+  `blocked_not_ready_for_patch_preview`.
+- Would write file:
+  `False`.
+- Patch ready for review:
+  `False`.
+- Candidate count:
+  `0`.
+- Patch gate passed:
+  `False`.
+- Target file sha256:
+  `59b488851936acf59b07a624ef5d257799c181b24540b1e088b50b4f92c98802`.
+- Patch text sha256:
+  `88215782ad8b057bf7005e8ddaca82de1e7a223af9b4aa9883bcd5b4f58e0800`.
+- Fixture patch preview receipt sha256:
+  `1fcd37d0aa4921c771f8f1d30d0f41c2d08ecd6ba015433c8a8b7d976eda0e47`.
+- Integrity check:
+  `passed`.
+
+### Boundary
+
+This feature still does not import real celebrity birth data. It only makes the
+future fixture edit reviewable and reproducible once a real reviewed manifest is
+available.
+
+## 2026-06-26 - Fixture Patch Preview Capability Audit Binding
+
+### Motivation
+
+The fixture patch preview had API, CLI, HTTP, and schema surfaces, but the
+global capability audit still ended the birth-profile evidence chain at import
+preview. Future agents need to discover the full three-stage chain from the
+audit receipt itself.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Imported `build_birth_profile_fixture_patch_preview`.
+   - Added fixture patch preview evidence to implemented requirement material.
+   - Added `birth_profile_fixture_patch_preview_summary` to cross-domain
+     symbolic scoring readiness.
+   - Added `birth_profile_fixture_patch_preview_receipt_sha256`.
+   - Added `birth-profile-fixture-patch-preview` to the
+     `celebrity_birth_profile_review` verification commands.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added the patch preview summary and receipt fields to the public
+     `IndustryEventCrossDomainFixtureImportMaterial` schema.
+
+3. Updated tests:
+   - Added capability-audit assertions for the patch preview summary.
+   - Added schema-contract assertions for the new summary and receipt fields.
+   - Added known-gap command coverage for the patch preview CLI command.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py examples\mingli_5agents\tests\test_capability_audit_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance -q`
+  passed: `3 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_review_manifest_audits_missing_cross_domain_profiles examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_import_preview_blocks_unreviewed_manifest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_import_preview_accepts_reviewed_manifest_without_writing examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_fixture_patch_preview_renders_reviewed_candidates_without_writing examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_fixture_patch_preview_status_exposes_runtime_schema examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_fixture_patch_preview_blocks_writes examples\mingli_5agents\tests\test_api_server.py::test_http_api_birth_profile_fixture_patch_preview_route -q`
+  passed: `7 passed`.
+
+### Snapshot
+
+- Capability audit receipt sha256:
+  `999dcac5ecfcd23ce03b003ab26bb6afb7f5663b3f6e6e3262f3e6faffe2e252`.
+- Cross-domain fixture receipt sha256:
+  `4bea6e5dccc5eef7398dba0614ea227c5b1067ae55ced893c0d93b0dc21e26e7`.
+- Patch preview status:
+  `blocked_not_ready_for_patch_preview`.
+- Patch ready for review:
+  `False`.
+- Would write file:
+  `False`.
+- Candidate count:
+  `0`.
+- Patch gate passed:
+  `False`.
+- Target file sha256:
+  `59b488851936acf59b07a624ef5d257799c181b24540b1e088b50b4f92c98802`.
+- Patch text sha256:
+  `88215782ad8b057bf7005e8ddaca82de1e7a223af9b4aa9883bcd5b4f58e0800`.
+- Patch preview receipt sha256:
+  `1fcd37d0aa4921c771f8f1d30d0f41c2d08ecd6ba015433c8a8b7d976eda0e47`.
+- Integrity check:
+  `passed`.
+
+### Boundary
+
+The capability audit now exposes the full three-stage birth-profile evidence
+chain. It still does not certify or import any real celebrity birth profile.
+
+## 2026-06-26 - Fixture Patch Preview Production Gate
+
+### Motivation
+
+The birth-profile fixture patch preview had become visible in capability audit,
+but production readiness still did not enforce that the default patch path
+remains blocked and non-mutating. A future change could otherwise make the
+patch preview ready too early without failing release gates.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/production_gates.py`:
+   - Added `birth_profile_fixture_patch_preview_blocked`.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added production-readiness extraction for
+     `birth_profile_fixture_patch_preview_summary`.
+   - Added the runtime gate
+     `birth_profile_fixture_patch_preview_blocked`.
+   - Added blocker diagnostics for missing hashes, unexpected candidates,
+     unexpected write intent, unexpected gate pass, and failed integrity.
+
+3. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added `birth_profile_fixture_patch_preview_blocked` to the
+     `celebrity_birth_profile_review` known-gap production gate IDs.
+
+4. Updated tests:
+   - Added production-readiness assertions for the patch preview gate.
+   - Updated known-gap gate count and valid-gate assertions.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\production_gates.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_capability_audit_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `3 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_fixture_patch_preview_renders_reviewed_candidates_without_writing examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_fixture_patch_preview_blocks_writes examples\mingli_5agents\tests\test_api_server.py::test_http_api_birth_profile_fixture_patch_preview_route -q`
+  passed: `4 passed`.
+
+### Snapshot
+
+- Production readiness receipt sha256:
+  `244675aaf0cb321123a26f342ae729e89d9c3115ecbdf6d000ce6c36bb55bae8`.
+- Production gate registry current:
+  `True`.
+- Import preview blocked gate passed:
+  `True`.
+- Import preview blocked gate details:
+  `[]`.
+- Fixture patch preview blocked gate passed:
+  `True`.
+- Fixture patch preview blocked gate details:
+  `[]`.
+- Fixture patch preview gate blocker present:
+  `False`.
+- Gate registered:
+  `True`.
+
+### Boundary
+
+This gate proves the default fixture patch path remains blocked, non-mutating,
+and integrity-checked. It does not approve any real celebrity birth-profile
+fixture edit.
+
+## 2026-06-26 - Birth Profile Source Review Workplan
+
+### Motivation
+
+The celebrity birth-profile chain could block unreviewed data and preview later
+import/patch steps, but the missing source-review work itself was still only
+implicit in the review manifest. The next step was to turn each blocked
+celebrity profile into an explicit human source-review work item.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/birth_profile_review.py`:
+   - Added `build_birth_profile_source_review_workplan`.
+   - Added one work item per review request.
+   - Each work item now carries suggested search queries, identity URL,
+     missing fields, allowed source families, disallowed sources, required
+     evidence, a reviewed-profile draft, and acceptance criteria.
+   - The workplan remains offline-only and non-mutating:
+     `would_fetch_live_sources = False`,
+     `would_write_review_manifest = False`.
+   - Added receipt and integrity checks.
+
+2. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added the source-review workplan to implemented evidence.
+   - Added `birth_profile_source_review_workplan_summary`.
+   - Added `birth_profile_source_review_workplan_receipt_sha256`.
+
+3. Updated `examples/mingli_5agents/api_core.py`:
+   - Added the workplan summary and receipt fields to the public
+     cross-domain fixture import schema.
+
+4. Updated tests:
+   - Added direct workplan test coverage.
+   - Added capability-audit and schema-contract assertions.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\birth_profile_review.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_review_workplan_turns_requests_into_review_tasks examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `3 passed`.
+
+### Snapshot
+
+- Workplan status:
+  `ready_for_human_source_review`.
+- Request count:
+  `8`.
+- Work item count:
+  `8`.
+- Would fetch live sources:
+  `False`.
+- Would write review manifest:
+  `False`.
+- Source review gate passed:
+  `False`.
+- Workplan receipt sha256:
+  `f5b88984baf97f530cdd8a957a59549443ddc461970d9f17624c74c2fca76b10`.
+- Workplan sha256:
+  `f5b88984baf97f530cdd8a957a59549443ddc461970d9f17624c74c2fca76b10`.
+- Integrity check:
+  `passed`.
+- Capability audit receipt sha256:
+  `88b07bf44bc8f7e2cbfce8ccefdc53a5c073a32b86f3f6c228b07edbf9bb5abd`.
+- Audit workplan receipt sha256:
+  `f5b88984baf97f530cdd8a957a59549443ddc461970d9f17624c74c2fca76b10`.
+
+### Boundary
+
+This workplan organizes source-review tasks only. It does not fetch live
+sources, certify birth data, write a reviewed manifest, or unlock symbolic
+scoring.
+
+## 2026-06-26 - Birth Profile Source Review Workplan API Surface
+
+### Motivation
+
+The birth-profile source-review workplan existed in code and capability audit,
+but reviewers and future agents still needed a direct way to request it without
+digging through the full capability audit object.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `birth_profile_source_review_workplan`.
+   - Added public schema `BirthProfileSourceReviewWorkplanResponse`.
+   - Added `/schema` endpoint documentation for
+     `GET /birth-profile-source-review-workplan`.
+
+2. Updated `examples/mingli_5agents/cli.py`:
+   - Added command `birth-profile-source-review-workplan`.
+
+3. Updated `examples/mingli_5agents/api_server.py`:
+   - Added HTTP route `/birth-profile-source-review-workplan`.
+
+4. Updated schema governance:
+   - Added the response schema and endpoint to the schema-contract evaluator.
+
+5. Updated tests:
+   - Added runtime schema validation.
+   - Added CLI and HTTP route coverage.
+   - Added schema-contract assertions.
+   - Re-ran the birth-profile chain regression.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\cli.py examples\mingli_5agents\api_server.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_cli.py examples\mingli_5agents\tests\test_api_server.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_review_workplan_status_exposes_runtime_schema examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_source_review_workplan examples\mingli_5agents\tests\test_api_server.py::test_http_api_birth_profile_source_review_workplan_route examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `4 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_review_manifest_audits_missing_cross_domain_profiles examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_review_workplan_turns_requests_into_review_tasks examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_review_workplan_status_exposes_runtime_schema examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_import_preview_blocks_unreviewed_manifest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_fixture_patch_preview_renders_reviewed_candidates_without_writing examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt -q`
+  passed: `6 passed`.
+
+### Snapshot
+
+- Configured:
+  `False`.
+- Workplan status:
+  `ready_for_human_source_review`.
+- Request count:
+  `8`.
+- Work item count:
+  `8`.
+- Would fetch live sources:
+  `False`.
+- Would write review manifest:
+  `False`.
+- Source review gate passed:
+  `False`.
+- Workplan receipt sha256:
+  `f5b88984baf97f530cdd8a957a59549443ddc461970d9f17624c74c2fca76b10`.
+- Workplan sha256:
+  `f5b88984baf97f530cdd8a957a59549443ddc461970d9f17624c74c2fca76b10`.
+- Integrity check:
+  `passed`.
+- CLI:
+  `python -m examples.mingli_5agents.cli --repo . birth-profile-source-review-workplan --manifest C:\aicoding\semas_framework\examples\mingli_5agents\providers\birth_profile_review_manifest_example.json`.
+- HTTP:
+  `GET /birth-profile-source-review-workplan?manifest=C:\aicoding\semas_framework\examples\mingli_5agents\providers\birth_profile_review_manifest_example.json`.
+
+### Boundary
+
+The new surface exposes review work items only. It does not fetch live sources,
+write reviewed manifests, or certify birth profiles.
+
+## 2026-06-26 - Birth Profile Source Review Workplan Production Gate
+
+### Motivation
+
+The source-review workplan had direct API/CLI/HTTP surfaces and capability-audit
+visibility, but production readiness still did not assert that the workplan
+exists and remains non-mutating. This left a governance gap before the import
+and fixture patch gates.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/production_gates.py`:
+   - Added `birth_profile_source_review_workplan_available`.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added extraction of `birth_profile_source_review_workplan_summary`.
+   - Added runtime gate `birth_profile_source_review_workplan_available`.
+   - Added diagnostics for missing workplan, live-fetch intent, manifest-write
+     intent, empty request/work-item counts, unexpected gate pass, and failed
+     integrity.
+
+3. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added `birth-profile-source-review-workplan` to the
+     `celebrity_birth_profile_review` verification commands.
+   - Added `birth_profile_source_review_workplan_available` to the same known
+     gap's production gate IDs.
+
+4. Updated tests:
+   - Added production-readiness assertions for the source-review workplan gate.
+   - Updated known-gap command and gate-count assertions.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\production_gates.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_capability_audit_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `3 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_review_workplan_status_exposes_runtime_schema examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_source_review_workplan examples\mingli_5agents\tests\test_api_server.py::test_http_api_birth_profile_source_review_workplan_route -q`
+  passed: `3 passed`.
+
+### Snapshot
+
+- Production readiness receipt sha256:
+  `a2cfc80fbff7fc933cb1990c38db31bd1020591b209f7103f1a4beac1c367b3e`.
+- Production gate registry current:
+  `True`.
+- Source-review workplan gate passed:
+  `True`.
+- Source-review workplan gate details:
+  `[]`.
+- Source-review workplan gate blocker present:
+  `False`.
+- Import preview blocked gate passed:
+  `True`.
+- Fixture patch preview blocked gate passed:
+  `True`.
+- Gate registered:
+  `True`.
+
+### Boundary
+
+This gate proves the source-review workplan exists, is non-mutating, and remains
+human-review gated. It does not certify or collect any real celebrity birth
+profile.
+
+## 2026-06-26 - Birth Profile Source Review Progress Summary
+
+### Motivation
+
+The celebrity source-review workplan could list each film, music, and sports
+work item, but it did not expose a top-level answer to "how much remains" or
+"which fields are missing most." That made the workplan harder to use for
+public-celebrity validation planning.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/birth_profile_review.py`:
+   - Added `review_progress_summary` to the source-review workplan.
+   - Added `field_gap_summary` to the source-review workplan.
+   - Derived both summaries from generated work items so the summary and task
+     rows share one source of truth.
+
+2. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Propagated both summaries into the cross-domain fixture-import readiness
+     audit.
+
+3. Updated `examples/mingli_5agents/api_core.py` and schema tests:
+   - Declared both summaries in the runtime API schema and capability-audit
+     readiness schema.
+
+4. Updated regression tests:
+   - Added assertions for film/music/sports work-item counts, blocked-label
+     counts, and missing birth-profile fields.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\birth_profile_review.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_review_workplan_turns_requests_into_review_tasks examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `3 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_review_workplan_status_exposes_runtime_schema examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_source_review_workplan examples\mingli_5agents\tests\test_api_server.py::test_http_api_birth_profile_source_review_workplan_route -q`
+  passed: `3 passed`.
+
+### Snapshot
+
+- Source-review status:
+  `ready_for_human_source_review`.
+- Work items:
+  `8`.
+- Domain work-item counts:
+  `film=3`, `music=3`, `sports=2`.
+- Domain blocked-label counts:
+  `film=137`, `music=72`, `sports=48`.
+- Review status counts:
+  `not_started=8`, `in_review=0`, `externally_reviewed=0`, `rejected=0`.
+- Missing fields:
+  `birth_date=8`, `birth_time=8`, `birthplace=8`, `gender=8`,
+  `source_name=8`, `source_rating=8`, `source_url=8`.
+- Source-review workplan receipt sha256:
+  `8cd5f289a7feb27e2e97787909f5caa78d0a14d911644108102c95638b259337`.
+
+### Boundary
+
+The new summaries make the celebrity validation backlog visible. They do not
+fetch sources, certify any celebrity birth profile, or unlock symbolic scoring.
+
+## 2026-06-26 - Birth Profile Source Lookup Plan
+
+### Motivation
+
+The source-review workplan listed celebrity birth-profile review tasks, but the
+next action was still implicit: reviewers had to interpret suggested search
+queries manually. To make sports, film, and music celebrity validation
+operational, the system needed a dry-run lookup plan that expands each review
+task into executable source-search units without fetching or certifying data.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/birth_profile_review.py`:
+   - Added `build_birth_profile_source_lookup_plan`.
+   - Expanded every work item into planned queries with target fields, cache
+     paths, identity anchors, acceptance criteria, and dry-run flags.
+   - Added receipt and integrity checks for the lookup plan.
+
+2. Updated service surfaces:
+   - Added `birth_profile_source_lookup_plan` to `api_core.py`.
+   - Added CLI command `birth-profile-source-lookup-plan`.
+   - Added HTTP route `GET /birth-profile-source-lookup-plan`.
+   - Added `BirthProfileSourceLookupPlanResponse` to the runtime schema and
+     schema-contract evaluator.
+
+3. Updated capability audit:
+   - Added lookup-plan evidence to the cross-domain famous-case validation
+     capability.
+   - Added lookup-plan command guidance to `celebrity_birth_profile_review`.
+   - Added lookup-plan summary and receipt hash to the symbolic-scoring
+     readiness audit.
+
+4. Updated tests:
+   - Covered full lookup plan generation.
+   - Covered domain filtering.
+   - Covered CLI, HTTP, schema, and capability-audit visibility.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\birth_profile_review.py examples\mingli_5agents\api_core.py examples\mingli_5agents\cli.py examples\mingli_5agents\api_server.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_cli.py examples\mingli_5agents\tests\test_api_server.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_lookup_plan_expands_review_queries examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_lookup_plan_filters_domain examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_source_lookup_plan examples\mingli_5agents\tests\test_api_server.py::test_http_api_birth_profile_source_lookup_plan_route examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance -q`
+  passed: `7 passed`.
+
+### Snapshot
+
+- Lookup-plan status:
+  `ready_for_manual_lookup`.
+- Lookup items:
+  `8`.
+- Planned queries:
+  `16`.
+- Domain summary:
+  `film=3 items/6 queries/137 blocked labels`,
+  `music=3 items/6 queries/72 blocked labels`,
+  `sports=2 items/4 queries/48 blocked labels`.
+- Source-lookup plan receipt sha256:
+  `58ae0e6952d3373d01c8bab437177ca4a6d0abfedbc9a0f9c789e97dde317758`.
+
+### Boundary
+
+The lookup plan is dry-run only. It does not fetch webpages, write cache files,
+certify celebrity birth data, write reviewed manifests, or unlock symbolic
+scoring.
+
+## 2026-06-26 - Birth Profile Source Lookup Plan Production Gate
+
+### Motivation
+
+The source lookup plan had API, CLI, HTTP, schema, and capability-audit
+visibility, but production readiness did not yet prove the lookup plan remained
+dry-run. Without a runtime gate, a future change could accidentally allow live
+fetches, cache writes, or reviewed-manifest writes before source evidence is
+externally reviewed.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/production_gates.py`:
+   - Added `birth_profile_source_lookup_plan_dry_run`.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Extracted `birth_profile_source_lookup_plan_summary` from capability
+     audit.
+   - Added production-readiness gate
+     `birth_profile_source_lookup_plan_dry_run`.
+   - Added diagnostics for missing lookup plan, live-fetch intent, cache-write
+     intent, manifest-write intent, empty lookup/query counts, unexpected gate
+     pass, and failed integrity.
+
+3. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added `birth_profile_source_lookup_plan_dry_run` to the
+     `celebrity_birth_profile_review` known-gap production gate IDs.
+
+4. Updated tests:
+   - Added production-readiness assertions for the lookup-plan gate.
+   - Updated known-gap command and gate-count assertions.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\production_gates.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_capability_audit_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `3 passed`.
+
+### Snapshot
+
+- Production readiness receipt sha256:
+  `abe86c9681f60a03971d2103b87b13940a91eb3bf8a77b9fa99d3c0b8e70c108`.
+- Source-review workplan gate passed:
+  `True`.
+- Source-lookup dry-run gate passed:
+  `True`.
+- Import preview blocked gate passed:
+  `True`.
+- Fixture patch preview blocked gate passed:
+  `True`.
+- Production gate registry current:
+  `True`.
+
+### Boundary
+
+This gate proves the lookup plan remains available and dry-run. It does not
+execute lookup queries, fetch webpages, write cache files, certify birth data,
+or unlock symbolic scoring.
+
+## 2026-06-26 - Birth Profile Source Cache Audit
+
+### Motivation
+
+The source lookup plan defined where reviewers should collect celebrity
+birth-profile evidence, but the system still lacked a way to inspect manually
+prepared lookup cache files. Without a cache audit layer, the next agent would
+have to infer whether cached evidence existed, whether it matched the planned
+query, and whether it was safe to move toward a reviewed manifest.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/birth_profile_review.py`:
+   - Added `build_birth_profile_source_cache_audit`.
+   - Audits planned cache files generated by the lookup plan.
+   - Validates cache JSON shape, planned `query_id`, `case_id`, source fields,
+     review status, reviewer note, and whether any target birth field is
+     actually filled.
+   - Keeps cache audit non-mutating and non-importing.
+
+2. Updated service surfaces:
+   - Added `birth_profile_source_cache_audit` to `api_core.py`.
+   - Added CLI command `birth-profile-source-cache-audit`.
+   - Added HTTP route `GET /birth-profile-source-cache-audit`.
+   - Added `BirthProfileSourceCacheAuditResponse` to the runtime schema and
+     schema-contract evaluator.
+
+3. Updated capability audit:
+   - Added source-cache-audit evidence to the cross-domain famous-case
+     validation capability.
+   - Added source-cache-audit command guidance to
+     `celebrity_birth_profile_review`.
+   - Added source-cache-audit summary and receipt hash to symbolic-scoring
+     readiness.
+
+4. Updated tests:
+   - Covered missing manual cache state.
+   - Covered one reviewed cache fixture.
+   - Covered API schema, CLI, HTTP, schema-contract, and capability-audit
+     visibility.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\birth_profile_review.py examples\mingli_5agents\api_core.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\cli.py examples\mingli_5agents\api_server.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_cli.py examples\mingli_5agents\tests\test_api_server.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py examples\mingli_5agents\tests\test_capability_audit_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_cache_audit_reports_missing_manual_cache examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_cache_audit_reads_reviewed_cache_file examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_cache_audit_api_exposes_schema examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_source_cache_audit examples\mingli_5agents\tests\test_api_server.py::test_http_api_birth_profile_source_cache_audit_route examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance -q`
+  passed: `8 passed`.
+
+### Snapshot
+
+- Source-cache audit status:
+  `waiting_for_manual_cache`.
+- Expected cache files:
+  `16`.
+- Present cache files:
+  `0`.
+- Missing cache files:
+  `16`.
+- Accepted cache evidence:
+  `0`.
+- Source-cache audit receipt sha256:
+  `2789980d968029a7b39242366d3fd3076ded3ccd274530e182979f6f03f81bc1`.
+
+### Boundary
+
+The cache audit reads manually prepared JSON files only. It does not fetch
+webpages, write cache files, certify birth data, write reviewed manifests,
+import profiles, or unlock symbolic scoring.
+
+## 2026-06-26 - Birth Profile Source Cache Audit Production Gate
+
+### Motivation
+
+The source-cache audit could inspect manually prepared lookup-result JSON files,
+but production readiness did not yet prove that the audit remained read-only and
+non-importing. Since cache files sit closer to external evidence than a dry-run
+lookup plan, this boundary needs a runtime gate before production release.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/production_gates.py`:
+   - Added `birth_profile_source_cache_audit_read_only`.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Extracted `birth_profile_source_cache_audit_summary` from capability
+     audit.
+   - Added production-readiness gate
+     `birth_profile_source_cache_audit_read_only`.
+   - Added diagnostics for missing cache audit, live-fetch intent, cache-write
+     intent, manifest-write intent, profile-import intent, empty expected cache
+     count, unexpected gate pass, and failed integrity.
+
+3. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added `birth_profile_source_cache_audit_read_only` to the
+     `celebrity_birth_profile_review` known-gap production gate IDs.
+
+4. Updated tests:
+   - Added production-readiness assertions for the cache-audit gate.
+   - Updated known-gap gate-count assertions.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\production_gates.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_capability_audit_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `3 passed`.
+
+### Snapshot
+
+- Production readiness receipt sha256:
+  `17292651b773e04f53ef8c89ed67915366db344732364e88b4e87c674169f6cc`.
+- Source-review workplan gate passed:
+  `True`.
+- Source-lookup dry-run gate passed:
+  `True`.
+- Source-cache audit read-only gate passed:
+  `True`.
+- Import preview blocked gate passed:
+  `True`.
+- Fixture patch preview blocked gate passed:
+  `True`.
+- Production gate registry current:
+  `True`.
+
+### Boundary
+
+This gate proves the source-cache audit is present, read-only, and non-importing.
+It does not fetch webpages, write cache files, certify birth data, write
+reviewed manifests, import profiles, or unlock symbolic scoring.
+
+## 2026-06-26 - Birth Profile Reviewed Manifest Draft Preview
+
+### Motivation
+
+The source-cache audit can inspect manually prepared lookup-result JSON files,
+but accepted cache evidence still needed a controlled next step before import
+preview. Without a reviewed-manifest draft preview, a future agent would have to
+manually assemble reviewed manifests from cache evidence, risking skipped
+fields, mismatched cases, or accidental writes.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/birth_profile_review.py`:
+   - Added `build_birth_profile_reviewed_manifest_draft_preview`.
+   - Aggregates accepted cache evidence by case.
+   - Builds non-mutating reviewed-manifest draft JSON and text preview.
+   - Tracks complete and incomplete reviewed profile rows.
+   - Keeps the draft gate blocked until human approval.
+
+2. Updated service surfaces:
+   - Added `birth_profile_reviewed_manifest_draft_preview` to `api_core.py`.
+   - Added CLI command `birth-profile-reviewed-manifest-draft-preview`.
+   - Added HTTP route `GET /birth-profile-reviewed-manifest-draft-preview`.
+   - Added `BirthProfileReviewedManifestDraftPreviewResponse` to the runtime
+     schema and schema-contract evaluator.
+
+3. Updated capability audit:
+   - Added reviewed-manifest-draft-preview evidence to the cross-domain
+     famous-case validation capability.
+   - Added draft-preview command guidance to `celebrity_birth_profile_review`.
+   - Added draft-preview summary and receipt hash to symbolic-scoring
+     readiness.
+
+4. Updated tests:
+   - Covered blocked default state with missing cache.
+   - Covered partial accepted cache evidence for one sports case.
+   - Covered API schema, CLI, HTTP, schema-contract, and capability-audit
+     visibility.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\birth_profile_review.py examples\mingli_5agents\api_core.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\cli.py examples\mingli_5agents\api_server.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_cli.py examples\mingli_5agents\tests\test_api_server.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py examples\mingli_5agents\tests\test_capability_audit_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_reviewed_manifest_draft_preview_blocks_until_cache_complete examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_reviewed_manifest_draft_preview_uses_accepted_cache examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_reviewed_manifest_draft_preview_api_exposes_schema examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_reviewed_manifest_draft_preview examples\mingli_5agents\tests\test_api_server.py::test_http_api_birth_profile_reviewed_manifest_draft_preview_route examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance -q`
+  passed: `8 passed`.
+
+### Snapshot
+
+- Reviewed-manifest draft preview status:
+  `blocked_waiting_for_complete_source_cache`.
+- Review requests:
+  `8`.
+- Complete reviewed profile rows:
+  `0`.
+- Incomplete reviewed profile rows:
+  `8`.
+- Draft ready for human approval:
+  `False`.
+- Draft-preview receipt sha256:
+  `17f10d212feb8e675fca7517fbf56653315dc3df4f086d2f056dc8e3088fbc81`.
+
+### Boundary
+
+The draft preview does not write reviewed manifests, import profiles, certify
+birth data, or unlock symbolic scoring. It only renders a reviewable draft from
+accepted cache evidence.
+
+## 2026-06-26 - Birth Profile Reviewed Manifest Draft Preview Production Gate
+
+### Motivation
+
+The reviewed-manifest draft preview can aggregate accepted cache evidence into a
+reviewable manifest draft, but production readiness did not yet prove this step
+remained non-mutating. Since the draft is the last step before import preview,
+its boundary must be enforced at release time.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/production_gates.py`:
+   - Added `birth_profile_reviewed_manifest_draft_preview_non_mutating`.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Extracted `birth_profile_reviewed_manifest_draft_preview_summary` from
+     capability audit.
+   - Added production-readiness gate
+     `birth_profile_reviewed_manifest_draft_preview_non_mutating`.
+   - Added diagnostics for missing preview, manifest-write intent,
+     profile-import intent, empty request count, unexpected draft gate pass, and
+     failed integrity.
+
+3. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added the new gate ID to `celebrity_birth_profile_review`.
+
+4. Updated tests:
+   - Added production-readiness assertions for the reviewed-manifest draft gate.
+   - Updated known-gap gate-count assertions.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\production_gates.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_capability_audit_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `3 passed`.
+
+### Snapshot
+
+- Production readiness receipt sha256:
+  `74adecec2bea6f64cebccf4a0c07ae16168f8a51144c6342c42ee4a2ad18e801`.
+- Source-review workplan gate passed:
+  `True`.
+- Source-lookup dry-run gate passed:
+  `True`.
+- Source-cache audit read-only gate passed:
+  `True`.
+- Reviewed-manifest draft preview non-mutating gate passed:
+  `True`.
+- Import preview blocked gate passed:
+  `True`.
+- Fixture patch preview blocked gate passed:
+  `True`.
+- Production gate registry current:
+  `True`.
+
+### Boundary
+
+This gate proves the reviewed-manifest draft preview is present and non-mutating.
+It does not write reviewed manifests, import profiles, certify birth data, or
+unlock symbolic scoring.
+
+## 2026-06-26 - Birth Profile Reviewed Manifest File Preview
+
+### Motivation
+
+The reviewed-manifest draft preview shows the JSON content that could become a
+reviewed birth-profile manifest, but it did not yet expose the final file-write
+surface: target path, existing-file hash, draft hash, and the exact boundary for
+human approval. Celebrity validation across sports, film, and music needs this
+step before any reviewed birth data can move from source evidence into fixtures.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/birth_profile_review.py`:
+   - Added `build_birth_profile_reviewed_manifest_file_preview`.
+   - Added a non-mutating file-write gate for reviewed-manifest drafts.
+   - Added receipt and integrity checks for target file hash, draft text hash,
+     and approval boundary.
+
+2. Updated public interfaces:
+   - Added API service `birth_profile_reviewed_manifest_file_preview`.
+   - Added CLI command `birth-profile-reviewed-manifest-file-preview`.
+   - Added HTTP route `/birth-profile-reviewed-manifest-file-preview`.
+   - Added runtime schema
+     `BirthProfileReviewedManifestFilePreviewResponse`.
+
+3. Updated capability audit and schema contract:
+   - Added reviewed-manifest file-preview summaries to the cross-domain
+     celebrity fixture import readiness receipt.
+   - Added the file-preview receipt hash to the symbolic-scoring readiness
+     summary.
+   - Added the command to the `celebrity_birth_profile_review` known-gap
+     verification coverage.
+
+4. Updated tests:
+   - Added direct builder/API/CLI/HTTP tests for the file preview.
+   - Added capability-audit and schema-contract assertions.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\birth_profile_review.py examples\mingli_5agents\api_core.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\cli.py examples\mingli_5agents\api_server.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_cli.py examples\mingli_5agents\tests\test_api_server.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py examples\mingli_5agents\tests\test_capability_audit_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_reviewed_manifest_file_preview_blocks_until_draft_ready examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_reviewed_manifest_file_preview_api_exposes_schema examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_reviewed_manifest_file_preview examples\mingli_5agents\tests\test_api_server.py::test_http_api_birth_profile_reviewed_manifest_file_preview_route examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance -q`
+  passed: `7 passed`.
+
+### Snapshot
+
+- File-preview status:
+  `blocked_waiting_for_approved_draft`.
+- Target file:
+  `.semas_mingli_repo\birth_profile_review_manifest_reviewed.json`.
+- Target exists:
+  `False`.
+- Would write file:
+  `False`.
+- Write ready for human approval:
+  `False`.
+- File-preview receipt sha256:
+  `dcf5b0854e78962ad5698622513bd1dfd3b7499a85d7fbb988b97ed2ac21db24`.
+- Blocking reasons:
+  `16 planned source cache files are missing`; `no accepted source cache evidence is available`;
+  `incomplete reviewed profile drafts: jackie_chan,meryl_streep,tom_hanks,beyonce,jay_chou,taylor_swift,michael_jordan,serena_williams`;
+  `reviewed manifest draft preview is not ready for human approval`.
+
+### Boundary
+
+The file preview does not write the reviewed manifest, import profiles, certify
+birth data, or unlock symbolic scoring. It only tells the operator exactly what
+would be written after source caches and reviewed-manifest drafts are complete
+and manually approved.
+
+## 2026-06-26 - Celebrity Birth Profile Source Family Catalog
+
+### Motivation
+
+The sports, film, and music celebrity lookup plan already expanded 8 blocked
+birth-profile requests into 16 dry-run source queries, but each query only
+carried search text. The plan did not yet distinguish a rated birth-time source
+from identity or domain databases, which could let a reviewer accidentally treat
+Wikidata, IMDb, MusicBrainz, or Olympedia metadata as birth-time evidence.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/birth_profile_review.py`:
+   - Added `birth_profile_source_family_catalog`.
+   - Declared five source families:
+     `rated_birth_time_source`, `wikidata_identity_anchor`,
+     `film_identity_and_work_anchor`, `music_identity_and_work_anchor`, and
+     `sports_identity_and_result_anchor`.
+   - Added source-family recommendations and source-use policy to every planned
+     lookup query.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `source_family_catalog` to the
+     `BirthProfileSourceLookupPlanResponse` schema.
+   - Added schema coverage for catalog receipts and hashes.
+
+3. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added `source_family_count` to cross-domain birth-profile lookup summaries.
+
+4. Updated tests:
+   - Added assertions for source-family catalog count, catalog receipt hash,
+     per-query recommended source families, and birth-time source policy.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\birth_profile_review.py examples\mingli_5agents\api_core.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_lookup_plan_expands_review_queries examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_lookup_plan_filters_domain examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `4 passed`.
+
+### Snapshot
+
+- Lookup plan status:
+  `ready_for_manual_lookup`.
+- Query count:
+  `16`.
+- Source family count:
+  `5`.
+- Source families:
+  `rated_birth_time_source`, `wikidata_identity_anchor`,
+  `film_identity_and_work_anchor`, `music_identity_and_work_anchor`,
+  `sports_identity_and_result_anchor`.
+- First query:
+  `Astro-Databank Jackie Chan birth time`.
+- First query requires rated birth-time source:
+  `True`.
+- First query recommended source families:
+  `rated_birth_time_source`, `wikidata_identity_anchor`,
+  `film_identity_and_work_anchor`.
+- Catalog receipt sha256:
+  `3a6a3ef3588f83dacc6b13de6911209c218945488186add6103f4be95403fd59`.
+
+### Boundary
+
+The source-family catalog is guidance and audit metadata only. It does not fetch
+sources, certify birth data, write caches, write reviewed manifests, or unlock
+symbolic scoring.
+
+## 2026-06-26 - Birth Profile Source Family Catalog Production Gate
+
+### Motivation
+
+The celebrity birth-profile lookup plan now carries a source-family catalog and
+per-query source-use policies, but production readiness still only proved the
+lookup plan was dry-run. It did not prove that the source-family catalog was
+bound or that birth-time queries were constrained to rated birth-time sources.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added `source_family_catalog_bound`.
+   - Added `birth_time_source_policy_bound`.
+   - Added `identity_anchor_birth_time_disallowed`.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added production gate `birth_profile_source_family_catalog_bound`.
+   - Added gate diagnostics for missing source families, missing birth-time
+     policy binding, and identity anchors that could satisfy `birth_time`.
+   - Added the new source-family policy fields to the public schema.
+
+3. Updated `examples/mingli_5agents/production_gates.py`:
+   - Registered `birth_profile_source_family_catalog_bound`.
+
+4. Updated tests:
+   - Added production-readiness assertions for the new gate.
+   - Added schema-contract assertions for source-family policy fields.
+   - Updated known-gap production gate coverage for
+     `celebrity_birth_profile_review`.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\production_gates.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py examples\mingli_5agents\tests\test_capability_audit_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance -q`
+  passed: `4 passed`.
+
+### Snapshot
+
+- `birth_profile_source_lookup_plan_dry_run`:
+  `True`.
+- `birth_profile_source_family_catalog_bound`:
+  `True`.
+- `birth_profile_source_cache_audit_read_only`:
+  `True`.
+- Production gate registry current:
+  `True`.
+- Production readiness receipt sha256:
+  `fa030a9101b479a8c619d339c38d0f16fe573f9bf63bad743d097885a81a5fed`.
+
+### Boundary
+
+This gate proves source-family policy is bound to the dry-run celebrity
+birth-profile lookup plan. It does not fetch sources, certify birth data, write
+caches, write reviewed manifests, or unlock symbolic scoring.
+
+## 2026-06-26 - Birth Profile Source Cache Template Preview
+
+### Motivation
+
+The source lookup plan defines what reviewers should search, and the source
+cache audit defines which JSON fields are required. There was still a manual gap
+between them: operators had to create cache JSON files by hand without a
+machine-generated template for `query_id`, `case_id`, required source metadata,
+review status, target fields, and planned cache paths.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/birth_profile_review.py`:
+   - Added `build_birth_profile_source_cache_template_preview`.
+   - Added template payloads for every planned lookup query.
+   - Added template hashes, required fields, review status options, and
+     non-mutating integrity checks.
+
+2. Updated public interfaces:
+   - Added API service `birth_profile_source_cache_template_preview`.
+   - Added CLI command `birth-profile-source-cache-template-preview`.
+   - Added HTTP route `/birth-profile-source-cache-template-preview`.
+   - Added runtime schema
+     `BirthProfileSourceCacheTemplatePreviewResponse`.
+
+3. Updated governance:
+   - Added the new CLI command to the `celebrity_birth_profile_review`
+     known-gap verification commands.
+   - Added the new schema and endpoint to the schema contract evaluator.
+
+4. Updated tests:
+   - Added builder/API/CLI/HTTP tests for the template preview.
+   - Added schema-contract assertions.
+   - Added known-gap command coverage assertions.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\birth_profile_review.py examples\mingli_5agents\api_core.py examples\mingli_5agents\cli.py examples\mingli_5agents\api_server.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\evaluators\schema_contract_evaluator.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_cli.py examples\mingli_5agents\tests\test_api_server.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py examples\mingli_5agents\tests\test_capability_audit_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_cache_template_preview_renders_manual_json examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_cache_template_preview_api_exposes_schema examples\mingli_5agents\tests\test_cli.py::test_cli_birth_profile_source_cache_template_preview examples\mingli_5agents\tests\test_api_server.py::test_http_api_birth_profile_source_cache_template_preview_route examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance -q`
+  passed: `6 passed`.
+
+### Snapshot
+
+- Template preview status:
+  `ready_for_manual_cache_fill`.
+- Sports template count:
+  `4`.
+- Would write cache:
+  `False`.
+- Template gate passed:
+  `False`.
+- First planned cache path:
+  `.semas_mingli_repo\birth_profile_source_cache\michael_jordan_1.json`.
+- Required cache fields:
+  `query_id`, `case_id`, `source_name`, `source_url`, `source_rating`,
+  `reviewer_note`, `review_status`.
+- Review status options:
+  `source_reviewed`, `rejected`, `needs_more_evidence`.
+- Template-preview receipt sha256:
+  `0fbec7b4566b6b5528b0ebc7b23597913be7f81c75c72035fa83fcadace3592a`.
+
+### Boundary
+
+The template preview does not fetch sources, write cache files, certify birth
+data, write reviewed manifests, import profiles, or unlock symbolic scoring. It
+only renders the JSON skeletons required for manual source-cache creation.
+
+## 2026-06-26 - Birth Profile Source Cache Template Preview Production Gate
+
+### Motivation
+
+The source-cache template preview standardizes manual JSON creation, but
+production readiness did not yet prove the template step remained non-mutating.
+Because this step sits between dry-run lookup and cache audit, it must not start
+fetching sources, writing cache files, or importing profiles.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added `build_birth_profile_source_cache_template_preview` to evidence.
+   - Added `birth_profile_source_cache_template_preview_summary`.
+   - Added template-preview receipt hash to cross-domain symbolic scoring
+     readiness.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added production gate
+     `birth_profile_source_cache_template_preview_non_mutating`.
+   - Added diagnostics for missing template preview, write/fetch/import intent,
+     empty template count, unexpected template gate pass, and failed integrity.
+   - Added source-cache template preview summary schema fields.
+
+3. Updated `examples/mingli_5agents/production_gates.py`:
+   - Registered `birth_profile_source_cache_template_preview_non_mutating`.
+
+4. Updated tests:
+   - Added cross-domain readiness assertions for the template preview summary.
+   - Added production-readiness assertions for the new gate.
+   - Added schema-contract assertions and known-gap gate coverage.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\production_gates.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py examples\mingli_5agents\tests\test_capability_audit_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance -q`
+  passed: `4 passed`.
+
+### Snapshot
+
+- `birth_profile_source_cache_template_preview_non_mutating`:
+  `True`.
+- `birth_profile_source_cache_audit_read_only`:
+  `True`.
+- Production gate registry current:
+  `True`.
+- Production readiness receipt sha256:
+  `e605708806b9c085a97ef066ffa8f202fcb595fb8b3c32ccd5333bcc7d7a10db`.
+
+### Boundary
+
+This gate proves the source-cache template preview is present and non-mutating.
+It does not fetch sources, write cache files, certify birth data, write reviewed
+manifests, import profiles, or unlock symbolic scoring.
+
+## 2026-06-26 - Birth Profile Source Family Cache Enforcement
+
+### Motivation
+
+The lookup plan and template preview carried source-family policy, but the
+source cache audit still accepted reviewed cache payloads without a
+`source_family_id`. That left a gap where identity anchors could theoretically
+be recorded as reviewed evidence for `birth_time`.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/birth_profile_review.py`:
+   - Added `source_family_id` to source cache template payloads.
+   - Added `source_family_id` to required cache fields.
+   - Added allowed source-family IDs to every template item.
+   - Added cache-audit validation that rejects `birth_time` unless
+     `source_family_id` is `rated_birth_time_source`.
+   - Added source-family target-field validation against
+     `SOURCE_FAMILY_CATALOG.usable_for_fields`.
+
+2. Updated tests:
+   - Added accepted reviewed-cache fixture payloads with explicit
+     `source_family_id`.
+   - Added a rejection test proving `wikidata_identity_anchor` cannot satisfy
+     `birth_time`.
+   - Added template assertions for `source_family_id` and allowed source-family
+     IDs.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\birth_profile_review.py examples\mingli_5agents\tests\test_empirical_validation.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_cache_template_preview_renders_manual_json examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_cache_audit_reads_reviewed_cache_file examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_cache_audit_rejects_identity_anchor_birth_time examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_reviewed_manifest_draft_preview_uses_accepted_cache -q`
+  passed: `4 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `2 passed`.
+
+### Snapshot
+
+- Rejected payload source family:
+  `wikidata_identity_anchor`.
+- Rejected field:
+  `birth_time`.
+- Accepted count after rejected payload:
+  `0`.
+- Failure:
+  `birth_time evidence requires source_family_id=rated_birth_time_source`.
+
+### Boundary
+
+This change strengthens cache audit validation only. It does not fetch sources,
+write cache files, certify birth data, write reviewed manifests, import
+profiles, or unlock symbolic scoring.
+
+## 2026-06-26 - Birth Profile Source Family Enforcement Probe
+
+### Motivation
+
+Source-family cache enforcement was covered by tests, but production readiness
+did not run a runtime counterexample proving the current cache audit still
+rejects identity-anchor `birth_time` payloads. A release gate should verify the
+actual enforcement path, not only the presence of policy metadata.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added a temporary-directory source-family enforcement probe.
+   - The probe writes a `wikidata_identity_anchor` payload claiming
+     `birth_time`, runs the real cache audit, and expects rejection.
+   - Added `birth_profile_source_family_cache_enforcement_summary` to
+     cross-domain symbolic scoring readiness.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added production gate
+     `birth_profile_source_family_cache_enforcement_probe`.
+   - Added diagnostics for missing probe, unexecuted probe, unexpected accepted
+     cache count, and missing birth-time policy failure.
+   - Added schema coverage for the enforcement summary.
+
+3. Updated `examples/mingli_5agents/production_gates.py`:
+   - Registered `birth_profile_source_family_cache_enforcement_probe`.
+
+4. Updated tests:
+   - Added cross-domain readiness assertions for the probe summary.
+   - Added production-readiness assertions for the new gate.
+   - Added schema-contract assertions and known-gap gate coverage.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\production_gates.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py examples\mingli_5agents\tests\test_capability_audit_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance -q`
+  passed: `4 passed`.
+
+### Snapshot
+
+- `birth_profile_source_family_cache_enforcement_probe`:
+  `True`.
+- `birth_profile_source_cache_audit_read_only`:
+  `True`.
+- Production gate registry current:
+  `True`.
+- Production readiness receipt sha256:
+  `8e41caa9762ff4bb60ec318b4c5df829669b781cb1e17f5f46b7a4cb3b97ed3b`.
+
+### Boundary
+
+The probe writes only to a temporary directory and uses the existing cache audit
+path. It does not fetch sources, write repository cache files, certify birth
+data, write reviewed manifests, import profiles, or unlock symbolic scoring.
+
+## 2026-06-26 - Birth Profile Substantive Evidence Cache Enforcement
+
+### Motivation
+
+Source cache audit accepted `source_reviewed` payloads when any planned target
+field was filled. Some planned target fields are source metadata
+(`source_name`, `source_url`, `source_rating`), so a payload could be marked
+reviewed without filling a substantive birth field.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/birth_profile_review.py`:
+   - Added `SUBSTANTIVE_BIRTH_EVIDENCE_FIELDS`.
+   - Changed `_source_cache_has_target_evidence` to count only `birth_date`,
+     `birth_time`, `gender`, and `birthplace`.
+   - Updated cache template acceptance note to distinguish substantive birth
+     fields from source metadata.
+   - Updated cache-audit failure wording to
+     `reviewed payload does not fill any substantive birth field`.
+
+2. Updated tests:
+   - Added a metadata-only `source_reviewed` cache rejection test.
+   - Kept reviewed birth-time cache and reviewed manifest draft aggregation
+     passing.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\birth_profile_review.py examples\mingli_5agents\tests\test_empirical_validation.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_cache_template_preview_renders_manual_json examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_cache_audit_reads_reviewed_cache_file examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_cache_audit_rejects_identity_anchor_birth_time examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_source_cache_audit_rejects_metadata_only_reviewed_cache examples\mingli_5agents\tests\test_empirical_validation.py::test_birth_profile_reviewed_manifest_draft_preview_uses_accepted_cache -q`
+  passed: `5 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `2 passed`.
+
+### Snapshot
+
+- Metadata-only reviewed payload accepted:
+  `False`.
+- Accepted count:
+  `0`.
+- Failure:
+  `reviewed payload does not fill any substantive birth field`.
+
+### Boundary
+
+This change affects cache-audit evidence acceptance only. It does not fetch
+sources, write cache files, certify birth data, write reviewed manifests, import
+profiles, or unlock symbolic scoring.
+
+## 2026-06-26 - Birth Profile Substantive Evidence Enforcement Probe
+
+### Motivation
+
+The cache audit already rejects reviewed payloads that contain only source
+metadata. Production readiness still needed to execute the same negative case at
+runtime, so a future bypass cannot pass release checks by relying on stale unit
+test assumptions.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added a temporary-directory probe that writes a metadata-only
+     `source_reviewed` cache payload with `source_family_id=rated_birth_time_source`.
+   - The probe runs the real source cache audit and requires rejection with
+     `reviewed payload does not fill any substantive birth field`.
+   - Added the probe summary to cross-domain symbolic readiness output.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added production readiness extraction for the substantive-evidence probe.
+   - Added gate `birth_profile_substantive_evidence_cache_enforcement_probe`.
+   - Extended the public schema contract for the new readiness summary.
+
+3. Updated `examples/mingli_5agents/production_gates.py` and tests:
+   - Registered the new gate ID.
+   - Added readiness, schema, production-gate, and known-gap coverage assertions.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\production_gates.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py examples\mingli_5agents\tests\test_capability_audit_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_cross_domain_fixture_import_receipt examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema examples\mingli_5agents\tests\test_capability_audit_evaluator.py::test_capability_audit_binds_provider_production_guidance -q`
+  passed: `4 passed`.
+
+### Snapshot
+
+- `birth_profile_substantive_evidence_cache_enforcement_probe`:
+  `True`.
+- Gate details:
+  `[]`.
+- Production gate registry current:
+  `True`.
+
+### Boundary
+
+The probe writes only to a temporary cache directory. It does not fetch live
+sources, write repository cache files, write reviewed manifests, import
+profiles, or certify any celebrity birth data.
+
+## 2026-06-26 - Chinese Report No-English No-Code Quality Gate
+
+### Motivation
+
+User-facing Mingli reports must be Chinese-only, readable, and free of code,
+ASCII question-mark mojibake, provider commands, and untranslated symbolic
+tokens. The previous renderer could still leak English names, stems, palaces,
+provider statuses, environment variables, and `python -m` commands into Chinese
+Markdown.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/report_renderers.py`:
+   - Added a Chinese Markdown postprocessor for final rendered text.
+   - Translated common stems/branches, five elements, Ziwei palaces, Qimen
+     doors/palaces, astrology signs, provider statuses, Xuanze day labels, and
+     benchmark case labels.
+   - Removed provider setup command lines from Chinese reports and replaced
+     them with plain Chinese production-access guidance.
+
+2. Updated `examples/mingli_5agents/evaluators/chinese_render_evaluator.py`:
+   - Rejected ASCII `?`, generic mojibake markers, code blocks, `python -m`,
+     `SEMAS_` variables, and any remaining Latin letters in Chinese reports.
+
+3. Updated `examples/mingli_5agents/tests/test_chinese_render_evaluator.py`:
+   - Required generated Chinese reports to contain no ASCII letters, question
+     marks, provider commands, or environment variables.
+   - Added a negative test for question-mark and Python-code leakage.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\report_renderers.py examples\mingli_5agents\evaluators\chinese_render_evaluator.py examples\mingli_5agents\tests\test_chinese_render_evaluator.py examples\mingli_5agents\tests\test_benchmark.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_chinese_render_evaluator.py examples\mingli_5agents\tests\test_benchmark.py::test_run_benchmark_returns_aggregate_metrics -q`
+  passed: `5 passed`.
+
+### Snapshot
+
+- Chinese render score:
+  `1.0`.
+- ASCII letters in generated Chinese report:
+  `0`.
+- ASCII question mark present:
+  `False`.
+- `python -m` present:
+  `False`.
+- `SEMAS_` provider variable present:
+  `False`.
+
+### Boundary
+
+This change cleans and gates user-facing Chinese Markdown only. It does not
+alter structured provider receipts, source commands, schema contracts, or
+internal audit metadata.
+
+## 2026-06-26 - Annual Monthly Anti-Repetition Evidence Binding
+
+### Motivation
+
+User-facing yearly and monthly sections must not repeat generic template
+sentences. A readable Mingli report should show why each year and month is being
+judged differently, using the independently computed annual or monthly pillar,
+ten-god relation, active major luck, useful-state, and natal activation flags.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/report_renderers.py`:
+   - Annual and monthly topic lines now include the specific year/month,
+     ganzhi, stem ten-god, branch ten-god, active major luck, useful-state, and
+     natal same-pillar evidence.
+   - Main-axis and BaZi-evidence lines now include the year/month and ganzhi, so
+     repeated structural rows remain traceable instead of appearing as copied
+     prose.
+
+2. Updated `examples/mingli_5agents/evaluators/chinese_render_evaluator.py`:
+   - Added a duplicate-bullet ratio check over the final annual/monthly report
+     sections.
+   - Chinese rendering now fails when the annual/monthly tail sections contain
+     repeated bullet lines above the allowed floor.
+
+3. Updated `examples/mingli_5agents/tests/test_chinese_render_evaluator.py`:
+   - Generated Chinese reports must have zero duplicate bullet ratio in the
+     annual/monthly tail sections.
+   - Added a repeated-line negative test for the duplicate-ratio helper.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\report_renderers.py examples\mingli_5agents\evaluators\chinese_render_evaluator.py examples\mingli_5agents\tests\test_chinese_render_evaluator.py examples\mingli_5agents\tests\test_benchmark.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_chinese_render_evaluator.py examples\mingli_5agents\tests\test_benchmark.py::test_run_benchmark_returns_aggregate_metrics -q`
+  passed: `6 passed`.
+
+### Snapshot
+
+- Chinese render score:
+  `1.0`.
+- Annual/monthly duplicate bullet ratio:
+  `0.0`.
+- ASCII letters:
+  `0`.
+- ASCII question mark present:
+  `False`.
+
+### Boundary
+
+This change improves final Chinese prose traceability and repetition detection.
+It does not change the underlying annual/monthly calculation algorithm or claim
+predictive validation.
+
+## 2026-06-26 - Annual Monthly Evidence Anchor Coverage Gate
+
+### Motivation
+
+The anti-repetition gate ensures annual/monthly lines are not copied verbatim,
+but it still needs a stronger invariant: every yearly and monthly topic
+judgment must visibly bind to the independently computed evidence for that row.
+Otherwise future edits could produce varied prose without showing the actual
+ganzhi, ten-god, major-luck, useful-state, or natal-activation basis.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/evaluators/chinese_render_evaluator.py`:
+   - Added `_tail_section_topic_evidence_anchor_ratio`.
+   - Chinese rendering now fails unless every annual/monthly topic line for
+     finance, official career, career, study, relationship, friends, leadership,
+     and children/family contains row-level evidence anchors.
+   - Required anchors are: current year/month scope, stem ten-god, branch
+     ten-god, active major luck, useful-state, and natal same-pillar status.
+
+2. Updated `examples/mingli_5agents/tests/test_chinese_render_evaluator.py`:
+   - Generated Chinese reports must reach evidence-anchor coverage `1.0`.
+   - Added a negative helper test for unbound topic lines.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\evaluators\chinese_render_evaluator.py examples\mingli_5agents\tests\test_chinese_render_evaluator.py examples\mingli_5agents\report_renderers.py examples\mingli_5agents\tests\test_benchmark.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_chinese_render_evaluator.py examples\mingli_5agents\tests\test_benchmark.py::test_run_benchmark_returns_aggregate_metrics -q`
+  passed: `7 passed`.
+
+### Snapshot
+
+- Chinese render score:
+  `1.0`.
+- Annual/monthly duplicate bullet ratio:
+  `0.0`.
+- Annual/monthly topic evidence-anchor ratio:
+  `1.0`.
+- ASCII letters:
+  `0`.
+- ASCII question mark present:
+  `False`.
+
+### Boundary
+
+This is a report-quality gate. It proves row-level evidence is visible in the
+Chinese prose; it does not prove real-world predictive accuracy.
+
+## 2026-06-26 - Benchmark Chinese Render Diagnostics Exposure
+
+### Motivation
+
+The Chinese render evaluator now enforces no-English/no-code/no-mojibake,
+anti-repetition, and annual/monthly evidence-anchor coverage. Those failures
+should be visible in benchmark artifacts, not only hidden inside a single
+aggregate `chinese_render` score.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/benchmark.py`:
+   - Added benchmark `report_features` for:
+     - `chinese_render_duplicate_bullet_ratio`
+     - `chinese_render_topic_evidence_anchor_ratio`
+     - `chinese_render_ascii_letter_count`
+     - `chinese_render_ascii_question_present`
+     - `chinese_render_code_marker_present`
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Exposed the new benchmark report-feature fields in
+     `BenchmarkCaseReportFeatures`.
+
+3. Updated tests:
+   - `examples/mingli_5agents/tests/test_benchmark.py` asserts both Chinese
+     benchmark cases report zero duplication, full evidence-anchor coverage,
+     zero Latin letters, no ASCII question mark, and no code marker.
+   - `examples/mingli_5agents/tests/test_schema_contract_evaluator.py` asserts
+     the new schema fields and types.
+   - `examples/mingli_5agents/tests/test_cli.py` schema field-list assertions
+     were updated.
+
+4. Updated `examples/mingli_5agents/report_renderers.py`:
+   - Added Chinese-render replacements for common English test-case names,
+     Chinese city inputs, zodiac/door/palace symbols, and a final fallback that
+     replaces untranslated Latin tokens in Chinese Markdown only.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\benchmark.py examples\mingli_5agents\api_core.py examples\mingli_5agents\report_renderers.py examples\mingli_5agents\tests\test_benchmark.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py examples\mingli_5agents\tests\test_cli.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_benchmark.py::test_run_benchmark_returns_aggregate_metrics -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_cli.py::test_cli_init_analyze_evolve_status -q`
+  did not complete within 240 seconds in this run; no pass/fail conclusion was
+  recorded for that large integration test.
+
+### Snapshot
+
+For both `zh_topic_professional_auto_case` and
+`production_external_provider_case`:
+
+- Duplicate bullet ratio:
+  `0.0`.
+- Topic evidence-anchor ratio:
+  `1.0`.
+- ASCII letter count:
+  `0`.
+- ASCII question mark present:
+  `False`.
+- Code marker present:
+  `False`.
+
+### Boundary
+
+This change makes report-quality diagnostics observable in benchmark artifacts.
+It does not alter structured birth data, provider receipts, or predictive
+claims.
+
+## 2026-06-26 - Benchmark Chinese Render Quality Production Gate
+
+### Motivation
+
+Benchmark diagnostics made Chinese report quality observable, but production
+readiness still needed a dedicated gate. Otherwise a release could pass general
+benchmark floors while hiding the specific cause of a Chinese-rendering
+regression.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `_benchmark_chinese_render_quality_failures`.
+   - Added production readiness gate
+     `benchmark_chinese_render_quality_diagnostics`.
+   - The gate checks benchmark Chinese reports for duplicate annual/monthly
+     bullets, evidence-anchor coverage, Latin letters, ASCII question marks,
+     and code/provider-command markers.
+
+2. Updated `examples/mingli_5agents/production_gates.py`:
+   - Registered `benchmark_chinese_render_quality_diagnostics`.
+
+3. Updated tests:
+   - `examples/mingli_5agents/tests/test_empirical_validation.py` asserts the
+     new production-readiness gate passes and does not appear in blockers.
+   - `examples/mingli_5agents/tests/test_schema_contract_evaluator.py` asserts
+     the new gate is part of valid production gate IDs.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\production_gates.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_known_gap_resolution_plan_coverage_accepts_id_alias -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `1 passed`.
+
+### Snapshot
+
+- `benchmark_chinese_render_quality_diagnostics`:
+  `True`.
+- Gate details:
+  `[]`.
+- Production gate registry current:
+  `True`.
+- Gate registered:
+  `True`.
+- Chinese benchmark duplicate ratio:
+  `0.0`.
+- Chinese benchmark evidence-anchor ratio:
+  `1.0`.
+- ASCII letters:
+  `0`.
+- ASCII question mark present:
+  `False`.
+- Code marker present:
+  `False`.
+
+### Boundary
+
+This is a production report-quality gate. It prevents release regressions in
+Chinese report readability and row-evidence visibility, but it does not certify
+real-world predictive accuracy.
+
+## 2026-06-26 - Celebrity Sports Film Music Validation Pool Review
+
+### Motivation
+
+The user asked whether sports, film, and music celebrities can be found for
+famous-case validation. The existing framework already had a candidate pool and
+fixture layer, but it needed a concrete review of coverage, boundary, and source
+quality before using the cases to evolve rules.
+
+### Actions Taken
+
+1. Reviewed the local candidate pool:
+   - `examples/mingli_5agents/providers/industry_event_candidate_cases_example.json`
+     contains 9 public candidates.
+   - Coverage is balanced across `sports`, `film`, and `music`, with 3
+     candidates per domain.
+   - Audit status is valid and ready for review, but not production ready
+     because it is not externally reviewed.
+
+2. Reviewed the local event-source manifest:
+   - `examples/mingli_5agents/providers/industry_event_source_manifest_example.json`
+     covers film, music, and sports event sources.
+   - Audit status is valid and ready for review, but not production evidence.
+
+3. Reviewed the sourced famous-case fixture layer:
+   - Sports: Arthur Ashe, Mark Spitz, Roger Federer.
+   - Film/television: Marilyn Monroe, Lucille Ball, Sean Penn.
+   - Film/martial arts: Bruce Lee.
+   - Singers: Aretha Franklin, Michael Jackson, Madonna.
+   - Sources are tracked as Astro-Databank with rating labels preserved.
+
+4. Corrected one fixture data issue:
+   - Updated Arthur Ashe birth time from `18:40` to `12:55` in
+     `examples/mingli_5agents/famous_case_validation.py`.
+   - This prevents a wrong hour pillar from contaminating symbolic annual
+     scoring.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\industry_event_candidates.py examples\mingli_5agents\industry_event_manifest.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_outcome_dataset_configuration examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_symbolic_scoring_readiness_matches_birth_profiles examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_symbolic_annual_score_scores_ready_labels -q`
+  passed: `3 passed`.
+
+### Snapshot
+
+- Candidate pool audit:
+  valid, 9 candidates, 3 sports, 3 film, 3 music, production ready false.
+- Event manifest audit:
+  valid, 6 records, covers film/music/sports, production evidence false.
+- Fixture coverage:
+  sports 3 cases / 32 event tags; film 3 cases / 33 event tags; singers 3
+  cases / 33 event tags; Bruce Lee adds 1 film-martial-arts case / 12 event
+  tags.
+
+### Boundary
+
+Celebrity cases are useful for calibration and false-positive detection, but
+they are not proof of predictive validity. Before promotion to production
+evidence, every case needs externally reviewed birth data, sourced event labels,
+negative-year review, and frozen train/holdout splits.
+
+## 2026-06-26 - Annual Monthly Judgment Then Evidence Structure
+
+### Motivation
+
+The annual and monthly topic lines already carried row-level evidence, but the
+evidence was embedded in parentheses after the conclusion. That made the report
+look like a field dump and weakened readability. The user asked for stronger,
+more fluent, more directional language, so the renderer now separates the
+assertion from the evidence.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/report_renderers.py`:
+   - Annual and monthly topic rows now render as
+     `判断：...；依据：...`.
+   - The evidence still includes year/month, ganzhi, stem ten-god, branch
+     ten-god, active major luck, useful-state, and natal same-pillar relation.
+
+2. Updated `examples/mingli_5agents/evaluators/chinese_render_evaluator.py`:
+   - Added `_tail_section_topic_judgment_structure_ratio`.
+   - Chinese reports now fail if annual/monthly topic rows do not include both
+     judgment and evidence markers.
+
+3. Updated benchmark and production readiness:
+   - `examples/mingli_5agents/benchmark.py` exposes
+     `chinese_render_topic_judgment_structure_ratio`.
+   - `examples/mingli_5agents/api_core.py` adds the schema field and checks it
+     inside `benchmark_chinese_render_quality_diagnostics`.
+
+4. Updated tests:
+   - Chinese render evaluator positive and negative cases.
+   - Benchmark aggregate feature assertions.
+   - Schema contract and CLI schema field assertions.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\report_renderers.py examples\mingli_5agents\evaluators\chinese_render_evaluator.py examples\mingli_5agents\benchmark.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_chinese_render_evaluator.py examples\mingli_5agents\tests\test_benchmark.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py examples\mingli_5agents\tests\test_cli.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_chinese_render_evaluator.py -q`
+  passed: `7 passed`.
+- `pytest examples\mingli_5agents\tests\test_benchmark.py::test_run_benchmark_returns_aggregate_metrics -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+
+### Snapshot
+
+- `benchmark_chinese_render_quality_diagnostics`:
+  `True`.
+- Gate details:
+  `[]`.
+- `zh_topic_professional_auto_case`:
+  duplicate ratio `0.0`, evidence-anchor ratio `1.0`, judgment-structure ratio
+  `1.0`, ASCII letters `0`, question marker `False`, code marker `False`.
+- `production_external_provider_case`:
+  duplicate ratio `0.0`, evidence-anchor ratio `1.0`, judgment-structure ratio
+  `1.0`, ASCII letters `0`, question marker `False`, code marker `False`.
+
+### Boundary
+
+This change improves report readability and auditability. It does not change
+birth-chart calculation, annual/monthly symbolic scoring, or empirical
+predictive validity.
+
+## 2026-06-26 - Famous Case Birth Source Quality Summary
+
+### Motivation
+
+Celebrity validation can improve rule calibration only if birth-time quality is
+visible. The famous-case receipt already tracked domain coverage and source
+ratings, but downstream evolution could still focus on case count without
+seeing which samples are suitable for hour-pillar-sensitive checks.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `_fixture_birth_source_quality`.
+   - Added `birth_source_quality` to `famous_case_receipt()` and its stable
+     material.
+   - The summary records source counts, rating counts, high-confidence cases,
+     caution cases, invalid birth-time formats, and hour-pillar eligible cases.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `birth_source_quality` to `FamousCaseValidationReceiptSummary`.
+
+3. Updated tests:
+   - Capability-audit test asserts the source-quality summary is present and
+     stable in material.
+   - Schema-contract test requires the new field in the public schema.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `1 passed`.
+
+### Snapshot
+
+- Famous-case count:
+  `12`.
+- Source counts:
+  `{"Astro-Databank": 12}`.
+- Rating counts:
+  `{"乙": 1, "甲": 4, "甲甲": 7}`.
+- High-confidence case count:
+  `11`.
+- Caution case ids:
+  `["chiang_kai_shek"]`.
+- Invalid birth-time format case ids:
+  `[]`.
+- Hour-pillar scoring eligible case count:
+  `11`.
+- Arthur Ashe eligible after birth-time correction:
+  `True`.
+
+### Boundary
+
+This summary improves calibration hygiene. It does not certify predictive
+validity, and it does not replace external review of event labels or source
+documents.
+
+## 2026-06-26 - Annual Calibration Birth Source Quality Propagation
+
+### Motivation
+
+The famous-case fixture now exposes birth-source quality, but annual event
+calibration still only carried `source_rating` on each case score. That meant a
+downstream rule-refinement step could ignore whether a case was eligible for
+hour-pillar-sensitive analysis. The quality signal needed to travel with the
+calibration output itself.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added case-level `birth_source_quality` to annual case scores.
+   - Added `hour_pillar_scoring_eligible` to each annual case score.
+   - Added `birth_source_quality_summary` to
+     `famous_case_annual_event_calibration_receipt()`.
+   - The summary counts eligible cases, caution cases, eligible event labels,
+     caution event labels, and eligible event rate.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `birth_source_quality_summary` to
+     `FamousCaseAnnualEventCalibrationReceiptSummary`.
+
+3. Updated tests:
+   - Capability-audit test checks case-level and aggregate birth-source quality.
+   - Schema-contract test requires the annual calibration summary field.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `1 passed`.
+
+### Snapshot
+
+- Annual calibration case count:
+  `12`.
+- Hour-pillar scoring eligible cases:
+  `11`.
+- Caution case ids:
+  `["chiang_kai_shek"]`.
+- Eligible event labels:
+  `120`.
+- Caution event labels:
+  `10`.
+- Eligible event rate:
+  `0.923`.
+
+### Boundary
+
+This propagates input-quality metadata into annual calibration. It does not
+remove caution cases from broad annual diagnostics; it makes the caution visible
+so future rule evolution can filter hour-sensitive claims.

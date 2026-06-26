@@ -17,7 +17,8 @@ dependencies = [
 [project.optional-dependencies]
 qlib = ["pyqlib>=0.9.0"]
 talib = ["TA-Lib>=0.4.32"]
-all = ["pyqlib>=0.9.0", "TA-Lib>=0.4.32"]
+tushare = ["tushare>=1.4.0"]
+all = ["pyqlib>=0.9.0", "TA-Lib>=0.4.32", "tushare>=1.4.0"]
 
 [tool.setuptools.packages.find]
 where = ["."]

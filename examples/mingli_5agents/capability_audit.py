@@ -13,10 +13,46 @@ from typing import Any
 
 from semas.utils.llm_client import llm_backend_status
 
+from examples.mingli_5agents.birth_profile_review import (
+    audit_birth_profile_review_manifest,
+    build_birth_profile_fixture_patch_preview,
+    build_birth_profile_import_preview,
+    build_birth_profile_reviewed_manifest_draft_preview,
+    build_birth_profile_reviewed_manifest_file_preview,
+    build_birth_profile_source_cache_audit,
+    build_birth_profile_source_cache_template_preview,
+    build_birth_profile_source_lookup_plan,
+    build_birth_profile_source_review_workplan,
+)
 from examples.mingli_5agents.classical_corpus_refresh import source_list_audit
 from examples.mingli_5agents.classical_text_index import classical_index_audit
 from examples.mingli_5agents.empirical_validation import empirical_validation_cases, outcome_dataset_audit
-from examples.mingli_5agents.famous_case_validation import famous_case_receipt
+from examples.mingli_5agents.famous_case_validation import (
+    famous_case_annual_event_calibration_receipt,
+    famous_case_receipt,
+    famous_case_records,
+    famous_case_school_calibration_receipt,
+)
+from examples.mingli_5agents.industry_event_manifest import (
+    audit_industry_event_manifest,
+    build_industry_event_symbolic_annual_score_payload,
+    build_industry_event_symbolic_scoring_readiness_payload,
+    default_industry_event_manifest_path,
+    industry_event_manifest_receipt,
+)
+from examples.mingli_5agents.industry_event_candidates import (
+    audit_industry_event_candidate_cases,
+    build_candidate_pool_fetch_cache_plan,
+    build_candidate_pool_manifest_drafts_from_cache,
+    build_industry_event_evidence_workplan_from_symbolic_score,
+    default_industry_event_candidate_cases_path,
+    industry_event_candidate_cases_receipt,
+)
+from examples.mingli_5agents.industry_event_query_plan import (
+    audit_industry_event_query_plan,
+    default_industry_event_query_plan_path,
+    industry_event_query_plan_receipt,
+)
 from examples.mingli_5agents.knowledge_base import SOURCE_REGISTRY
 from examples.mingli_5agents.memory import MingliFeedbackMemory
 from examples.mingli_5agents.method_lineage import method_lineage_receipt
@@ -38,6 +74,14 @@ from examples.mingli_5agents.tools.professional_chart_provider import describe_d
 BASE_DIR = Path(__file__).resolve().parent
 REPO_ROOT = BASE_DIR.parents[1]
 DEFAULT_CLASSICAL_SOURCE_LIST = BASE_DIR / "providers" / "classical_source_list_example.json"
+INDUSTRY_EVENT_SOURCE_MANIFEST_EXAMPLE = default_industry_event_manifest_path()
+INDUSTRY_EVENT_CANDIDATE_CASES_EXAMPLE = default_industry_event_candidate_cases_path()
+INDUSTRY_EVENT_SOURCE_QUERY_PLAN_EXAMPLE = default_industry_event_query_plan_path()
+INDUSTRY_EVENT_WIKIDATA_FILM_RESPONSE_EXAMPLE = BASE_DIR / "providers" / "wikidata_film_response_example.json"
+INDUSTRY_EVENT_WIKIDATA_MUSIC_RESPONSE_EXAMPLE = BASE_DIR / "providers" / "wikidata_music_response_example.json"
+INDUSTRY_EVENT_WIKIDATA_SPORTS_RESPONSE_EXAMPLE = BASE_DIR / "providers" / "wikidata_sports_response_example.json"
+INDUSTRY_EVENT_CROSS_DOMAIN_FIXTURE_CACHE = REPO_ROOT / ".semas_mingli_repo" / "industry_event_cache_audit_fixture"
+BIRTH_PROFILE_REVIEW_MANIFEST_EXAMPLE = BASE_DIR / "providers" / "birth_profile_review_manifest_example.json"
 
 
 def _default_classical_source_list_path(classical_source_list_path: Path | None) -> Path | None:
@@ -958,6 +1002,37 @@ IMPLEMENTED_REQUIREMENTS = [
         ],
         "status": "implemented",
     },
+    {
+        "id": "industry_event_cross_domain_fixture_import",
+        "requirement": "Sports, film, and music celebrity candidate pools can be imported through an offline cached-response fixture loop that emits positive and negative validation labels, binds a receipt into capability audit, and validates the artifact across Python, HTTP, and CLI schema surfaces.",
+        "evidence": [
+            "capability_audit._industry_event_cross_domain_fixture_import_receipt",
+            "capability_audit._cross_domain_birth_profile_completion_task_plan",
+            "capability_audit._cross_domain_birth_profile_completion_workplan_summary",
+            "birth_profile_review.audit_birth_profile_review_manifest",
+            "birth_profile_review.build_birth_profile_import_preview",
+            "birth_profile_review.build_birth_profile_fixture_patch_preview",
+            "birth_profile_review.build_birth_profile_source_lookup_plan",
+            "birth_profile_review.build_birth_profile_source_cache_template_preview",
+            "birth_profile_review.build_birth_profile_source_cache_audit",
+            "birth_profile_review.build_birth_profile_reviewed_manifest_draft_preview",
+            "birth_profile_review.build_birth_profile_reviewed_manifest_file_preview",
+            "birth_profile_review.build_birth_profile_source_review_workplan",
+            "providers/birth_profile_review_manifest_example.json",
+            "api_core.schema_document.CapabilityAuditResponse.industry_event_cross_domain_fixture_import",
+            "api_core.schema_document.CapabilityAuditReceiptMaterial.industry_event_cross_domain_fixture_import",
+            "api_core.schema_document.IndustryEventCrossDomainFixtureImportReceipt.material",
+            "providers/wikidata_film_response_example.json",
+            "providers/wikidata_music_response_example.json",
+            "providers/wikidata_sports_response_example.json",
+            "tests/test_empirical_validation.py",
+            "tests/test_empirical_validation.py symbolic scoring readiness coverage",
+            "tests/test_schema_contract_evaluator.py",
+            "tests/test_api_server.py",
+            "tests/test_cli.py",
+        ],
+        "status": "implemented",
+    },
 ]
 
 
@@ -998,6 +1073,20 @@ KNOWN_GAPS = [
         "severity": "major",
     },
     {
+        "id": "industry_event_source_provider",
+        "requirement": "Reviewed external industry-event sources for film, music, and sports event years and non-event years.",
+        "current_state": "Famous-case calibration now derives industry evidence from sourced fixture event subtypes, but negative-year industry-event labels have zero coverage and fixture-industry candidate rules are blocked from promotion.",
+        "needed_to_close": "Configure a reviewed industry-event manifest or provider covering releases, awards, nominations, charts, rankings, titles, records, box office, broadcasts, and explicit non-event years before using industry evidence for false-positive claims.",
+        "severity": "major",
+    },
+    {
+        "id": "celebrity_birth_profile_review",
+        "requirement": "Reviewed celebrity birth profiles before industry-event labels can enter symbolic BaZi scoring.",
+        "current_state": "Cross-domain celebrity event labels are importable, but eight sports/film/music cases remain blocked by a reviewed-birth-profile manifest and non-mutating import preview.",
+        "needed_to_close": "Externally review birth date, birth time, gender, birthplace, source URL, source rating, and source notes before generating a fixture import patch.",
+        "severity": "major",
+    },
+    {
         "id": "huangdao_calendar_selection",
         "requirement": "Coordinator precisely calculates professional almanac systems such as twelve officers, twenty-eight mansions, and huangdao/heiddao with verified calendrical tables.",
         "current_state": "A deterministic xuanze scaffold and optional JSON-CLI provider boundary now emit twelve officers, twenty-eight mansions, huangdao rating, and recommended hours; the current environment still uses the offline baseline unless SEMAS_XUANZE_CLI is configured.",
@@ -1028,6 +1117,34 @@ EXTERNAL_INTEGRATION_CANDIDATES = [
         "url": "https://github.com/astrorigin/pyswisseph",
         "fit": "Python Swiss Ephemeris binding candidate for high-precision natal and transit calculations.",
         "audit_note": "AGPL/licensing and ephemeris data requirements must be reviewed before bundling.",
+    },
+    {
+        "domain": "industry_events",
+        "name": "IMDb Non-Commercial Datasets",
+        "url": "https://developer.imdb.com/non-commercial-datasets/",
+        "fit": "Film and television release/title metadata candidate for industry event manifests.",
+        "audit_note": "Non-commercial terms, refresh cadence, title matching, awards gaps, and negative-year semantics require review.",
+    },
+    {
+        "domain": "industry_events",
+        "name": "MusicBrainz Database",
+        "url": "https://musicbrainz.org/doc/MusicBrainz_Database",
+        "fit": "Music release, recording, artist, label, and relationship metadata candidate for music event manifests.",
+        "audit_note": "Schema, licensing, local dump/API usage, chart/award coverage gaps, and artist disambiguation require review.",
+    },
+    {
+        "domain": "industry_events",
+        "name": "Wikidata Query Service",
+        "url": "https://query.wikidata.org/",
+        "fit": "Cross-domain linked-data candidate for awards, roles, releases, teams, rankings, and source URLs.",
+        "audit_note": "SPARQL rate limits, statement references, data completeness, and negative-year absence semantics require review.",
+    },
+    {
+        "domain": "industry_events",
+        "name": "Olympedia",
+        "url": "https://www.olympedia.org/",
+        "fit": "Sports/Olympic athlete and result metadata candidate for sports peak event manifests.",
+        "audit_note": "Terms, sport coverage beyond Olympics, result normalization, and non-event-year coverage require review.",
     },
 ]
 
@@ -1142,6 +1259,62 @@ GAP_RESOLUTION_BLUEPRINTS = {
             "outcome_dataset_label_collection_pre_analysis_gate",
             "outcome_dataset_statistical_plan_preregistered",
             "outcome_dataset_gate_passed",
+        ],
+    },
+    "industry_event_source_provider": {
+        "owner_domain": "industry_events",
+        "blocking_scope": "externally_reviewed_industry_event_manifest",
+        "closure_condition": (
+            "A reviewed industry-event manifest or provider covers positive and negative years for film, music, "
+            "and sports domain-topic slices, exposes source/provenance fields, and passes outcome-dataset audit "
+            "without enabling predictive optimization."
+        ),
+        "verification_commands": [
+            "python examples/mingli_5agents/cli.py --repo <repo> outcome-dataset --manifest examples/mingli_5agents/providers/industry_event_source_manifest_example.json",
+            "python examples/mingli_5agents/cli.py --repo <repo> production-readiness --manifest examples/mingli_5agents/providers/industry_event_source_manifest_example.json --live",
+            "python examples/mingli_5agents/cli.py --repo <repo> release-manifest --manifest examples/mingli_5agents/providers/industry_event_source_manifest_example.json",
+        ],
+        "production_gate_ids": [
+            "outcome_dataset_configured",
+            "outcome_dataset_external_review_gate",
+            "outcome_dataset_frozen_holdout_gate",
+            "outcome_dataset_data_split_records_covered",
+            "outcome_dataset_label_collection_pre_analysis_gate",
+            "outcome_dataset_statistical_plan_preregistered",
+            "outcome_dataset_gate_passed",
+        ],
+    },
+    "celebrity_birth_profile_review": {
+        "owner_domain": "birth_profiles",
+        "blocking_scope": "reviewed_celebrity_birth_profile_import",
+        "closure_condition": (
+            "Celebrity birth-profile review manifests are externally reviewed before import, and the current "
+            "production readiness gate confirms unreviewed import previews remain non-mutating and blocked."
+        ),
+        "verification_commands": [
+            "python examples/mingli_5agents/cli.py --repo <repo> birth-profile-review --manifest examples/mingli_5agents/providers/birth_profile_review_manifest_example.json",
+            "python examples/mingli_5agents/cli.py --repo <repo> birth-profile-source-review-workplan --manifest examples/mingli_5agents/providers/birth_profile_review_manifest_example.json",
+            "python examples/mingli_5agents/cli.py --repo <repo> birth-profile-source-lookup-plan --manifest examples/mingli_5agents/providers/birth_profile_review_manifest_example.json --cache-dir <repo>/birth_profile_source_cache",
+            "python examples/mingli_5agents/cli.py --repo <repo> birth-profile-source-cache-template-preview --manifest examples/mingli_5agents/providers/birth_profile_review_manifest_example.json --cache-dir <repo>/birth_profile_source_cache",
+            "python examples/mingli_5agents/cli.py --repo <repo> birth-profile-source-cache-audit --manifest examples/mingli_5agents/providers/birth_profile_review_manifest_example.json --cache-dir <repo>/birth_profile_source_cache",
+            "python examples/mingli_5agents/cli.py --repo <repo> birth-profile-reviewed-manifest-draft-preview --manifest examples/mingli_5agents/providers/birth_profile_review_manifest_example.json --cache-dir <repo>/birth_profile_source_cache",
+            "python examples/mingli_5agents/cli.py --repo <repo> birth-profile-reviewed-manifest-file-preview --manifest examples/mingli_5agents/providers/birth_profile_review_manifest_example.json --cache-dir <repo>/birth_profile_source_cache --target <repo>/birth_profile_review_manifest_reviewed.json",
+            "python examples/mingli_5agents/cli.py --repo <repo> birth-profile-import-preview --manifest examples/mingli_5agents/providers/birth_profile_review_manifest_example.json",
+            "python examples/mingli_5agents/cli.py --repo <repo> birth-profile-fixture-patch-preview --manifest examples/mingli_5agents/providers/birth_profile_review_manifest_example.json",
+            "python examples/mingli_5agents/cli.py --repo <repo> production-readiness --manifest <manifest.json> --live",
+        ],
+        "production_gate_ids": [
+            "birth_profile_source_review_workplan_available",
+            "birth_profile_source_lookup_plan_dry_run",
+            "birth_profile_source_family_catalog_bound",
+            "birth_profile_source_cache_template_preview_non_mutating",
+            "birth_profile_source_family_cache_enforcement_probe",
+            "birth_profile_substantive_evidence_cache_enforcement_probe",
+            "birth_profile_source_cache_audit_read_only",
+            "birth_profile_reviewed_manifest_draft_preview_non_mutating",
+            "birth_profile_import_preview_blocked",
+            "birth_profile_fixture_patch_preview_blocked",
+            "production_gate_registry_current",
         ],
     },
     "huangdao_calendar_selection": {
@@ -1786,6 +1959,7 @@ def _github_comparison_receipt(
                 "audit_note": item.get("audit_note"),
             }
             for item in external_candidates
+            if str(item.get("url", "")).startswith("https://github.com/")
         ],
         "blocking_provider_capabilities": state_of_art.get("blocking_provider_capabilities", []),
         "production_ready_for_professional_calculation": state_of_art.get(
@@ -1832,6 +2006,1171 @@ def _plan_compliance_receipt(plan_compliance: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _industry_event_source_manifest_example_receipt() -> dict[str, Any]:
+    audit = audit_industry_event_manifest(INDUSTRY_EVENT_SOURCE_MANIFEST_EXAMPLE)
+    receipt = industry_event_manifest_receipt(audit)
+    material = {
+        "schema_version": "industry-event-source-manifest-example-receipt-v1",
+        "path": str(INDUSTRY_EVENT_SOURCE_MANIFEST_EXAMPLE.relative_to(REPO_ROOT)),
+        "exists": INDUSTRY_EVENT_SOURCE_MANIFEST_EXAMPLE.exists(),
+        "readable": audit.get("valid") is True,
+        "content_hash": audit.get("content_hash"),
+        "manifest_schema_version": audit.get("schema_version"),
+        "manifest_status": audit.get("manifest_status"),
+        "production_evidence": audit.get("production_evidence"),
+        "externally_reviewed": audit.get("externally_reviewed"),
+        "record_count": audit.get("record_count"),
+        "positive_event_count": audit.get("positive_event_count"),
+        "negative_event_count": audit.get("negative_event_count"),
+        "domain_count": len(audit.get("domains", [])),
+        "domains": audit.get("domains", []),
+        "industry_count": len(audit.get("industries", [])),
+        "industries": audit.get("industries", []),
+        "source_family_count": audit.get("source_family_count"),
+        "source_families": audit.get("source_families", []),
+        "candidate_source_count": audit.get("candidate_source_count"),
+        "candidate_source_names": audit.get("candidate_source_names", []),
+        "required_record_fields": audit.get("required_record_fields", []),
+        "all_records_have_required_fields": audit.get("valid") is True,
+        "has_positive_and_negative_examples": audit.get("has_positive_and_negative_examples"),
+        "split_roles": audit.get("split_roles", []),
+        "underlying_audit_receipt_sha256": receipt.get("sha256"),
+        "status": "ready_example" if audit.get("valid") is True else "incomplete",
+        "failures": audit.get("failures", []),
+    }
+    encoded = json.dumps(material, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    return {
+        "schema_version": material["schema_version"],
+        "sha256": hashlib.sha256(encoded).hexdigest(),
+        "material": material,
+    }
+
+
+def _industry_event_source_query_plan_example_receipt() -> dict[str, Any]:
+    audit = audit_industry_event_query_plan(INDUSTRY_EVENT_SOURCE_QUERY_PLAN_EXAMPLE)
+    receipt = industry_event_query_plan_receipt(audit)
+    material = {
+        "schema_version": "industry-event-source-query-plan-example-receipt-v1",
+        "path": str(INDUSTRY_EVENT_SOURCE_QUERY_PLAN_EXAMPLE.relative_to(REPO_ROOT)),
+        "exists": INDUSTRY_EVENT_SOURCE_QUERY_PLAN_EXAMPLE.exists(),
+        "readable": audit.get("valid") is True,
+        "content_hash": audit.get("content_hash"),
+        "plan_schema_version": audit.get("schema_version"),
+        "plan_status": audit.get("plan_status"),
+        "collection_ready": audit.get("collection_ready"),
+        "externally_reviewed": audit.get("externally_reviewed"),
+        "live_collection_allowed": audit.get("live_collection_allowed"),
+        "source_id": audit.get("source_id"),
+        "endpoint_url": audit.get("endpoint_url"),
+        "template_count": audit.get("template_count"),
+        "domains": audit.get("domains", []),
+        "event_topics": audit.get("event_topics", []),
+        "required_manifest_fields_mapped": audit.get("required_manifest_fields_mapped"),
+        "underlying_audit_receipt_sha256": receipt.get("sha256"),
+        "status": "ready_example" if audit.get("valid") is True else "incomplete",
+        "failures": audit.get("failures", []),
+    }
+    encoded = json.dumps(material, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    return {
+        "schema_version": material["schema_version"],
+        "sha256": hashlib.sha256(encoded).hexdigest(),
+        "material": material,
+    }
+
+
+def _industry_event_candidate_cases_example_receipt() -> dict[str, Any]:
+    audit = audit_industry_event_candidate_cases(INDUSTRY_EVENT_CANDIDATE_CASES_EXAMPLE)
+    receipt = industry_event_candidate_cases_receipt(audit)
+    material = {
+        "schema_version": "industry-event-candidate-cases-example-receipt-v1",
+        "path": str(INDUSTRY_EVENT_CANDIDATE_CASES_EXAMPLE.relative_to(REPO_ROOT)),
+        "exists": INDUSTRY_EVENT_CANDIDATE_CASES_EXAMPLE.exists(),
+        "readable": audit.get("valid") is True,
+        "content_hash": audit.get("content_hash"),
+        "candidate_schema_version": audit.get("schema_version"),
+        "candidate_pool_status": audit.get("candidate_pool_status"),
+        "production_ready": audit.get("production_ready"),
+        "externally_reviewed": audit.get("externally_reviewed"),
+        "candidate_count": audit.get("candidate_count"),
+        "domain_counts": audit.get("domain_counts", {}),
+        "domains": audit.get("domains", []),
+        "split_roles": audit.get("split_roles", []),
+        "person_qids": audit.get("person_qids", []),
+        "required_candidate_fields": audit.get("required_candidate_fields", []),
+        "underlying_audit_receipt_sha256": receipt.get("sha256"),
+        "status": "ready_example" if audit.get("valid") is True else "incomplete",
+        "failures": audit.get("failures", []),
+    }
+    encoded = json.dumps(material, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    return {
+        "schema_version": material["schema_version"],
+        "sha256": hashlib.sha256(encoded).hexdigest(),
+        "material": material,
+    }
+
+
+def _industry_event_cross_domain_fixture_import_receipt() -> dict[str, Any]:
+    response_paths = {
+        "film": INDUSTRY_EVENT_WIKIDATA_FILM_RESPONSE_EXAMPLE,
+        "music": INDUSTRY_EVENT_WIKIDATA_MUSIC_RESPONSE_EXAMPLE,
+        "sports": INDUSTRY_EVENT_WIKIDATA_SPORTS_RESPONSE_EXAMPLE,
+    }
+    failures = [
+        f"missing fixture response for {domain}: {path}"
+        for domain, path in response_paths.items()
+        if not path.exists()
+    ]
+    batch_plan: dict[str, Any] = {}
+    draft_import: dict[str, Any] = {}
+    if not failures:
+        batch_plan = build_candidate_pool_fetch_cache_plan(
+            INDUSTRY_EVENT_CANDIDATE_CASES_EXAMPLE,
+            query_plan_path=INDUSTRY_EVENT_SOURCE_QUERY_PLAN_EXAMPLE,
+            cache_dir=INDUSTRY_EVENT_CROSS_DOMAIN_FIXTURE_CACHE,
+        )
+        response_payloads = {domain: path.read_bytes() for domain, path in response_paths.items()}
+        for plan in batch_plan.get("plans", []):
+            if not isinstance(plan, dict):
+                continue
+            case = plan.get("case", {}) if isinstance(plan.get("case"), dict) else {}
+            payload = response_payloads.get(str(case.get("domain", "")))
+            if payload is None:
+                failures.append(f"missing response payload for domain: {case.get('domain')}")
+                continue
+            for entry in plan.get("cache_entries", []):
+                if not isinstance(entry, dict):
+                    continue
+                cache_path = Path(str(entry.get("cache_path", "")))
+                cache_path.parent.mkdir(parents=True, exist_ok=True)
+                cache_path.write_bytes(payload)
+        draft_import = build_candidate_pool_manifest_drafts_from_cache(
+            INDUSTRY_EVENT_CANDIDATE_CASES_EXAMPLE,
+            query_plan_path=INDUSTRY_EVENT_SOURCE_QUERY_PLAN_EXAMPLE,
+            cache_dir=INDUSTRY_EVENT_CROSS_DOMAIN_FIXTURE_CACHE,
+        )
+        failures.extend(str(failure) for failure in draft_import.get("failures", []))
+    label_table = draft_import.get("validation_label_table", {}) if isinstance(draft_import, dict) else {}
+    symbolic_readiness_summary = _cross_domain_fixture_symbolic_readiness_summary(draft_import)
+    coverage_gate = (
+        label_table.get("cross_domain_coverage_gate", {})
+        if isinstance(label_table.get("cross_domain_coverage_gate"), dict)
+        else {}
+    )
+    material = {
+        "schema_version": "industry-event-cross-domain-fixture-import-receipt-v1",
+        "status": "ready_example" if not failures and draft_import.get("valid") is True else "incomplete",
+        "candidate_path": str(INDUSTRY_EVENT_CANDIDATE_CASES_EXAMPLE.relative_to(REPO_ROOT)),
+        "query_plan_path": str(INDUSTRY_EVENT_SOURCE_QUERY_PLAN_EXAMPLE.relative_to(REPO_ROOT)),
+        "cache_dir": str(INDUSTRY_EVENT_CROSS_DOMAIN_FIXTURE_CACHE.relative_to(REPO_ROOT)),
+        "fixture_response_paths": {
+            domain: str(path.relative_to(REPO_ROOT))
+            for domain, path in sorted(response_paths.items())
+        },
+        "offline_only": True,
+        "production_evidence": False,
+        "candidate_count": draft_import.get("candidate_count", 0),
+        "draft_count": draft_import.get("draft_count", 0),
+        "positive_record_count": draft_import.get("positive_record_count", 0),
+        "negative_record_count": draft_import.get("negative_record_count", 0),
+        "record_count": draft_import.get("record_count", 0),
+        "domains": draft_import.get("domains", []),
+        "cross_domain_coverage_gate_passed": coverage_gate.get("passed") is True,
+        "domain_coverage_summary": label_table.get("domain_coverage_summary", []),
+        "symbolic_scoring_readiness_summary": symbolic_readiness_summary,
+        "candidate_pool_fetch_cache_receipt_sha256": batch_plan.get("candidate_pool_fetch_cache_receipt", {}).get(
+            "sha256"
+        )
+        if isinstance(batch_plan, dict)
+        else None,
+        "candidate_pool_draft_import_receipt_sha256": draft_import.get(
+            "candidate_pool_draft_import_receipt", {}
+        ).get("sha256")
+        if isinstance(draft_import.get("candidate_pool_draft_import_receipt"), dict)
+        else None,
+        "validation_label_table_receipt_sha256": label_table.get("validation_label_table_receipt", {}).get("sha256")
+        if isinstance(label_table.get("validation_label_table_receipt"), dict)
+        else None,
+        "boundary": (
+            "Repository-authored offline fixture import only; it validates pipeline shape, not production source "
+            "review or factual event-label completeness."
+        ),
+        "failures": failures,
+    }
+    encoded = json.dumps(material, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    return {
+        "schema_version": material["schema_version"],
+        "sha256": hashlib.sha256(encoded).hexdigest(),
+        "material": material,
+    }
+
+
+def _cross_domain_fixture_symbolic_readiness_summary(draft_import: dict[str, Any]) -> dict[str, Any]:
+    """Summarize which imported celebrity labels can enter BaZi symbolic scoring."""
+    payload = draft_import.get("combined_draft_manifest", {}) if isinstance(draft_import, dict) else {}
+    if not isinstance(payload, dict) or not payload:
+        return {
+            "status": "blocked_missing_manifest",
+            "label_count": 0,
+            "ready_label_count": 0,
+            "blocked_label_count": 0,
+            "case_count": 0,
+            "ready_case_count": 0,
+            "blocked_case_count": 0,
+            "ready_case_ids": [],
+            "blocked_case_ids": [],
+            "missing_birth_profile_case_ids": [],
+            "domain_topic_summary": [],
+            "gates": [],
+            "birth_profile_completion_task_plan": [],
+            "birth_profile_completion_workplan_summary": {
+                "status": "blocked_missing_workplan",
+                "valid": False,
+                "source_task_count": 0,
+                "deferred_task_count": 0,
+                "work_item_count": 0,
+                "readiness_status": "blocked_missing_workplan",
+                "deferred_blocked_gate_count": 0,
+                "deferred_failed_integrity_check_count": 0,
+                "deferred_task_summaries": [],
+                "boundary": "No evidence workplan was available for birth-profile completion.",
+            },
+            "birth_profile_review_manifest_summary": {
+                "status": "missing",
+                "valid": False,
+                "production_evidence": False,
+                "request_count": 0,
+                "case_count": 0,
+                "domains": [],
+                "blocked_label_count": 0,
+                "ready_for_import": False,
+                "domain_summary": [],
+                "failures": ["birth profile review manifest audit is missing"],
+                "boundary": "No birth-profile review manifest was available.",
+            },
+            "birth_profile_source_review_workplan_summary": {
+                "status": "blocked_missing_source_review_workplan",
+                "valid": False,
+                "would_fetch_live_sources": False,
+                "would_write_review_manifest": False,
+                "request_count": 0,
+                "work_item_count": 0,
+                "source_review_gate_passed": False,
+                "blocking_reasons": ["birth profile source review workplan is missing"],
+                "integrity_check_status": "missing",
+                "boundary": "No birth-profile source review workplan was available.",
+            },
+            "birth_profile_source_lookup_plan_summary": {
+                "status": "blocked_missing_source_lookup_plan",
+                "valid": False,
+                "would_fetch_live_sources": False,
+                "would_write_cache": False,
+                "would_write_review_manifest": False,
+                "lookup_item_count": 0,
+                "query_count": 0,
+                "source_family_count": 0,
+                "source_family_catalog_bound": False,
+                "birth_time_source_policy_bound": False,
+                "identity_anchor_birth_time_disallowed": False,
+                "lookup_gate_passed": False,
+                "blocking_reasons": ["birth profile source lookup plan is missing"],
+                "integrity_check_status": "missing",
+                "boundary": "No birth-profile source lookup plan was available.",
+            },
+            "birth_profile_source_cache_audit_summary": {
+                "status": "blocked_missing_source_cache_audit",
+                "valid": False,
+                "would_fetch_live_sources": False,
+                "would_write_cache": False,
+                "would_write_review_manifest": False,
+                "would_import_profiles": False,
+                "expected_cache_count": 0,
+                "present_cache_count": 0,
+                "missing_cache_count": 0,
+                "accepted_cache_count": 0,
+                "cache_audit_gate_passed": False,
+                "blocking_reasons": ["birth profile source cache audit is missing"],
+                "integrity_check_status": "missing",
+                "boundary": "No birth-profile source cache audit was available.",
+            },
+            "birth_profile_source_cache_template_preview_summary": {
+                "status": "blocked_missing_source_cache_template_preview",
+                "valid": False,
+                "would_fetch_live_sources": False,
+                "would_write_cache": False,
+                "would_import_profiles": False,
+                "template_count": 0,
+                "template_preview_gate_passed": False,
+                "blocking_reasons": ["birth profile source cache template preview is missing"],
+                "integrity_check_status": "missing",
+                "boundary": "No birth-profile source cache template preview was available.",
+            },
+            "birth_profile_source_family_cache_enforcement_summary": {
+                "status": "blocked_missing_source_family_cache_enforcement_probe",
+                "valid": False,
+                "probe_executed": False,
+                "identity_anchor_birth_time_rejected": False,
+                "accepted_cache_count_after_probe": None,
+                "probe_source_family_id": "",
+                "failure_contains_birth_time_policy": False,
+                "failures": ["birth profile source family cache enforcement probe is missing"],
+                "boundary": "No source-family cache enforcement probe was available.",
+            },
+            "birth_profile_substantive_evidence_cache_enforcement_summary": {
+                "status": "blocked_missing_substantive_evidence_cache_enforcement_probe",
+                "valid": False,
+                "probe_executed": False,
+                "metadata_only_reviewed_cache_rejected": False,
+                "accepted_cache_count_after_probe": None,
+                "probe_source_family_id": "",
+                "failure_contains_substantive_birth_policy": False,
+                "failures": ["birth profile substantive evidence cache enforcement probe is missing"],
+                "boundary": "No substantive-evidence cache enforcement probe was available.",
+            },
+            "birth_profile_reviewed_manifest_draft_preview_summary": {
+                "status": "blocked_missing_reviewed_manifest_draft_preview",
+                "valid": False,
+                "would_write_review_manifest": False,
+                "would_import_profiles": False,
+                "draft_ready_for_human_approval": False,
+                "review_request_count": 0,
+                "complete_review_request_count": 0,
+                "incomplete_review_request_count": 0,
+                "draft_gate_passed": False,
+                "blocking_reasons": ["birth profile reviewed manifest draft preview is missing"],
+                "integrity_check_status": "missing",
+                "boundary": "No birth-profile reviewed manifest draft preview was available.",
+            },
+            "birth_profile_reviewed_manifest_file_preview_summary": {
+                "status": "blocked_missing_reviewed_manifest_file_preview",
+                "valid": False,
+                "would_write_file": False,
+                "would_import_profiles": False,
+                "write_ready_for_human_approval": False,
+                "target_file": "",
+                "target_file_sha256": None,
+                "file_preview_gate_passed": False,
+                "blocking_reasons": ["birth profile reviewed manifest file preview is missing"],
+                "integrity_check_status": "missing",
+                "boundary": "No birth-profile reviewed manifest file preview was available.",
+            },
+            "birth_profile_import_preview_summary": {
+                "status": "blocked_missing_preview",
+                "valid": False,
+                "would_write_file": False,
+                "import_allowed": False,
+                "request_count": 0,
+                "blocked_request_count": 0,
+                "import_ready_request_count": 0,
+                "import_gate_passed": False,
+                "blocking_reasons": ["birth profile import preview is missing"],
+                "integrity_check_status": "missing",
+                "boundary": "No birth-profile import preview was available.",
+            },
+            "birth_profile_fixture_patch_preview_summary": {
+                "status": "blocked_missing_patch_preview",
+                "valid": False,
+                "would_write_file": False,
+                "patch_ready_for_review": False,
+                "candidate_count": 0,
+                "candidate_case_ids": [],
+                "patch_gate_passed": False,
+                "target_file_sha256": None,
+                "patch_text_sha256": None,
+                "blocking_reasons": ["birth profile fixture patch preview is missing"],
+                "integrity_check_status": "missing",
+                "boundary": "No birth-profile fixture patch preview was available.",
+            },
+            "symbolic_scoring_readiness_receipt_sha256": None,
+            "symbolic_annual_score_receipt_sha256": None,
+            "evidence_workplan_receipt_sha256": None,
+            "birth_profile_review_manifest_receipt_sha256": None,
+            "birth_profile_source_review_workplan_receipt_sha256": None,
+            "birth_profile_source_lookup_plan_receipt_sha256": None,
+            "birth_profile_source_cache_template_preview_receipt_sha256": None,
+            "birth_profile_source_cache_audit_receipt_sha256": None,
+            "birth_profile_reviewed_manifest_draft_preview_receipt_sha256": None,
+            "birth_profile_reviewed_manifest_file_preview_receipt_sha256": None,
+            "birth_profile_import_preview_receipt_sha256": None,
+            "birth_profile_fixture_patch_preview_receipt_sha256": None,
+            "boundary": "No combined draft manifest was available, so symbolic scoring readiness could not be checked.",
+        }
+    readiness = build_industry_event_symbolic_scoring_readiness_payload(
+        payload,
+        path="<cross-domain-fixture-import>",
+        raw=json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8"),
+        birth_cases=famous_case_records(),
+    )
+    scoring = build_industry_event_symbolic_annual_score_payload(
+        payload,
+        path="<cross-domain-fixture-import>",
+        raw=json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8"),
+        birth_cases=famous_case_records(),
+    )
+    workplan = build_industry_event_evidence_workplan_from_symbolic_score(
+        scoring,
+        candidate_path=INDUSTRY_EVENT_CANDIDATE_CASES_EXAMPLE,
+        query_plan_path=INDUSTRY_EVENT_SOURCE_QUERY_PLAN_EXAMPLE,
+        cache_dir=INDUSTRY_EVENT_CROSS_DOMAIN_FIXTURE_CACHE,
+    )
+    birth_review = audit_birth_profile_review_manifest(BIRTH_PROFILE_REVIEW_MANIFEST_EXAMPLE)
+    birth_source_review_workplan = build_birth_profile_source_review_workplan(BIRTH_PROFILE_REVIEW_MANIFEST_EXAMPLE)
+    birth_source_lookup_plan = build_birth_profile_source_lookup_plan(
+        BIRTH_PROFILE_REVIEW_MANIFEST_EXAMPLE,
+        cache_dir=INDUSTRY_EVENT_CROSS_DOMAIN_FIXTURE_CACHE / "birth_profile_source_cache",
+    )
+    birth_source_cache_template_preview = build_birth_profile_source_cache_template_preview(
+        BIRTH_PROFILE_REVIEW_MANIFEST_EXAMPLE,
+        cache_dir=INDUSTRY_EVENT_CROSS_DOMAIN_FIXTURE_CACHE / "birth_profile_source_cache",
+    )
+    birth_source_family_cache_enforcement_probe = _cross_domain_birth_profile_source_family_cache_enforcement_probe()
+    birth_substantive_evidence_cache_enforcement_probe = (
+        _cross_domain_birth_profile_substantive_evidence_cache_enforcement_probe()
+    )
+    birth_source_cache_audit = build_birth_profile_source_cache_audit(
+        BIRTH_PROFILE_REVIEW_MANIFEST_EXAMPLE,
+        cache_dir=INDUSTRY_EVENT_CROSS_DOMAIN_FIXTURE_CACHE / "birth_profile_source_cache",
+    )
+    birth_reviewed_manifest_draft_preview = build_birth_profile_reviewed_manifest_draft_preview(
+        BIRTH_PROFILE_REVIEW_MANIFEST_EXAMPLE,
+        cache_dir=INDUSTRY_EVENT_CROSS_DOMAIN_FIXTURE_CACHE / "birth_profile_source_cache",
+    )
+    birth_reviewed_manifest_file_preview = build_birth_profile_reviewed_manifest_file_preview(
+        BIRTH_PROFILE_REVIEW_MANIFEST_EXAMPLE,
+        cache_dir=INDUSTRY_EVENT_CROSS_DOMAIN_FIXTURE_CACHE / "birth_profile_source_cache",
+        target_path=INDUSTRY_EVENT_CROSS_DOMAIN_FIXTURE_CACHE / "birth_profile_review_manifest_reviewed.json",
+    )
+    birth_import_preview = build_birth_profile_import_preview(BIRTH_PROFILE_REVIEW_MANIFEST_EXAMPLE)
+    birth_fixture_patch_preview = build_birth_profile_fixture_patch_preview(BIRTH_PROFILE_REVIEW_MANIFEST_EXAMPLE)
+    case_summary = readiness.get("case_summary", []) if isinstance(readiness.get("case_summary"), list) else []
+    ready_case_ids = sorted(
+        str(item.get("case_id"))
+        for item in case_summary
+        if isinstance(item, dict) and item.get("birth_profile_available") is True
+    )
+    blocked_case_ids = sorted(
+        str(item.get("case_id"))
+        for item in case_summary
+        if isinstance(item, dict) and item.get("scoring_ready") is not True
+    )
+    missing_birth_profile_case_ids = sorted(
+        str(item.get("case_id"))
+        for item in case_summary
+        if isinstance(item, dict) and item.get("birth_profile_available") is not True
+    )
+    receipt = readiness.get("symbolic_scoring_readiness_receipt", {})
+    return {
+        "status": readiness.get("status"),
+        "label_count": readiness.get("label_count", 0),
+        "ready_label_count": readiness.get("ready_label_count", 0),
+        "blocked_label_count": readiness.get("blocked_label_count", 0),
+        "case_count": readiness.get("case_count", 0),
+        "ready_case_count": readiness.get("ready_case_count", 0),
+        "blocked_case_count": readiness.get("blocked_case_count", 0),
+        "ready_case_ids": ready_case_ids,
+        "blocked_case_ids": blocked_case_ids,
+        "missing_birth_profile_case_ids": missing_birth_profile_case_ids,
+        "domain_topic_summary": readiness.get("domain_topic_summary", []),
+        "gates": readiness.get("gates", []),
+        "birth_profile_completion_task_plan": _cross_domain_birth_profile_completion_task_plan(scoring),
+        "birth_profile_completion_workplan_summary": _cross_domain_birth_profile_completion_workplan_summary(workplan),
+        "birth_profile_review_manifest_summary": _cross_domain_birth_profile_review_manifest_summary(birth_review),
+        "birth_profile_source_review_workplan_summary": _cross_domain_birth_profile_source_review_workplan_summary(
+            birth_source_review_workplan
+        ),
+        "birth_profile_source_lookup_plan_summary": _cross_domain_birth_profile_source_lookup_plan_summary(
+            birth_source_lookup_plan
+        ),
+        "birth_profile_source_cache_template_preview_summary": (
+            _cross_domain_birth_profile_source_cache_template_preview_summary(
+                birth_source_cache_template_preview
+            )
+        ),
+        "birth_profile_source_family_cache_enforcement_summary": (
+            birth_source_family_cache_enforcement_probe
+        ),
+        "birth_profile_substantive_evidence_cache_enforcement_summary": (
+            birth_substantive_evidence_cache_enforcement_probe
+        ),
+        "birth_profile_source_cache_audit_summary": _cross_domain_birth_profile_source_cache_audit_summary(
+            birth_source_cache_audit
+        ),
+        "birth_profile_reviewed_manifest_draft_preview_summary": (
+            _cross_domain_birth_profile_reviewed_manifest_draft_preview_summary(
+                birth_reviewed_manifest_draft_preview
+            )
+        ),
+        "birth_profile_reviewed_manifest_file_preview_summary": (
+            _cross_domain_birth_profile_reviewed_manifest_file_preview_summary(
+                birth_reviewed_manifest_file_preview
+            )
+        ),
+        "birth_profile_import_preview_summary": _cross_domain_birth_profile_import_preview_summary(
+            birth_import_preview
+        ),
+        "birth_profile_fixture_patch_preview_summary": _cross_domain_birth_profile_fixture_patch_preview_summary(
+            birth_fixture_patch_preview
+        ),
+        "symbolic_scoring_readiness_receipt_sha256": receipt.get("sha256") if isinstance(receipt, dict) else None,
+        "symbolic_annual_score_receipt_sha256": scoring.get("symbolic_annual_score_receipt", {}).get("sha256")
+        if isinstance(scoring.get("symbolic_annual_score_receipt"), dict)
+        else None,
+        "evidence_workplan_receipt_sha256": workplan.get("evidence_workplan_receipt", {}).get("sha256")
+        if isinstance(workplan.get("evidence_workplan_receipt"), dict)
+        else None,
+        "birth_profile_review_manifest_receipt_sha256": birth_review.get(
+            "birth_profile_review_manifest_receipt", {}
+        ).get("sha256")
+        if isinstance(birth_review.get("birth_profile_review_manifest_receipt"), dict)
+        else None,
+        "birth_profile_source_review_workplan_receipt_sha256": birth_source_review_workplan.get(
+            "source_review_workplan_receipt", {}
+        ).get("sha256")
+        if isinstance(birth_source_review_workplan.get("source_review_workplan_receipt"), dict)
+        else None,
+        "birth_profile_source_lookup_plan_receipt_sha256": birth_source_lookup_plan.get(
+            "source_lookup_plan_receipt", {}
+        ).get("sha256")
+        if isinstance(birth_source_lookup_plan.get("source_lookup_plan_receipt"), dict)
+        else None,
+        "birth_profile_source_cache_template_preview_receipt_sha256": birth_source_cache_template_preview.get(
+            "source_cache_template_preview_receipt", {}
+        ).get("sha256")
+        if isinstance(birth_source_cache_template_preview.get("source_cache_template_preview_receipt"), dict)
+        else None,
+        "birth_profile_source_cache_audit_receipt_sha256": birth_source_cache_audit.get(
+            "source_cache_audit_receipt", {}
+        ).get("sha256")
+        if isinstance(birth_source_cache_audit.get("source_cache_audit_receipt"), dict)
+        else None,
+        "birth_profile_reviewed_manifest_draft_preview_receipt_sha256": (
+            birth_reviewed_manifest_draft_preview.get("reviewed_manifest_draft_preview_receipt", {}).get("sha256")
+            if isinstance(
+                birth_reviewed_manifest_draft_preview.get("reviewed_manifest_draft_preview_receipt"), dict
+            )
+            else None
+        ),
+        "birth_profile_reviewed_manifest_file_preview_receipt_sha256": (
+            birth_reviewed_manifest_file_preview.get("reviewed_manifest_file_preview_receipt", {}).get("sha256")
+            if isinstance(birth_reviewed_manifest_file_preview.get("reviewed_manifest_file_preview_receipt"), dict)
+            else None
+        ),
+        "birth_profile_import_preview_receipt_sha256": birth_import_preview.get(
+            "import_preview_receipt", {}
+        ).get("sha256")
+        if isinstance(birth_import_preview.get("import_preview_receipt"), dict)
+        else None,
+        "birth_profile_fixture_patch_preview_receipt_sha256": birth_fixture_patch_preview.get(
+            "fixture_patch_preview_receipt", {}
+        ).get("sha256")
+        if isinstance(birth_fixture_patch_preview.get("fixture_patch_preview_receipt"), dict)
+        else None,
+        "boundary": readiness.get("boundary", ""),
+    }
+
+
+def _cross_domain_birth_profile_completion_task_plan(scoring: dict[str, Any]) -> list[dict[str, Any]]:
+    """Expose blocked celebrity birth-profile work as a compact audit task plan."""
+    tasks = scoring.get("evolution_task_plan", []) if isinstance(scoring, dict) else []
+    if not isinstance(tasks, list):
+        return []
+    completion_tasks = []
+    for task in tasks:
+        if not isinstance(task, dict) or task.get("task_type") != "add_reviewed_birth_profiles":
+            continue
+        metrics = task.get("current_metrics", {}) if isinstance(task.get("current_metrics"), dict) else {}
+        completion_tasks.append(
+            {
+                "task_id": task.get("task_id"),
+                "domain": task.get("domain"),
+                "symbolic_event_topic": task.get("symbolic_event_topic"),
+                "priority": task.get("priority"),
+                "task_type": task.get("task_type"),
+                "blocked_label_count": metrics.get("blocked_label_count", 0),
+                "blocked_case_count": metrics.get("blocked_case_count", 0),
+                "blocked_case_ids": task.get("blocked_case_ids", []),
+                "blocked_public_names": task.get("blocked_public_names", []),
+                "next_evidence_to_add": task.get("next_evidence_to_add", []),
+                "acceptance_criteria": task.get("acceptance_criteria", []),
+                "blocking_reasons": task.get("blocking_reasons", []),
+                "boundary": task.get("boundary", ""),
+            }
+        )
+    return sorted(
+        completion_tasks,
+        key=lambda item: (str(item.get("domain")), str(item.get("symbolic_event_topic")), str(item.get("task_id"))),
+    )
+
+
+def _cross_domain_birth_profile_completion_workplan_summary(workplan: dict[str, Any]) -> dict[str, Any]:
+    """Expose the reviewed-data workplan outcome without embedding every nested draft artifact."""
+    if not isinstance(workplan, dict) or not workplan:
+        return {
+            "status": "blocked_missing_workplan",
+            "valid": False,
+            "source_task_count": 0,
+            "deferred_task_count": 0,
+            "work_item_count": 0,
+            "readiness_status": "blocked_missing_workplan",
+            "deferred_blocked_gate_count": 0,
+            "deferred_failed_integrity_check_count": 0,
+            "deferred_task_summaries": [],
+            "boundary": "No evidence workplan was available for birth-profile completion.",
+        }
+    readiness = workplan.get("readiness_summary", {}) if isinstance(workplan.get("readiness_summary"), dict) else {}
+    deferred_summaries = []
+    for task in workplan.get("deferred_tasks", []):
+        if not isinstance(task, dict):
+            continue
+        gate_summary = task.get("gate_summary", {}) if isinstance(task.get("gate_summary"), dict) else {}
+        completion = (
+            task.get("local_completion_work_order", {})
+            if isinstance(task.get("local_completion_work_order"), dict)
+            else {}
+        )
+        deferred_summaries.append(
+            {
+                "task_id": task.get("task_id"),
+                "domain": task.get("domain"),
+                "symbolic_event_topic": task.get("symbolic_event_topic"),
+                "task_type": task.get("task_type"),
+                "blocked_case_ids": task.get("blocked_case_ids", []),
+                "local_birth_profile_suggestion_count": task.get("local_birth_profile_suggestion_count", 0),
+                "local_birth_profile_suggestion_case_ids": [
+                    str(item.get("case_id"))
+                    for item in task.get("local_birth_profile_suggestions", [])
+                    if isinstance(item, dict) and item.get("case_id")
+                ],
+                "completion_work_order_status": completion.get("status"),
+                "gate_summary_status": gate_summary.get("status"),
+                "blocked_gate_count": gate_summary.get("blocked_gate_count", 0),
+                "failed_integrity_check_count": gate_summary.get("failed_integrity_check_count", 0),
+                "next_action": task.get("next_action"),
+            }
+        )
+    return {
+        "status": workplan.get("status"),
+        "valid": workplan.get("valid") is True,
+        "source_task_count": workplan.get("source_task_count", 0),
+        "deferred_task_count": workplan.get("deferred_task_count", 0),
+        "work_item_count": workplan.get("work_item_count", 0),
+        "readiness_status": readiness.get("status"),
+        "deferred_blocked_gate_count": readiness.get("deferred_blocked_gate_count", 0),
+        "deferred_failed_integrity_check_count": readiness.get("deferred_failed_integrity_check_count", 0),
+        "deferred_task_summaries": deferred_summaries,
+        "boundary": workplan.get("boundary", ""),
+    }
+
+
+def _cross_domain_birth_profile_review_manifest_summary(audit: dict[str, Any]) -> dict[str, Any]:
+    """Summarize the reviewed-birth-profile collection worklist for audit portability."""
+    if not isinstance(audit, dict) or not audit:
+        return {
+            "status": "missing",
+            "valid": False,
+            "production_evidence": False,
+            "request_count": 0,
+            "case_count": 0,
+            "domains": [],
+            "blocked_label_count": 0,
+            "ready_for_import": False,
+            "domain_summary": [],
+            "failures": ["birth profile review manifest audit is missing"],
+            "boundary": "No birth-profile review manifest was available.",
+        }
+    return {
+        "status": audit.get("status"),
+        "valid": audit.get("valid") is True,
+        "production_evidence": audit.get("production_evidence") is True,
+        "request_count": audit.get("request_count", 0),
+        "case_count": audit.get("case_count", 0),
+        "domains": audit.get("domains", []),
+        "blocked_label_count": audit.get("blocked_label_count", 0),
+        "ready_for_import": audit.get("ready_for_import") is True,
+        "domain_summary": audit.get("domain_summary", []),
+        "failures": audit.get("failures", []),
+        "boundary": audit.get("boundary", ""),
+    }
+
+
+def _cross_domain_birth_profile_source_review_workplan_summary(workplan: dict[str, Any]) -> dict[str, Any]:
+    """Summarize human source-review work items for blocked celebrity birth profiles."""
+    if not isinstance(workplan, dict) or not workplan:
+        return {
+            "status": "blocked_missing_source_review_workplan",
+            "valid": False,
+            "would_fetch_live_sources": False,
+            "would_write_review_manifest": False,
+            "request_count": 0,
+            "work_item_count": 0,
+            "review_progress_summary": {},
+            "field_gap_summary": {},
+            "source_review_gate_passed": False,
+            "blocking_reasons": ["birth profile source review workplan is missing"],
+            "integrity_check_status": "missing",
+            "boundary": "No birth-profile source review workplan was available.",
+        }
+    gate = workplan.get("source_review_gate", {}) if isinstance(workplan.get("source_review_gate"), dict) else {}
+    integrity = workplan.get("integrity_check", {}) if isinstance(workplan.get("integrity_check"), dict) else {}
+    return {
+        "status": workplan.get("status"),
+        "valid": workplan.get("valid") is True,
+        "would_fetch_live_sources": workplan.get("would_fetch_live_sources") is True,
+        "would_write_review_manifest": workplan.get("would_write_review_manifest") is True,
+        "request_count": workplan.get("request_count", 0),
+        "work_item_count": workplan.get("work_item_count", 0),
+        "review_progress_summary": workplan.get("review_progress_summary", {}),
+        "field_gap_summary": workplan.get("field_gap_summary", {}),
+        "source_review_gate_passed": gate.get("passed") is True,
+        "blocking_reasons": gate.get("blocking_reasons", []),
+        "integrity_check_status": integrity.get("status"),
+        "boundary": workplan.get("boundary", ""),
+    }
+
+
+def _cross_domain_birth_profile_source_lookup_plan_summary(plan: dict[str, Any]) -> dict[str, Any]:
+    """Summarize dry-run source lookup tasks for blocked celebrity birth profiles."""
+    if not isinstance(plan, dict) or not plan:
+        return {
+            "status": "blocked_missing_source_lookup_plan",
+            "valid": False,
+            "would_fetch_live_sources": False,
+            "would_write_cache": False,
+            "would_write_review_manifest": False,
+            "lookup_item_count": 0,
+            "query_count": 0,
+            "lookup_gate_passed": False,
+            "blocking_reasons": ["birth profile source lookup plan is missing"],
+            "integrity_check_status": "missing",
+            "boundary": "No birth-profile source lookup plan was available.",
+        }
+    gate = plan.get("lookup_gate", {}) if isinstance(plan.get("lookup_gate"), dict) else {}
+    integrity = plan.get("integrity_check", {}) if isinstance(plan.get("integrity_check"), dict) else {}
+    source_catalog = plan.get("source_family_catalog", {}) if isinstance(plan.get("source_family_catalog"), dict) else {}
+    source_family_ids = {
+        str(item.get("source_family_id"))
+        for item in source_catalog.get("source_families", [])
+        if isinstance(item, dict) and item.get("source_family_id")
+    }
+    planned_queries = [
+        query
+        for item in plan.get("lookup_items", [])
+        if isinstance(item, dict)
+        for query in item.get("planned_queries", [])
+        if isinstance(query, dict)
+    ]
+    birth_time_queries = [
+        query
+        for query in planned_queries
+        if isinstance(query.get("source_use_policy"), dict)
+        and query.get("source_use_policy", {}).get("requires_rated_birth_time_source") is True
+    ]
+    birth_time_source_policy_bound = bool(birth_time_queries) and all(
+        "rated_birth_time_source" in query.get("source_use_policy", {}).get("birth_time_may_be_satisfied_by", [])
+        and any(
+            isinstance(family, dict) and family.get("source_family_id") == "rated_birth_time_source"
+            for family in query.get("recommended_source_families", [])
+        )
+        for query in birth_time_queries
+    )
+    identity_anchor_birth_time_disallowed = bool(planned_queries) and all(
+        "birth_time" in str(query.get("source_use_policy", {}).get("disallowed_shortcut", ""))
+        for query in planned_queries
+        if isinstance(query.get("source_use_policy"), dict)
+    )
+    required_source_families = {
+        "rated_birth_time_source",
+        "wikidata_identity_anchor",
+        "film_identity_and_work_anchor",
+        "music_identity_and_work_anchor",
+        "sports_identity_and_result_anchor",
+    }
+    return {
+        "status": plan.get("status"),
+        "valid": plan.get("valid") is True,
+        "would_fetch_live_sources": plan.get("would_fetch_live_sources") is True,
+        "would_write_cache": plan.get("would_write_cache") is True,
+        "would_write_review_manifest": plan.get("would_write_review_manifest") is True,
+        "lookup_item_count": plan.get("lookup_item_count", 0),
+        "query_count": plan.get("query_count", 0),
+        "source_family_count": source_catalog.get("source_family_count", 0),
+        "source_family_catalog_bound": required_source_families.issubset(source_family_ids)
+        and isinstance(source_catalog.get("source_family_catalog_receipt", {}).get("sha256"), str)
+        and len(source_catalog.get("source_family_catalog_receipt", {}).get("sha256", "")) == 64,
+        "birth_time_source_policy_bound": birth_time_source_policy_bound,
+        "identity_anchor_birth_time_disallowed": identity_anchor_birth_time_disallowed,
+        "domain_summary": plan.get("domain_summary", []),
+        "lookup_gate_passed": gate.get("passed") is True,
+        "blocking_reasons": gate.get("blocking_reasons", []),
+        "integrity_check_status": integrity.get("status"),
+        "boundary": plan.get("boundary", ""),
+    }
+
+
+def _cross_domain_birth_profile_source_cache_audit_summary(audit: dict[str, Any]) -> dict[str, Any]:
+    """Summarize manual source-cache audit state for blocked celebrity birth profiles."""
+    if not isinstance(audit, dict) or not audit:
+        return {
+            "status": "blocked_missing_source_cache_audit",
+            "valid": False,
+            "would_fetch_live_sources": False,
+            "would_write_cache": False,
+            "would_write_review_manifest": False,
+            "would_import_profiles": False,
+            "expected_cache_count": 0,
+            "present_cache_count": 0,
+            "missing_cache_count": 0,
+            "accepted_cache_count": 0,
+            "cache_audit_gate_passed": False,
+            "blocking_reasons": ["birth profile source cache audit is missing"],
+            "integrity_check_status": "missing",
+            "boundary": "No birth-profile source cache audit was available.",
+        }
+    gate = audit.get("cache_audit_gate", {}) if isinstance(audit.get("cache_audit_gate"), dict) else {}
+    integrity = audit.get("integrity_check", {}) if isinstance(audit.get("integrity_check"), dict) else {}
+    return {
+        "status": audit.get("status"),
+        "valid": audit.get("valid") is True,
+        "would_fetch_live_sources": audit.get("would_fetch_live_sources") is True,
+        "would_write_cache": audit.get("would_write_cache") is True,
+        "would_write_review_manifest": audit.get("would_write_review_manifest") is True,
+        "would_import_profiles": audit.get("would_import_profiles") is True,
+        "expected_cache_count": audit.get("expected_cache_count", 0),
+        "present_cache_count": audit.get("present_cache_count", 0),
+        "missing_cache_count": audit.get("missing_cache_count", 0),
+        "accepted_cache_count": audit.get("accepted_cache_count", 0),
+        "cache_audit_gate_passed": gate.get("passed") is True,
+        "blocking_reasons": gate.get("blocking_reasons", []),
+        "integrity_check_status": integrity.get("status"),
+        "boundary": audit.get("boundary", ""),
+    }
+
+
+def _cross_domain_birth_profile_source_cache_template_preview_summary(preview: dict[str, Any]) -> dict[str, Any]:
+    """Summarize non-mutating manual source-cache template preview state."""
+    if not isinstance(preview, dict) or not preview:
+        return {
+            "status": "blocked_missing_source_cache_template_preview",
+            "valid": False,
+            "would_fetch_live_sources": False,
+            "would_write_cache": False,
+            "would_import_profiles": False,
+            "template_count": 0,
+            "template_preview_gate_passed": False,
+            "blocking_reasons": ["birth profile source cache template preview is missing"],
+            "integrity_check_status": "missing",
+            "boundary": "No birth-profile source cache template preview was available.",
+        }
+    gate = preview.get("template_preview_gate", {}) if isinstance(preview.get("template_preview_gate"), dict) else {}
+    integrity = preview.get("integrity_check", {}) if isinstance(preview.get("integrity_check"), dict) else {}
+    return {
+        "status": preview.get("status"),
+        "valid": preview.get("valid") is True,
+        "would_fetch_live_sources": preview.get("would_fetch_live_sources") is True,
+        "would_write_cache": preview.get("would_write_cache") is True,
+        "would_import_profiles": preview.get("would_import_profiles") is True,
+        "template_count": preview.get("template_count", 0),
+        "template_preview_gate_passed": gate.get("passed") is True,
+        "blocking_reasons": gate.get("blocking_reasons", []),
+        "integrity_check_status": integrity.get("status"),
+        "boundary": preview.get("boundary", ""),
+    }
+
+
+def _cross_domain_birth_profile_source_family_cache_enforcement_probe() -> dict[str, Any]:
+    """Probe that identity-anchor cache payloads cannot satisfy birth_time."""
+    with tempfile.TemporaryDirectory(prefix="birth_profile_source_family_probe_") as temp_dir:
+        cache_dir = Path(temp_dir) / "birth_profile_source_cache"
+        before = build_birth_profile_source_cache_audit(
+            BIRTH_PROFILE_REVIEW_MANIFEST_EXAMPLE,
+            cache_dir=cache_dir,
+            domain="film",
+        )
+        cache_items = before.get("cache_items", []) if isinstance(before.get("cache_items"), list) else []
+        target = next(
+            (
+                item
+                for item in cache_items
+                if isinstance(item, dict) and "birth_time" in item.get("target_fields", [])
+            ),
+            None,
+        )
+        if not isinstance(target, dict):
+            return {
+                "status": "failed",
+                "valid": False,
+                "probe_executed": False,
+                "identity_anchor_birth_time_rejected": False,
+                "accepted_cache_count_after_probe": None,
+                "probe_source_family_id": "wikidata_identity_anchor",
+                "failure_contains_birth_time_policy": False,
+                "failures": ["no planned birth_time cache item was available for source-family probe"],
+                "boundary": "Probe did not execute because no target cache item was available.",
+            }
+        cache_path = Path(str(target.get("cache_path", "")))
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(
+            json.dumps(
+                {
+                    "query_id": target.get("query_id"),
+                    "case_id": target.get("case_id"),
+                    "source_family_id": "wikidata_identity_anchor",
+                    "source_name": "identity-only probe source",
+                    "source_url": "https://example.test/identity-only",
+                    "source_rating": "identity-only",
+                    "reviewer_note": "Probe payload: identity anchor must not satisfy birth_time.",
+                    "review_status": "source_reviewed",
+                    "birth_time": "08:00",
+                },
+                sort_keys=True,
+                ensure_ascii=True,
+            ),
+            encoding="utf-8",
+        )
+        after = build_birth_profile_source_cache_audit(
+            BIRTH_PROFILE_REVIEW_MANIFEST_EXAMPLE,
+            cache_dir=cache_dir,
+            domain="film",
+        )
+        present_items = [
+            item
+            for item in after.get("cache_items", [])
+            if isinstance(item, dict) and item.get("cache_status") == "present"
+        ]
+        present = present_items[0] if present_items else {}
+        failures = present.get("failures", []) if isinstance(present, dict) else []
+        failure_contains_policy = any(
+            "birth_time evidence requires source_family_id=rated_birth_time_source" in str(item)
+            for item in failures
+        )
+        rejected = present.get("source_evidence_acceptable") is False and failure_contains_policy
+        return {
+            "status": "passed" if rejected else "failed",
+            "valid": rejected,
+            "probe_executed": True,
+            "identity_anchor_birth_time_rejected": rejected,
+            "accepted_cache_count_after_probe": after.get("accepted_cache_count"),
+            "probe_source_family_id": "wikidata_identity_anchor",
+            "failure_contains_birth_time_policy": failure_contains_policy,
+            "failures": [] if rejected else [str(item) for item in failures],
+            "boundary": "Probe uses a temporary cache directory and does not write repository cache files.",
+        }
+
+
+def _cross_domain_birth_profile_substantive_evidence_cache_enforcement_probe() -> dict[str, Any]:
+    """Probe that reviewed source metadata cannot satisfy birth-profile evidence by itself."""
+    with tempfile.TemporaryDirectory(prefix="birth_profile_substantive_evidence_probe_") as temp_dir:
+        cache_dir = Path(temp_dir) / "birth_profile_source_cache"
+        before = build_birth_profile_source_cache_audit(
+            BIRTH_PROFILE_REVIEW_MANIFEST_EXAMPLE,
+            cache_dir=cache_dir,
+            domain="film",
+        )
+        cache_items = before.get("cache_items", []) if isinstance(before.get("cache_items"), list) else []
+        target = next(
+            (
+                item
+                for item in cache_items
+                if isinstance(item, dict) and "birth_time" in item.get("target_fields", [])
+            ),
+            None,
+        )
+        if not isinstance(target, dict):
+            return {
+                "status": "failed",
+                "valid": False,
+                "probe_executed": False,
+                "metadata_only_reviewed_cache_rejected": False,
+                "accepted_cache_count_after_probe": None,
+                "probe_source_family_id": "rated_birth_time_source",
+                "failure_contains_substantive_birth_policy": False,
+                "failures": ["no planned birth_time cache item was available for substantive-evidence probe"],
+                "boundary": "Probe did not execute because no target cache item was available.",
+            }
+        cache_path = Path(str(target.get("cache_path", "")))
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(
+            json.dumps(
+                {
+                    "query_id": target.get("query_id"),
+                    "case_id": target.get("case_id"),
+                    "source_family_id": "rated_birth_time_source",
+                    "source_name": "metadata-only probe source",
+                    "source_url": "https://example.test/metadata-only",
+                    "source_rating": "reviewed-metadata-only",
+                    "reviewer_note": "Probe payload: source metadata alone must not satisfy birth evidence.",
+                    "review_status": "source_reviewed",
+                },
+                sort_keys=True,
+                ensure_ascii=True,
+            ),
+            encoding="utf-8",
+        )
+        after = build_birth_profile_source_cache_audit(
+            BIRTH_PROFILE_REVIEW_MANIFEST_EXAMPLE,
+            cache_dir=cache_dir,
+            domain="film",
+        )
+        present_items = [
+            item
+            for item in after.get("cache_items", [])
+            if isinstance(item, dict) and item.get("cache_status") == "present"
+        ]
+        present = present_items[0] if present_items else {}
+        failures = present.get("failures", []) if isinstance(present, dict) else []
+        failure_contains_policy = any(
+            "reviewed payload does not fill any substantive birth field" in str(item)
+            for item in failures
+        )
+        rejected = present.get("source_evidence_acceptable") is False and failure_contains_policy
+        return {
+            "status": "passed" if rejected else "failed",
+            "valid": rejected,
+            "probe_executed": True,
+            "metadata_only_reviewed_cache_rejected": rejected,
+            "accepted_cache_count_after_probe": after.get("accepted_cache_count"),
+            "probe_source_family_id": "rated_birth_time_source",
+            "failure_contains_substantive_birth_policy": failure_contains_policy,
+            "failures": [] if rejected else [str(item) for item in failures],
+            "boundary": "Probe uses a temporary cache directory and does not write repository cache files.",
+        }
+
+
+def _cross_domain_birth_profile_reviewed_manifest_draft_preview_summary(preview: dict[str, Any]) -> dict[str, Any]:
+    """Summarize non-mutating reviewed-manifest draft preview state."""
+    if not isinstance(preview, dict) or not preview:
+        return {
+            "status": "blocked_missing_reviewed_manifest_draft_preview",
+            "valid": False,
+            "would_write_review_manifest": False,
+            "would_import_profiles": False,
+            "draft_ready_for_human_approval": False,
+            "review_request_count": 0,
+            "complete_review_request_count": 0,
+            "incomplete_review_request_count": 0,
+            "draft_gate_passed": False,
+            "blocking_reasons": ["birth profile reviewed manifest draft preview is missing"],
+            "integrity_check_status": "missing",
+            "boundary": "No birth-profile reviewed manifest draft preview was available.",
+        }
+    gate = preview.get("draft_gate", {}) if isinstance(preview.get("draft_gate"), dict) else {}
+    integrity = preview.get("integrity_check", {}) if isinstance(preview.get("integrity_check"), dict) else {}
+    return {
+        "status": preview.get("status"),
+        "valid": preview.get("valid") is True,
+        "would_write_review_manifest": preview.get("would_write_review_manifest") is True,
+        "would_import_profiles": preview.get("would_import_profiles") is True,
+        "draft_ready_for_human_approval": preview.get("draft_ready_for_human_approval") is True,
+        "review_request_count": preview.get("review_request_count", 0),
+        "complete_review_request_count": preview.get("complete_review_request_count", 0),
+        "incomplete_review_request_count": preview.get("incomplete_review_request_count", 0),
+        "draft_gate_passed": gate.get("passed") is True,
+        "blocking_reasons": gate.get("blocking_reasons", []),
+        "integrity_check_status": integrity.get("status"),
+        "boundary": preview.get("boundary", ""),
+    }
+
+
+def _cross_domain_birth_profile_reviewed_manifest_file_preview_summary(preview: dict[str, Any]) -> dict[str, Any]:
+    """Summarize the final non-mutating reviewed-manifest file-write preview."""
+    if not isinstance(preview, dict) or not preview:
+        return {
+            "status": "blocked_missing_reviewed_manifest_file_preview",
+            "valid": False,
+            "would_write_file": False,
+            "would_import_profiles": False,
+            "write_ready_for_human_approval": False,
+            "target_file": "",
+            "target_file_sha256": None,
+            "file_preview_gate_passed": False,
+            "blocking_reasons": ["birth profile reviewed manifest file preview is missing"],
+            "integrity_check_status": "missing",
+            "boundary": "No birth-profile reviewed manifest file preview was available.",
+        }
+    gate = preview.get("file_preview_gate", {}) if isinstance(preview.get("file_preview_gate"), dict) else {}
+    integrity = preview.get("integrity_check", {}) if isinstance(preview.get("integrity_check"), dict) else {}
+    return {
+        "status": preview.get("status"),
+        "valid": preview.get("valid") is True,
+        "would_write_file": preview.get("would_write_file") is True,
+        "would_import_profiles": preview.get("would_import_profiles") is True,
+        "write_ready_for_human_approval": preview.get("write_ready_for_human_approval") is True,
+        "target_file": preview.get("target_file", ""),
+        "target_file_sha256": preview.get("target_file_sha256"),
+        "file_preview_gate_passed": gate.get("passed") is True,
+        "blocking_reasons": gate.get("blocking_reasons", []),
+        "integrity_check_status": integrity.get("status"),
+        "boundary": preview.get("boundary", ""),
+    }
+
+
+def _cross_domain_birth_profile_import_preview_summary(preview: dict[str, Any]) -> dict[str, Any]:
+    """Summarize the non-mutating birth-profile import preview for audit portability."""
+    if not isinstance(preview, dict) or not preview:
+        return {
+            "status": "blocked_missing_preview",
+            "valid": False,
+            "would_write_file": False,
+            "import_allowed": False,
+            "request_count": 0,
+            "blocked_request_count": 0,
+            "import_ready_request_count": 0,
+            "import_gate_passed": False,
+            "blocking_reasons": ["birth profile import preview is missing"],
+            "integrity_check_status": "missing",
+            "boundary": "No birth-profile import preview was available.",
+        }
+    gate = preview.get("import_gate", {}) if isinstance(preview.get("import_gate"), dict) else {}
+    integrity = preview.get("integrity_check", {}) if isinstance(preview.get("integrity_check"), dict) else {}
+    return {
+        "status": preview.get("status"),
+        "valid": preview.get("valid") is True,
+        "would_write_file": preview.get("would_write_file") is True,
+        "import_allowed": preview.get("import_allowed") is True,
+        "request_count": preview.get("request_count", 0),
+        "blocked_request_count": preview.get("blocked_request_count", 0),
+        "import_ready_request_count": preview.get("import_ready_request_count", 0),
+        "import_gate_passed": gate.get("passed") is True,
+        "blocking_reasons": preview.get("blocking_reasons", []),
+        "integrity_check_status": integrity.get("status"),
+        "boundary": preview.get("boundary", ""),
+    }
+
+
+def _cross_domain_birth_profile_fixture_patch_preview_summary(preview: dict[str, Any]) -> dict[str, Any]:
+    """Summarize the non-mutating fixture patch preview for audit portability."""
+    if not isinstance(preview, dict) or not preview:
+        return {
+            "status": "blocked_missing_patch_preview",
+            "valid": False,
+            "would_write_file": False,
+            "patch_ready_for_review": False,
+            "candidate_count": 0,
+            "candidate_case_ids": [],
+            "patch_gate_passed": False,
+            "target_file_sha256": None,
+            "patch_text_sha256": None,
+            "blocking_reasons": ["birth profile fixture patch preview is missing"],
+            "integrity_check_status": "missing",
+            "boundary": "No birth-profile fixture patch preview was available.",
+        }
+    gate = preview.get("patch_gate", {}) if isinstance(preview.get("patch_gate"), dict) else {}
+    integrity = preview.get("integrity_check", {}) if isinstance(preview.get("integrity_check"), dict) else {}
+    return {
+        "status": preview.get("status"),
+        "valid": preview.get("valid") is True,
+        "would_write_file": preview.get("would_write_file") is True,
+        "patch_ready_for_review": preview.get("patch_ready_for_review") is True,
+        "candidate_count": preview.get("candidate_count", 0),
+        "candidate_case_ids": preview.get("candidate_case_ids", []),
+        "patch_gate_passed": gate.get("passed") is True,
+        "target_file_sha256": preview.get("target_file_sha256"),
+        "patch_text_sha256": preview.get("patch_text_sha256"),
+        "blocking_reasons": preview.get("blocking_reasons", []),
+        "integrity_check_status": integrity.get("status"),
+        "boundary": preview.get("boundary", ""),
+    }
+
+
 def _capability_audit_receipt_material(response: dict[str, Any]) -> dict[str, Any]:
     evidence = response["evidence_materialization"]
     plan = response["plan_compliance"]
@@ -1840,6 +3179,12 @@ def _capability_audit_receipt_material(response: dict[str, Any]) -> dict[str, An
     method_surface = response["method_surface"]
     method_lineage = response["method_lineage"]
     famous_cases = response["famous_case_validation"]
+    famous_case_calibration = response["famous_case_school_calibration"]
+    famous_case_annual = response["famous_case_annual_event_calibration"]
+    industry_event_manifest = response.get("industry_event_source_manifest_example", {})
+    industry_event_query_plan = response.get("industry_event_source_query_plan_example", {})
+    industry_event_candidate_cases = response.get("industry_event_candidate_cases_example", {})
+    industry_event_cross_domain_fixture_import = response.get("industry_event_cross_domain_fixture_import", {})
     classical_index = response["classical_text_index"]
     classical_source_refresh = response["classical_source_refresh"]
     source_audits = classical_source_refresh.get("source_audits", [])
@@ -1915,8 +3260,153 @@ def _capability_audit_receipt_material(response: dict[str, Any]) -> dict[str, An
             "domains": famous_cases.get("domains", []),
             "ratings": famous_cases.get("ratings", []),
             "sources": famous_cases.get("sources", []),
+            "domain_coverage": famous_cases.get("domain_coverage", []),
             "material": famous_cases.get("material", {}),
         },
+        "famous_case_school_calibration": {
+            "schema_version": famous_case_calibration.get("schema_version"),
+            "sha256": famous_case_calibration.get("sha256"),
+            "fixture_sha256": famous_case_calibration.get("fixture_sha256"),
+            "case_count": famous_case_calibration.get("case_count"),
+            "mean_topic_recall": famous_case_calibration.get("mean_topic_recall"),
+            "low_coverage_cases": famous_case_calibration.get("low_coverage_cases", []),
+            "school_summary": famous_case_calibration.get("school_summary", []),
+            "domain_summary": famous_case_calibration.get("domain_summary", []),
+            "boundary": famous_case_calibration.get("boundary"),
+        },
+        "famous_case_annual_event_calibration": {
+            "schema_version": famous_case_annual.get("schema_version"),
+            "sha256": famous_case_annual.get("sha256"),
+            "fixture_sha256": famous_case_annual.get("fixture_sha256"),
+            "case_count": famous_case_annual.get("case_count"),
+            "event_count": famous_case_annual.get("event_count"),
+            "negative_year_count": famous_case_annual.get("negative_year_count"),
+            "false_positive_count": famous_case_annual.get("false_positive_count"),
+            "strict_exact_hit_count": famous_case_annual.get("strict_exact_hit_count"),
+            "strict_false_positive_count": famous_case_annual.get("strict_false_positive_count"),
+            "exact_hit_rate": famous_case_annual.get("exact_hit_rate"),
+            "window_hit_rate": famous_case_annual.get("window_hit_rate"),
+            "exact_precision": famous_case_annual.get("exact_precision"),
+            "false_positive_rate": famous_case_annual.get("false_positive_rate"),
+            "strict_exact_hit_rate": famous_case_annual.get("strict_exact_hit_rate"),
+            "strict_exact_precision": famous_case_annual.get("strict_exact_precision"),
+            "strict_false_positive_rate": famous_case_annual.get("strict_false_positive_rate"),
+            "low_coverage_cases": famous_case_annual.get("low_coverage_cases", []),
+            "domain_summary": famous_case_annual.get("domain_summary", []),
+            "domain_topic_summary": famous_case_annual.get("domain_topic_summary", []),
+            "domain_topic_refinement_queue": famous_case_annual.get("domain_topic_refinement_queue", []),
+            "domain_topic_variant_sweep": famous_case_annual.get("domain_topic_variant_sweep", []),
+            "topic_summary": famous_case_annual.get("topic_summary", []),
+            "industry_event_evidence_summary": famous_case_annual.get("industry_event_evidence_summary", []),
+            "industry_event_source_coverage": famous_case_annual.get("industry_event_source_coverage", {}),
+            "event_subtype_summary": famous_case_annual.get("event_subtype_summary", []),
+            "rule_variant_sweep": famous_case_annual.get("rule_variant_sweep", []),
+            "rule_refinement_queue": famous_case_annual.get("rule_refinement_queue", []),
+            "evolution_task_plan": famous_case_annual.get("evolution_task_plan", []),
+            "boundary": famous_case_annual.get("boundary"),
+        },
+        "industry_event_source_manifest_example": {
+            "schema_version": industry_event_manifest.get("schema_version"),
+            "sha256": industry_event_manifest.get("sha256"),
+            "status": industry_event_manifest.get("material", {}).get("status")
+            if isinstance(industry_event_manifest.get("material"), dict)
+            else None,
+            "path": industry_event_manifest.get("material", {}).get("path")
+            if isinstance(industry_event_manifest.get("material"), dict)
+            else None,
+            "content_hash": industry_event_manifest.get("material", {}).get("content_hash")
+            if isinstance(industry_event_manifest.get("material"), dict)
+            else None,
+            "record_count": industry_event_manifest.get("material", {}).get("record_count")
+            if isinstance(industry_event_manifest.get("material"), dict)
+            else None,
+            "positive_event_count": industry_event_manifest.get("material", {}).get("positive_event_count")
+            if isinstance(industry_event_manifest.get("material"), dict)
+            else None,
+            "negative_event_count": industry_event_manifest.get("material", {}).get("negative_event_count")
+            if isinstance(industry_event_manifest.get("material"), dict)
+            else None,
+            "domains": industry_event_manifest.get("material", {}).get("domains", [])
+            if isinstance(industry_event_manifest.get("material"), dict)
+            else [],
+            "candidate_source_names": industry_event_manifest.get("material", {}).get("candidate_source_names", [])
+            if isinstance(industry_event_manifest.get("material"), dict)
+            else [],
+            "production_evidence": industry_event_manifest.get("material", {}).get("production_evidence")
+            if isinstance(industry_event_manifest.get("material"), dict)
+            else False,
+            "externally_reviewed": industry_event_manifest.get("material", {}).get("externally_reviewed")
+            if isinstance(industry_event_manifest.get("material"), dict)
+            else False,
+        },
+        "industry_event_source_query_plan_example": {
+            "schema_version": industry_event_query_plan.get("schema_version"),
+            "sha256": industry_event_query_plan.get("sha256"),
+            "status": industry_event_query_plan.get("material", {}).get("status")
+            if isinstance(industry_event_query_plan.get("material"), dict)
+            else None,
+            "path": industry_event_query_plan.get("material", {}).get("path")
+            if isinstance(industry_event_query_plan.get("material"), dict)
+            else None,
+            "content_hash": industry_event_query_plan.get("material", {}).get("content_hash")
+            if isinstance(industry_event_query_plan.get("material"), dict)
+            else None,
+            "source_id": industry_event_query_plan.get("material", {}).get("source_id")
+            if isinstance(industry_event_query_plan.get("material"), dict)
+            else None,
+            "endpoint_url": industry_event_query_plan.get("material", {}).get("endpoint_url")
+            if isinstance(industry_event_query_plan.get("material"), dict)
+            else None,
+            "template_count": industry_event_query_plan.get("material", {}).get("template_count")
+            if isinstance(industry_event_query_plan.get("material"), dict)
+            else None,
+            "domains": industry_event_query_plan.get("material", {}).get("domains", [])
+            if isinstance(industry_event_query_plan.get("material"), dict)
+            else [],
+            "required_manifest_fields_mapped": industry_event_query_plan.get("material", {}).get(
+                "required_manifest_fields_mapped"
+            )
+            if isinstance(industry_event_query_plan.get("material"), dict)
+            else False,
+            "collection_ready": industry_event_query_plan.get("material", {}).get("collection_ready")
+            if isinstance(industry_event_query_plan.get("material"), dict)
+            else False,
+            "externally_reviewed": industry_event_query_plan.get("material", {}).get("externally_reviewed")
+            if isinstance(industry_event_query_plan.get("material"), dict)
+            else False,
+        },
+        "industry_event_candidate_cases_example": {
+            "schema_version": industry_event_candidate_cases.get("schema_version"),
+            "sha256": industry_event_candidate_cases.get("sha256"),
+            "status": industry_event_candidate_cases.get("material", {}).get("status")
+            if isinstance(industry_event_candidate_cases.get("material"), dict)
+            else None,
+            "path": industry_event_candidate_cases.get("material", {}).get("path")
+            if isinstance(industry_event_candidate_cases.get("material"), dict)
+            else None,
+            "content_hash": industry_event_candidate_cases.get("material", {}).get("content_hash")
+            if isinstance(industry_event_candidate_cases.get("material"), dict)
+            else None,
+            "candidate_count": industry_event_candidate_cases.get("material", {}).get("candidate_count")
+            if isinstance(industry_event_candidate_cases.get("material"), dict)
+            else None,
+            "domain_counts": industry_event_candidate_cases.get("material", {}).get("domain_counts", {})
+            if isinstance(industry_event_candidate_cases.get("material"), dict)
+            else {},
+            "domains": industry_event_candidate_cases.get("material", {}).get("domains", [])
+            if isinstance(industry_event_candidate_cases.get("material"), dict)
+            else [],
+            "split_roles": industry_event_candidate_cases.get("material", {}).get("split_roles", [])
+            if isinstance(industry_event_candidate_cases.get("material"), dict)
+            else [],
+            "production_ready": industry_event_candidate_cases.get("material", {}).get("production_ready")
+            if isinstance(industry_event_candidate_cases.get("material"), dict)
+            else False,
+            "externally_reviewed": industry_event_candidate_cases.get("material", {}).get("externally_reviewed")
+            if isinstance(industry_event_candidate_cases.get("material"), dict)
+            else False,
+        },
+        "industry_event_cross_domain_fixture_import": industry_event_cross_domain_fixture_import,
         "classical_text_index": {
             "status": classical_index.get("status"),
             "record_count": classical_index.get("record_count"),
@@ -2085,6 +3575,12 @@ def capability_audit(
     method_surface = method_surface_receipt()
     method_lineage = method_lineage_receipt()
     famous_cases = famous_case_receipt()
+    famous_case_calibration = famous_case_school_calibration_receipt()
+    famous_case_annual = famous_case_annual_event_calibration_receipt()
+    industry_event_manifest = _industry_event_source_manifest_example_receipt()
+    industry_event_query_plan = _industry_event_source_query_plan_example_receipt()
+    industry_event_candidate_cases = _industry_event_candidate_cases_example_receipt()
+    industry_event_cross_domain_fixture_import = _industry_event_cross_domain_fixture_import_receipt()
     classical_index = classical_index_audit()
     resolved_classical_source_list_path = _default_classical_source_list_path(classical_source_list_path)
     classical_source_refresh = source_list_audit(resolved_classical_source_list_path)
@@ -2217,6 +3713,39 @@ def capability_audit(
         "famous_case_validation_receipt": isinstance(famous_cases.get("sha256"), str)
         and len(famous_cases.get("sha256", "")) == 64
         and int(famous_cases.get("case_count", 0)) >= 12,
+        "famous_case_school_calibration_receipt": isinstance(famous_case_calibration.get("sha256"), str)
+        and len(famous_case_calibration.get("sha256", "")) == 64
+        and famous_case_calibration.get("fixture_sha256") == famous_cases.get("sha256")
+        and int(famous_case_calibration.get("case_count", 0)) >= 12,
+        "famous_case_annual_event_calibration_receipt": isinstance(famous_case_annual.get("sha256"), str)
+        and len(famous_case_annual.get("sha256", "")) == 64
+        and famous_case_annual.get("fixture_sha256") == famous_cases.get("sha256")
+        and int(famous_case_annual.get("case_count", 0)) >= 12
+        and int(famous_case_annual.get("event_count", 0)) > 0,
+        "industry_event_source_manifest_example": isinstance(industry_event_manifest.get("sha256"), str)
+        and len(industry_event_manifest.get("sha256", "")) == 64
+        and industry_event_manifest.get("material", {}).get("status") == "ready_example",
+        "industry_event_source_query_plan_example": isinstance(industry_event_query_plan.get("sha256"), str)
+        and len(industry_event_query_plan.get("sha256", "")) == 64
+        and industry_event_query_plan.get("material", {}).get("status") == "ready_example",
+        "industry_event_candidate_cases_example": isinstance(industry_event_candidate_cases.get("sha256"), str)
+        and len(industry_event_candidate_cases.get("sha256", "")) == 64
+        and industry_event_candidate_cases.get("material", {}).get("status") == "ready_example"
+        and industry_event_candidate_cases.get("material", {}).get("domain_counts") == {
+            "film": 3,
+            "music": 3,
+            "sports": 3,
+        },
+        "industry_event_cross_domain_fixture_import": isinstance(
+            industry_event_cross_domain_fixture_import.get("sha256"), str
+        )
+        and len(industry_event_cross_domain_fixture_import.get("sha256", "")) == 64
+        and industry_event_cross_domain_fixture_import.get("material", {}).get("status") == "ready_example"
+        and industry_event_cross_domain_fixture_import.get("material", {}).get("candidate_count") == 9
+        and industry_event_cross_domain_fixture_import.get("material", {}).get("positive_record_count") == 9
+        and int(industry_event_cross_domain_fixture_import.get("material", {}).get("negative_record_count", 0)) > 0
+        and industry_event_cross_domain_fixture_import.get("material", {}).get("cross_domain_coverage_gate_passed")
+        is True,
         "method_lineage_receipt": isinstance(method_lineage.get("sha256"), str)
         and len(method_lineage.get("sha256", "")) == 64,
         "monthly_luck_receipt": True,
@@ -2351,6 +3880,12 @@ def capability_audit(
         "method_surface": method_surface,
         "method_lineage": method_lineage,
         "famous_case_validation": famous_cases,
+        "famous_case_school_calibration": famous_case_calibration,
+        "famous_case_annual_event_calibration": famous_case_annual,
+        "industry_event_source_manifest_example": industry_event_manifest,
+        "industry_event_source_query_plan_example": industry_event_query_plan,
+        "industry_event_candidate_cases_example": industry_event_candidate_cases,
+        "industry_event_cross_domain_fixture_import": industry_event_cross_domain_fixture_import,
         "request_scoped_provider_contract": {
             "status": "ready"
             if capabilities["request_scoped_full_external_provider_injection"]

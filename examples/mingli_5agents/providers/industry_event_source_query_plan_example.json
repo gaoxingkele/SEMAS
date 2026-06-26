@@ -1,0 +1,153 @@
+{
+  "schema_version": "industry-event-source-query-plan-v1",
+  "status": "example_only_not_live_collection",
+  "purpose": "Demonstrate reviewed query templates for collecting public famous-case industry-event evidence before manifest publication.",
+  "boundary": "This query plan is a collection contract. It does not certify result completeness, licensing, identity matching, or production evidence.",
+  "review": {
+    "externally_reviewed": false,
+    "reviewer": "example steward required before production use",
+    "review_date": null,
+    "approval": "not_approved_for_collection"
+  },
+  "source": {
+    "source_id": "wikidata_query_service",
+    "name": "Wikidata Query Service",
+    "endpoint_url": "https://query.wikidata.org/sparql",
+    "documentation_url": "https://query.wikidata.org/",
+    "license_or_review": "example_source_requires_review",
+    "access_mode": "sparql_http_get",
+    "live_collection_allowed": false
+  },
+  "collection_policy": {
+    "requires_identity_review": true,
+    "requires_statement_references": true,
+    "requires_negative_year_source_window": true,
+    "collected_before_rule_change": true,
+    "max_rows_per_query": 500,
+    "rate_limit_note": "Production collection must respect source rate limits and cache query receipts."
+  },
+  "required_template_fields": [
+    "template_id",
+    "domain",
+    "event_topic",
+    "positive_event_type",
+    "negative_year_rule",
+    "placeholders",
+    "sparql",
+    "result_mapping",
+    "manifest_record_defaults"
+  ],
+  "query_templates": [
+    {
+      "template_id": "wikidata_film_public_fame_events",
+      "domain": "film",
+      "event_topic": "public_fame",
+      "positive_event_type": "film_release_or_award_visibility",
+      "negative_year_rule": "A negative year requires a reviewed source-window query showing no qualifying film release, role, award, or nomination for the person-year.",
+      "placeholders": [
+        "PERSON_QID",
+        "START_YEAR",
+        "END_YEAR"
+      ],
+      "sparql": "SELECT ?event ?eventLabel ?date ?source WHERE { VALUES ?person { wd:PERSON_QID } { ?event wdt:P161 ?person . } UNION { ?event wdt:P166 ?award . ?event wdt:P1346 ?person . } OPTIONAL { ?event wdt:P577 ?date . } OPTIONAL { ?event prov:wasDerivedFrom ?source . } FILTER(YEAR(?date) >= START_YEAR && YEAR(?date) <= END_YEAR) SERVICE wikibase:label { bd:serviceParam wikibase:language \"en,zh\". } } LIMIT 500",
+      "result_mapping": {
+        "record_id": "template_id + case_id + year + event_qid",
+        "case_id": "input.case_id",
+        "public_name": "input.public_name",
+        "domain": "film",
+        "industry": "film_or_television",
+        "year": "YEAR(date)",
+        "event_topic": "public_fame",
+        "event_present": true,
+        "event_type": "positive_event_type",
+        "source_family_id": "film_or_television_release_award_box_office_source",
+        "source_name": "Wikidata Query Service",
+        "source_url": "event or statement reference URL",
+        "license_or_review": "source.license_or_review",
+        "collected_before_rule_change": "collection_policy.collected_before_rule_change",
+        "split_role": "collector supplied train or holdout",
+        "negative_year_reason": null
+      },
+      "manifest_record_defaults": {
+        "source_family_id": "film_or_television_release_award_box_office_source",
+        "source_name": "Wikidata Query Service",
+        "source_url": "https://query.wikidata.org/",
+        "license_or_review": "example_source_requires_review"
+      }
+    },
+    {
+      "template_id": "wikidata_music_public_fame_events",
+      "domain": "music",
+      "event_topic": "public_fame",
+      "positive_event_type": "music_release_or_public_visibility",
+      "negative_year_rule": "A negative year requires a reviewed source-window query showing no qualifying release, award, chart/publication, or broadcast marker for the artist-year.",
+      "placeholders": [
+        "PERSON_QID",
+        "START_YEAR",
+        "END_YEAR"
+      ],
+      "sparql": "SELECT ?event ?eventLabel ?date ?source WHERE { VALUES ?person { wd:PERSON_QID } { ?event wdt:P175 ?person . } UNION { ?event wdt:P86 ?person . } UNION { ?event wdt:P166 ?award . ?event wdt:P1346 ?person . } OPTIONAL { ?event wdt:P577 ?date . } OPTIONAL { ?event prov:wasDerivedFrom ?source . } FILTER(YEAR(?date) >= START_YEAR && YEAR(?date) <= END_YEAR) SERVICE wikibase:label { bd:serviceParam wikibase:language \"en,zh\". } } LIMIT 500",
+      "result_mapping": {
+        "record_id": "template_id + case_id + year + event_qid",
+        "case_id": "input.case_id",
+        "public_name": "input.public_name",
+        "domain": "music",
+        "industry": "music",
+        "year": "YEAR(date)",
+        "event_topic": "public_fame",
+        "event_present": true,
+        "event_type": "positive_event_type",
+        "source_family_id": "music_release_chart_award_source",
+        "source_name": "Wikidata Query Service",
+        "source_url": "event or statement reference URL",
+        "license_or_review": "source.license_or_review",
+        "collected_before_rule_change": "collection_policy.collected_before_rule_change",
+        "split_role": "collector supplied train or holdout",
+        "negative_year_reason": null
+      },
+      "manifest_record_defaults": {
+        "source_family_id": "music_release_chart_award_source",
+        "source_name": "Wikidata Query Service",
+        "source_url": "https://query.wikidata.org/",
+        "license_or_review": "example_source_requires_review"
+      }
+    },
+    {
+      "template_id": "wikidata_sports_peak_events",
+      "domain": "sports",
+      "event_topic": "career_peak",
+      "positive_event_type": "major_title_or_ranking_breakthrough",
+      "negative_year_rule": "A negative year requires a reviewed source-window query showing no qualifying title, medal, ranking, record, or major competition result for the athlete-year.",
+      "placeholders": [
+        "PERSON_QID",
+        "START_YEAR",
+        "END_YEAR"
+      ],
+      "sparql": "SELECT ?event ?eventLabel ?date ?source WHERE { VALUES ?person { wd:PERSON_QID } { ?event wdt:P1346 ?person . } UNION { ?event wdt:P710 ?person . } UNION { ?event wdt:P166 ?award . ?person wdt:P166 ?award . } OPTIONAL { ?event wdt:P585 ?date . } OPTIONAL { ?event wdt:P580 ?date . } OPTIONAL { ?event prov:wasDerivedFrom ?source . } FILTER(YEAR(?date) >= START_YEAR && YEAR(?date) <= END_YEAR) SERVICE wikibase:label { bd:serviceParam wikibase:language \"en,zh\". } } LIMIT 500",
+      "result_mapping": {
+        "record_id": "template_id + case_id + year + event_qid",
+        "case_id": "input.case_id",
+        "public_name": "input.public_name",
+        "domain": "sports",
+        "industry": "sports",
+        "year": "YEAR(date)",
+        "event_topic": "career_peak",
+        "event_present": true,
+        "event_type": "positive_event_type",
+        "source_family_id": "sports_result_ranking_title_record_source",
+        "source_name": "Wikidata Query Service",
+        "source_url": "event or statement reference URL",
+        "license_or_review": "source.license_or_review",
+        "collected_before_rule_change": "collection_policy.collected_before_rule_change",
+        "split_role": "collector supplied train or holdout",
+        "negative_year_reason": null
+      },
+      "manifest_record_defaults": {
+        "source_family_id": "sports_result_ranking_title_record_source",
+        "source_name": "Wikidata Query Service",
+        "source_url": "https://query.wikidata.org/",
+        "license_or_review": "example_source_requires_review"
+      }
+    }
+  ]
+}

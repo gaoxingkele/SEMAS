@@ -1,0 +1,33 @@
+{
+  "head": {
+    "vars": [
+      "event",
+      "eventLabel",
+      "date",
+      "source"
+    ]
+  },
+  "results": {
+    "bindings": [
+      {
+        "event": {
+          "type": "uri",
+          "value": "https://www.wikidata.org/entity/Q345678"
+        },
+        "eventLabel": {
+          "type": "literal",
+          "value": "Example music release or public visibility event"
+        },
+        "date": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+          "type": "literal",
+          "value": "2010-10-25T00:00:00Z"
+        },
+        "source": {
+          "type": "uri",
+          "value": "https://query.wikidata.org/"
+        }
+      }
+    ]
+  }
+}

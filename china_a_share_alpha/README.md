@@ -146,6 +146,29 @@ python -m china_a_share_alpha.run_portfolio_evolution china_a_share_alpha/exampl
 The portfolio runner treats each portfolio as a weighted, z-scored combination
 of factors and maximizes out-of-sample Sharpe ratio.
 
+## Tushare historical backtest comparison
+
+Run a real-data 5-year backtest comparing single factors and combined factors
+on CSI300 constituents:
+
+```bash
+export TUSHARE_TOKEN=your_token
+python -m china_a_share_alpha.scripts.run_tushare_backtest \
+    --start-date 20210601 --end-date 20260601 --split-date 20240101
+```
+
+Outputs:
+
+- `factor_comparison.csv` — IC, ICIR, Sharpe, max drawdown, turnover for each
+  single and combined factor.
+- `factor_comparison_report.md` — data-driven interpretation of results.
+- `summary.json` — best factor by Sharpe/IC and learned IC weights.
+
+Single factors cover momentum, short-term reversal, volume-price correlation,
+low-volatility, PB value, and liquidity. Combinations include a rule-based
+multi-timeframe factor, an equal-weighted multi-style factor, and an
+IC-weighted composite trained on the in-sample period.
+
 ## LLM-driven factor mutation
 
 Set `mutator: llm` in any factor config to let a language model propose new

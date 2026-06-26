@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 
@@ -368,7 +369,222 @@ AVOID_ZH = {
 
 def render_chinese_markdown(final_report: dict[str, Any]) -> str:
     """Render a concise Chinese Markdown report from a structured final report."""
-    return "\n".join(_clean_chinese_report_lines(final_report))
+    return _postprocess_chinese_markdown("\n".join(_clean_chinese_report_lines(final_report)), final_report)
+
+
+_GANZHI_STEM_ZH = {
+    "Jia": "甲",
+    "Yi": "乙",
+    "Bing": "丙",
+    "Ding": "丁",
+    "Wu": "戊",
+    "Ji": "己",
+    "Geng": "庚",
+    "Xin": "辛",
+    "Ren": "壬",
+    "Gui": "癸",
+}
+_GANZHI_BRANCH_ZH = {
+    "Zi": "子",
+    "Chou": "丑",
+    "Yin": "寅",
+    "Mao": "卯",
+    "Chen": "辰",
+    "Si": "巳",
+    "Wu": "午",
+    "Wei": "未",
+    "Shen": "申",
+    "You": "酉",
+    "Xu": "戌",
+    "Hai": "亥",
+}
+
+_CHINESE_REPORT_REPLACEMENTS = {
+    "CLI Person": "案例对象",
+    "Safety Case": "安全边界案例",
+    "Suzhou, Jiangsu, China": "中国江苏苏州",
+    "China/Jiangsu/Suzhou": "中国/江苏/苏州",
+    "Suzhou": "苏州",
+    "Jiangsu": "江苏",
+    "Nanjing": "南京",
+    "Taurus": "金牛座",
+    "Death": "死门",
+    "Zhen": "震宫",
+    "Siblings": "兄弟宫",
+    "Taiyang": "太阳",
+    "Mingli five-agent report for Reference Provider Case": "命理五智能体研判报告：参考来源案例",
+    "Reference Provider Case": "参考来源案例",
+    "Cancer": "巨蟹座",
+    "production_ready": "生产就绪",
+    "external_structured": "外部结构化来源",
+    "external_bazi": "外部八字",
+    "external_ziwei": "外部紫微",
+    "external_qimen": "外部奇门",
+    "external_astrology": "外部西占",
+    "external_xuanze": "外部择日",
+    "Well": "井宿",
+    "reference launch": "参考启动事项",
+    "reference avoid": "参考避忌事项",
+    "Mingli five-agent report for Demo Person": "命理五智能体研判报告：演示案例",
+    "Mingli five-agent report for Chinese Topic Case": "命理五智能体研判报告：中文主题案例",
+    "Demo Person": "演示案例",
+    "Chinese Topic Case": "中文主题案例",
+    "unspecified": "未说明",
+    "male": "男",
+    "female": "女",
+    "Sanming, Fujian, 中国": "中国福建三明",
+    "中国/Fujian/Sanming": "中国/福建/三明",
+    "Sanming": "三明",
+    "Fujian": "福建",
+    "Hangzhou, Zhejiang, China": "中国浙江杭州",
+    "China/Zhejiang/Hangzhou": "中国/浙江/杭州",
+    "Hangzhou": "杭州",
+    "Zhejiang": "浙江",
+    "China": "中国",
+    "auto": "自动",
+    "Jia": "甲",
+    "Yi": "乙",
+    "Bing": "丙",
+    "Ding": "丁",
+    "Wu": "戊",
+    "Ji": "己",
+    "Geng": "庚",
+    "Xin": "辛",
+    "Ren": "壬",
+    "Gui": "癸",
+    "Metal": "金",
+    "Wood": "木",
+    "Water": "水",
+    "Fire": "火",
+    "Earth": "土",
+    "Parents": "父母宫",
+    "Fortune": "福德宫",
+    "Children": "子女宫",
+    "Spouse": "夫妻宫",
+    "Friends": "交友宫",
+    "Career": "事业宫",
+    "Wealth": "财帛宫",
+    "Rest": "休门",
+    "Open": "开门",
+    "Close": "闭门",
+    "Establish": "建日",
+    "Remove": "除日",
+    "Full": "满日",
+    "Balance": "平日",
+    "Gen": "艮宫",
+    "Dui": "兑宫",
+    "Aries": "白羊座",
+    "Libra": "天秤座",
+    "Virgo": "处女座",
+    "Leo": "狮子座",
+    "Neck": "亢宿",
+    "Root": "氐宿",
+    "Room": "房宿",
+    "Heart": "心宿",
+    "Tail": "尾宿",
+    "Winnowing Basket": "箕宿",
+    "Dipper": "斗宿",
+    "pass": "通过",
+    "True": "是",
+    "ready_with_provider_gaps": "存在来源缺口",
+    "professional": "专业来源",
+    "lunar_python": "本地历法库",
+    "symbolic_scaffold": "符号脚手架",
+    "symbolic": "符号级",
+    "fallback": "备用",
+    "xuanze_offline": "离线择日规则",
+    "offline_rule_scaffold": "离线规则脚手架",
+    "ziping_pattern": "子平格局",
+    "strength_support": "旺衰扶抑",
+    "blind_school_workflow": "盲派流程",
+    "shensha_nayin": "神煞纳音",
+    "tiaohou": "调候",
+    "image_symbol_reading": "象法读法",
+    "new_school_simplified": "新派简化",
+    "data_validation_boundary": "资料校验边界",
+    "yang5": "阳五",
+    "yang7": "阳七",
+    "mixed": "平中有杂",
+    "cautious": "谨慎",
+    "favorable": "较有利",
+    "launches": "启动事项",
+    "meetings": "会面",
+    "travel planning": "出行规划",
+    "treating symbolic timing as certainty": "把象征性时机当作确定结果",
+    "rest": "休整",
+    "private review": "私下复盘",
+    "avoid major launches": "避免重大启动",
+    "major launches": "重大启动",
+    "large irreversible commitments": "大额或不可逆承诺",
+    "high-stakes decisions": "高风险决策",
+    "planning": "规划",
+    "starting routines": "建立日常节奏",
+    "setting direction": "确定方向",
+    "clearing blockers": "清理阻碍",
+    "repairs": "修补",
+    "decluttering": "整理",
+    "gathering resources": "聚集资源",
+    "social contact": "社交接触",
+    "inventory": "盘点",
+    "overexpansion": "过度扩张",
+    "unclear financial promises": "不清楚的金钱承诺",
+    "negotiation": "谈判",
+    "contracts review": "合同复核",
+    "mediation": "协调",
+    "career entry": "事业起步",
+    "responsibility growth": "责任增长",
+    "wealth": "财务",
+    "career": "事业",
+    "study": "学习",
+    "relationship": "关系",
+    "health": "健康",
+}
+
+
+def _postprocess_chinese_markdown(text: str, final_report: dict[str, Any]) -> str:
+    """Remove code-like provider instructions and translate common symbolic tokens."""
+    lines: list[str] = []
+    skipped_command = False
+    for raw_line in text.splitlines():
+        line = raw_line
+        if line.startswith("- 环境变量：") or line.startswith("- 认证命令：") or line.startswith("- 就绪检查："):
+            if not skipped_command:
+                lines.append("- 生产接入：需要配置经审查的外部排盘来源，并在生产就绪检查中记录来源证明。")
+                skipped_command = True
+            continue
+        skipped_command = False
+        lines.append(_translate_common_chinese_report_tokens(_translate_ganzhi_tokens(line)))
+    processed = "\n".join(lines)
+    name = final_report.get("birth_profile", {}).get("name") if isinstance(final_report.get("birth_profile"), dict) else ""
+    if name and name != "Demo Person":
+        processed = processed.replace("# Mingli five-agent report for " + str(name), f"# 命理五智能体研判报告：{name}")
+    return _replace_untranslated_latin_tokens(processed)
+
+
+def _translate_common_chinese_report_tokens(text: str) -> str:
+    for source, target in sorted(_CHINESE_REPORT_REPLACEMENTS.items(), key=lambda item: len(item[0]), reverse=True):
+        text = text.replace(source, target)
+    text = text.replace("、", "、")
+    return text
+
+
+def _replace_untranslated_latin_tokens(text: str) -> str:
+    """Keep Chinese reports free of raw English while leaving structured data untouched."""
+    return re.sub(r"[A-Za-z][A-Za-z0-9_+-]*(?: [A-Za-z][A-Za-z0-9_+-]*)*", "未译项", text)
+
+
+def _translate_ganzhi_tokens(text: str) -> str:
+    def repl(match: re.Match[str]) -> str:
+        stem = _GANZHI_STEM_ZH.get(match.group(1), match.group(1))
+        branch = _GANZHI_BRANCH_ZH.get(match.group(2), match.group(2))
+        return stem + branch
+
+    return re.sub(
+        r"\b(Jia|Yi|Bing|Ding|Wu|Ji|Geng|Xin|Ren|Gui)"
+        r"(Zi|Chou|Yin|Mao|Chen|Si|Wu|Wei|Shen|You|Xu|Hai)\b",
+        repl,
+        text,
+    )
 
 
 CLEAN_TOPIC_TITLES_ZH = {
@@ -672,22 +888,51 @@ def _clean_monthly_luck_lines(monthly_luck: dict[str, Any]) -> list[str]:
 
 def _clean_luck_row_lines(row: dict[str, Any], *, include_month: bool) -> list[str]:
     title = f"{row.get('year', '')}-{int(row.get('month', 0)):02d}" if include_month else str(row.get("year", ""))
+    pillar = _ganzhi_zh(str(row.get("ganzhi", "")))
     lines = [
         f"### {title}（{row.get('ganzhi', '')}）",
-        f"- 主轴：{CLEAN_CATEGORY_ZH.get(str(row.get('category', '')), row.get('category', ''))}；强度：{CLEAN_INTENSITY_ZH.get(str(row.get('intensity', '')), row.get('intensity', ''))}。",
+        (
+            f"- 主轴：{title}{pillar}，"
+            f"{CLEAN_CATEGORY_ZH.get(str(row.get('category', '')), row.get('category', ''))}；"
+            f"强度：{CLEAN_INTENSITY_ZH.get(str(row.get('intensity', '')), row.get('intensity', ''))}。"
+        ),
     ]
     lines.extend(_clean_bazi_evidence_lines(row, monthly=include_month))
-    lines.extend([
-        f"- 财运：{_clean_message(row.get('finance'))}",
-        f"- 官运：{_clean_message(row.get('official_career'))}",
-        f"- 事业：{_clean_message(row.get('career'))}",
-        f"- 学业：{_clean_message(row.get('study'))}",
-        f"- 婚恋感情：{_clean_message(row.get('relationship'))}",
-        f"- 朋友团队：{_clean_message(row.get('friends'))}",
-        f"- 领导客户：{_clean_message(row.get('leadership'))}",
-        f"- 子女家庭：{_clean_message(row.get('children_family'))}",
-    ])
+    for field, label in [
+        ("finance", "财运"),
+        ("official_career", "官运"),
+        ("career", "事业"),
+        ("study", "学业"),
+        ("relationship", "婚恋感情"),
+        ("friends", "朋友团队"),
+        ("leadership", "领导客户"),
+        ("children_family", "子女家庭"),
+    ]:
+        lines.append(_clean_contextual_topic_line(label, row.get(field), row, monthly=include_month))
     return lines
+
+
+def _clean_contextual_topic_line(label: str, message: Any, row: dict[str, Any], *, monthly: bool) -> str:
+    evidence = row.get("bazi_evidence") if isinstance(row.get("bazi_evidence"), dict) else {}
+    ten_god_key = "monthly_ten_gods" if monthly else "annual_ten_gods"
+    ten_gods = evidence.get(ten_god_key) if isinstance(evidence.get(ten_god_key), dict) else {}
+    active_luck = evidence.get("active_major_luck") if isinstance(evidence.get("active_major_luck"), dict) else {}
+    matches = evidence.get("natal_pillar_matches") if isinstance(evidence.get("natal_pillar_matches"), list) else []
+    title = f"{row.get('year', '')}-{int(row.get('month', 0)):02d}" if monthly else str(row.get("year", ""))
+    pillar = _ganzhi_zh(str(row.get("ganzhi", "")))
+    stem_ten = _ten_god_zh(ten_gods.get("stem", ""))
+    branch_ten = _ten_god_zh(ten_gods.get("branch", ""))
+    useful_state = _useful_state_zh(evidence.get("useful_state", ""))
+    luck_label = _ganzhi_zh(active_luck.get("ganzhi", "")) if active_luck.get("ganzhi") else "未匹配"
+    match_text = "、".join(
+        _pillar_name_zh(str(item.get("pillar", ""))) for item in matches if isinstance(item, dict) and item.get("pillar")
+    ) or "无"
+    scope = "本月" if monthly else "本年"
+    return (
+        f"- {label}：判断：{_clean_message(message)}；"
+        f"依据：{scope}{title}{pillar}，天干{stem_ten}、地支{branch_ten}，"
+        f"大运{luck_label}，用神{useful_state}，原局同柱{match_text}。"
+    )
 
 
 def _clean_bazi_evidence_lines(row: dict[str, Any], *, monthly: bool = False) -> list[str]:
@@ -703,8 +948,14 @@ def _clean_bazi_evidence_lines(row: dict[str, Any], *, monthly: bool = False) ->
         _pillar_name_zh(str(item.get("pillar", ""))) for item in matches if isinstance(item, dict) and item.get("pillar")
     ) or "无"
     label = "流月依据" if monthly else "八字依据"
+    title = f"{row.get('year', '')}-{int(row.get('month', 0)):02d}" if monthly else str(row.get("year", ""))
+    pillar = _ganzhi_zh(str(row.get("ganzhi", "")))
     return [
-        f"- {label}：十神 天干={_ten_god_zh(ten_gods.get('stem', ''))}、地支={_ten_god_zh(ten_gods.get('branch', ''))}；大运={luck_label}；用神状态={_useful_state_zh(evidence.get('useful_state', ''))}；原局同柱={match_text}。"
+        (
+            f"- {label}：{title}{pillar}，十神 天干={_ten_god_zh(ten_gods.get('stem', ''))}、"
+            f"地支={_ten_god_zh(ten_gods.get('branch', ''))}；大运={luck_label}；"
+            f"用神状态={_useful_state_zh(evidence.get('useful_state', ''))}；原局同柱={match_text}。"
+        )
     ]
 
 

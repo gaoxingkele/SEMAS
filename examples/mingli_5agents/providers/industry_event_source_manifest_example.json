@@ -1,0 +1,227 @@
+{
+  "schema_version": "industry-event-source-manifest-v1",
+  "status": "example_only_not_production_evidence",
+  "purpose": "Demonstrate the reviewed industry-event source contract for film, television, music, and sports famous-case calibration.",
+  "boundary": "This file is a schema and handoff example. It is not a production evidence dataset and must not be used to promote predictive rules.",
+  "review": {
+    "externally_reviewed": false,
+    "reviewer": "example steward required before production use",
+    "review_date": null,
+    "approval": "not_approved_for_production"
+  },
+  "required_record_fields": [
+    "record_id",
+    "case_id",
+    "public_name",
+    "domain",
+    "industry",
+    "year",
+    "event_topic",
+    "event_present",
+    "event_type",
+    "source_family_id",
+    "source_name",
+    "source_url",
+    "license_or_review",
+    "collected_before_rule_change",
+    "split_role",
+    "negative_year_reason"
+  ],
+  "source_families": [
+    {
+      "id": "film_or_television_release_award_box_office_source",
+      "coverage": "film_or_television",
+      "candidate_sources": [
+        {
+          "name": "IMDb Non-Commercial Datasets",
+          "url": "https://developer.imdb.com/non-commercial-datasets/",
+          "intended_fields": [
+            "title",
+            "year",
+            "person_title_relation"
+          ]
+        },
+        {
+          "name": "Wikidata Query Service",
+          "url": "https://query.wikidata.org/",
+          "intended_fields": [
+            "award",
+            "role",
+            "release",
+            "source_reference"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "music_release_chart_award_source",
+      "coverage": "music",
+      "candidate_sources": [
+        {
+          "name": "MusicBrainz Database",
+          "url": "https://musicbrainz.org/doc/MusicBrainz_Database",
+          "intended_fields": [
+            "artist",
+            "release",
+            "recording",
+            "relationship"
+          ]
+        },
+        {
+          "name": "Wikidata Query Service",
+          "url": "https://query.wikidata.org/",
+          "intended_fields": [
+            "award",
+            "chart_or_publication",
+            "source_reference"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sports_result_ranking_title_record_source",
+      "coverage": "sports",
+      "candidate_sources": [
+        {
+          "name": "Olympedia",
+          "url": "https://www.olympedia.org/",
+          "intended_fields": [
+            "competition",
+            "result",
+            "rank",
+            "medal"
+          ]
+        },
+        {
+          "name": "Wikidata Query Service",
+          "url": "https://query.wikidata.org/",
+          "intended_fields": [
+            "competition",
+            "award",
+            "team",
+            "record",
+            "source_reference"
+          ]
+        }
+      ]
+    }
+  ],
+  "split_policy": {
+    "frozen_before_rule_change": true,
+    "allowed_split_roles": [
+      "train",
+      "holdout"
+    ],
+    "negative_year_rule": "A negative record must name the reviewed source window and explain why no qualifying industry event was found for that case-topic-year."
+  },
+  "records": [
+    {
+      "record_id": "industry_example_film_positive_1953",
+      "case_id": "marilyn_monroe",
+      "public_name": "Marilyn Monroe",
+      "domain": "film",
+      "industry": "film_or_television",
+      "year": 1953,
+      "event_topic": "public_fame",
+      "event_present": true,
+      "event_type": "film_release_or_award_visibility",
+      "source_family_id": "film_or_television_release_award_box_office_source",
+      "source_name": "Wikidata Query Service",
+      "source_url": "https://query.wikidata.org/",
+      "license_or_review": "example_source_requires_review",
+      "collected_before_rule_change": true,
+      "split_role": "train",
+      "negative_year_reason": null
+    },
+    {
+      "record_id": "industry_example_film_negative_1952",
+      "case_id": "marilyn_monroe",
+      "public_name": "Marilyn Monroe",
+      "domain": "film",
+      "industry": "film_or_television",
+      "year": 1952,
+      "event_topic": "public_fame",
+      "event_present": false,
+      "event_type": "no_qualifying_event",
+      "source_family_id": "film_or_television_release_award_box_office_source",
+      "source_name": "Wikidata Query Service",
+      "source_url": "https://query.wikidata.org/",
+      "license_or_review": "example_source_requires_review",
+      "collected_before_rule_change": true,
+      "split_role": "holdout",
+      "negative_year_reason": "example negative year; production use requires reviewed source-window evidence"
+    },
+    {
+      "record_id": "industry_example_music_positive_1964",
+      "case_id": "bob_dylan",
+      "public_name": "Bob Dylan",
+      "domain": "music",
+      "industry": "music",
+      "year": 1964,
+      "event_topic": "career_peak",
+      "event_present": true,
+      "event_type": "music_release_or_public_visibility",
+      "source_family_id": "music_release_chart_award_source",
+      "source_name": "MusicBrainz Database",
+      "source_url": "https://musicbrainz.org/doc/MusicBrainz_Database",
+      "license_or_review": "example_source_requires_review",
+      "collected_before_rule_change": true,
+      "split_role": "train",
+      "negative_year_reason": null
+    },
+    {
+      "record_id": "industry_example_music_negative_1963",
+      "case_id": "bob_dylan",
+      "public_name": "Bob Dylan",
+      "domain": "music",
+      "industry": "music",
+      "year": 1963,
+      "event_topic": "career_peak",
+      "event_present": false,
+      "event_type": "no_qualifying_event",
+      "source_family_id": "music_release_chart_award_source",
+      "source_name": "MusicBrainz Database",
+      "source_url": "https://musicbrainz.org/doc/MusicBrainz_Database",
+      "license_or_review": "example_source_requires_review",
+      "collected_before_rule_change": true,
+      "split_role": "holdout",
+      "negative_year_reason": "example negative year; production use requires reviewed source-window evidence"
+    },
+    {
+      "record_id": "industry_example_sports_positive_2003",
+      "case_id": "roger_federer",
+      "public_name": "Roger Federer",
+      "domain": "sports",
+      "industry": "sports",
+      "year": 2003,
+      "event_topic": "career_peak",
+      "event_present": true,
+      "event_type": "major_title_or_ranking_breakthrough",
+      "source_family_id": "sports_result_ranking_title_record_source",
+      "source_name": "Wikidata Query Service",
+      "source_url": "https://query.wikidata.org/",
+      "license_or_review": "example_source_requires_review",
+      "collected_before_rule_change": true,
+      "split_role": "train",
+      "negative_year_reason": null
+    },
+    {
+      "record_id": "industry_example_sports_negative_2002",
+      "case_id": "roger_federer",
+      "public_name": "Roger Federer",
+      "domain": "sports",
+      "industry": "sports",
+      "year": 2002,
+      "event_topic": "career_peak",
+      "event_present": false,
+      "event_type": "no_qualifying_event",
+      "source_family_id": "sports_result_ranking_title_record_source",
+      "source_name": "Wikidata Query Service",
+      "source_url": "https://query.wikidata.org/",
+      "license_or_review": "example_source_requires_review",
+      "collected_before_rule_change": true,
+      "split_role": "holdout",
+      "negative_year_reason": "example negative year; production use requires reviewed source-window evidence"
+    }
+  ]
+}

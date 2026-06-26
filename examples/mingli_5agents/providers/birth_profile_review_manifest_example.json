@@ -1,0 +1,242 @@
+{
+  "schema_version": "birth-profile-review-manifest-v1",
+  "status": "example_only_requires_external_review",
+  "purpose": "Track reviewed-birth-profile collection tasks for celebrity cases that already have industry-event labels but cannot enter symbolic BaZi scoring.",
+  "boundary": "This manifest is a review worklist only. It does not certify birth data and must not be merged into famous-case fixtures until every requested profile has externally reviewed source evidence.",
+  "review": {
+    "externally_reviewed": false,
+    "reviewer": "birth-profile steward required before production use",
+    "review_date": null,
+    "approval": "not_approved_for_birth_profile_import"
+  },
+  "required_profile_fields": [
+    "case_id",
+    "public_name",
+    "domain",
+    "birth_date",
+    "birth_time",
+    "gender",
+    "birthplace",
+    "source_name",
+    "source_url",
+    "source_rating",
+    "source_note",
+    "identity_source_url",
+    "review_status",
+    "collected_before_rule_change"
+  ],
+  "source_policy": {
+    "requires_identity_match": true,
+    "requires_birth_time_source": true,
+    "requires_source_rating": true,
+    "allowed_source_families": [
+      "Astro-Databank or equivalent rated birth-data source",
+      "official biography or archive confirming identity",
+      "public entity page used only as identity anchor"
+    ],
+    "minimum_review_status_for_import": "externally_reviewed",
+    "disallowed_use": "Do not use social posts, unsourced fan pages, or unreviewed scraped snippets as birth-time evidence."
+  },
+  "review_requests": [
+    {
+      "case_id": "jackie_chan",
+      "public_name": "Jackie Chan",
+      "domain": "film",
+      "identity_source_url": "https://www.wikidata.org/wiki/Q36970",
+      "missing_profile_fields": [
+        "birth_date",
+        "birth_time",
+        "gender",
+        "birthplace",
+        "source_name",
+        "source_url",
+        "source_rating"
+      ],
+      "suggested_search_queries": [
+        "Astro-Databank Jackie Chan birth time",
+        "Jackie Chan official biography birthplace"
+      ],
+      "blocked_symbolic_event_topics": [
+        "public_fame"
+      ],
+      "blocked_label_count": 46,
+      "review_status": "not_started",
+      "collected_before_rule_change": true
+    },
+    {
+      "case_id": "meryl_streep",
+      "public_name": "Meryl Streep",
+      "domain": "film",
+      "identity_source_url": "https://www.wikidata.org/wiki/Q873",
+      "missing_profile_fields": [
+        "birth_date",
+        "birth_time",
+        "gender",
+        "birthplace",
+        "source_name",
+        "source_url",
+        "source_rating"
+      ],
+      "suggested_search_queries": [
+        "Astro-Databank Meryl Streep birth time",
+        "Meryl Streep official biography birthplace"
+      ],
+      "blocked_symbolic_event_topics": [
+        "public_fame"
+      ],
+      "blocked_label_count": 47,
+      "review_status": "not_started",
+      "collected_before_rule_change": true
+    },
+    {
+      "case_id": "tom_hanks",
+      "public_name": "Tom Hanks",
+      "domain": "film",
+      "identity_source_url": "https://www.wikidata.org/wiki/Q2263",
+      "missing_profile_fields": [
+        "birth_date",
+        "birth_time",
+        "gender",
+        "birthplace",
+        "source_name",
+        "source_url",
+        "source_rating"
+      ],
+      "suggested_search_queries": [
+        "Astro-Databank Tom Hanks birth time",
+        "Tom Hanks official biography birthplace"
+      ],
+      "blocked_symbolic_event_topics": [
+        "public_fame"
+      ],
+      "blocked_label_count": 44,
+      "review_status": "not_started",
+      "collected_before_rule_change": true
+    },
+    {
+      "case_id": "beyonce",
+      "public_name": "Beyonce",
+      "domain": "music",
+      "identity_source_url": "https://www.wikidata.org/wiki/Q36153",
+      "missing_profile_fields": [
+        "birth_date",
+        "birth_time",
+        "gender",
+        "birthplace",
+        "source_name",
+        "source_url",
+        "source_rating"
+      ],
+      "suggested_search_queries": [
+        "Astro-Databank Beyonce birth time",
+        "Beyonce official biography birthplace"
+      ],
+      "blocked_symbolic_event_topics": [
+        "public_fame"
+      ],
+      "blocked_label_count": 28,
+      "review_status": "not_started",
+      "collected_before_rule_change": true
+    },
+    {
+      "case_id": "jay_chou",
+      "public_name": "Jay Chou",
+      "domain": "music",
+      "identity_source_url": "https://www.wikidata.org/wiki/Q238819",
+      "missing_profile_fields": [
+        "birth_date",
+        "birth_time",
+        "gender",
+        "birthplace",
+        "source_name",
+        "source_url",
+        "source_rating"
+      ],
+      "suggested_search_queries": [
+        "Jay Chou birth time rated source",
+        "Jay Chou official biography birthplace"
+      ],
+      "blocked_symbolic_event_topics": [
+        "public_fame"
+      ],
+      "blocked_label_count": 25,
+      "review_status": "not_started",
+      "collected_before_rule_change": true
+    },
+    {
+      "case_id": "taylor_swift",
+      "public_name": "Taylor Swift",
+      "domain": "music",
+      "identity_source_url": "https://www.wikidata.org/wiki/Q26876",
+      "missing_profile_fields": [
+        "birth_date",
+        "birth_time",
+        "gender",
+        "birthplace",
+        "source_name",
+        "source_url",
+        "source_rating"
+      ],
+      "suggested_search_queries": [
+        "Astro-Databank Taylor Swift birth time",
+        "Taylor Swift official biography birthplace"
+      ],
+      "blocked_symbolic_event_topics": [
+        "public_fame"
+      ],
+      "blocked_label_count": 19,
+      "review_status": "not_started",
+      "collected_before_rule_change": true
+    },
+    {
+      "case_id": "michael_jordan",
+      "public_name": "Michael Jordan",
+      "domain": "sports",
+      "identity_source_url": "https://www.wikidata.org/wiki/Q41421",
+      "missing_profile_fields": [
+        "birth_date",
+        "birth_time",
+        "gender",
+        "birthplace",
+        "source_name",
+        "source_url",
+        "source_rating"
+      ],
+      "suggested_search_queries": [
+        "Astro-Databank Michael Jordan birth time",
+        "Michael Jordan official biography birthplace"
+      ],
+      "blocked_symbolic_event_topics": [
+        "sports_peak"
+      ],
+      "blocked_label_count": 20,
+      "review_status": "not_started",
+      "collected_before_rule_change": true
+    },
+    {
+      "case_id": "serena_williams",
+      "public_name": "Serena Williams",
+      "domain": "sports",
+      "identity_source_url": "https://www.wikidata.org/wiki/Q11459",
+      "missing_profile_fields": [
+        "birth_date",
+        "birth_time",
+        "gender",
+        "birthplace",
+        "source_name",
+        "source_url",
+        "source_rating"
+      ],
+      "suggested_search_queries": [
+        "Astro-Databank Serena Williams birth time",
+        "Serena Williams official biography birthplace"
+      ],
+      "blocked_symbolic_event_topics": [
+        "sports_peak"
+      ],
+      "blocked_label_count": 28,
+      "review_status": "not_started",
+      "collected_before_rule_change": true
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "head": {
+    "vars": [
+      "event",
+      "eventLabel",
+      "date",
+      "source"
+    ]
+  },
+  "results": {
+    "bindings": [
+      {
+        "event": {
+          "type": "uri",
+          "value": "https://www.wikidata.org/entity/Q234567"
+        },
+        "eventLabel": {
+          "type": "literal",
+          "value": "Example film release or award visibility event"
+        },
+        "date": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+          "type": "literal",
+          "value": "1995-03-24T00:00:00Z"
+        },
+        "source": {
+          "type": "uri",
+          "value": "https://query.wikidata.org/"
+        }
+      }
+    ]
+  }
+}

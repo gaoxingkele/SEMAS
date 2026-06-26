@@ -12,6 +12,19 @@ from semas.genome.repository import GenomeRepository
 from semas.utils.llm_client import llm_backend_status
 
 from examples.mingli_5agents.benchmark import benchmark_cases, compare_versions, run_benchmark
+from examples.mingli_5agents.birth_profile_review import (
+    audit_birth_profile_review_manifest,
+    build_birth_profile_fixture_patch_preview,
+    birth_profile_review_manifest_receipt,
+    build_birth_profile_import_preview,
+    build_birth_profile_source_cache_audit,
+    build_birth_profile_source_cache_template_preview,
+    build_birth_profile_source_lookup_plan,
+    build_birth_profile_source_review_workplan,
+    build_birth_profile_reviewed_manifest_draft_preview,
+    build_birth_profile_reviewed_manifest_file_preview,
+    default_birth_profile_review_manifest_path,
+)
 from examples.mingli_5agents.capability_audit import (
     capability_audit as build_capability_audit,
     known_gap_verification_command_coverage,
@@ -23,6 +36,31 @@ from examples.mingli_5agents.empirical_validation import (
     outcome_dataset_evolution_gate,
 )
 from examples.mingli_5agents.evolution import METRIC_FLOORS, MingliEvolutionArchive, MingliPopulationEvolver, genome_fingerprint
+from examples.mingli_5agents.industry_event_manifest import (
+    audit_industry_event_manifest,
+    build_industry_event_symbolic_annual_score,
+    build_industry_event_symbolic_scoring_readiness,
+    build_industry_event_validation_label_table,
+    default_industry_event_manifest_path,
+    industry_event_manifest_receipt,
+)
+from examples.mingli_5agents.industry_event_candidates import (
+    audit_industry_event_candidate_cases,
+    build_candidate_pool_fetch_cache_plan,
+    build_candidate_pool_manifest_drafts_from_cache,
+    build_industry_event_evidence_workplan_from_symbolic_score,
+    default_industry_event_candidate_cases_path,
+    industry_event_candidate_cases_receipt,
+)
+from examples.mingli_5agents.industry_event_query_plan import (
+    audit_industry_event_query_plan,
+    build_industry_event_collection_request_bundle,
+    build_industry_event_fetch_cache_plan,
+    build_industry_event_manifest_draft_from_wikidata_response,
+    default_industry_event_query_plan_path,
+    industry_event_query_plan_receipt,
+)
+from examples.mingli_5agents.famous_case_validation import famous_case_records
 from examples.mingli_5agents.memory import MingliFeedbackMemory
 from examples.mingli_5agents.method_surface import method_surface_receipt
 from examples.mingli_5agents.provider_checks import (
@@ -1177,6 +1215,842 @@ def outcome_dataset_manifest_status(repo_path: Path, manifest_path: Path | None 
     }
 
 
+def industry_event_manifest_status(repo_path: Path, manifest_path: Path | None = None) -> dict[str, Any]:
+    """Audit a public famous-case industry-event manifest."""
+    ensure_repo(repo_path)
+    selected_path = manifest_path or default_industry_event_manifest_path()
+    audit = audit_industry_event_manifest(selected_path)
+    receipt = industry_event_manifest_receipt(audit)
+    configured = manifest_path is not None
+    return {
+        "repo": str(repo_path),
+        "manifest_path": str(selected_path),
+        "configured": configured,
+        "audit": audit,
+        "industry_event_manifest_receipt": receipt,
+        "production_gate": {
+            "id": "industry_event_source_provider_reviewed_manifest",
+            "passed": audit.get("production_evidence") is True,
+            "reason": (
+                "Industry-event manifest is externally reviewed and marked as production evidence."
+                if audit.get("production_evidence") is True
+                else "Industry-event manifest is only a contract/audit input until external review approves production evidence."
+            ),
+            "blocking_failures": list(audit.get("failures", [])),
+            "externally_reviewed": audit.get("externally_reviewed"),
+            "production_evidence": audit.get("production_evidence"),
+        },
+        "configuration_guidance": _industry_event_manifest_configuration_guidance(repo_path, manifest_path),
+    }
+
+
+def industry_event_validation_labels(repo_path: Path, manifest_path: Path | None = None) -> dict[str, Any]:
+    """Convert an industry-event manifest into annual validation labels."""
+    ensure_repo(repo_path)
+    selected_path = manifest_path or default_industry_event_manifest_path()
+    label_table = build_industry_event_validation_label_table(selected_path)
+    return {
+        "repo": str(repo_path),
+        "manifest_path": str(selected_path),
+        "configured": manifest_path is not None,
+        "validation_label_table": label_table,
+        "configuration_guidance": {
+            "example_manifest_path": str(default_industry_event_manifest_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+                f"industry-event-labels --manifest {selected_path}"
+            ),
+            "policy": (
+                "Validation labels adapt factual event manifests for future timing-rule scoring. "
+                "They do not score symbolic rules by themselves."
+            ),
+        },
+    }
+
+
+def industry_event_symbolic_scoring_readiness(repo_path: Path, manifest_path: Path | None = None) -> dict[str, Any]:
+    """Check which industry-event labels can enter symbolic annual scoring."""
+    ensure_repo(repo_path)
+    selected_path = manifest_path or default_industry_event_manifest_path()
+    readiness = build_industry_event_symbolic_scoring_readiness(
+        selected_path,
+        birth_cases=famous_case_records(),
+    )
+    return {
+        "repo": str(repo_path),
+        "manifest_path": str(selected_path),
+        "configured": manifest_path is not None,
+        "symbolic_scoring_readiness": readiness,
+        "configuration_guidance": {
+            "example_manifest_path": str(default_industry_event_manifest_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+                f"industry-event-scoring-readiness --manifest {selected_path}"
+            ),
+            "policy": (
+                "This checks whether validation labels have matching birth profiles before symbolic scoring. "
+                "It does not compute prediction accuracy."
+            ),
+        },
+    }
+
+
+def industry_event_symbolic_annual_score(repo_path: Path, manifest_path: Path | None = None) -> dict[str, Any]:
+    """Score ready industry-event labels against symbolic annual rows."""
+    ensure_repo(repo_path)
+    selected_path = manifest_path or default_industry_event_manifest_path()
+    score = build_industry_event_symbolic_annual_score(
+        selected_path,
+        birth_cases=famous_case_records(),
+    )
+    return {
+        "repo": str(repo_path),
+        "manifest_path": str(selected_path),
+        "configured": manifest_path is not None,
+        "symbolic_annual_score": score,
+        "configuration_guidance": {
+            "example_manifest_path": str(default_industry_event_manifest_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+                f"industry-event-symbolic-score --manifest {selected_path}"
+            ),
+            "policy": (
+                "This scores only labels that have matching birth profiles and remains a diagnostic, "
+                "not a predictive-validity claim."
+            ),
+        },
+    }
+
+
+def industry_event_evidence_workplan(
+    repo_path: Path,
+    manifest_path: Path | None = None,
+    candidate_path: Path | None = None,
+    query_plan_path: Path | None = None,
+    cache_dir: Path | None = None,
+) -> dict[str, Any]:
+    """Convert score-derived evidence tasks into candidate collection work."""
+    ensure_repo(repo_path)
+    selected_manifest = manifest_path or default_industry_event_manifest_path()
+    selected_candidates = candidate_path or default_industry_event_candidate_cases_path()
+    selected_query_plan = query_plan_path or default_industry_event_query_plan_path()
+    selected_cache_dir = cache_dir or repo_path / "industry_event_cache"
+    score = build_industry_event_symbolic_annual_score(
+        selected_manifest,
+        birth_cases=famous_case_records(),
+    )
+    workplan = build_industry_event_evidence_workplan_from_symbolic_score(
+        score,
+        candidate_path=selected_candidates,
+        query_plan_path=selected_query_plan,
+        cache_dir=selected_cache_dir,
+    )
+    return {
+        "repo": str(repo_path),
+        "manifest_path": str(selected_manifest),
+        "candidate_path": str(selected_candidates),
+        "query_plan_path": str(selected_query_plan),
+        "cache_dir": str(selected_cache_dir),
+        "configured": manifest_path is not None or candidate_path is not None or query_plan_path is not None or cache_dir is not None,
+        "symbolic_annual_score": score,
+        "evidence_workplan": workplan,
+        "configuration_guidance": {
+            "example_manifest_path": str(default_industry_event_manifest_path()),
+            "example_candidate_path": str(default_industry_event_candidate_cases_path()),
+            "example_query_plan_path": str(default_industry_event_query_plan_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+                f"industry-event-evidence-workplan --manifest {selected_manifest} "
+                f"--candidates {selected_candidates} --query-plan {selected_query_plan} --cache-dir {selected_cache_dir}"
+            ),
+            "policy": (
+                "This converts score-derived tasks into reviewable dry-run collection commands. "
+                "It does not fetch live sources."
+            ),
+        },
+    }
+
+
+def birth_profile_review_status(repo_path: Path, manifest_path: Path | None = None) -> dict[str, Any]:
+    """Audit a reviewed-birth-profile collection worklist."""
+    ensure_repo(repo_path)
+    selected_path = manifest_path or default_birth_profile_review_manifest_path()
+    audit = audit_birth_profile_review_manifest(selected_path)
+    receipt = birth_profile_review_manifest_receipt(audit)
+    configured = manifest_path is not None
+    return {
+        "repo": str(repo_path),
+        "manifest_path": str(selected_path),
+        "configured": configured,
+        "audit": audit,
+        "birth_profile_review_manifest_receipt": receipt,
+        "production_gate": {
+            "id": "birth_profile_review_manifest_ready_for_import",
+            "passed": audit.get("ready_for_import") is True and audit.get("production_evidence") is True,
+            "reason": (
+                "Birth-profile review manifest is approved for import."
+                if audit.get("ready_for_import") is True and audit.get("production_evidence") is True
+                else "Birth-profile review manifest is a collection worklist until external review approves import."
+            ),
+            "blocking_failures": list(audit.get("failures", [])),
+            "externally_reviewed": audit.get("externally_reviewed"),
+            "production_evidence": audit.get("production_evidence"),
+            "ready_for_import": audit.get("ready_for_import"),
+        },
+        "configuration_guidance": {
+            "example_manifest_path": str(default_birth_profile_review_manifest_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+                f"birth-profile-review --manifest {selected_path}"
+            ),
+            "http_query": f"GET /birth-profile-review?manifest={selected_path}",
+            "policy": (
+                "This audits a birth-profile collection worklist. It does not certify birth data or import "
+                "profiles into famous-case fixtures."
+            ),
+        },
+    }
+
+
+def birth_profile_source_review_workplan(repo_path: Path, manifest_path: Path | None = None) -> dict[str, Any]:
+    """Build a non-mutating source-review workplan for celebrity birth-profile requests."""
+    ensure_repo(repo_path)
+    selected_path = manifest_path or default_birth_profile_review_manifest_path()
+    workplan = build_birth_profile_source_review_workplan(selected_path)
+    return {
+        "repo": str(repo_path),
+        "manifest_path": str(selected_path),
+        "configured": manifest_path is not None,
+        "source_review_workplan": workplan,
+        "configuration_guidance": {
+            "example_manifest_path": str(default_birth_profile_review_manifest_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+                f"birth-profile-source-review-workplan --manifest {selected_path}"
+            ),
+            "http_query": f"GET /birth-profile-source-review-workplan?manifest={selected_path}",
+            "policy": (
+                "This creates a human source-review workplan only. It does not fetch live sources, certify "
+                "birth data, write reviewed manifests, or unlock symbolic scoring."
+            ),
+        },
+    }
+
+
+def birth_profile_source_lookup_plan(
+    repo_path: Path,
+    manifest_path: Path | None = None,
+    *,
+    cache_dir: Path | None = None,
+    domain: str | None = None,
+) -> dict[str, Any]:
+    """Build a dry-run source lookup plan for celebrity birth-profile review tasks."""
+    ensure_repo(repo_path)
+    selected_path = manifest_path or default_birth_profile_review_manifest_path()
+    selected_cache_dir = cache_dir or repo_path / "birth_profile_source_cache"
+    plan = build_birth_profile_source_lookup_plan(
+        selected_path,
+        cache_dir=selected_cache_dir,
+        domain=domain,
+    )
+    return {
+        "repo": str(repo_path),
+        "manifest_path": str(selected_path),
+        "cache_dir": str(selected_cache_dir),
+        "configured": manifest_path is not None or cache_dir is not None or domain is not None,
+        "source_lookup_plan": plan,
+        "configuration_guidance": {
+            "example_manifest_path": str(default_birth_profile_review_manifest_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+                f"birth-profile-source-lookup-plan --manifest {selected_path} --cache-dir {selected_cache_dir}"
+            ),
+            "http_query": f"GET /birth-profile-source-lookup-plan?manifest={selected_path}&cache_dir={selected_cache_dir}",
+            "policy": (
+                "This creates a dry-run lookup plan only. It does not fetch live sources, write caches, certify "
+                "birth data, write reviewed manifests, or unlock symbolic scoring."
+            ),
+        },
+    }
+
+
+def birth_profile_source_cache_audit(
+    repo_path: Path,
+    manifest_path: Path | None = None,
+    *,
+    cache_dir: Path | None = None,
+    domain: str | None = None,
+) -> dict[str, Any]:
+    """Audit manually prepared source lookup cache files without importing birth profiles."""
+    ensure_repo(repo_path)
+    selected_path = manifest_path or default_birth_profile_review_manifest_path()
+    selected_cache_dir = cache_dir or repo_path / "birth_profile_source_cache"
+    audit = build_birth_profile_source_cache_audit(
+        selected_path,
+        cache_dir=selected_cache_dir,
+        domain=domain,
+    )
+    return {
+        "repo": str(repo_path),
+        "manifest_path": str(selected_path),
+        "cache_dir": str(selected_cache_dir),
+        "configured": manifest_path is not None or cache_dir is not None or domain is not None,
+        "source_cache_audit": audit,
+        "configuration_guidance": {
+            "example_manifest_path": str(default_birth_profile_review_manifest_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+                f"birth-profile-source-cache-audit --manifest {selected_path} --cache-dir {selected_cache_dir}"
+            ),
+            "http_query": f"GET /birth-profile-source-cache-audit?manifest={selected_path}&cache_dir={selected_cache_dir}",
+            "policy": (
+                "This audits manually prepared cache files only. It does not fetch live sources, write caches, "
+                "certify birth data, write reviewed manifests, import profiles, or unlock symbolic scoring."
+            ),
+        },
+    }
+
+
+def birth_profile_source_cache_template_preview(
+    repo_path: Path,
+    manifest_path: Path | None = None,
+    *,
+    cache_dir: Path | None = None,
+    domain: str | None = None,
+) -> dict[str, Any]:
+    """Build non-mutating source-cache JSON templates for celebrity birth-profile review tasks."""
+    ensure_repo(repo_path)
+    selected_path = manifest_path or default_birth_profile_review_manifest_path()
+    selected_cache_dir = cache_dir or repo_path / "birth_profile_source_cache"
+    preview = build_birth_profile_source_cache_template_preview(
+        selected_path,
+        cache_dir=selected_cache_dir,
+        domain=domain,
+    )
+    return {
+        "repo": str(repo_path),
+        "manifest_path": str(selected_path),
+        "cache_dir": str(selected_cache_dir),
+        "configured": manifest_path is not None or cache_dir is not None or domain is not None,
+        "source_cache_template_preview": preview,
+        "configuration_guidance": {
+            "example_manifest_path": str(default_birth_profile_review_manifest_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+                f"birth-profile-source-cache-template-preview --manifest {selected_path} --cache-dir {selected_cache_dir}"
+            ),
+            "http_query": (
+                f"GET /birth-profile-source-cache-template-preview?manifest={selected_path}"
+                f"&cache_dir={selected_cache_dir}"
+            ),
+            "policy": (
+                "This renders cache JSON templates only. It does not fetch live sources, write caches, certify "
+                "birth data, write reviewed manifests, import profiles, or unlock symbolic scoring."
+            ),
+        },
+    }
+
+
+def birth_profile_reviewed_manifest_draft_preview(
+    repo_path: Path,
+    manifest_path: Path | None = None,
+    *,
+    cache_dir: Path | None = None,
+    domain: str | None = None,
+) -> dict[str, Any]:
+    """Build a non-mutating reviewed-manifest draft preview from accepted source cache evidence."""
+    ensure_repo(repo_path)
+    selected_path = manifest_path or default_birth_profile_review_manifest_path()
+    selected_cache_dir = cache_dir or repo_path / "birth_profile_source_cache"
+    preview = build_birth_profile_reviewed_manifest_draft_preview(
+        selected_path,
+        cache_dir=selected_cache_dir,
+        domain=domain,
+    )
+    return {
+        "repo": str(repo_path),
+        "manifest_path": str(selected_path),
+        "cache_dir": str(selected_cache_dir),
+        "configured": manifest_path is not None or cache_dir is not None or domain is not None,
+        "reviewed_manifest_draft_preview": preview,
+        "configuration_guidance": {
+            "example_manifest_path": str(default_birth_profile_review_manifest_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+                f"birth-profile-reviewed-manifest-draft-preview --manifest {selected_path} --cache-dir {selected_cache_dir}"
+            ),
+            "http_query": (
+                f"GET /birth-profile-reviewed-manifest-draft-preview?manifest={selected_path}"
+                f"&cache_dir={selected_cache_dir}"
+            ),
+            "policy": (
+                "This builds a non-mutating reviewed-manifest draft preview only. It does not write manifests, "
+                "import profiles, certify birth data, or unlock symbolic scoring."
+            ),
+        },
+    }
+
+
+def birth_profile_reviewed_manifest_file_preview(
+    repo_path: Path,
+    manifest_path: Path | None = None,
+    *,
+    cache_dir: Path | None = None,
+    domain: str | None = None,
+    target_path: Path | None = None,
+) -> dict[str, Any]:
+    """Build a non-mutating file-write preview for an approved reviewed-manifest draft."""
+    ensure_repo(repo_path)
+    selected_path = manifest_path or default_birth_profile_review_manifest_path()
+    selected_cache_dir = cache_dir or repo_path / "birth_profile_source_cache"
+    selected_target = target_path or repo_path / "birth_profile_review_manifest_reviewed.json"
+    preview = build_birth_profile_reviewed_manifest_file_preview(
+        selected_path,
+        cache_dir=selected_cache_dir,
+        domain=domain,
+        target_path=selected_target,
+    )
+    return {
+        "repo": str(repo_path),
+        "manifest_path": str(selected_path),
+        "cache_dir": str(selected_cache_dir),
+        "target_path": str(selected_target),
+        "configured": (
+            manifest_path is not None or cache_dir is not None or domain is not None or target_path is not None
+        ),
+        "reviewed_manifest_file_preview": preview,
+        "configuration_guidance": {
+            "example_manifest_path": str(default_birth_profile_review_manifest_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+                f"birth-profile-reviewed-manifest-file-preview --manifest {selected_path} "
+                f"--cache-dir {selected_cache_dir} --target {selected_target}"
+            ),
+            "http_query": (
+                f"GET /birth-profile-reviewed-manifest-file-preview?manifest={selected_path}"
+                f"&cache_dir={selected_cache_dir}&target={selected_target}"
+            ),
+            "policy": (
+                "This builds a non-mutating file-write preview only. It does not write manifests, import profiles, "
+                "certify birth data, or unlock symbolic scoring."
+            ),
+        },
+    }
+
+
+def birth_profile_import_preview(repo_path: Path, manifest_path: Path | None = None) -> dict[str, Any]:
+    """Build a non-mutating preview for reviewed birth-profile fixture import."""
+    ensure_repo(repo_path)
+    selected_path = manifest_path or default_birth_profile_review_manifest_path()
+    preview = build_birth_profile_import_preview(selected_path)
+    return {
+        "repo": str(repo_path),
+        "manifest_path": str(selected_path),
+        "configured": manifest_path is not None,
+        "import_preview": preview,
+        "configuration_guidance": {
+            "example_manifest_path": str(default_birth_profile_review_manifest_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+                f"birth-profile-import-preview --manifest {selected_path}"
+            ),
+            "http_query": f"GET /birth-profile-import-preview?manifest={selected_path}",
+            "policy": (
+                "This builds a non-mutating import preview. It does not write famous-case fixtures and remains "
+                "blocked until reviewed birth-profile evidence is complete."
+            ),
+        },
+    }
+
+
+def birth_profile_fixture_patch_preview(repo_path: Path, manifest_path: Path | None = None) -> dict[str, Any]:
+    """Build a non-mutating fixture patch preview for reviewed birth-profile imports."""
+    ensure_repo(repo_path)
+    selected_path = manifest_path or default_birth_profile_review_manifest_path()
+    preview = build_birth_profile_fixture_patch_preview(selected_path)
+    return {
+        "repo": str(repo_path),
+        "manifest_path": str(selected_path),
+        "configured": manifest_path is not None,
+        "fixture_patch_preview": preview,
+        "configuration_guidance": {
+            "example_manifest_path": str(default_birth_profile_review_manifest_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+                f"birth-profile-fixture-patch-preview --manifest {selected_path}"
+            ),
+            "http_query": f"GET /birth-profile-fixture-patch-preview?manifest={selected_path}",
+            "policy": (
+                "This renders a non-mutating patch-review payload. It does not write famous-case fixtures; "
+                "actual fixture edits require a separate reviewed patch."
+            ),
+        },
+    }
+
+
+def industry_event_query_plan_status(repo_path: Path, query_plan_path: Path | None = None) -> dict[str, Any]:
+    """Audit a public industry-event source query plan."""
+    ensure_repo(repo_path)
+    selected_path = query_plan_path or default_industry_event_query_plan_path()
+    audit = audit_industry_event_query_plan(selected_path)
+    receipt = industry_event_query_plan_receipt(audit)
+    configured = query_plan_path is not None
+    return {
+        "repo": str(repo_path),
+        "query_plan_path": str(selected_path),
+        "configured": configured,
+        "audit": audit,
+        "industry_event_query_plan_receipt": receipt,
+        "collection_gate": {
+            "id": "industry_event_source_query_plan_reviewed",
+            "passed": audit.get("collection_ready") is True,
+            "reason": (
+                "Industry-event query plan is externally reviewed and marked ready for live collection."
+                if audit.get("collection_ready") is True
+                else "Industry-event query plan is only a contract/audit input until external review approves live collection."
+            ),
+            "blocking_failures": list(audit.get("failures", [])),
+            "externally_reviewed": audit.get("externally_reviewed"),
+            "live_collection_allowed": audit.get("live_collection_allowed"),
+            "collection_ready": audit.get("collection_ready"),
+        },
+        "configuration_guidance": _industry_event_query_plan_configuration_guidance(repo_path, query_plan_path),
+    }
+
+
+def industry_event_candidate_cases_status(repo_path: Path, candidate_path: Path | None = None) -> dict[str, Any]:
+    """Audit a candidate celebrity pool for future industry-event validation."""
+    ensure_repo(repo_path)
+    selected_path = candidate_path or default_industry_event_candidate_cases_path()
+    audit = audit_industry_event_candidate_cases(selected_path)
+    receipt = industry_event_candidate_cases_receipt(audit)
+    configured = candidate_path is not None
+    return {
+        "repo": str(repo_path),
+        "candidate_path": str(selected_path),
+        "configured": configured,
+        "audit": audit,
+        "industry_event_candidate_cases_receipt": receipt,
+        "candidate_pool_gate": {
+            "id": "industry_event_candidate_pool_reviewed",
+            "passed": audit.get("production_ready") is True,
+            "reason": (
+                "Candidate pool is externally reviewed for production validation planning."
+                if audit.get("production_ready") is True
+                else "Candidate pool is an example planning input until external review approves identity and sampling."
+            ),
+            "blocking_failures": list(audit.get("failures", [])),
+            "externally_reviewed": audit.get("externally_reviewed"),
+            "production_ready": audit.get("production_ready"),
+        },
+        "configuration_guidance": {
+            "example_candidate_path": str(default_industry_event_candidate_cases_path()),
+            "example_is_demonstration_only": True,
+            "cli_audit_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+                f"industry-event-candidates --candidates {selected_path}"
+            ),
+            "http_query": f"GET /industry-event-candidates?candidates={selected_path}",
+            "policy": (
+                "Use candidate pools to select public people before event collection. Production validation still "
+                "requires reviewed identity, reviewed event manifests, and negative-year coverage."
+            ),
+        },
+    }
+
+
+def industry_event_candidate_pool_fetch_cache(
+    repo_path: Path,
+    *,
+    candidate_path: Path | None = None,
+    query_plan_path: Path | None = None,
+    cache_dir: Path | None = None,
+    domain: str | None = None,
+    split_role: str | None = None,
+    live: bool = False,
+) -> dict[str, Any]:
+    """Plan or execute fetch/cache steps for a celebrity candidate pool."""
+    ensure_repo(repo_path)
+    selected_candidate_path = candidate_path or default_industry_event_candidate_cases_path()
+    selected_query_plan = query_plan_path or default_industry_event_query_plan_path()
+    selected_cache_dir = cache_dir or repo_path / "industry_event_cache"
+    batch_plan = build_candidate_pool_fetch_cache_plan(
+        selected_candidate_path,
+        query_plan_path=selected_query_plan,
+        cache_dir=selected_cache_dir,
+        domain=domain,
+        split_role=split_role,
+        live=live,
+    )
+    return {
+        "repo": str(repo_path),
+        "candidate_path": str(selected_candidate_path),
+        "query_plan_path": str(selected_query_plan),
+        "cache_dir": str(selected_cache_dir),
+        "configured": candidate_path is not None,
+        "live_requested": live,
+        "candidate_pool_fetch_cache_plan": batch_plan,
+        "configuration_guidance": {
+            "example_candidate_path": str(default_industry_event_candidate_cases_path()),
+            "example_query_plan_path": str(default_industry_event_query_plan_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+                f"industry-event-candidate-fetch-cache --candidates {selected_candidate_path} "
+                f"--query-plan {selected_query_plan} --cache-dir {selected_cache_dir}"
+            ),
+            "policy": (
+                "Without --live this batch command creates deterministic cache plans only. Live collection still "
+                "requires reviewed candidate identity, reviewed query plans, and event-manifest review."
+            ),
+        },
+    }
+
+
+def industry_event_candidate_pool_draft_import(
+    repo_path: Path,
+    *,
+    candidate_path: Path | None = None,
+    query_plan_path: Path | None = None,
+    cache_dir: Path | None = None,
+    domain: str | None = None,
+    split_role: str | None = None,
+) -> dict[str, Any]:
+    """Import cached candidate-pool source responses into draft manifests."""
+    ensure_repo(repo_path)
+    selected_candidate_path = candidate_path or default_industry_event_candidate_cases_path()
+    selected_query_plan = query_plan_path or default_industry_event_query_plan_path()
+    selected_cache_dir = cache_dir or repo_path / "industry_event_cache"
+    draft_import = build_candidate_pool_manifest_drafts_from_cache(
+        selected_candidate_path,
+        query_plan_path=selected_query_plan,
+        cache_dir=selected_cache_dir,
+        domain=domain,
+        split_role=split_role,
+    )
+    return {
+        "repo": str(repo_path),
+        "candidate_path": str(selected_candidate_path),
+        "query_plan_path": str(selected_query_plan),
+        "cache_dir": str(selected_cache_dir),
+        "configured": candidate_path is not None,
+        "candidate_pool_draft_import": draft_import,
+        "configuration_guidance": {
+            "example_candidate_path": str(default_industry_event_candidate_cases_path()),
+            "example_query_plan_path": str(default_industry_event_query_plan_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+                f"industry-event-candidate-draft-import --candidates {selected_candidate_path} "
+                f"--query-plan {selected_query_plan} --cache-dir {selected_cache_dir}"
+            ),
+            "policy": (
+                "This imports existing cached source responses only. It does not fetch live data and generated "
+                "draft manifests still require source review before calibration use."
+            ),
+        },
+    }
+
+
+def industry_event_collection_requests(
+    repo_path: Path,
+    *,
+    query_plan_path: Path | None = None,
+    case_id: str,
+    public_name: str,
+    person_qid: str,
+    start_year: int,
+    end_year: int,
+    split_role: str = "holdout",
+    domain: str | None = None,
+) -> dict[str, Any]:
+    """Build an offline collection request bundle from an industry-event query plan."""
+    ensure_repo(repo_path)
+    selected_path = query_plan_path or default_industry_event_query_plan_path()
+    bundle = build_industry_event_collection_request_bundle(
+        selected_path,
+        case_id=case_id,
+        public_name=public_name,
+        person_qid=person_qid,
+        start_year=start_year,
+        end_year=end_year,
+        split_role=split_role,
+        domain=domain,
+    )
+    return {
+        "repo": str(repo_path),
+        "query_plan_path": str(selected_path),
+        "configured": query_plan_path is not None,
+        "offline_only": True,
+        "request_bundle": bundle,
+        "configuration_guidance": {
+            "example_query_plan_path": str(default_industry_event_query_plan_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} industry-event-requests "
+                f"--query-plan {selected_path} --case-id {case_id} --public-name \"{public_name}\" "
+                f"--person-qid {person_qid} --start-year {start_year} --end-year {end_year} "
+                f"--split-role {split_role}"
+            ),
+            "policy": "Review the offline request bundle before any live collection. Live execution remains disabled here.",
+        },
+    }
+
+
+def industry_event_fetch_cache(
+    repo_path: Path,
+    *,
+    cache_dir: Path | None = None,
+    query_plan_path: Path | None = None,
+    case_id: str,
+    public_name: str,
+    person_qid: str,
+    start_year: int,
+    end_year: int,
+    split_role: str = "holdout",
+    domain: str | None = None,
+    live: bool = False,
+) -> dict[str, Any]:
+    """Plan or execute reviewed industry-event source fetches into cache."""
+    ensure_repo(repo_path)
+    selected_path = query_plan_path or default_industry_event_query_plan_path()
+    selected_cache_dir = cache_dir or repo_path / "industry_event_cache"
+    fetch_plan = build_industry_event_fetch_cache_plan(
+        selected_path,
+        cache_dir=selected_cache_dir,
+        case_id=case_id,
+        public_name=public_name,
+        person_qid=person_qid,
+        start_year=start_year,
+        end_year=end_year,
+        split_role=split_role,
+        domain=domain,
+        live=live,
+    )
+    return {
+        "repo": str(repo_path),
+        "query_plan_path": str(selected_path),
+        "cache_dir": str(selected_cache_dir),
+        "configured": query_plan_path is not None,
+        "live_requested": live,
+        "fetch_cache_plan": fetch_plan,
+        "configuration_guidance": {
+            "example_query_plan_path": str(default_industry_event_query_plan_path()),
+            "example_is_demonstration_only": True,
+            "cli_command": (
+                f"python -m examples.mingli_5agents.cli --repo {repo_path} industry-event-fetch-cache "
+                f"--query-plan {selected_path} --cache-dir {selected_cache_dir} --case-id {case_id} "
+                f"--public-name \"{public_name}\" --person-qid {person_qid} --start-year {start_year} "
+                f"--end-year {end_year} --split-role {split_role}"
+            ),
+            "policy": (
+                "Without --live this only creates a deterministic cache plan. With --live it still requires "
+                "a reviewed collection_ready query plan before contacting any public source."
+            ),
+        },
+    }
+
+
+def industry_event_manifest_draft_from_response(
+    repo_path: Path,
+    *,
+    response_path: Path,
+    query_plan_path: Path | None = None,
+    case_id: str,
+    public_name: str,
+    person_qid: str,
+    start_year: int,
+    end_year: int,
+    split_role: str = "holdout",
+    domain: str,
+) -> dict[str, Any]:
+    """Build a draft industry-event manifest from a cached source response."""
+    ensure_repo(repo_path)
+    selected_path = query_plan_path or default_industry_event_query_plan_path()
+    draft = build_industry_event_manifest_draft_from_wikidata_response(
+        selected_path,
+        response_path,
+        case_id=case_id,
+        public_name=public_name,
+        person_qid=person_qid,
+        start_year=start_year,
+        end_year=end_year,
+        split_role=split_role,
+        domain=domain,
+    )
+    return {
+        "repo": str(repo_path),
+        "query_plan_path": str(selected_path),
+        "response_path": str(response_path),
+        "offline_only": True,
+        "draft": draft,
+        "configuration_guidance": {
+            "example_query_plan_path": str(default_industry_event_query_plan_path()),
+            "example_is_demonstration_only": True,
+            "policy": (
+                "Draft manifests generated from cached responses must pass industry-events audit and external "
+                "review before use as production evidence."
+            ),
+        },
+    }
+
+
+def _industry_event_query_plan_configuration_guidance(repo_path: Path, query_plan_path: Path | None) -> dict[str, Any]:
+    example_query_plan = default_industry_event_query_plan_path()
+    query_plan_arg = str(query_plan_path) if query_plan_path else str(example_query_plan)
+    return {
+        "configured": query_plan_path is not None,
+        "env_var": "SEMAS_INDUSTRY_EVENT_QUERY_PLAN",
+        "current_query_plan_path": str(query_plan_path) if query_plan_path else None,
+        "example_query_plan_path": str(example_query_plan),
+        "example_is_demonstration_only": True,
+        "cli_audit_command": (
+            f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+            f"industry-event-queries --query-plan {query_plan_arg}"
+        ),
+        "http_query": f"GET /industry-event-queries?query_plan={query_plan_arg}",
+        "policy": (
+            "Provide an externally reviewed query plan before collecting public industry events from live sources. "
+            "The query plan still does not certify the resulting manifest; collected records must pass the "
+            "industry-events manifest audit."
+        ),
+    }
+
+
+def _industry_event_manifest_configuration_guidance(repo_path: Path, manifest_path: Path | None) -> dict[str, Any]:
+    example_manifest = default_industry_event_manifest_path()
+    manifest_arg = str(manifest_path) if manifest_path else str(example_manifest)
+    return {
+        "configured": manifest_path is not None,
+        "env_var": "SEMAS_INDUSTRY_EVENT_MANIFEST",
+        "current_manifest_path": str(manifest_path) if manifest_path else None,
+        "example_manifest_path": str(example_manifest),
+        "example_is_demonstration_only": True,
+        "cli_audit_command": (
+            f"python -m examples.mingli_5agents.cli --repo {repo_path} "
+            f"industry-events --manifest {manifest_arg}"
+        ),
+        "http_query": f"GET /industry-events?manifest={manifest_arg}",
+        "policy": (
+            "Provide a reviewed public industry-event manifest covering positive and negative years before using "
+            "film, music, or sports event data for false-positive-sensitive calibration."
+        ),
+    }
+
+
 def _outcome_dataset_configuration_guidance(repo_path: Path, manifest_path: Path | None) -> dict[str, Any]:
     """Return stable operator guidance for configuring a real outcome manifest."""
     example_manifest = Path(__file__).resolve().parent / "providers" / "outcome_dataset_manifest_example.json"
@@ -1408,6 +2282,23 @@ def production_readiness(
     classical_refresh_receipt = _read_classical_refresh_receipt(repo_path)
     known_gap_ids = [str(item.get("id")) for item in audit.get("known_gaps", []) if isinstance(item, dict)]
     known_gap_resolution_plan = audit.get("known_gap_resolution_plan", [])
+    birth_profile_source_review_workplan_summary = _birth_profile_source_review_workplan_summary_from_audit(audit)
+    birth_profile_source_lookup_plan_summary = _birth_profile_source_lookup_plan_summary_from_audit(audit)
+    birth_profile_source_cache_template_preview_summary = (
+        _birth_profile_source_cache_template_preview_summary_from_audit(audit)
+    )
+    birth_profile_source_family_cache_enforcement_summary = (
+        _birth_profile_source_family_cache_enforcement_summary_from_audit(audit)
+    )
+    birth_profile_substantive_evidence_cache_enforcement_summary = (
+        _birth_profile_substantive_evidence_cache_enforcement_summary_from_audit(audit)
+    )
+    birth_profile_source_cache_audit_summary = _birth_profile_source_cache_audit_summary_from_audit(audit)
+    birth_profile_reviewed_manifest_draft_preview_summary = (
+        _birth_profile_reviewed_manifest_draft_preview_summary_from_audit(audit)
+    )
+    birth_profile_import_preview_summary = _birth_profile_import_preview_summary_from_audit(audit)
+    birth_profile_fixture_patch_preview_summary = _birth_profile_fixture_patch_preview_summary_from_audit(audit)
     known_gap_resolution_plan_coverage = _known_gap_resolution_plan_coverage_from_response(
         {
             "known_gap_ids": known_gap_ids,
@@ -1425,6 +2316,7 @@ def production_readiness(
     benchmark_auspicious_calendar_failures = _benchmark_auspicious_calendar_receipt_failures(current_benchmark)
     benchmark_external_birth_match_failures = _benchmark_external_payload_birth_match_failures(current_benchmark)
     benchmark_topic_confidence_failures = _benchmark_topic_confidence_failures(current_benchmark)
+    benchmark_chinese_render_quality_failures = _benchmark_chinese_render_quality_failures(current_benchmark)
     benchmark_analyze_response_schema = _benchmark_analyze_response_schema_audit(
         repo_path,
         version=int(current_benchmark.get("genome_version", 0) or 0),
@@ -1742,11 +2634,104 @@ def production_readiness(
             benchmark_topic_confidence_failures,
         ),
         _readiness_gate(
+            "benchmark_chinese_render_quality_diagnostics",
+            not benchmark_chinese_render_quality_failures,
+            "Benchmark Chinese reports expose clean prose, zero repetition, and full row-evidence anchors.",
+            "Restore Chinese report rendering so benchmark diagnostics show no English/code leakage, no duplicated annual/monthly bullets, and full evidence-anchor coverage.",
+            benchmark_chinese_render_quality_failures,
+        ),
+        _readiness_gate(
             "benchmark_analyze_response_schema_valid",
             not benchmark_analyze_response_schema_failures,
             "Every built-in benchmark AnalyzeResponse validates against the public schema contract.",
             "Repair analyze_case runtime output or schema_document so benchmark responses pass AnalyzeResponse validation.",
             benchmark_analyze_response_schema_failures,
+        ),
+        _readiness_gate(
+            "birth_profile_source_review_workplan_available",
+            _birth_profile_source_review_workplan_available(birth_profile_source_review_workplan_summary),
+            "Celebrity birth-profile source-review workplan is present, non-mutating, and ready for human review.",
+            "Restore the non-mutating birth-profile source-review workplan before production.",
+            _birth_profile_source_review_workplan_failures(birth_profile_source_review_workplan_summary),
+        ),
+        _readiness_gate(
+            "birth_profile_source_lookup_plan_dry_run",
+            _birth_profile_source_lookup_plan_dry_run(birth_profile_source_lookup_plan_summary),
+            "Celebrity birth-profile source lookup plan is present and remains dry-run.",
+            "Restore the non-mutating birth-profile source lookup plan before production.",
+            _birth_profile_source_lookup_plan_failures(birth_profile_source_lookup_plan_summary),
+        ),
+        _readiness_gate(
+            "birth_profile_source_family_catalog_bound",
+            _birth_profile_source_family_catalog_bound(birth_profile_source_lookup_plan_summary),
+            "Celebrity birth-profile lookup plan binds source families and birth-time evidence policy.",
+            "Restore source-family catalog binding so identity anchors cannot be promoted to birth-time evidence.",
+            _birth_profile_source_family_catalog_failures(birth_profile_source_lookup_plan_summary),
+        ),
+        _readiness_gate(
+            "birth_profile_source_cache_template_preview_non_mutating",
+            _birth_profile_source_cache_template_preview_non_mutating(
+                birth_profile_source_cache_template_preview_summary
+            ),
+            "Celebrity birth-profile source cache template preview is present and non-mutating.",
+            "Restore the non-mutating source-cache template preview before production.",
+            _birth_profile_source_cache_template_preview_failures(
+                birth_profile_source_cache_template_preview_summary
+            ),
+        ),
+        _readiness_gate(
+            "birth_profile_source_family_cache_enforcement_probe",
+            _birth_profile_source_family_cache_enforcement_probe_passed(
+                birth_profile_source_family_cache_enforcement_summary
+            ),
+            "Celebrity birth-profile cache audit rejects identity-anchor payloads that claim birth_time evidence.",
+            "Restore source-family enforcement so identity/domain anchors cannot satisfy birth_time in cache audit.",
+            _birth_profile_source_family_cache_enforcement_probe_failures(
+                birth_profile_source_family_cache_enforcement_summary
+            ),
+        ),
+        _readiness_gate(
+            "birth_profile_substantive_evidence_cache_enforcement_probe",
+            _birth_profile_substantive_evidence_cache_enforcement_probe_passed(
+                birth_profile_substantive_evidence_cache_enforcement_summary
+            ),
+            "Celebrity birth-profile cache audit rejects reviewed metadata-only payloads.",
+            "Restore substantive-evidence enforcement so source metadata cannot satisfy birth-profile facts.",
+            _birth_profile_substantive_evidence_cache_enforcement_probe_failures(
+                birth_profile_substantive_evidence_cache_enforcement_summary
+            ),
+        ),
+        _readiness_gate(
+            "birth_profile_source_cache_audit_read_only",
+            _birth_profile_source_cache_audit_read_only(birth_profile_source_cache_audit_summary),
+            "Celebrity birth-profile source cache audit is present, read-only, and non-importing.",
+            "Restore the read-only birth-profile source cache audit before production.",
+            _birth_profile_source_cache_audit_failures(birth_profile_source_cache_audit_summary),
+        ),
+        _readiness_gate(
+            "birth_profile_reviewed_manifest_draft_preview_non_mutating",
+            _birth_profile_reviewed_manifest_draft_preview_non_mutating(
+                birth_profile_reviewed_manifest_draft_preview_summary
+            ),
+            "Celebrity birth-profile reviewed-manifest draft preview is present and non-mutating.",
+            "Restore the non-mutating reviewed-manifest draft preview before production.",
+            _birth_profile_reviewed_manifest_draft_preview_failures(
+                birth_profile_reviewed_manifest_draft_preview_summary
+            ),
+        ),
+        _readiness_gate(
+            "birth_profile_import_preview_blocked",
+            _birth_profile_import_preview_blocked(birth_profile_import_preview_summary),
+            "Celebrity birth-profile import preview is present, non-mutating, and blocked until review completes.",
+            "Restore the blocked non-mutating birth-profile import preview before production.",
+            _birth_profile_import_preview_blocker_failures(birth_profile_import_preview_summary),
+        ),
+        _readiness_gate(
+            "birth_profile_fixture_patch_preview_blocked",
+            _birth_profile_fixture_patch_preview_blocked(birth_profile_fixture_patch_preview_summary),
+            "Celebrity birth-profile fixture patch preview is present, non-mutating, and blocked until review completes.",
+            "Restore the blocked non-mutating birth-profile fixture patch preview before production.",
+            _birth_profile_fixture_patch_preview_blocker_failures(birth_profile_fixture_patch_preview_summary),
         ),
     ]
     production_gate_registry_audit = _production_gate_registry_audit(
@@ -2435,6 +3420,40 @@ def _benchmark_topic_confidence_failures(benchmark_result: dict[str, Any]) -> li
     return failures
 
 
+def _benchmark_chinese_render_quality_failures(benchmark_result: dict[str, Any]) -> list[str]:
+    failures = []
+    cases = benchmark_result.get("cases", [])
+    if not isinstance(cases, list):
+        return ["benchmark cases missing"]
+    for case in cases:
+        if not isinstance(case, dict):
+            failures.append("benchmark case is not an object")
+            continue
+        features = case.get("report_features", {})
+        if not isinstance(features, dict):
+            failures.append(f"{case.get('name')} report_features missing")
+            continue
+        if features.get("has_chinese_render") is not True:
+            continue
+        duplicate_ratio = float(features.get("chinese_render_duplicate_bullet_ratio", 1.0) or 0.0)
+        anchor_ratio = float(features.get("chinese_render_topic_evidence_anchor_ratio", 0.0) or 0.0)
+        judgment_ratio = float(features.get("chinese_render_topic_judgment_structure_ratio", 0.0) or 0.0)
+        ascii_count = int(features.get("chinese_render_ascii_letter_count", 0) or 0)
+        if duplicate_ratio > 0.02:
+            failures.append(f"{case.get('name')} Chinese annual/monthly duplicate ratio={duplicate_ratio:.3f}")
+        if anchor_ratio < 1.0:
+            failures.append(f"{case.get('name')} Chinese annual/monthly evidence-anchor ratio={anchor_ratio:.3f}")
+        if judgment_ratio < 1.0:
+            failures.append(f"{case.get('name')} Chinese annual/monthly judgment-structure ratio={judgment_ratio:.3f}")
+        if ascii_count != 0:
+            failures.append(f"{case.get('name')} Chinese render ASCII letter count={ascii_count}")
+        if features.get("chinese_render_ascii_question_present") is True:
+            failures.append(f"{case.get('name')} Chinese render contains ASCII question mark")
+        if features.get("chinese_render_code_marker_present") is True:
+            failures.append(f"{case.get('name')} Chinese render contains code or provider command marker")
+    return failures
+
+
 def _benchmark_analyze_response_schema_audit(repo_path: Path, *, version: int | None = None) -> dict[str, Any]:
     """Validate full analyze_case responses for built-in benchmark cases."""
     cache_key: tuple[str, int] | None = None
@@ -2494,6 +3513,467 @@ def _benchmark_analyze_response_schema_failures(schema_audit: dict[str, Any]) ->
         sample = item.get("errors_sample", [])
         first_error = sample[0] if isinstance(sample, list) and sample else "unknown schema error"
         failures.append(f"{item.get('case')} AnalyzeResponse schema invalid: {first_error}")
+    return failures
+
+
+def _birth_profile_import_preview_summary_from_audit(audit: dict[str, Any]) -> dict[str, Any]:
+    fixture = audit.get("industry_event_cross_domain_fixture_import", {})
+    material = fixture.get("material", {}) if isinstance(fixture, dict) else {}
+    readiness = material.get("symbolic_scoring_readiness_summary", {}) if isinstance(material, dict) else {}
+    summary = readiness.get("birth_profile_import_preview_summary", {}) if isinstance(readiness, dict) else {}
+    return summary if isinstance(summary, dict) else {}
+
+
+def _birth_profile_source_review_workplan_summary_from_audit(audit: dict[str, Any]) -> dict[str, Any]:
+    fixture = audit.get("industry_event_cross_domain_fixture_import", {})
+    material = fixture.get("material", {}) if isinstance(fixture, dict) else {}
+    readiness = material.get("symbolic_scoring_readiness_summary", {}) if isinstance(material, dict) else {}
+    summary = (
+        readiness.get("birth_profile_source_review_workplan_summary", {}) if isinstance(readiness, dict) else {}
+    )
+    return summary if isinstance(summary, dict) else {}
+
+
+def _birth_profile_source_lookup_plan_summary_from_audit(audit: dict[str, Any]) -> dict[str, Any]:
+    fixture = audit.get("industry_event_cross_domain_fixture_import", {})
+    material = fixture.get("material", {}) if isinstance(fixture, dict) else {}
+    readiness = material.get("symbolic_scoring_readiness_summary", {}) if isinstance(material, dict) else {}
+    summary = readiness.get("birth_profile_source_lookup_plan_summary", {}) if isinstance(readiness, dict) else {}
+    return summary if isinstance(summary, dict) else {}
+
+
+def _birth_profile_source_cache_template_preview_summary_from_audit(audit: dict[str, Any]) -> dict[str, Any]:
+    fixture = audit.get("industry_event_cross_domain_fixture_import", {})
+    material = fixture.get("material", {}) if isinstance(fixture, dict) else {}
+    readiness = material.get("symbolic_scoring_readiness_summary", {}) if isinstance(material, dict) else {}
+    summary = (
+        readiness.get("birth_profile_source_cache_template_preview_summary", {})
+        if isinstance(readiness, dict)
+        else {}
+    )
+    return summary if isinstance(summary, dict) else {}
+
+
+def _birth_profile_source_family_cache_enforcement_summary_from_audit(audit: dict[str, Any]) -> dict[str, Any]:
+    fixture = audit.get("industry_event_cross_domain_fixture_import", {})
+    material = fixture.get("material", {}) if isinstance(fixture, dict) else {}
+    readiness = material.get("symbolic_scoring_readiness_summary", {}) if isinstance(material, dict) else {}
+    summary = (
+        readiness.get("birth_profile_source_family_cache_enforcement_summary", {})
+        if isinstance(readiness, dict)
+        else {}
+    )
+    return summary if isinstance(summary, dict) else {}
+
+
+def _birth_profile_substantive_evidence_cache_enforcement_summary_from_audit(
+    audit: dict[str, Any],
+) -> dict[str, Any]:
+    fixture = audit.get("industry_event_cross_domain_fixture_import", {})
+    material = fixture.get("material", {}) if isinstance(fixture, dict) else {}
+    readiness = material.get("symbolic_scoring_readiness_summary", {}) if isinstance(material, dict) else {}
+    summary = (
+        readiness.get("birth_profile_substantive_evidence_cache_enforcement_summary", {})
+        if isinstance(readiness, dict)
+        else {}
+    )
+    return summary if isinstance(summary, dict) else {}
+
+
+def _birth_profile_source_cache_audit_summary_from_audit(audit: dict[str, Any]) -> dict[str, Any]:
+    fixture = audit.get("industry_event_cross_domain_fixture_import", {})
+    material = fixture.get("material", {}) if isinstance(fixture, dict) else {}
+    readiness = material.get("symbolic_scoring_readiness_summary", {}) if isinstance(material, dict) else {}
+    summary = readiness.get("birth_profile_source_cache_audit_summary", {}) if isinstance(readiness, dict) else {}
+    return summary if isinstance(summary, dict) else {}
+
+
+def _birth_profile_reviewed_manifest_draft_preview_summary_from_audit(audit: dict[str, Any]) -> dict[str, Any]:
+    fixture = audit.get("industry_event_cross_domain_fixture_import", {})
+    material = fixture.get("material", {}) if isinstance(fixture, dict) else {}
+    readiness = material.get("symbolic_scoring_readiness_summary", {}) if isinstance(material, dict) else {}
+    summary = (
+        readiness.get("birth_profile_reviewed_manifest_draft_preview_summary", {})
+        if isinstance(readiness, dict)
+        else {}
+    )
+    return summary if isinstance(summary, dict) else {}
+
+
+def _birth_profile_fixture_patch_preview_summary_from_audit(audit: dict[str, Any]) -> dict[str, Any]:
+    fixture = audit.get("industry_event_cross_domain_fixture_import", {})
+    material = fixture.get("material", {}) if isinstance(fixture, dict) else {}
+    readiness = material.get("symbolic_scoring_readiness_summary", {}) if isinstance(material, dict) else {}
+    summary = (
+        readiness.get("birth_profile_fixture_patch_preview_summary", {}) if isinstance(readiness, dict) else {}
+    )
+    return summary if isinstance(summary, dict) else {}
+
+
+def _birth_profile_import_preview_blocked(summary: dict[str, Any]) -> bool:
+    return (
+        summary.get("status") == "blocked_not_ready_for_import"
+        and summary.get("valid") is True
+        and summary.get("would_write_file") is False
+        and summary.get("import_allowed") is False
+        and summary.get("import_gate_passed") is False
+        and summary.get("integrity_check_status") == "passed"
+        and int(summary.get("blocked_request_count", 0)) > 0
+        and int(summary.get("import_ready_request_count", -1)) == 0
+    )
+
+
+def _birth_profile_import_preview_blocker_failures(summary: dict[str, Any]) -> list[str]:
+    failures = []
+    if not summary:
+        return ["birth profile import preview summary is missing from capability audit"]
+    if summary.get("status") != "blocked_not_ready_for_import":
+        failures.append(f"status={summary.get('status')}")
+    if summary.get("valid") is not True:
+        failures.append("preview summary is not valid")
+    if summary.get("would_write_file") is not False:
+        failures.append("preview would write a file")
+    if summary.get("import_allowed") is not False:
+        failures.append("preview allows import")
+    if summary.get("import_gate_passed") is not False:
+        failures.append("preview import gate is not blocked")
+    if summary.get("integrity_check_status") != "passed":
+        failures.append(f"integrity_check_status={summary.get('integrity_check_status')}")
+    if int(summary.get("blocked_request_count", 0)) <= 0:
+        failures.append("blocked_request_count is not positive")
+    if int(summary.get("import_ready_request_count", -1)) != 0:
+        failures.append(f"import_ready_request_count={summary.get('import_ready_request_count')}")
+    return failures
+
+
+def _birth_profile_source_review_workplan_available(summary: dict[str, Any]) -> bool:
+    return (
+        summary.get("status") == "ready_for_human_source_review"
+        and summary.get("valid") is True
+        and summary.get("would_fetch_live_sources") is False
+        and summary.get("would_write_review_manifest") is False
+        and int(summary.get("request_count", 0)) > 0
+        and int(summary.get("work_item_count", 0)) > 0
+        and summary.get("source_review_gate_passed") is False
+        and summary.get("integrity_check_status") == "passed"
+    )
+
+
+def _birth_profile_source_review_workplan_failures(summary: dict[str, Any]) -> list[str]:
+    failures = []
+    if not summary:
+        return ["birth profile source-review workplan summary is missing from capability audit"]
+    if summary.get("status") != "ready_for_human_source_review":
+        failures.append(f"status={summary.get('status')}")
+    if summary.get("valid") is not True:
+        failures.append("source-review workplan summary is not valid")
+    if summary.get("would_fetch_live_sources") is not False:
+        failures.append("source-review workplan would fetch live sources")
+    if summary.get("would_write_review_manifest") is not False:
+        failures.append("source-review workplan would write a reviewed manifest")
+    if int(summary.get("request_count", 0)) <= 0:
+        failures.append("request_count is not positive")
+    if int(summary.get("work_item_count", 0)) <= 0:
+        failures.append("work_item_count is not positive")
+    if summary.get("source_review_gate_passed") is not False:
+        failures.append("source-review workplan gate unexpectedly passed")
+    if summary.get("integrity_check_status") != "passed":
+        failures.append(f"integrity_check_status={summary.get('integrity_check_status')}")
+    return failures
+
+
+def _birth_profile_source_lookup_plan_dry_run(summary: dict[str, Any]) -> bool:
+    return (
+        summary.get("status") == "ready_for_manual_lookup"
+        and summary.get("valid") is True
+        and summary.get("would_fetch_live_sources") is False
+        and summary.get("would_write_cache") is False
+        and summary.get("would_write_review_manifest") is False
+        and int(summary.get("lookup_item_count", 0)) > 0
+        and int(summary.get("query_count", 0)) > 0
+        and summary.get("lookup_gate_passed") is False
+        and summary.get("integrity_check_status") == "passed"
+    )
+
+
+def _birth_profile_source_lookup_plan_failures(summary: dict[str, Any]) -> list[str]:
+    failures = []
+    if not summary:
+        return ["birth profile source lookup plan summary is missing from capability audit"]
+    if summary.get("status") != "ready_for_manual_lookup":
+        failures.append(f"status={summary.get('status')}")
+    if summary.get("valid") is not True:
+        failures.append("source lookup plan summary is not valid")
+    if summary.get("would_fetch_live_sources") is not False:
+        failures.append("source lookup plan would fetch live sources")
+    if summary.get("would_write_cache") is not False:
+        failures.append("source lookup plan would write cache files")
+    if summary.get("would_write_review_manifest") is not False:
+        failures.append("source lookup plan would write a reviewed manifest")
+    if int(summary.get("lookup_item_count", 0)) <= 0:
+        failures.append("lookup_item_count is not positive")
+    if int(summary.get("query_count", 0)) <= 0:
+        failures.append("query_count is not positive")
+    if summary.get("lookup_gate_passed") is not False:
+        failures.append("source lookup gate unexpectedly passed")
+    if summary.get("integrity_check_status") != "passed":
+        failures.append(f"integrity_check_status={summary.get('integrity_check_status')}")
+    return failures
+
+
+def _birth_profile_source_family_catalog_bound(summary: dict[str, Any]) -> bool:
+    return (
+        summary.get("status") == "ready_for_manual_lookup"
+        and summary.get("valid") is True
+        and int(summary.get("source_family_count", 0)) >= 5
+        and summary.get("source_family_catalog_bound") is True
+        and summary.get("birth_time_source_policy_bound") is True
+        and summary.get("identity_anchor_birth_time_disallowed") is True
+        and summary.get("integrity_check_status") == "passed"
+    )
+
+
+def _birth_profile_source_family_catalog_failures(summary: dict[str, Any]) -> list[str]:
+    failures = []
+    if not summary:
+        return ["birth profile source lookup plan summary is missing from capability audit"]
+    if summary.get("status") != "ready_for_manual_lookup":
+        failures.append(f"status={summary.get('status')}")
+    if summary.get("valid") is not True:
+        failures.append("source lookup plan summary is not valid")
+    if int(summary.get("source_family_count", 0)) < 5:
+        failures.append(f"source_family_count={summary.get('source_family_count')}")
+    if summary.get("source_family_catalog_bound") is not True:
+        failures.append("source family catalog is not bound to the lookup plan")
+    if summary.get("birth_time_source_policy_bound") is not True:
+        failures.append("birth-time queries are not bound to rated birth-time source policy")
+    if summary.get("identity_anchor_birth_time_disallowed") is not True:
+        failures.append("identity/domain anchors are not explicitly barred from satisfying birth_time")
+    if summary.get("integrity_check_status") != "passed":
+        failures.append(f"integrity_check_status={summary.get('integrity_check_status')}")
+    return failures
+
+
+def _birth_profile_source_cache_template_preview_non_mutating(summary: dict[str, Any]) -> bool:
+    return (
+        summary.get("status") == "ready_for_manual_cache_fill"
+        and summary.get("valid") is True
+        and summary.get("would_fetch_live_sources") is False
+        and summary.get("would_write_cache") is False
+        and summary.get("would_import_profiles") is False
+        and int(summary.get("template_count", 0)) > 0
+        and summary.get("template_preview_gate_passed") is False
+        and summary.get("integrity_check_status") == "passed"
+    )
+
+
+def _birth_profile_source_cache_template_preview_failures(summary: dict[str, Any]) -> list[str]:
+    failures = []
+    if not summary:
+        return ["birth profile source cache template preview summary is missing from capability audit"]
+    if summary.get("status") != "ready_for_manual_cache_fill":
+        failures.append(f"status={summary.get('status')}")
+    if summary.get("valid") is not True:
+        failures.append("source cache template preview summary is not valid")
+    if summary.get("would_fetch_live_sources") is not False:
+        failures.append("source cache template preview would fetch live sources")
+    if summary.get("would_write_cache") is not False:
+        failures.append("source cache template preview would write cache files")
+    if summary.get("would_import_profiles") is not False:
+        failures.append("source cache template preview would import profiles")
+    if int(summary.get("template_count", 0)) <= 0:
+        failures.append("template_count is not positive")
+    if summary.get("template_preview_gate_passed") is not False:
+        failures.append("source cache template preview gate unexpectedly passed")
+    if summary.get("integrity_check_status") != "passed":
+        failures.append(f"integrity_check_status={summary.get('integrity_check_status')}")
+    return failures
+
+
+def _birth_profile_source_family_cache_enforcement_probe_passed(summary: dict[str, Any]) -> bool:
+    return (
+        summary.get("status") == "passed"
+        and summary.get("valid") is True
+        and summary.get("probe_executed") is True
+        and summary.get("identity_anchor_birth_time_rejected") is True
+        and summary.get("accepted_cache_count_after_probe") == 0
+        and summary.get("probe_source_family_id") == "wikidata_identity_anchor"
+        and summary.get("failure_contains_birth_time_policy") is True
+    )
+
+
+def _birth_profile_source_family_cache_enforcement_probe_failures(summary: dict[str, Any]) -> list[str]:
+    failures = []
+    if not summary:
+        return ["birth profile source-family cache enforcement probe summary is missing from capability audit"]
+    if summary.get("status") != "passed":
+        failures.append(f"status={summary.get('status')}")
+    if summary.get("valid") is not True:
+        failures.append("source-family cache enforcement probe is not valid")
+    if summary.get("probe_executed") is not True:
+        failures.append("source-family cache enforcement probe did not execute")
+    if summary.get("identity_anchor_birth_time_rejected") is not True:
+        failures.append("identity-anchor birth_time payload was not rejected")
+    if summary.get("accepted_cache_count_after_probe") != 0:
+        failures.append(f"accepted_cache_count_after_probe={summary.get('accepted_cache_count_after_probe')}")
+    if summary.get("probe_source_family_id") != "wikidata_identity_anchor":
+        failures.append(f"probe_source_family_id={summary.get('probe_source_family_id')}")
+    if summary.get("failure_contains_birth_time_policy") is not True:
+        failures.append("birth_time source-family policy failure was not observed")
+    failures.extend(str(item) for item in summary.get("failures", []) if item)
+    return failures
+
+
+def _birth_profile_substantive_evidence_cache_enforcement_probe_passed(summary: dict[str, Any]) -> bool:
+    return (
+        summary.get("status") == "passed"
+        and summary.get("valid") is True
+        and summary.get("probe_executed") is True
+        and summary.get("metadata_only_reviewed_cache_rejected") is True
+        and summary.get("accepted_cache_count_after_probe") == 0
+        and summary.get("probe_source_family_id") == "rated_birth_time_source"
+        and summary.get("failure_contains_substantive_birth_policy") is True
+    )
+
+
+def _birth_profile_substantive_evidence_cache_enforcement_probe_failures(
+    summary: dict[str, Any],
+) -> list[str]:
+    failures = []
+    if not summary:
+        return ["birth profile substantive-evidence cache enforcement probe summary is missing from capability audit"]
+    if summary.get("status") != "passed":
+        failures.append(f"status={summary.get('status')}")
+    if summary.get("valid") is not True:
+        failures.append("substantive-evidence cache enforcement probe is not valid")
+    if summary.get("probe_executed") is not True:
+        failures.append("substantive-evidence cache enforcement probe did not execute")
+    if summary.get("metadata_only_reviewed_cache_rejected") is not True:
+        failures.append("reviewed metadata-only cache payload was not rejected")
+    if summary.get("accepted_cache_count_after_probe") != 0:
+        failures.append(f"accepted_cache_count_after_probe={summary.get('accepted_cache_count_after_probe')}")
+    if summary.get("probe_source_family_id") != "rated_birth_time_source":
+        failures.append(f"probe_source_family_id={summary.get('probe_source_family_id')}")
+    if summary.get("failure_contains_substantive_birth_policy") is not True:
+        failures.append("substantive birth evidence policy failure was not observed")
+    failures.extend(str(item) for item in summary.get("failures", []) if item)
+    return failures
+
+
+def _birth_profile_source_cache_audit_read_only(summary: dict[str, Any]) -> bool:
+    return (
+        summary.get("status") in {"waiting_for_manual_cache", "cache_present_requires_review", "cache_ready_for_reviewed_manifest_draft"}
+        and summary.get("valid") is True
+        and summary.get("would_fetch_live_sources") is False
+        and summary.get("would_write_cache") is False
+        and summary.get("would_write_review_manifest") is False
+        and summary.get("would_import_profiles") is False
+        and int(summary.get("expected_cache_count", 0)) > 0
+        and summary.get("cache_audit_gate_passed") is False
+        and summary.get("integrity_check_status") == "passed"
+    )
+
+
+def _birth_profile_source_cache_audit_failures(summary: dict[str, Any]) -> list[str]:
+    failures = []
+    if not summary:
+        return ["birth profile source cache audit summary is missing from capability audit"]
+    if summary.get("status") not in {
+        "waiting_for_manual_cache",
+        "cache_present_requires_review",
+        "cache_ready_for_reviewed_manifest_draft",
+    }:
+        failures.append(f"status={summary.get('status')}")
+    if summary.get("valid") is not True:
+        failures.append("source cache audit summary is not valid")
+    if summary.get("would_fetch_live_sources") is not False:
+        failures.append("source cache audit would fetch live sources")
+    if summary.get("would_write_cache") is not False:
+        failures.append("source cache audit would write cache files")
+    if summary.get("would_write_review_manifest") is not False:
+        failures.append("source cache audit would write a reviewed manifest")
+    if summary.get("would_import_profiles") is not False:
+        failures.append("source cache audit would import profiles")
+    if int(summary.get("expected_cache_count", 0)) <= 0:
+        failures.append("expected_cache_count is not positive")
+    if summary.get("cache_audit_gate_passed") is not False:
+        failures.append("source cache audit gate unexpectedly passed")
+    if summary.get("integrity_check_status") != "passed":
+        failures.append(f"integrity_check_status={summary.get('integrity_check_status')}")
+    return failures
+
+
+def _birth_profile_reviewed_manifest_draft_preview_non_mutating(summary: dict[str, Any]) -> bool:
+    return (
+        summary.get("status") in {"blocked_waiting_for_complete_source_cache", "ready_for_human_approval"}
+        and summary.get("valid") is True
+        and summary.get("would_write_review_manifest") is False
+        and summary.get("would_import_profiles") is False
+        and int(summary.get("review_request_count", 0)) > 0
+        and summary.get("draft_gate_passed") is False
+        and summary.get("integrity_check_status") == "passed"
+    )
+
+
+def _birth_profile_reviewed_manifest_draft_preview_failures(summary: dict[str, Any]) -> list[str]:
+    failures = []
+    if not summary:
+        return ["birth profile reviewed manifest draft preview summary is missing from capability audit"]
+    if summary.get("status") not in {"blocked_waiting_for_complete_source_cache", "ready_for_human_approval"}:
+        failures.append(f"status={summary.get('status')}")
+    if summary.get("valid") is not True:
+        failures.append("reviewed manifest draft preview summary is not valid")
+    if summary.get("would_write_review_manifest") is not False:
+        failures.append("reviewed manifest draft preview would write a reviewed manifest")
+    if summary.get("would_import_profiles") is not False:
+        failures.append("reviewed manifest draft preview would import profiles")
+    if int(summary.get("review_request_count", 0)) <= 0:
+        failures.append("review_request_count is not positive")
+    if summary.get("draft_gate_passed") is not False:
+        failures.append("reviewed manifest draft gate unexpectedly passed")
+    if summary.get("integrity_check_status") != "passed":
+        failures.append(f"integrity_check_status={summary.get('integrity_check_status')}")
+    return failures
+
+
+def _birth_profile_fixture_patch_preview_blocked(summary: dict[str, Any]) -> bool:
+    return (
+        summary.get("status") == "blocked_not_ready_for_patch_preview"
+        and summary.get("valid") is True
+        and summary.get("would_write_file") is False
+        and summary.get("patch_ready_for_review") is False
+        and int(summary.get("candidate_count", -1)) == 0
+        and summary.get("patch_gate_passed") is False
+        and isinstance(summary.get("target_file_sha256"), str)
+        and len(str(summary.get("target_file_sha256"))) == 64
+        and isinstance(summary.get("patch_text_sha256"), str)
+        and len(str(summary.get("patch_text_sha256"))) == 64
+        and summary.get("integrity_check_status") == "passed"
+    )
+
+
+def _birth_profile_fixture_patch_preview_blocker_failures(summary: dict[str, Any]) -> list[str]:
+    failures = []
+    if not summary:
+        return ["birth profile fixture patch preview summary is missing from capability audit"]
+    if summary.get("status") != "blocked_not_ready_for_patch_preview":
+        failures.append(f"status={summary.get('status')}")
+    if summary.get("valid") is not True:
+        failures.append("fixture patch preview summary is not valid")
+    if summary.get("would_write_file") is not False:
+        failures.append("fixture patch preview would write a file")
+    if summary.get("patch_ready_for_review") is not False:
+        failures.append("fixture patch preview is ready for review before birth-profile review completion")
+    if int(summary.get("candidate_count", -1)) != 0:
+        failures.append(f"candidate_count={summary.get('candidate_count')}")
+    if summary.get("patch_gate_passed") is not False:
+        failures.append("fixture patch preview gate is not blocked")
+    if not isinstance(summary.get("target_file_sha256"), str) or len(str(summary.get("target_file_sha256"))) != 64:
+        failures.append("target_file_sha256 is missing or invalid")
+    if not isinstance(summary.get("patch_text_sha256"), str) or len(str(summary.get("patch_text_sha256"))) != 64:
+        failures.append("patch_text_sha256 is missing or invalid")
+    if summary.get("integrity_check_status") != "passed":
+        failures.append(f"integrity_check_status={summary.get('integrity_check_status')}")
     return failures
 
 
@@ -9225,6 +10705,984 @@ def schema_document() -> dict[str, Any]:
                     "configuration_guidance": {"$ref": "#/schemas/OutcomeDatasetConfigurationGuidance"},
                 },
             },
+            "BirthProfileReviewStatusResponse": {
+                "type": "object",
+                "required": [
+                    "repo",
+                    "manifest_path",
+                    "configured",
+                    "audit",
+                    "birth_profile_review_manifest_receipt",
+                    "production_gate",
+                    "configuration_guidance",
+                ],
+                "properties": {
+                    "repo": {"type": "string"},
+                    "manifest_path": {"type": "string"},
+                    "configured": {"type": "boolean"},
+                    "audit": {"type": "object"},
+                    "birth_profile_review_manifest_receipt": {
+                        "type": "object",
+                        "required": ["schema_version", "sha256", "material"],
+                        "properties": {
+                            "schema_version": {
+                                "type": "string",
+                                "const": "birth-profile-review-manifest-summary-receipt-v1",
+                            },
+                            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                            "material": {"type": "object"},
+                        },
+                    },
+                    "production_gate": {
+                        "type": "object",
+                        "required": [
+                            "id",
+                            "passed",
+                            "reason",
+                            "blocking_failures",
+                            "externally_reviewed",
+                            "production_evidence",
+                            "ready_for_import",
+                        ],
+                        "properties": {
+                            "id": {"type": "string", "const": "birth_profile_review_manifest_ready_for_import"},
+                            "passed": {"type": "boolean"},
+                            "reason": {"type": "string"},
+                            "blocking_failures": {"type": "array", "items": {"type": "string"}},
+                            "externally_reviewed": {"type": "boolean"},
+                            "production_evidence": {"type": "boolean"},
+                            "ready_for_import": {"type": "boolean"},
+                        },
+                    },
+                    "configuration_guidance": {
+                        "type": "object",
+                        "required": [
+                            "example_manifest_path",
+                            "example_is_demonstration_only",
+                            "cli_command",
+                            "http_query",
+                            "policy",
+                        ],
+                        "properties": {
+                            "example_manifest_path": {"type": "string"},
+                            "example_is_demonstration_only": {"type": "boolean"},
+                            "cli_command": {"type": "string"},
+                            "http_query": {"type": "string"},
+                            "policy": {"type": "string"},
+                        },
+                    },
+                },
+            },
+            "BirthProfileSourceReviewWorkplanResponse": {
+                "type": "object",
+                "required": ["repo", "manifest_path", "configured", "source_review_workplan", "configuration_guidance"],
+                "properties": {
+                    "repo": {"type": "string"},
+                    "manifest_path": {"type": "string"},
+                    "configured": {"type": "boolean"},
+                    "source_review_workplan": {
+                        "type": "object",
+                        "required": [
+                            "schema_version",
+                            "status",
+                            "valid",
+                            "would_fetch_live_sources",
+                            "would_write_review_manifest",
+                            "request_count",
+                            "work_item_count",
+                            "review_progress_summary",
+                            "field_gap_summary",
+                            "work_items",
+                            "source_review_gate",
+                            "source_review_workplan_receipt",
+                            "source_review_workplan_sha256",
+                            "integrity_check",
+                            "boundary",
+                        ],
+                        "properties": {
+                            "schema_version": {
+                                "type": "string",
+                                "const": "birth-profile-source-review-workplan-v1",
+                            },
+                            "status": {"type": "string"},
+                            "valid": {"type": "boolean"},
+                            "would_fetch_live_sources": {"type": "boolean"},
+                            "would_write_review_manifest": {"type": "boolean"},
+                            "request_count": {"type": "integer"},
+                            "work_item_count": {"type": "integer"},
+                            "review_progress_summary": {"type": "object"},
+                            "field_gap_summary": {"type": "object"},
+                            "work_items": {"type": "array", "items": {"type": "object"}},
+                            "source_review_gate": {
+                                "type": "object",
+                                "required": ["id", "passed", "reason", "blocking_reasons"],
+                                "properties": {
+                                    "id": {"type": "string", "const": "birth_profile_source_review_required"},
+                                    "passed": {"type": "boolean"},
+                                    "reason": {"type": "string"},
+                                    "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                },
+                            },
+                            "source_review_workplan_receipt": {
+                                "type": "object",
+                                "required": ["schema_version", "sha256", "material"],
+                                "properties": {
+                                    "schema_version": {
+                                        "type": "string",
+                                        "const": "birth-profile-source-review-workplan-receipt-v1",
+                                    },
+                                    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                                    "material": {"type": "object"},
+                                },
+                            },
+                            "source_review_workplan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                            "integrity_check": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "receipt_sha256_matches_material",
+                                    "workplan_sha256_matches_material",
+                                ],
+                                "properties": {
+                                    "status": {"type": "string"},
+                                    "receipt_sha256_matches_material": {"type": "boolean"},
+                                    "workplan_sha256_matches_material": {"type": "boolean"},
+                                },
+                            },
+                            "boundary": {"type": "string"},
+                        },
+                    },
+                    "configuration_guidance": {
+                        "type": "object",
+                        "required": [
+                            "example_manifest_path",
+                            "example_is_demonstration_only",
+                            "cli_command",
+                            "http_query",
+                            "policy",
+                        ],
+                        "properties": {
+                            "example_manifest_path": {"type": "string"},
+                            "example_is_demonstration_only": {"type": "boolean"},
+                            "cli_command": {"type": "string"},
+                            "http_query": {"type": "string"},
+                            "policy": {"type": "string"},
+                        },
+                    },
+                },
+            },
+            "BirthProfileSourceLookupPlanResponse": {
+                "type": "object",
+                "required": ["repo", "manifest_path", "cache_dir", "configured", "source_lookup_plan", "configuration_guidance"],
+                "properties": {
+                    "repo": {"type": "string"},
+                    "manifest_path": {"type": "string"},
+                    "cache_dir": {"type": "string"},
+                    "configured": {"type": "boolean"},
+                    "source_lookup_plan": {
+                        "type": "object",
+                        "required": [
+                            "schema_version",
+                            "status",
+                            "valid",
+                            "would_fetch_live_sources",
+                            "would_write_cache",
+                            "would_write_review_manifest",
+                            "source_family_catalog",
+                            "selected_work_item_count",
+                            "lookup_item_count",
+                            "query_count",
+                            "domain_summary",
+                            "lookup_items",
+                            "lookup_gate",
+                            "source_lookup_plan_receipt",
+                            "source_lookup_plan_sha256",
+                            "integrity_check",
+                            "boundary",
+                        ],
+                        "properties": {
+                            "schema_version": {"type": "string", "const": "birth-profile-source-lookup-plan-v1"},
+                            "status": {"type": "string"},
+                            "valid": {"type": "boolean"},
+                            "would_fetch_live_sources": {"type": "boolean"},
+                            "would_write_cache": {"type": "boolean"},
+                            "would_write_review_manifest": {"type": "boolean"},
+                            "source_family_catalog": {
+                                "type": "object",
+                                "required": [
+                                    "schema_version",
+                                    "source_family_count",
+                                    "source_families",
+                                    "birth_time_policy",
+                                    "source_family_catalog_receipt",
+                                    "source_family_catalog_sha256",
+                                    "boundary",
+                                ],
+                                "properties": {
+                                    "schema_version": {
+                                        "type": "string",
+                                        "const": "birth-profile-source-family-catalog-v1",
+                                    },
+                                    "source_family_count": {"type": "integer"},
+                                    "source_families": {"type": "array", "items": {"type": "object"}},
+                                    "birth_time_policy": {"type": "string"},
+                                    "source_family_catalog_receipt": {
+                                        "type": "object",
+                                        "required": ["schema_version", "sha256", "material"],
+                                        "properties": {
+                                            "schema_version": {
+                                                "type": "string",
+                                                "const": "birth-profile-source-family-catalog-receipt-v1",
+                                            },
+                                            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                                            "material": {"type": "object"},
+                                        },
+                                    },
+                                    "source_family_catalog_sha256": {
+                                        "type": "string",
+                                        "pattern": "^[0-9a-f]{64}$",
+                                    },
+                                    "boundary": {"type": "string"},
+                                },
+                            },
+                            "selected_work_item_count": {"type": "integer"},
+                            "lookup_item_count": {"type": "integer"},
+                            "query_count": {"type": "integer"},
+                            "domain_summary": {"type": "array", "items": {"type": "object"}},
+                            "lookup_items": {"type": "array", "items": {"type": "object"}},
+                            "lookup_gate": {
+                                "type": "object",
+                                "required": ["id", "passed", "reason", "blocking_reasons"],
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "const": "birth_profile_source_lookup_requires_human_execution",
+                                    },
+                                    "passed": {"type": "boolean"},
+                                    "reason": {"type": "string"},
+                                    "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                },
+                            },
+                            "source_lookup_plan_receipt": {
+                                "type": "object",
+                                "required": ["schema_version", "sha256", "material"],
+                                "properties": {
+                                    "schema_version": {
+                                        "type": "string",
+                                        "const": "birth-profile-source-lookup-plan-receipt-v1",
+                                    },
+                                    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                                    "material": {"type": "object"},
+                                },
+                            },
+                            "source_lookup_plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                            "integrity_check": {
+                                "type": "object",
+                                "required": ["status", "receipt_sha256_matches_material", "plan_sha256_matches_material"],
+                                "properties": {
+                                    "status": {"type": "string"},
+                                    "receipt_sha256_matches_material": {"type": "boolean"},
+                                    "plan_sha256_matches_material": {"type": "boolean"},
+                                },
+                            },
+                            "boundary": {"type": "string"},
+                        },
+                    },
+                    "configuration_guidance": {
+                        "type": "object",
+                        "required": [
+                            "example_manifest_path",
+                            "example_is_demonstration_only",
+                            "cli_command",
+                            "http_query",
+                            "policy",
+                        ],
+                        "properties": {
+                            "example_manifest_path": {"type": "string"},
+                            "example_is_demonstration_only": {"type": "boolean"},
+                            "cli_command": {"type": "string"},
+                            "http_query": {"type": "string"},
+                            "policy": {"type": "string"},
+                        },
+                    },
+                },
+            },
+            "BirthProfileSourceCacheTemplatePreviewResponse": {
+                "type": "object",
+                "required": [
+                    "repo",
+                    "manifest_path",
+                    "cache_dir",
+                    "configured",
+                    "source_cache_template_preview",
+                    "configuration_guidance",
+                ],
+                "properties": {
+                    "repo": {"type": "string"},
+                    "manifest_path": {"type": "string"},
+                    "cache_dir": {"type": "string"},
+                    "configured": {"type": "boolean"},
+                    "source_cache_template_preview": {
+                        "type": "object",
+                        "required": [
+                            "schema_version",
+                            "status",
+                            "valid",
+                            "would_write_cache",
+                            "would_fetch_live_sources",
+                            "would_import_profiles",
+                            "template_count",
+                            "templates",
+                            "template_preview_gate",
+                            "source_cache_template_preview_receipt",
+                            "source_cache_template_preview_sha256",
+                            "integrity_check",
+                            "boundary",
+                        ],
+                        "properties": {
+                            "schema_version": {
+                                "type": "string",
+                                "const": "birth-profile-source-cache-template-preview-v1",
+                            },
+                            "status": {"type": "string"},
+                            "valid": {"type": "boolean"},
+                            "would_write_cache": {"type": "boolean"},
+                            "would_fetch_live_sources": {"type": "boolean"},
+                            "would_import_profiles": {"type": "boolean"},
+                            "template_count": {"type": "integer"},
+                            "templates": {"type": "array", "items": {"type": "object"}},
+                            "template_preview_gate": {
+                                "type": "object",
+                                "required": ["id", "passed", "reason", "blocking_reasons"],
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "const": "birth_profile_source_cache_template_requires_manual_fill",
+                                    },
+                                    "passed": {"type": "boolean"},
+                                    "reason": {"type": "string"},
+                                    "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                },
+                            },
+                            "source_cache_template_preview_receipt": {
+                                "type": "object",
+                                "required": ["schema_version", "sha256", "material"],
+                                "properties": {
+                                    "schema_version": {
+                                        "type": "string",
+                                        "const": "birth-profile-source-cache-template-preview-receipt-v1",
+                                    },
+                                    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                                    "material": {"type": "object"},
+                                },
+                            },
+                            "source_cache_template_preview_sha256": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$",
+                            },
+                            "integrity_check": {
+                                "type": "object",
+                                "required": ["status", "receipt_sha256_matches_material", "preview_sha256_matches_material"],
+                                "properties": {
+                                    "status": {"type": "string"},
+                                    "receipt_sha256_matches_material": {"type": "boolean"},
+                                    "preview_sha256_matches_material": {"type": "boolean"},
+                                },
+                            },
+                            "boundary": {"type": "string"},
+                        },
+                    },
+                    "configuration_guidance": {
+                        "type": "object",
+                        "required": [
+                            "example_manifest_path",
+                            "example_is_demonstration_only",
+                            "cli_command",
+                            "http_query",
+                            "policy",
+                        ],
+                        "properties": {
+                            "example_manifest_path": {"type": "string"},
+                            "example_is_demonstration_only": {"type": "boolean"},
+                            "cli_command": {"type": "string"},
+                            "http_query": {"type": "string"},
+                            "policy": {"type": "string"},
+                        },
+                    },
+                },
+            },
+            "BirthProfileSourceCacheAuditResponse": {
+                "type": "object",
+                "required": ["repo", "manifest_path", "cache_dir", "configured", "source_cache_audit", "configuration_guidance"],
+                "properties": {
+                    "repo": {"type": "string"},
+                    "manifest_path": {"type": "string"},
+                    "cache_dir": {"type": "string"},
+                    "configured": {"type": "boolean"},
+                    "source_cache_audit": {
+                        "type": "object",
+                        "required": [
+                            "schema_version",
+                            "status",
+                            "valid",
+                            "would_fetch_live_sources",
+                            "would_write_cache",
+                            "would_write_review_manifest",
+                            "would_import_profiles",
+                            "expected_cache_count",
+                            "present_cache_count",
+                            "missing_cache_count",
+                            "reviewed_cache_count",
+                            "accepted_cache_count",
+                            "cache_items",
+                            "cache_audit_gate",
+                            "source_cache_audit_receipt",
+                            "source_cache_audit_sha256",
+                            "integrity_check",
+                            "boundary",
+                        ],
+                        "properties": {
+                            "schema_version": {"type": "string", "const": "birth-profile-source-cache-audit-v1"},
+                            "status": {"type": "string"},
+                            "valid": {"type": "boolean"},
+                            "would_fetch_live_sources": {"type": "boolean"},
+                            "would_write_cache": {"type": "boolean"},
+                            "would_write_review_manifest": {"type": "boolean"},
+                            "would_import_profiles": {"type": "boolean"},
+                            "expected_cache_count": {"type": "integer"},
+                            "present_cache_count": {"type": "integer"},
+                            "missing_cache_count": {"type": "integer"},
+                            "reviewed_cache_count": {"type": "integer"},
+                            "accepted_cache_count": {"type": "integer"},
+                            "cache_items": {"type": "array", "items": {"type": "object"}},
+                            "cache_audit_gate": {
+                                "type": "object",
+                                "required": ["id", "passed", "reason", "blocking_reasons"],
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "const": "birth_profile_source_cache_requires_reviewed_manifest_draft",
+                                    },
+                                    "passed": {"type": "boolean"},
+                                    "reason": {"type": "string"},
+                                    "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                },
+                            },
+                            "source_cache_audit_receipt": {
+                                "type": "object",
+                                "required": ["schema_version", "sha256", "material"],
+                                "properties": {
+                                    "schema_version": {
+                                        "type": "string",
+                                        "const": "birth-profile-source-cache-audit-receipt-v1",
+                                    },
+                                    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                                    "material": {"type": "object"},
+                                },
+                            },
+                            "source_cache_audit_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                            "integrity_check": {
+                                "type": "object",
+                                "required": ["status", "receipt_sha256_matches_material", "audit_sha256_matches_material"],
+                                "properties": {
+                                    "status": {"type": "string"},
+                                    "receipt_sha256_matches_material": {"type": "boolean"},
+                                    "audit_sha256_matches_material": {"type": "boolean"},
+                                },
+                            },
+                            "boundary": {"type": "string"},
+                        },
+                    },
+                    "configuration_guidance": {
+                        "type": "object",
+                        "required": [
+                            "example_manifest_path",
+                            "example_is_demonstration_only",
+                            "cli_command",
+                            "http_query",
+                            "policy",
+                        ],
+                        "properties": {
+                            "example_manifest_path": {"type": "string"},
+                            "example_is_demonstration_only": {"type": "boolean"},
+                            "cli_command": {"type": "string"},
+                            "http_query": {"type": "string"},
+                            "policy": {"type": "string"},
+                        },
+                    },
+                },
+            },
+            "BirthProfileReviewedManifestDraftPreviewResponse": {
+                "type": "object",
+                "required": [
+                    "repo",
+                    "manifest_path",
+                    "cache_dir",
+                    "configured",
+                    "reviewed_manifest_draft_preview",
+                    "configuration_guidance",
+                ],
+                "properties": {
+                    "repo": {"type": "string"},
+                    "manifest_path": {"type": "string"},
+                    "cache_dir": {"type": "string"},
+                    "configured": {"type": "boolean"},
+                    "reviewed_manifest_draft_preview": {
+                        "type": "object",
+                        "required": [
+                            "schema_version",
+                            "status",
+                            "valid",
+                            "would_write_review_manifest",
+                            "would_import_profiles",
+                            "draft_ready_for_human_approval",
+                            "review_request_count",
+                            "complete_review_request_count",
+                            "incomplete_review_request_count",
+                            "draft_manifest",
+                            "draft_manifest_sha256",
+                            "draft_text_sha256",
+                            "draft_gate",
+                            "reviewed_manifest_draft_preview_receipt",
+                            "reviewed_manifest_draft_preview_sha256",
+                            "integrity_check",
+                            "boundary",
+                        ],
+                        "properties": {
+                            "schema_version": {
+                                "type": "string",
+                                "const": "birth-profile-reviewed-manifest-draft-preview-v1",
+                            },
+                            "status": {"type": "string"},
+                            "valid": {"type": "boolean"},
+                            "would_write_review_manifest": {"type": "boolean"},
+                            "would_import_profiles": {"type": "boolean"},
+                            "draft_ready_for_human_approval": {"type": "boolean"},
+                            "review_request_count": {"type": "integer"},
+                            "complete_review_request_count": {"type": "integer"},
+                            "incomplete_review_request_count": {"type": "integer"},
+                            "draft_manifest": {"type": "object"},
+                            "draft_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                            "draft_text_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                            "draft_gate": {
+                                "type": "object",
+                                "required": ["id", "passed", "reason", "blocking_reasons"],
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "const": "birth_profile_reviewed_manifest_draft_requires_human_approval",
+                                    },
+                                    "passed": {"type": "boolean"},
+                                    "reason": {"type": "string"},
+                                    "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                },
+                            },
+                            "reviewed_manifest_draft_preview_receipt": {
+                                "type": "object",
+                                "required": ["schema_version", "sha256", "material"],
+                                "properties": {
+                                    "schema_version": {
+                                        "type": "string",
+                                        "const": "birth-profile-reviewed-manifest-draft-preview-receipt-v1",
+                                    },
+                                    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                                    "material": {"type": "object"},
+                                },
+                            },
+                            "reviewed_manifest_draft_preview_sha256": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$",
+                            },
+                            "integrity_check": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "receipt_sha256_matches_material",
+                                    "preview_sha256_matches_material",
+                                ],
+                                "properties": {
+                                    "status": {"type": "string"},
+                                    "receipt_sha256_matches_material": {"type": "boolean"},
+                                    "preview_sha256_matches_material": {"type": "boolean"},
+                                },
+                            },
+                            "boundary": {"type": "string"},
+                        },
+                    },
+                    "configuration_guidance": {
+                        "type": "object",
+                        "required": [
+                            "example_manifest_path",
+                            "example_is_demonstration_only",
+                            "cli_command",
+                            "http_query",
+                            "policy",
+                        ],
+                        "properties": {
+                            "example_manifest_path": {"type": "string"},
+                            "example_is_demonstration_only": {"type": "boolean"},
+                            "cli_command": {"type": "string"},
+                            "http_query": {"type": "string"},
+                            "policy": {"type": "string"},
+                        },
+                    },
+                },
+            },
+            "BirthProfileReviewedManifestFilePreviewResponse": {
+                "type": "object",
+                "required": [
+                    "repo",
+                    "manifest_path",
+                    "cache_dir",
+                    "target_path",
+                    "configured",
+                    "reviewed_manifest_file_preview",
+                    "configuration_guidance",
+                ],
+                "properties": {
+                    "repo": {"type": "string"},
+                    "manifest_path": {"type": "string"},
+                    "cache_dir": {"type": "string"},
+                    "target_path": {"type": "string"},
+                    "configured": {"type": "boolean"},
+                    "reviewed_manifest_file_preview": {
+                        "type": "object",
+                        "required": [
+                            "schema_version",
+                            "status",
+                            "valid",
+                            "target_file",
+                            "would_write_file",
+                            "would_import_profiles",
+                            "write_ready_for_human_approval",
+                            "draft_manifest_sha256",
+                            "draft_text_sha256",
+                            "file_preview_gate",
+                            "reviewed_manifest_file_preview_receipt",
+                            "reviewed_manifest_file_preview_sha256",
+                            "integrity_check",
+                            "boundary",
+                        ],
+                        "properties": {
+                            "schema_version": {
+                                "type": "string",
+                                "const": "birth-profile-reviewed-manifest-file-preview-v1",
+                            },
+                            "status": {"type": "string"},
+                            "valid": {"type": "boolean"},
+                            "target_file": {"type": "string"},
+                            "target_file_exists": {"type": "boolean"},
+                            "target_file_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+                            "would_write_file": {"type": "boolean"},
+                            "would_import_profiles": {"type": "boolean"},
+                            "write_ready_for_human_approval": {"type": "boolean"},
+                            "draft_manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+                            "draft_text_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+                            "file_preview_gate": {
+                                "type": "object",
+                                "required": ["id", "passed", "reason", "blocking_reasons"],
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "const": "birth_profile_reviewed_manifest_file_write_requires_human_approval",
+                                    },
+                                    "passed": {"type": "boolean"},
+                                    "reason": {"type": "string"},
+                                    "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                },
+                            },
+                            "reviewed_manifest_file_preview_receipt": {
+                                "type": "object",
+                                "required": ["schema_version", "sha256", "material"],
+                                "properties": {
+                                    "schema_version": {
+                                        "type": "string",
+                                        "const": "birth-profile-reviewed-manifest-file-preview-receipt-v1",
+                                    },
+                                    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                                    "material": {"type": "object"},
+                                },
+                            },
+                            "reviewed_manifest_file_preview_sha256": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$",
+                            },
+                            "integrity_check": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "receipt_sha256_matches_material",
+                                    "preview_sha256_matches_material",
+                                ],
+                                "properties": {
+                                    "status": {"type": "string"},
+                                    "receipt_sha256_matches_material": {"type": "boolean"},
+                                    "preview_sha256_matches_material": {"type": "boolean"},
+                                },
+                            },
+                            "boundary": {"type": "string"},
+                        },
+                    },
+                    "configuration_guidance": {
+                        "type": "object",
+                        "required": [
+                            "example_manifest_path",
+                            "example_is_demonstration_only",
+                            "cli_command",
+                            "http_query",
+                            "policy",
+                        ],
+                        "properties": {
+                            "example_manifest_path": {"type": "string"},
+                            "example_is_demonstration_only": {"type": "boolean"},
+                            "cli_command": {"type": "string"},
+                            "http_query": {"type": "string"},
+                            "policy": {"type": "string"},
+                        },
+                    },
+                },
+            },
+            "BirthProfileImportPreviewResponse": {
+                "type": "object",
+                "required": ["repo", "manifest_path", "configured", "import_preview", "configuration_guidance"],
+                "properties": {
+                    "repo": {"type": "string"},
+                    "manifest_path": {"type": "string"},
+                    "configured": {"type": "boolean"},
+                    "import_preview": {
+                        "type": "object",
+                        "required": [
+                            "schema_version",
+                            "status",
+                            "valid",
+                            "would_write_file",
+                            "import_allowed",
+                            "import_preview_receipt",
+                            "import_preview_sha256",
+                            "integrity_check",
+                            "import_gate",
+                            "blocking_reasons",
+                            "candidate_profiles",
+                            "next_action",
+                            "boundary",
+                        ],
+                        "properties": {
+                            "schema_version": {"type": "string", "const": "birth-profile-import-preview-v1"},
+                            "status": {"type": "string"},
+                            "valid": {"type": "boolean"},
+                            "would_write_file": {"type": "boolean"},
+                            "import_allowed": {"type": "boolean"},
+                            "import_preview_receipt": {
+                                "type": "object",
+                                "required": ["schema_version", "sha256", "material"],
+                                "properties": {
+                                    "schema_version": {
+                                        "type": "string",
+                                        "const": "birth-profile-import-preview-receipt-v1",
+                                    },
+                                    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                                    "material": {"type": "object"},
+                                },
+                            },
+                            "import_preview_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                            "integrity_check": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "receipt_sha256_matches_material",
+                                    "preview_sha256_matches_material",
+                                ],
+                                "properties": {
+                                    "status": {"type": "string"},
+                                    "receipt_sha256_matches_material": {"type": "boolean"},
+                                    "preview_sha256_matches_material": {"type": "boolean"},
+                                },
+                            },
+                            "import_gate": {
+                                "type": "object",
+                                "required": ["id", "passed", "reason", "blocking_reasons"],
+                                "properties": {
+                                    "id": {"type": "string", "const": "birth_profile_import_reviewed_profiles_present"},
+                                    "passed": {"type": "boolean"},
+                                    "reason": {"type": "string"},
+                                    "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                },
+                            },
+                            "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                            "candidate_profiles": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "required": [
+                                        "case_id",
+                                        "public_name",
+                                        "domain",
+                                        "birth",
+                                        "source",
+                                        "identity_source_url",
+                                        "review_status",
+                                    ],
+                                    "properties": {
+                                        "case_id": {"type": "string"},
+                                        "public_name": {"type": "string"},
+                                        "domain": {"type": "string"},
+                                        "birth": {
+                                            "type": "object",
+                                            "required": ["birth_date", "birth_time", "gender", "birthplace"],
+                                            "properties": {
+                                                "birth_date": {"type": "string"},
+                                                "birth_time": {"type": "string"},
+                                                "gender": {"type": "string"},
+                                                "birthplace": {"type": "string"},
+                                            },
+                                        },
+                                        "source": {
+                                            "type": "object",
+                                            "required": ["name", "url", "rating", "note"],
+                                            "properties": {
+                                                "name": {"type": "string"},
+                                                "url": {"type": "string"},
+                                                "rating": {"type": "string"},
+                                                "note": {"type": "string"},
+                                            },
+                                        },
+                                        "identity_source_url": {"type": "string"},
+                                        "review_status": {"type": "string"},
+                                        "collected_before_rule_change": {"type": "boolean"},
+                                    },
+                                },
+                            },
+                            "next_action": {"type": "string"},
+                            "boundary": {"type": "string"},
+                        },
+                    },
+                    "configuration_guidance": {
+                        "type": "object",
+                        "required": [
+                            "example_manifest_path",
+                            "example_is_demonstration_only",
+                            "cli_command",
+                            "http_query",
+                            "policy",
+                        ],
+                        "properties": {
+                            "example_manifest_path": {"type": "string"},
+                            "example_is_demonstration_only": {"type": "boolean"},
+                            "cli_command": {"type": "string"},
+                            "http_query": {"type": "string"},
+                            "policy": {"type": "string"},
+                        },
+                    },
+                },
+            },
+            "BirthProfileFixturePatchPreviewResponse": {
+                "type": "object",
+                "required": ["repo", "manifest_path", "configured", "fixture_patch_preview", "configuration_guidance"],
+                "properties": {
+                    "repo": {"type": "string"},
+                    "manifest_path": {"type": "string"},
+                    "configured": {"type": "boolean"},
+                    "fixture_patch_preview": {
+                        "type": "object",
+                        "required": [
+                            "schema_version",
+                            "status",
+                            "valid",
+                            "target_file",
+                            "target_file_sha256",
+                            "would_write_file",
+                            "patch_ready_for_review",
+                            "candidate_count",
+                            "candidate_case_ids",
+                            "candidate_profiles",
+                            "patch_format",
+                            "patch_text",
+                            "patch_text_sha256",
+                            "fixture_patch_preview_receipt",
+                            "fixture_patch_preview_sha256",
+                            "integrity_check",
+                            "patch_gate",
+                            "blocking_reasons",
+                            "next_action",
+                            "boundary",
+                        ],
+                        "properties": {
+                            "schema_version": {
+                                "type": "string",
+                                "const": "birth-profile-fixture-patch-preview-v1",
+                            },
+                            "status": {"type": "string"},
+                            "valid": {"type": "boolean"},
+                            "target_file": {"type": "string"},
+                            "target_file_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+                            "would_write_file": {"type": "boolean"},
+                            "patch_ready_for_review": {"type": "boolean"},
+                            "candidate_count": {"type": "integer"},
+                            "candidate_case_ids": {"type": "array", "items": {"type": "string"}},
+                            "candidate_profiles": {"type": "array", "items": {"type": "object"}},
+                            "patch_format": {"type": "string"},
+                            "patch_text": {"type": "string"},
+                            "patch_text_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                            "fixture_patch_preview_receipt": {
+                                "type": "object",
+                                "required": ["schema_version", "sha256", "material"],
+                                "properties": {
+                                    "schema_version": {
+                                        "type": "string",
+                                        "const": "birth-profile-fixture-patch-preview-receipt-v1",
+                                    },
+                                    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                                    "material": {"type": "object"},
+                                },
+                            },
+                            "fixture_patch_preview_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                            "integrity_check": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "receipt_sha256_matches_material",
+                                    "preview_sha256_matches_material",
+                                ],
+                                "properties": {
+                                    "status": {"type": "string"},
+                                    "receipt_sha256_matches_material": {"type": "boolean"},
+                                    "preview_sha256_matches_material": {"type": "boolean"},
+                                },
+                            },
+                            "patch_gate": {
+                                "type": "object",
+                                "required": ["id", "passed", "reason", "blocking_reasons"],
+                                "properties": {
+                                    "id": {"type": "string", "const": "birth_profile_fixture_patch_preview_ready"},
+                                    "passed": {"type": "boolean"},
+                                    "reason": {"type": "string"},
+                                    "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                },
+                            },
+                            "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                            "next_action": {"type": "string"},
+                            "boundary": {"type": "string"},
+                        },
+                    },
+                    "configuration_guidance": {
+                        "type": "object",
+                        "required": [
+                            "example_manifest_path",
+                            "example_is_demonstration_only",
+                            "cli_command",
+                            "http_query",
+                            "policy",
+                        ],
+                        "properties": {
+                            "example_manifest_path": {"type": "string"},
+                            "example_is_demonstration_only": {"type": "boolean"},
+                            "cli_command": {"type": "string"},
+                            "http_query": {"type": "string"},
+                            "policy": {"type": "string"},
+                        },
+                    },
+                },
+            },
             "FeedbackMemorySafetyAudit": {
                 "type": "object",
                 "required": [
@@ -9422,6 +11880,9 @@ def schema_document() -> dict[str, Any]:
                     "github_comparison_receipt_sha256",
                     "plan_compliance_receipt_sha256",
                     "famous_case_validation",
+                    "famous_case_school_calibration",
+                    "famous_case_annual_event_calibration",
+                    "industry_event_cross_domain_fixture_import",
                 ],
                 "properties": {
                     "schema_version": {"type": "string", "const": "capability-audit-receipt-v1"},
@@ -9442,6 +11903,644 @@ def schema_document() -> dict[str, Any]:
                         "pattern": "^[0-9a-f]{64}$",
                     },
                     "famous_case_validation": {"$ref": "#/schemas/FamousCaseValidationReceiptSummary"},
+                    "famous_case_school_calibration": {
+                        "$ref": "#/schemas/FamousCaseSchoolCalibrationReceiptSummary"
+                    },
+                    "famous_case_annual_event_calibration": {
+                        "$ref": "#/schemas/FamousCaseAnnualEventCalibrationReceiptSummary"
+                    },
+                    "industry_event_cross_domain_fixture_import": {
+                        "$ref": "#/schemas/IndustryEventCrossDomainFixtureImportReceipt"
+                    },
+                },
+            },
+            "IndustryEventCrossDomainFixtureImportMaterial": {
+                "type": "object",
+                "required": [
+                    "schema_version",
+                    "status",
+                    "candidate_path",
+                    "query_plan_path",
+                    "cache_dir",
+                    "fixture_response_paths",
+                    "offline_only",
+                    "production_evidence",
+                    "candidate_count",
+                    "draft_count",
+                    "positive_record_count",
+                    "negative_record_count",
+                    "record_count",
+                    "domains",
+                    "cross_domain_coverage_gate_passed",
+                    "domain_coverage_summary",
+                    "symbolic_scoring_readiness_summary",
+                    "candidate_pool_fetch_cache_receipt_sha256",
+                    "candidate_pool_draft_import_receipt_sha256",
+                    "validation_label_table_receipt_sha256",
+                    "boundary",
+                    "failures",
+                ],
+                "properties": {
+                    "schema_version": {
+                        "type": "string",
+                        "const": "industry-event-cross-domain-fixture-import-receipt-v1",
+                    },
+                    "status": {"type": "string", "enum": ["ready_example", "incomplete"]},
+                    "candidate_path": {"type": "string"},
+                    "query_plan_path": {"type": "string"},
+                    "cache_dir": {"type": "string"},
+                    "fixture_response_paths": {
+                        "type": "object",
+                        "required": ["film", "music", "sports"],
+                        "properties": {
+                            "film": {"type": "string"},
+                            "music": {"type": "string"},
+                            "sports": {"type": "string"},
+                        },
+                    },
+                    "offline_only": {"type": "boolean"},
+                    "production_evidence": {"type": "boolean"},
+                    "candidate_count": {"type": "integer"},
+                    "draft_count": {"type": "integer"},
+                    "positive_record_count": {"type": "integer"},
+                    "negative_record_count": {"type": "integer"},
+                    "record_count": {"type": "integer"},
+                    "domains": {"type": "array", "items": {"type": "string"}},
+                    "cross_domain_coverage_gate_passed": {"type": "boolean"},
+                    "domain_coverage_summary": {"type": "array", "items": {"type": "object"}},
+                    "symbolic_scoring_readiness_summary": {
+                        "type": "object",
+                        "required": [
+                            "status",
+                            "label_count",
+                            "ready_label_count",
+                            "blocked_label_count",
+                            "case_count",
+                            "ready_case_count",
+                            "blocked_case_count",
+                            "ready_case_ids",
+                            "blocked_case_ids",
+                            "missing_birth_profile_case_ids",
+                            "domain_topic_summary",
+                            "gates",
+                            "birth_profile_completion_task_plan",
+                            "birth_profile_completion_workplan_summary",
+                            "birth_profile_review_manifest_summary",
+                            "birth_profile_source_review_workplan_summary",
+                            "birth_profile_source_lookup_plan_summary",
+                            "birth_profile_source_cache_template_preview_summary",
+                            "birth_profile_source_family_cache_enforcement_summary",
+                            "birth_profile_substantive_evidence_cache_enforcement_summary",
+                            "birth_profile_source_cache_audit_summary",
+                            "birth_profile_reviewed_manifest_draft_preview_summary",
+                            "birth_profile_reviewed_manifest_file_preview_summary",
+                            "birth_profile_import_preview_summary",
+                            "birth_profile_fixture_patch_preview_summary",
+                            "symbolic_scoring_readiness_receipt_sha256",
+                            "symbolic_annual_score_receipt_sha256",
+                            "evidence_workplan_receipt_sha256",
+                            "birth_profile_review_manifest_receipt_sha256",
+                            "birth_profile_source_review_workplan_receipt_sha256",
+                            "birth_profile_source_lookup_plan_receipt_sha256",
+                            "birth_profile_source_cache_template_preview_receipt_sha256",
+                            "birth_profile_source_cache_audit_receipt_sha256",
+                            "birth_profile_reviewed_manifest_draft_preview_receipt_sha256",
+                            "birth_profile_reviewed_manifest_file_preview_receipt_sha256",
+                            "birth_profile_import_preview_receipt_sha256",
+                            "birth_profile_fixture_patch_preview_receipt_sha256",
+                            "boundary",
+                        ],
+                        "properties": {
+                            "status": {"type": "string"},
+                            "label_count": {"type": "integer"},
+                            "ready_label_count": {"type": "integer"},
+                            "blocked_label_count": {"type": "integer"},
+                            "case_count": {"type": "integer"},
+                            "ready_case_count": {"type": "integer"},
+                            "blocked_case_count": {"type": "integer"},
+                            "ready_case_ids": {"type": "array", "items": {"type": "string"}},
+                            "blocked_case_ids": {"type": "array", "items": {"type": "string"}},
+                            "missing_birth_profile_case_ids": {"type": "array", "items": {"type": "string"}},
+                            "domain_topic_summary": {"type": "array", "items": {"type": "object"}},
+                            "gates": {"type": "array", "items": {"type": "object"}},
+                            "birth_profile_completion_task_plan": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "required": [
+                                        "task_id",
+                                        "domain",
+                                        "symbolic_event_topic",
+                                        "priority",
+                                        "task_type",
+                                        "blocked_label_count",
+                                        "blocked_case_count",
+                                        "blocked_case_ids",
+                                        "blocked_public_names",
+                                        "next_evidence_to_add",
+                                        "acceptance_criteria",
+                                        "blocking_reasons",
+                                        "boundary",
+                                    ],
+                                    "properties": {
+                                        "task_id": {"type": ["string", "null"]},
+                                        "domain": {"type": ["string", "null"]},
+                                        "symbolic_event_topic": {"type": ["string", "null"]},
+                                        "priority": {"type": ["string", "null"]},
+                                        "task_type": {"type": ["string", "null"]},
+                                        "blocked_label_count": {"type": "integer"},
+                                        "blocked_case_count": {"type": "integer"},
+                                        "blocked_case_ids": {"type": "array", "items": {"type": "string"}},
+                                        "blocked_public_names": {"type": "array", "items": {"type": "string"}},
+                                        "next_evidence_to_add": {"type": "array", "items": {"type": "string"}},
+                                        "acceptance_criteria": {"type": "array", "items": {"type": "string"}},
+                                        "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                        "boundary": {"type": "string"},
+                                    },
+                                },
+                            },
+                            "birth_profile_completion_workplan_summary": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "valid",
+                                    "source_task_count",
+                                    "deferred_task_count",
+                                    "work_item_count",
+                                    "readiness_status",
+                                    "deferred_blocked_gate_count",
+                                    "deferred_failed_integrity_check_count",
+                                    "deferred_task_summaries",
+                                    "boundary",
+                                ],
+                                "properties": {
+                                    "status": {"type": "string"},
+                                    "valid": {"type": "boolean"},
+                                    "source_task_count": {"type": "integer"},
+                                    "deferred_task_count": {"type": "integer"},
+                                    "work_item_count": {"type": "integer"},
+                                    "readiness_status": {"type": "string"},
+                                    "deferred_blocked_gate_count": {"type": "integer"},
+                                    "deferred_failed_integrity_check_count": {"type": "integer"},
+                                    "deferred_task_summaries": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "required": [
+                                                "task_id",
+                                                "domain",
+                                                "symbolic_event_topic",
+                                                "task_type",
+                                                "blocked_case_ids",
+                                                "local_birth_profile_suggestion_count",
+                                                "local_birth_profile_suggestion_case_ids",
+                                                "completion_work_order_status",
+                                                "gate_summary_status",
+                                                "blocked_gate_count",
+                                                "failed_integrity_check_count",
+                                                "next_action",
+                                            ],
+                                            "properties": {
+                                                "task_id": {"type": ["string", "null"]},
+                                                "domain": {"type": ["string", "null"]},
+                                                "symbolic_event_topic": {"type": ["string", "null"]},
+                                                "task_type": {"type": ["string", "null"]},
+                                                "blocked_case_ids": {
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                },
+                                                "local_birth_profile_suggestion_count": {"type": "integer"},
+                                                "local_birth_profile_suggestion_case_ids": {
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                },
+                                                "completion_work_order_status": {"type": ["string", "null"]},
+                                                "gate_summary_status": {"type": ["string", "null"]},
+                                                "blocked_gate_count": {"type": "integer"},
+                                                "failed_integrity_check_count": {"type": "integer"},
+                                                "next_action": {"type": ["string", "null"]},
+                                            },
+                                        },
+                                    },
+                                    "boundary": {"type": "string"},
+                                },
+                            },
+                            "birth_profile_review_manifest_summary": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "valid",
+                                    "production_evidence",
+                                    "request_count",
+                                    "case_count",
+                                    "domains",
+                                    "blocked_label_count",
+                                    "ready_for_import",
+                                    "domain_summary",
+                                    "failures",
+                                    "boundary",
+                                ],
+                                "properties": {
+                                    "status": {"type": ["string", "null"]},
+                                    "valid": {"type": "boolean"},
+                                    "production_evidence": {"type": "boolean"},
+                                    "request_count": {"type": "integer"},
+                                    "case_count": {"type": "integer"},
+                                    "domains": {"type": "array", "items": {"type": "string"}},
+                                    "blocked_label_count": {"type": "integer"},
+                                    "ready_for_import": {"type": "boolean"},
+                                    "domain_summary": {"type": "array", "items": {"type": "object"}},
+                                    "failures": {"type": "array", "items": {"type": "string"}},
+                                    "boundary": {"type": "string"},
+                                },
+                            },
+                            "birth_profile_source_review_workplan_summary": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "valid",
+                                    "would_fetch_live_sources",
+                                    "would_write_review_manifest",
+                                    "request_count",
+                                    "work_item_count",
+                                    "review_progress_summary",
+                                    "field_gap_summary",
+                                    "source_review_gate_passed",
+                                    "blocking_reasons",
+                                    "integrity_check_status",
+                                    "boundary",
+                                ],
+                                "properties": {
+                                    "status": {"type": ["string", "null"]},
+                                    "valid": {"type": "boolean"},
+                                    "would_fetch_live_sources": {"type": "boolean"},
+                                    "would_write_review_manifest": {"type": "boolean"},
+                                    "request_count": {"type": "integer"},
+                                    "work_item_count": {"type": "integer"},
+                                    "review_progress_summary": {"type": "object"},
+                                    "field_gap_summary": {"type": "object"},
+                                    "source_review_gate_passed": {"type": "boolean"},
+                                    "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                    "integrity_check_status": {"type": ["string", "null"]},
+                                    "boundary": {"type": "string"},
+                                },
+                            },
+                            "birth_profile_source_lookup_plan_summary": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "valid",
+                                    "would_fetch_live_sources",
+                                    "would_write_cache",
+                                    "would_write_review_manifest",
+                                    "lookup_item_count",
+                                    "query_count",
+                                    "source_family_count",
+                                    "source_family_catalog_bound",
+                                    "birth_time_source_policy_bound",
+                                    "identity_anchor_birth_time_disallowed",
+                                    "lookup_gate_passed",
+                                    "blocking_reasons",
+                                    "integrity_check_status",
+                                    "boundary",
+                                ],
+                                "properties": {
+                                    "status": {"type": ["string", "null"]},
+                                    "valid": {"type": "boolean"},
+                                    "would_fetch_live_sources": {"type": "boolean"},
+                                    "would_write_cache": {"type": "boolean"},
+                                    "would_write_review_manifest": {"type": "boolean"},
+                                    "lookup_item_count": {"type": "integer"},
+                                    "query_count": {"type": "integer"},
+                                    "source_family_count": {"type": "integer"},
+                                    "source_family_catalog_bound": {"type": "boolean"},
+                                    "birth_time_source_policy_bound": {"type": "boolean"},
+                                    "identity_anchor_birth_time_disallowed": {"type": "boolean"},
+                                    "domain_summary": {"type": "array", "items": {"type": "object"}},
+                                    "lookup_gate_passed": {"type": "boolean"},
+                                    "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                    "integrity_check_status": {"type": ["string", "null"]},
+                                    "boundary": {"type": "string"},
+                                },
+                            },
+                            "birth_profile_source_cache_audit_summary": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "valid",
+                                    "would_fetch_live_sources",
+                                    "would_write_cache",
+                                    "would_write_review_manifest",
+                                    "would_import_profiles",
+                                    "expected_cache_count",
+                                    "present_cache_count",
+                                    "missing_cache_count",
+                                    "accepted_cache_count",
+                                    "cache_audit_gate_passed",
+                                    "blocking_reasons",
+                                    "integrity_check_status",
+                                    "boundary",
+                                ],
+                                "properties": {
+                                    "status": {"type": ["string", "null"]},
+                                    "valid": {"type": "boolean"},
+                                    "would_fetch_live_sources": {"type": "boolean"},
+                                    "would_write_cache": {"type": "boolean"},
+                                    "would_write_review_manifest": {"type": "boolean"},
+                                    "would_import_profiles": {"type": "boolean"},
+                                    "expected_cache_count": {"type": "integer"},
+                                    "present_cache_count": {"type": "integer"},
+                                    "missing_cache_count": {"type": "integer"},
+                                    "accepted_cache_count": {"type": "integer"},
+                                    "cache_audit_gate_passed": {"type": "boolean"},
+                                    "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                    "integrity_check_status": {"type": ["string", "null"]},
+                                    "boundary": {"type": "string"},
+                                },
+                            },
+                            "birth_profile_source_cache_template_preview_summary": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "valid",
+                                    "would_fetch_live_sources",
+                                    "would_write_cache",
+                                    "would_import_profiles",
+                                    "template_count",
+                                    "template_preview_gate_passed",
+                                    "blocking_reasons",
+                                    "integrity_check_status",
+                                    "boundary",
+                                ],
+                                "properties": {
+                                    "status": {"type": ["string", "null"]},
+                                    "valid": {"type": "boolean"},
+                                    "would_fetch_live_sources": {"type": "boolean"},
+                                    "would_write_cache": {"type": "boolean"},
+                                    "would_import_profiles": {"type": "boolean"},
+                                    "template_count": {"type": "integer"},
+                                    "template_preview_gate_passed": {"type": "boolean"},
+                                    "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                    "integrity_check_status": {"type": ["string", "null"]},
+                                    "boundary": {"type": "string"},
+                                },
+                            },
+                            "birth_profile_source_family_cache_enforcement_summary": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "valid",
+                                    "probe_executed",
+                                    "identity_anchor_birth_time_rejected",
+                                    "accepted_cache_count_after_probe",
+                                    "probe_source_family_id",
+                                    "failure_contains_birth_time_policy",
+                                    "failures",
+                                    "boundary",
+                                ],
+                                "properties": {
+                                    "status": {"type": "string"},
+                                    "valid": {"type": "boolean"},
+                                    "probe_executed": {"type": "boolean"},
+                                    "identity_anchor_birth_time_rejected": {"type": "boolean"},
+                                    "accepted_cache_count_after_probe": {"type": ["integer", "null"]},
+                                    "probe_source_family_id": {"type": "string"},
+                                    "failure_contains_birth_time_policy": {"type": "boolean"},
+                                    "failures": {"type": "array", "items": {"type": "string"}},
+                                    "boundary": {"type": "string"},
+                                },
+                            },
+                            "birth_profile_substantive_evidence_cache_enforcement_summary": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "valid",
+                                    "probe_executed",
+                                    "metadata_only_reviewed_cache_rejected",
+                                    "accepted_cache_count_after_probe",
+                                    "probe_source_family_id",
+                                    "failure_contains_substantive_birth_policy",
+                                    "failures",
+                                    "boundary",
+                                ],
+                                "properties": {
+                                    "status": {"type": "string"},
+                                    "valid": {"type": "boolean"},
+                                    "probe_executed": {"type": "boolean"},
+                                    "metadata_only_reviewed_cache_rejected": {"type": "boolean"},
+                                    "accepted_cache_count_after_probe": {"type": ["integer", "null"]},
+                                    "probe_source_family_id": {"type": "string"},
+                                    "failure_contains_substantive_birth_policy": {"type": "boolean"},
+                                    "failures": {"type": "array", "items": {"type": "string"}},
+                                    "boundary": {"type": "string"},
+                                },
+                            },
+                            "birth_profile_reviewed_manifest_draft_preview_summary": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "valid",
+                                    "would_write_review_manifest",
+                                    "would_import_profiles",
+                                    "draft_ready_for_human_approval",
+                                    "review_request_count",
+                                    "complete_review_request_count",
+                                    "incomplete_review_request_count",
+                                    "draft_gate_passed",
+                                    "blocking_reasons",
+                                    "integrity_check_status",
+                                    "boundary",
+                                ],
+                                "properties": {
+                                    "status": {"type": ["string", "null"]},
+                                    "valid": {"type": "boolean"},
+                                    "would_write_review_manifest": {"type": "boolean"},
+                                    "would_import_profiles": {"type": "boolean"},
+                                    "draft_ready_for_human_approval": {"type": "boolean"},
+                                    "review_request_count": {"type": "integer"},
+                                    "complete_review_request_count": {"type": "integer"},
+                                    "incomplete_review_request_count": {"type": "integer"},
+                                    "draft_gate_passed": {"type": "boolean"},
+                                    "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                    "integrity_check_status": {"type": ["string", "null"]},
+                                    "boundary": {"type": "string"},
+                                },
+                            },
+                            "birth_profile_reviewed_manifest_file_preview_summary": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "valid",
+                                    "would_write_file",
+                                    "would_import_profiles",
+                                    "write_ready_for_human_approval",
+                                    "target_file",
+                                    "target_file_sha256",
+                                    "file_preview_gate_passed",
+                                    "blocking_reasons",
+                                    "integrity_check_status",
+                                    "boundary",
+                                ],
+                                "properties": {
+                                    "status": {"type": ["string", "null"]},
+                                    "valid": {"type": "boolean"},
+                                    "would_write_file": {"type": "boolean"},
+                                    "would_import_profiles": {"type": "boolean"},
+                                    "write_ready_for_human_approval": {"type": "boolean"},
+                                    "target_file": {"type": "string"},
+                                    "target_file_sha256": {
+                                        "type": ["string", "null"],
+                                        "pattern": "^[0-9a-f]{64}$",
+                                    },
+                                    "file_preview_gate_passed": {"type": "boolean"},
+                                    "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                    "integrity_check_status": {"type": ["string", "null"]},
+                                    "boundary": {"type": "string"},
+                                },
+                            },
+                            "birth_profile_import_preview_summary": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "valid",
+                                    "would_write_file",
+                                    "import_allowed",
+                                    "request_count",
+                                    "blocked_request_count",
+                                    "import_ready_request_count",
+                                    "import_gate_passed",
+                                    "blocking_reasons",
+                                    "integrity_check_status",
+                                    "boundary",
+                                ],
+                                "properties": {
+                                    "status": {"type": ["string", "null"]},
+                                    "valid": {"type": "boolean"},
+                                    "would_write_file": {"type": "boolean"},
+                                    "import_allowed": {"type": "boolean"},
+                                    "request_count": {"type": "integer"},
+                                    "blocked_request_count": {"type": "integer"},
+                                    "import_ready_request_count": {"type": "integer"},
+                                    "import_gate_passed": {"type": "boolean"},
+                                    "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                    "integrity_check_status": {"type": ["string", "null"]},
+                                    "boundary": {"type": "string"},
+                                },
+                            },
+                            "birth_profile_fixture_patch_preview_summary": {
+                                "type": "object",
+                                "required": [
+                                    "status",
+                                    "valid",
+                                    "would_write_file",
+                                    "patch_ready_for_review",
+                                    "candidate_count",
+                                    "candidate_case_ids",
+                                    "patch_gate_passed",
+                                    "target_file_sha256",
+                                    "patch_text_sha256",
+                                    "blocking_reasons",
+                                    "integrity_check_status",
+                                    "boundary",
+                                ],
+                                "properties": {
+                                    "status": {"type": ["string", "null"]},
+                                    "valid": {"type": "boolean"},
+                                    "would_write_file": {"type": "boolean"},
+                                    "patch_ready_for_review": {"type": "boolean"},
+                                    "candidate_count": {"type": "integer"},
+                                    "candidate_case_ids": {"type": "array", "items": {"type": "string"}},
+                                    "patch_gate_passed": {"type": "boolean"},
+                                    "target_file_sha256": {
+                                        "type": ["string", "null"],
+                                        "pattern": "^[0-9a-f]{64}$",
+                                    },
+                                    "patch_text_sha256": {
+                                        "type": ["string", "null"],
+                                        "pattern": "^[0-9a-f]{64}$",
+                                    },
+                                    "blocking_reasons": {"type": "array", "items": {"type": "string"}},
+                                    "integrity_check_status": {"type": ["string", "null"]},
+                                    "boundary": {"type": "string"},
+                                },
+                            },
+                            "symbolic_scoring_readiness_receipt_sha256": {
+                                "type": ["string", "null"],
+                                "pattern": "^[0-9a-f]{64}$",
+                            },
+                            "symbolic_annual_score_receipt_sha256": {
+                                "type": ["string", "null"],
+                                "pattern": "^[0-9a-f]{64}$",
+                            },
+                            "evidence_workplan_receipt_sha256": {
+                                "type": ["string", "null"],
+                                "pattern": "^[0-9a-f]{64}$",
+                            },
+                            "birth_profile_review_manifest_receipt_sha256": {
+                                "type": ["string", "null"],
+                                "pattern": "^[0-9a-f]{64}$",
+                            },
+                            "birth_profile_source_review_workplan_receipt_sha256": {
+                                "type": ["string", "null"],
+                                "pattern": "^[0-9a-f]{64}$",
+                            },
+                            "birth_profile_source_lookup_plan_receipt_sha256": {
+                                "type": ["string", "null"],
+                                "pattern": "^[0-9a-f]{64}$",
+                            },
+                            "birth_profile_source_cache_template_preview_receipt_sha256": {
+                                "type": ["string", "null"],
+                                "pattern": "^[0-9a-f]{64}$",
+                            },
+                            "birth_profile_source_cache_audit_receipt_sha256": {
+                                "type": ["string", "null"],
+                                "pattern": "^[0-9a-f]{64}$",
+                            },
+                            "birth_profile_reviewed_manifest_draft_preview_receipt_sha256": {
+                                "type": ["string", "null"],
+                                "pattern": "^[0-9a-f]{64}$",
+                            },
+                            "birth_profile_reviewed_manifest_file_preview_receipt_sha256": {
+                                "type": ["string", "null"],
+                                "pattern": "^[0-9a-f]{64}$",
+                            },
+                            "birth_profile_import_preview_receipt_sha256": {
+                                "type": ["string", "null"],
+                                "pattern": "^[0-9a-f]{64}$",
+                            },
+                            "birth_profile_fixture_patch_preview_receipt_sha256": {
+                                "type": ["string", "null"],
+                                "pattern": "^[0-9a-f]{64}$",
+                            },
+                            "boundary": {"type": "string"},
+                        },
+                    },
+                    "candidate_pool_fetch_cache_receipt_sha256": {
+                        "type": ["string", "null"],
+                        "pattern": "^[0-9a-f]{64}$",
+                    },
+                    "candidate_pool_draft_import_receipt_sha256": {
+                        "type": ["string", "null"],
+                        "pattern": "^[0-9a-f]{64}$",
+                    },
+                    "validation_label_table_receipt_sha256": {
+                        "type": ["string", "null"],
+                        "pattern": "^[0-9a-f]{64}$",
+                    },
+                    "boundary": {"type": "string"},
+                    "failures": {"type": "array", "items": {"type": "string"}},
+                },
+            },
+            "IndustryEventCrossDomainFixtureImportReceipt": {
+                "type": "object",
+                "required": ["schema_version", "sha256", "material"],
+                "properties": {
+                    "schema_version": {
+                        "type": "string",
+                        "const": "industry-event-cross-domain-fixture-import-receipt-v1",
+                    },
+                    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                    "material": {"$ref": "#/schemas/IndustryEventCrossDomainFixtureImportMaterial"},
                 },
             },
             "BlockedCapabilityCoverageEntry": {
@@ -9833,7 +12932,17 @@ def schema_document() -> dict[str, Any]:
             },
             "FamousCaseValidationReceiptSummary": {
                 "type": "object",
-                "required": ["schema_version", "sha256", "case_count", "domains", "sources", "ratings", "material"],
+                "required": [
+                    "schema_version",
+                    "sha256",
+                    "case_count",
+                    "domains",
+                    "sources",
+                    "ratings",
+                    "domain_coverage",
+                    "birth_source_quality",
+                    "material",
+                ],
                 "properties": {
                     "schema_version": {"type": "string", "const": "mingli-famous-case-validation-v2"},
                     "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
@@ -9841,7 +12950,104 @@ def schema_document() -> dict[str, Any]:
                     "domains": {"type": "array", "items": {"type": "string"}},
                     "sources": {"type": "array", "items": {"type": "string"}},
                     "ratings": {"type": "array", "items": {"type": "string"}},
+                    "domain_coverage": {"type": "array", "items": {"type": "object"}},
+                    "birth_source_quality": {"type": "object"},
                     "material": {"type": "object"},
+                },
+            },
+            "FamousCaseSchoolCalibrationReceiptSummary": {
+                "type": "object",
+                "required": [
+                    "schema_version",
+                    "sha256",
+                    "fixture_sha256",
+                    "case_count",
+                    "mean_topic_recall",
+                    "low_coverage_cases",
+                    "school_summary",
+                    "domain_summary",
+                    "boundary",
+                ],
+                "properties": {
+                    "schema_version": {"type": "string", "const": "mingli-famous-case-school-calibration-v1"},
+                    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                    "fixture_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                    "case_count": {"type": "integer"},
+                    "mean_topic_recall": {"type": "number"},
+                    "low_coverage_cases": {"type": "array", "items": {"type": "object"}},
+                    "school_summary": {"type": "array", "items": {"type": "object"}},
+                    "domain_summary": {"type": "array", "items": {"type": "object"}},
+                    "boundary": {"type": "string"},
+                },
+            },
+            "FamousCaseAnnualEventCalibrationReceiptSummary": {
+                "type": "object",
+                "required": [
+                    "schema_version",
+                    "sha256",
+                    "fixture_sha256",
+                    "case_count",
+                    "event_count",
+                    "negative_year_count",
+                    "false_positive_count",
+                    "strict_exact_hit_count",
+                    "strict_false_positive_count",
+                    "exact_hit_rate",
+                    "window_hit_rate",
+                    "exact_precision",
+                    "false_positive_rate",
+                    "strict_exact_hit_rate",
+                    "strict_exact_precision",
+                    "strict_false_positive_rate",
+                    "low_coverage_cases",
+                    "birth_source_quality_summary",
+                    "domain_summary",
+                    "domain_topic_summary",
+                    "domain_topic_refinement_queue",
+                    "domain_topic_variant_sweep",
+                    "topic_summary",
+                    "industry_event_evidence_summary",
+                    "industry_event_source_coverage",
+                    "event_subtype_summary",
+                    "rule_variant_sweep",
+                    "rule_refinement_queue",
+                    "evolution_task_plan",
+                    "boundary",
+                ],
+                "properties": {
+                    "schema_version": {
+                        "type": "string",
+                        "const": "mingli-famous-case-annual-event-calibration-v1",
+                    },
+                    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                    "fixture_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                    "case_count": {"type": "integer"},
+                    "event_count": {"type": "integer"},
+                    "negative_year_count": {"type": "integer"},
+                    "false_positive_count": {"type": "integer"},
+                    "strict_exact_hit_count": {"type": "integer"},
+                    "strict_false_positive_count": {"type": "integer"},
+                    "exact_hit_rate": {"type": "number"},
+                    "window_hit_rate": {"type": "number"},
+                    "exact_precision": {"type": "number"},
+                    "false_positive_rate": {"type": "number"},
+                    "strict_exact_hit_rate": {"type": "number"},
+                    "strict_exact_precision": {"type": "number"},
+                    "strict_false_positive_rate": {"type": "number"},
+                    "low_coverage_cases": {"type": "array", "items": {"type": "object"}},
+                    "birth_source_quality_summary": {"type": "object"},
+                    "domain_summary": {"type": "array", "items": {"type": "object"}},
+                    "domain_topic_summary": {"type": "array", "items": {"type": "object"}},
+                    "domain_topic_refinement_queue": {"type": "array", "items": {"type": "object"}},
+                    "domain_topic_variant_sweep": {"type": "array", "items": {"type": "object"}},
+                    "topic_summary": {"type": "array", "items": {"type": "object"}},
+                    "industry_event_evidence_summary": {"type": "array", "items": {"type": "object"}},
+                    "industry_event_source_coverage": {"type": "object"},
+                    "event_subtype_summary": {"type": "array", "items": {"type": "object"}},
+                    "rule_variant_sweep": {"type": "array", "items": {"type": "object"}},
+                    "rule_refinement_queue": {"type": "array", "items": {"type": "object"}},
+                    "evolution_task_plan": {"type": "array", "items": {"type": "object"}},
+                    "boundary": {"type": "string"},
                 },
             },
             "KnownGapItem": {
@@ -10009,6 +13215,9 @@ def schema_document() -> dict[str, Any]:
                     "method_surface",
                     "method_lineage",
                     "famous_case_validation",
+                    "famous_case_school_calibration",
+                    "famous_case_annual_event_calibration",
+                    "industry_event_cross_domain_fixture_import",
                     "audit_receipt",
                     "expected_audit_receipt_sha256",
                     "audit_receipt_matches_expected",
@@ -10044,6 +13253,15 @@ def schema_document() -> dict[str, Any]:
                     "method_surface": {"$ref": "#/schemas/MethodSurfaceReceiptSummary"},
                     "method_lineage": {"$ref": "#/schemas/MethodLineageReceiptSummary"},
                     "famous_case_validation": {"$ref": "#/schemas/FamousCaseValidationReceiptSummary"},
+                    "famous_case_school_calibration": {
+                        "$ref": "#/schemas/FamousCaseSchoolCalibrationReceiptSummary"
+                    },
+                    "famous_case_annual_event_calibration": {
+                        "$ref": "#/schemas/FamousCaseAnnualEventCalibrationReceiptSummary"
+                    },
+                    "industry_event_cross_domain_fixture_import": {
+                        "$ref": "#/schemas/IndustryEventCrossDomainFixtureImportReceipt"
+                    },
                     "audit_receipt": {"$ref": "#/schemas/CapabilityAuditReceipt"},
                     "expected_audit_receipt_sha256": {
                         "type": ["string", "null"],
@@ -10332,6 +13550,35 @@ def schema_document() -> dict[str, Any]:
                     "interpretation_basis": {"type": "array", "items": {"type": "string"}},
                 },
             },
+            "AnnualEventMarkers": {
+                "type": "object",
+                "required": [
+                    "career_launch",
+                    "role_power",
+                    "role_transition",
+                    "business_power",
+                    "relationship",
+                    "movement",
+                    "study_exam",
+                    "public_visibility",
+                    "health_pressure",
+                    "adult_career_stage",
+                    "basis",
+                ],
+                "properties": {
+                    "career_launch": {"type": "boolean"},
+                    "role_power": {"type": "boolean"},
+                    "role_transition": {"type": "boolean"},
+                    "business_power": {"type": "boolean"},
+                    "relationship": {"type": "boolean"},
+                    "movement": {"type": "boolean"},
+                    "study_exam": {"type": "boolean"},
+                    "public_visibility": {"type": "boolean"},
+                    "health_pressure": {"type": "boolean"},
+                    "adult_career_stage": {"type": "boolean"},
+                    "basis": {"type": "array", "items": {"type": "string"}},
+                },
+            },
             "AnnualLuckRow": {
                 "type": "object",
                 "required": [
@@ -10341,6 +13588,7 @@ def schema_document() -> dict[str, Any]:
                     "phase",
                     "elements",
                     "bazi_evidence",
+                    "event_markers",
                     "category",
                     "intensity",
                     "finance",
@@ -10361,6 +13609,7 @@ def schema_document() -> dict[str, Any]:
                     "phase": {"type": "string"},
                     "elements": {"$ref": "#/schemas/AnnualLuckRowElements"},
                     "bazi_evidence": {"$ref": "#/schemas/AnnualLuckBaziEvidence"},
+                    "event_markers": {"$ref": "#/schemas/AnnualEventMarkers"},
                     "category": {"type": "string"},
                     "intensity": {"type": "string"},
                     "finance": {"type": "string"},
@@ -11799,6 +15048,12 @@ def schema_document() -> dict[str, Any]:
                     "auspicious_calendar_row_count": {"type": "integer"},
                     "auspicious_calendar_receipt_bound_to_provenance": {"type": "boolean"},
                     "auspicious_calendar_count": {"type": "integer"},
+                    "chinese_render_duplicate_bullet_ratio": {"type": "number"},
+                    "chinese_render_topic_evidence_anchor_ratio": {"type": "number"},
+                    "chinese_render_topic_judgment_structure_ratio": {"type": "number"},
+                    "chinese_render_ascii_letter_count": {"type": "integer"},
+                    "chinese_render_ascii_question_present": {"type": "boolean"},
+                    "chinese_render_code_marker_present": {"type": "boolean"},
                     "topic_confidence_summary": {"type": "object"},
                     "topic_confidence_boundaries_ok": {"type": "boolean"},
                     "topic_confidence_missing_topics": {"type": "array", "items": {"type": "string"}},
@@ -12097,6 +15352,27 @@ def schema_document() -> dict[str, Any]:
             "GET /provider-drift": "ProviderCertificationDriftResponse: compare current provider certification receipts with the provider ledger; add ?domain=ziwei|qimen|astrology|xuanze or ?live=0 to narrow or skip live execution",
             "GET /provider-protocols": "ProviderProtocolsResponse: machine-readable JSON-CLI provider contracts for external professional engines; add ?domain=ziwei|qimen|astrology|xuanze to narrow",
             "GET /outcome-dataset": "OutcomeDatasetAuditResponse: audit an optional outcome dataset manifest; add ?manifest=path-to-json",
+            "GET /industry-events": "IndustryEventManifestStatusResponse: audit a public famous-case industry-event manifest; add ?manifest=path-to-json",
+            "GET /industry-event-labels": "IndustryEventValidationLabelTableResponse: convert an industry-event manifest into annual validation labels; add ?manifest=path-to-json",
+            "GET /industry-event-scoring-readiness": "IndustryEventSymbolicScoringReadinessResponse: check which industry-event labels have birth profiles for symbolic annual scoring; add ?manifest=path-to-json",
+            "GET /industry-event-symbolic-score": "IndustryEventSymbolicAnnualScoreResponse: score ready industry-event labels against symbolic annual rows; add ?manifest=path-to-json",
+            "GET /industry-event-evidence-workplan": "IndustryEventEvidenceWorkplanResponse: convert symbolic score tasks into reviewable candidate-pool collection work; add manifest, candidates, query_plan, and cache_dir",
+            "GET /birth-profile-review": "BirthProfileReviewStatusResponse: audit a reviewed-birth-profile collection worklist before celebrity birth profiles are imported; add ?manifest=path-to-json",
+            "GET /birth-profile-source-review-workplan": "BirthProfileSourceReviewWorkplanResponse: build a non-mutating human source-review workplan for celebrity birth-profile requests; add ?manifest=path-to-json",
+            "GET /birth-profile-source-lookup-plan": "BirthProfileSourceLookupPlanResponse: build a dry-run source lookup plan for celebrity birth-profile review tasks; add ?manifest=path-to-json&cache_dir=dir&domain=film",
+            "GET /birth-profile-source-cache-template-preview": "BirthProfileSourceCacheTemplatePreviewResponse: build non-mutating JSON templates for manual celebrity birth-profile source cache files; add ?manifest=path-to-json&cache_dir=dir&domain=film",
+            "GET /birth-profile-source-cache-audit": "BirthProfileSourceCacheAuditResponse: audit manually prepared source lookup cache files without importing celebrity birth profiles; add ?manifest=path-to-json&cache_dir=dir&domain=film",
+            "GET /birth-profile-reviewed-manifest-draft-preview": "BirthProfileReviewedManifestDraftPreviewResponse: build a non-mutating reviewed-manifest draft preview from accepted source cache evidence; add ?manifest=path-to-json&cache_dir=dir&domain=film",
+            "GET /birth-profile-reviewed-manifest-file-preview": "BirthProfileReviewedManifestFilePreviewResponse: build a non-mutating file-write preview for an approved reviewed-manifest draft; add ?manifest=path-to-json&cache_dir=dir&target=path",
+            "GET /birth-profile-import-preview": "BirthProfileImportPreviewResponse: build a non-mutating preview for reviewed birth-profile fixture import; add ?manifest=path-to-json",
+            "GET /birth-profile-fixture-patch-preview": "BirthProfileFixturePatchPreviewResponse: build a non-mutating fixture patch preview from reviewed birth-profile candidates; add ?manifest=path-to-json",
+            "GET /industry-event-queries": "IndustryEventQueryPlanStatusResponse: audit public famous-case industry-event source query templates; add ?query_plan=path-to-json",
+            "GET /industry-event-candidates": "IndustryEventCandidateCasesStatusResponse: audit public celebrity candidate cases for future industry-event validation; add ?candidates=path-to-json",
+            "GET /industry-event-candidate-fetch-cache": "IndustryEventCandidatePoolFetchCacheResponse: plan or execute fetch/cache steps for selected celebrity candidates; add candidates, query_plan, cache_dir, optional domain, split_role, and live=1",
+            "GET /industry-event-candidate-draft-import": "IndustryEventCandidatePoolDraftImportResponse: import cached source responses for selected celebrity candidates into draft manifests; add candidates, query_plan, cache_dir, optional domain and split_role",
+            "GET /industry-event-requests": "IndustryEventCollectionRequestBundleResponse: build offline source collection requests from a query plan; add case_id, public_name, person_qid, start_year, end_year, and optional domain",
+            "GET /industry-event-fetch-cache": "IndustryEventFetchCacheResponse: plan or execute reviewed source fetches into cache; add case_id, public_name, person_qid, start_year, end_year, cache_dir, and optional live=1",
+            "GET /industry-event-draft-manifest": "IndustryEventDraftManifestResponse: build a draft manifest from a cached source response; add response, case_id, public_name, person_qid, start_year, end_year, and domain",
             "GET /classical-sources": "ClassicalSourcesResponse: audit external classical-source refresh configuration; add ?source_list=path-to-json or configure SEMAS_CLASSIC_SOURCE_LIST",
             "GET /classical-refresh": "ClassicalSourcesRefreshResponse: download and ingest allowlisted, hash-pinned classical-source manifests; add ?source_list=path-to-json&cache_dir=path&output_dir=path",
             "GET /production-readiness": "ProductionReadinessResponse: aggregate hard production-readiness gates; add ?manifest=path-to-json&classical_source_list=path-to-json&live=1&expected_readiness_receipt_sha256=...&expected_audit_receipt_sha256=...",

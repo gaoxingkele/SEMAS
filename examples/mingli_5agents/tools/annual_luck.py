@@ -106,13 +106,17 @@ def _annual_row(
     category, theme = CATEGORY_BY_ELEMENT[focus]
     age = year - birth_year
     intensity = _intensity(annual_elements, dominant, useful)
+    phase = TEN_YEAR_PHASES[min(age // 10, len(TEN_YEAR_PHASES) - 1)]
+    bazi_evidence = _bazi_evidence(year, age, label, stem, branch, focus, useful, dominant, context, deep_analysis)
+    event_markers = _event_markers(category, intensity, age, phase, bazi_evidence)
     return {
         "year": year,
         "age": age,
         "ganzhi": label,
-        "phase": TEN_YEAR_PHASES[min(age // 10, len(TEN_YEAR_PHASES) - 1)],
+        "phase": phase,
         "elements": {"stem": stem_element, "branch": branch_element, "focus": focus},
-        "bazi_evidence": _bazi_evidence(year, age, label, stem, branch, focus, useful, dominant, context, deep_analysis),
+        "bazi_evidence": bazi_evidence,
+        "event_markers": event_markers,
         "category": category,
         "intensity": intensity,
         "finance": _finance_theme(category, intensity),
@@ -331,6 +335,64 @@ def _risk_notes(category: str, intensity: str) -> list[str]:
     if category == "friends":
         notes.append("separate friendship from financial guarantees")
     return notes
+
+
+def _event_markers(
+    category: str,
+    intensity: str,
+    age: int,
+    phase: str,
+    bazi_evidence: dict[str, Any],
+) -> dict[str, Any]:
+    ten_gods_raw = bazi_evidence.get("annual_ten_gods", {}) if isinstance(bazi_evidence, dict) else {}
+    ten_gods = set(ten_gods_raw.values()) if isinstance(ten_gods_raw, dict) else set()
+    useful_state = str(bazi_evidence.get("useful_state", "")) if isinstance(bazi_evidence, dict) else ""
+    active_luck = bazi_evidence.get("active_major_luck", {}) if isinstance(bazi_evidence, dict) else {}
+    natal_matches = bazi_evidence.get("natal_pillar_matches", []) if isinstance(bazi_evidence, dict) else []
+    supported = useful_state in {"useful_element_activated", "useful_element_present"}
+    pressured = useful_state == "dominant_element_reinforced"
+    activated = bool(active_luck) or bool(natal_matches)
+    career_launch = category == "expression" and "expression" in ten_gods and (supported or activated or phase == "career entry")
+    role_power = category == "authority" and "authority" in ten_gods and (supported or pressured or activated)
+    role_transition = (
+        category in {"friends", "learning", "wealth"}
+        and bool({"authority", "peer", "resource"} & ten_gods)
+        and activated
+        and age >= 18
+    )
+    business_power = category == "wealth" and "wealth" in ten_gods and (supported or activated)
+    relationship = (
+        category in {"friends", "wealth"}
+        and bool({"peer", "wealth"} & ten_gods)
+        and (intensity in {"active", "high-volatility"} or activated)
+    )
+    movement = (phase in {"strategy revision", "career entry"} and activated) or (intensity == "high-volatility" and activated)
+    return {
+        "career_launch": career_launch,
+        "role_power": role_power,
+        "role_transition": role_transition,
+        "business_power": business_power,
+        "relationship": relationship,
+        "movement": movement,
+        "study_exam": (
+            category in {"learning", "authority"}
+            and bool({"resource", "authority"} & ten_gods)
+            and (supported or intensity in {"constructive", "active"})
+        ),
+        "public_visibility": category == "expression" and "expression" in ten_gods,
+        "health_pressure": intensity == "high-volatility" and pressured,
+        "adult_career_stage": age >= 18,
+        "basis": [
+            "annual category",
+            "annual intensity",
+            "annual ten-god pair",
+            "useful-state",
+            "major-luck activity",
+            "natal-pillar activation",
+            "ten-year life phase",
+            "age-stage boundary",
+        ],
+    }
 
 
 def _phase_summary(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:

@@ -10,7 +10,9 @@ from pathlib import Path
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
+from examples.mingli_5agents.api_core import schema_validation_errors
 from examples.mingli_5agents.api_server import serve
+from examples.mingli_5agents.industry_event_candidates import build_candidate_pool_fetch_cache_plan
 
 
 def _request(base_url: str, method: str, path: str, body: dict | None = None) -> dict:
@@ -23,6 +25,15 @@ def _request(base_url: str, method: str, path: str, body: dict | None = None) ->
     )
     with urlopen(request, timeout=30) as response:
         return json.loads(response.read().decode("utf-8"))
+
+
+def _materialize_cached_responses(batch_plan: dict, response_path: Path) -> None:
+    payload = response_path.read_bytes()
+    for plan in batch_plan.get("plans", []):
+        for entry in plan.get("cache_entries", []):
+            cache_path = Path(entry["cache_path"])
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            cache_path.write_bytes(payload)
 
 
 def _source_governance_fields() -> dict[str, str]:
@@ -86,6 +97,613 @@ def test_http_api_known_gap_handoff_export(tmp_path):
             },
         )
         assert matched_checklist["checklist_receipt_matches_expected"] is True
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_industry_events_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        manifest = Path("examples/mingli_5agents/providers/industry_event_source_manifest_example.json")
+        result = _request(base_url, "GET", f"/industry-events?manifest={manifest.as_posix()}")
+
+        assert result["configured"] is True
+        assert result["audit"]["valid"] is True
+        assert result["audit"]["domains"] == ["film", "music", "sports"]
+        assert result["audit"]["positive_event_count"] == 3
+        assert result["audit"]["negative_event_count"] == 3
+        assert result["production_gate"]["passed"] is False
+        assert len(result["industry_event_manifest_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_birth_profile_review_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        manifest = Path("examples/mingli_5agents/providers/birth_profile_review_manifest_example.json")
+        result = _request(base_url, "GET", f"/birth-profile-review?manifest={manifest.as_posix()}")
+
+        assert result["configured"] is True
+        assert result["audit"]["valid"] is True
+        assert result["audit"]["request_count"] == 8
+        assert result["audit"]["blocked_label_count"] == 257
+        assert result["production_gate"]["passed"] is False
+        assert result["production_gate"]["ready_for_import"] is False
+        assert len(result["birth_profile_review_manifest_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_birth_profile_source_review_workplan_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        manifest = Path("examples/mingli_5agents/providers/birth_profile_review_manifest_example.json")
+        result = _request(base_url, "GET", f"/birth-profile-source-review-workplan?manifest={manifest.as_posix()}")
+
+        assert result["configured"] is True
+        assert result["source_review_workplan"]["status"] == "ready_for_human_source_review"
+        assert result["source_review_workplan"]["would_fetch_live_sources"] is False
+        assert result["source_review_workplan"]["would_write_review_manifest"] is False
+        assert result["source_review_workplan"]["work_item_count"] == 8
+        assert result["source_review_workplan"]["source_review_gate"]["passed"] is False
+        assert len(result["source_review_workplan"]["source_review_workplan_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_birth_profile_source_lookup_plan_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        manifest = Path("examples/mingli_5agents/providers/birth_profile_review_manifest_example.json")
+        cache_dir = tmp_path / "birth_source_cache"
+        result = _request(
+            base_url,
+            "GET",
+            (
+                f"/birth-profile-source-lookup-plan?manifest={manifest.as_posix()}"
+                f"&cache_dir={quote(str(cache_dir))}&domain=music"
+            ),
+        )
+
+        assert result["configured"] is True
+        plan = result["source_lookup_plan"]
+        assert plan["status"] == "ready_for_manual_lookup"
+        assert plan["would_fetch_live_sources"] is False
+        assert plan["would_write_cache"] is False
+        assert plan["would_write_review_manifest"] is False
+        assert plan["selected_work_item_count"] == 3
+        assert plan["query_count"] == 6
+        assert plan["lookup_gate"]["passed"] is False
+        assert len(plan["source_lookup_plan_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_birth_profile_source_cache_audit_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        manifest = Path("examples/mingli_5agents/providers/birth_profile_review_manifest_example.json")
+        cache_dir = tmp_path / "birth_source_cache"
+        result = _request(
+            base_url,
+            "GET",
+            (
+                f"/birth-profile-source-cache-audit?manifest={manifest.as_posix()}"
+                f"&cache_dir={quote(str(cache_dir))}&domain=sports"
+            ),
+        )
+
+        assert result["configured"] is True
+        audit = result["source_cache_audit"]
+        assert audit["status"] == "waiting_for_manual_cache"
+        assert audit["would_fetch_live_sources"] is False
+        assert audit["would_write_cache"] is False
+        assert audit["would_write_review_manifest"] is False
+        assert audit["would_import_profiles"] is False
+        assert audit["expected_cache_count"] == 4
+        assert audit["missing_cache_count"] == 4
+        assert audit["cache_audit_gate"]["passed"] is False
+        assert len(audit["source_cache_audit_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_birth_profile_source_cache_template_preview_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        manifest = Path("examples/mingli_5agents/providers/birth_profile_review_manifest_example.json")
+        cache_dir = tmp_path / "birth_source_cache"
+        result = _request(
+            base_url,
+            "GET",
+            (
+                f"/birth-profile-source-cache-template-preview?manifest={manifest.as_posix()}"
+                f"&cache_dir={quote(str(cache_dir))}&domain=music"
+            ),
+        )
+
+        assert result["configured"] is True
+        preview = result["source_cache_template_preview"]
+        assert preview["status"] == "ready_for_manual_cache_fill"
+        assert preview["template_count"] == 6
+        assert preview["would_write_cache"] is False
+        assert preview["template_preview_gate"]["passed"] is False
+        assert len(preview["source_cache_template_preview_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_birth_profile_reviewed_manifest_draft_preview_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        manifest = Path("examples/mingli_5agents/providers/birth_profile_review_manifest_example.json")
+        cache_dir = tmp_path / "birth_source_cache"
+        result = _request(
+            base_url,
+            "GET",
+            (
+                f"/birth-profile-reviewed-manifest-draft-preview?manifest={manifest.as_posix()}"
+                f"&cache_dir={quote(str(cache_dir))}&domain=sports"
+            ),
+        )
+
+        assert result["configured"] is True
+        preview = result["reviewed_manifest_draft_preview"]
+        assert preview["status"] == "blocked_waiting_for_complete_source_cache"
+        assert preview["would_write_review_manifest"] is False
+        assert preview["would_import_profiles"] is False
+        assert preview["draft_ready_for_human_approval"] is False
+        assert preview["review_request_count"] == 2
+        assert preview["draft_gate"]["passed"] is False
+        assert len(preview["reviewed_manifest_draft_preview_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_birth_profile_reviewed_manifest_file_preview_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        manifest = Path("examples/mingli_5agents/providers/birth_profile_review_manifest_example.json")
+        cache_dir = tmp_path / "birth_source_cache"
+        target = tmp_path / "reviewed_birth_profiles.json"
+        result = _request(
+            base_url,
+            "GET",
+            (
+                f"/birth-profile-reviewed-manifest-file-preview?manifest={manifest.as_posix()}"
+                f"&cache_dir={quote(str(cache_dir))}&domain=film&target={quote(str(target))}"
+            ),
+        )
+
+        assert result["configured"] is True
+        preview = result["reviewed_manifest_file_preview"]
+        assert preview["status"] == "blocked_waiting_for_approved_draft"
+        assert preview["would_write_file"] is False
+        assert preview["would_import_profiles"] is False
+        assert preview["target_file"] == str(target)
+        assert preview["file_preview_gate"]["passed"] is False
+        assert len(preview["reviewed_manifest_file_preview_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_birth_profile_import_preview_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        manifest = Path("examples/mingli_5agents/providers/birth_profile_review_manifest_example.json")
+        result = _request(base_url, "GET", f"/birth-profile-import-preview?manifest={manifest.as_posix()}")
+
+        assert result["configured"] is True
+        assert result["import_preview"]["status"] == "blocked_not_ready_for_import"
+        assert result["import_preview"]["would_write_file"] is False
+        assert result["import_preview"]["import_allowed"] is False
+        assert result["import_preview"]["import_gate"]["passed"] is False
+        assert len(result["import_preview"]["import_preview_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_birth_profile_fixture_patch_preview_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        manifest = Path("examples/mingli_5agents/providers/birth_profile_review_manifest_example.json")
+        result = _request(base_url, "GET", f"/birth-profile-fixture-patch-preview?manifest={manifest.as_posix()}")
+
+        assert result["configured"] is True
+        assert result["fixture_patch_preview"]["status"] == "blocked_not_ready_for_patch_preview"
+        assert result["fixture_patch_preview"]["would_write_file"] is False
+        assert result["fixture_patch_preview"]["patch_ready_for_review"] is False
+        assert result["fixture_patch_preview"]["patch_gate"]["passed"] is False
+        assert len(result["fixture_patch_preview"]["fixture_patch_preview_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_industry_event_labels_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        manifest = Path("examples/mingli_5agents/providers/industry_event_source_manifest_example.json")
+        result = _request(base_url, "GET", f"/industry-event-labels?manifest={manifest.as_posix()}")
+        label_table = result["validation_label_table"]
+
+        assert result["configured"] is True
+        assert label_table["valid"] is True
+        assert label_table["record_count"] == 6
+        assert label_table["positive_label_count"] == 3
+        assert label_table["negative_label_count"] == 3
+        assert len(label_table["validation_label_table_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_industry_event_scoring_readiness_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        manifest = Path("examples/mingli_5agents/providers/industry_event_source_manifest_example.json")
+        result = _request(base_url, "GET", f"/industry-event-scoring-readiness?manifest={manifest.as_posix()}")
+        readiness = result["symbolic_scoring_readiness"]
+
+        assert result["configured"] is True
+        assert readiness["valid"] is True
+        assert readiness["label_count"] == 6
+        assert readiness["ready_label_count"] == 4
+        assert readiness["blocked_label_count"] == 2
+        assert len(readiness["symbolic_scoring_readiness_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_industry_event_symbolic_score_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        manifest = Path("examples/mingli_5agents/providers/industry_event_source_manifest_example.json")
+        result = _request(base_url, "GET", f"/industry-event-symbolic-score?manifest={manifest.as_posix()}")
+        score = result["symbolic_annual_score"]
+
+        assert result["configured"] is True
+        assert score["valid"] is True
+        assert score["scored_label_count"] == 4
+        assert score["blocked_label_count"] == 2
+        assert len(score["symbolic_annual_score_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_industry_event_evidence_workplan_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        manifest = Path("examples/mingli_5agents/providers/industry_event_source_manifest_example.json")
+        candidates = Path("examples/mingli_5agents/providers/industry_event_candidate_cases_example.json")
+        query_plan = Path("examples/mingli_5agents/providers/industry_event_source_query_plan_example.json")
+        cache_dir = tmp_path / "cache"
+        result = _request(
+            base_url,
+            "GET",
+            (
+                f"/industry-event-evidence-workplan?manifest={manifest.as_posix()}"
+                f"&candidates={candidates.as_posix()}&query_plan={query_plan.as_posix()}"
+                f"&cache_dir={cache_dir.as_posix()}"
+            ),
+        )
+        workplan = result["evidence_workplan"]
+
+        assert result["configured"] is True
+        assert workplan["valid"] is True
+        assert workplan["work_item_count"] == 2
+        assert workplan["deferred_task_count"] == 1
+        assert workplan["domains"] == ["film", "sports"]
+        assert workplan["draft_import_ready"] is False
+        assert workplan["draft_import_readiness_gate"]["passed"] is False
+        assert workplan["draft_import_readiness_gate"]["missing_cache_count"] == 6
+        assert workplan["readiness_summary"]["status"] == "blocked"
+        assert workplan["readiness_summary"]["deferred_blocked_gate_count"] == 15
+        assert workplan["readiness_summary"]["integrity_check"]["status"] == "passed"
+        assert len(workplan["evidence_workplan_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_industry_event_queries_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        query_plan = Path("examples/mingli_5agents/providers/industry_event_source_query_plan_example.json")
+        result = _request(base_url, "GET", f"/industry-event-queries?query_plan={query_plan.as_posix()}")
+
+        assert result["configured"] is True
+        assert result["audit"]["valid"] is True
+        assert result["audit"]["source_id"] == "wikidata_query_service"
+        assert result["audit"]["template_count"] == 3
+        assert result["audit"]["domains"] == ["film", "music", "sports"]
+        assert result["collection_gate"]["passed"] is False
+        assert len(result["industry_event_query_plan_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_industry_event_candidates_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        candidates = Path("examples/mingli_5agents/providers/industry_event_candidate_cases_example.json")
+        result = _request(base_url, "GET", f"/industry-event-candidates?candidates={candidates.as_posix()}")
+
+        assert result["configured"] is True
+        assert result["audit"]["valid"] is True
+        assert result["audit"]["candidate_count"] == 9
+        assert result["audit"]["domain_counts"] == {"film": 3, "music": 3, "sports": 3}
+        assert result["candidate_pool_gate"]["passed"] is False
+        assert len(result["industry_event_candidate_cases_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_industry_event_candidate_fetch_cache_route_dry_run(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        candidates = Path("examples/mingli_5agents/providers/industry_event_candidate_cases_example.json")
+        query_plan = Path("examples/mingli_5agents/providers/industry_event_source_query_plan_example.json")
+        cache_dir = tmp_path / "cache"
+        result = _request(
+            base_url,
+            "GET",
+            (
+                f"/industry-event-candidate-fetch-cache?candidates={candidates.as_posix()}"
+                f"&query_plan={query_plan.as_posix()}&cache_dir={cache_dir.as_posix()}"
+                "&domain=sports"
+            ),
+        )
+        batch_plan = result["candidate_pool_fetch_cache_plan"]
+
+        assert result["live_requested"] is False
+        assert batch_plan["status"] == "dry_run"
+        assert batch_plan["candidate_count"] == 3
+        assert batch_plan["domains"] == ["sports"]
+        assert batch_plan["total_planned_cache_count"] == 3
+        assert batch_plan["total_cache_write_count"] == 0
+        assert len(batch_plan["candidate_pool_fetch_cache_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_industry_event_candidate_draft_import_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        candidates = Path("examples/mingli_5agents/providers/industry_event_candidate_cases_example.json")
+        query_plan = Path("examples/mingli_5agents/providers/industry_event_source_query_plan_example.json")
+        response = Path("examples/mingli_5agents/providers/wikidata_sports_response_example.json")
+        cache_dir = tmp_path / "cache"
+        batch_plan = build_candidate_pool_fetch_cache_plan(
+            candidates,
+            query_plan_path=query_plan,
+            cache_dir=cache_dir,
+            domain="sports",
+        )
+        _materialize_cached_responses(batch_plan, response)
+
+        result = _request(
+            base_url,
+            "GET",
+            (
+                f"/industry-event-candidate-draft-import?candidates={candidates.as_posix()}"
+                f"&query_plan={query_plan.as_posix()}&cache_dir={cache_dir.as_posix()}"
+                "&domain=sports"
+            ),
+        )
+        draft_import = result["candidate_pool_draft_import"]
+
+        assert draft_import["valid"] is True
+        assert draft_import["draft_count"] == 3
+        assert draft_import["missing_response_count"] == 0
+        assert draft_import["positive_record_count"] == 3
+        assert draft_import["negative_record_count"] == 70
+        assert draft_import["combined_manifest_valid"] is True
+        assert draft_import["combined_manifest_record_count"] == 73
+        assert len(draft_import["candidate_pool_draft_import_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_industry_event_requests_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        query_plan = Path("examples/mingli_5agents/providers/industry_event_source_query_plan_example.json")
+        result = _request(
+            base_url,
+            "GET",
+            (
+                f"/industry-event-requests?query_plan={query_plan.as_posix()}"
+                "&case_id=roger_federer&public_name=Roger%20Federer&person_qid=Q1426"
+                "&start_year=2002&end_year=2004&split_role=holdout&domain=sports"
+            ),
+        )
+        bundle = result["request_bundle"]
+
+        assert result["offline_only"] is True
+        assert bundle["valid"] is True
+        assert bundle["request_count"] == 1
+        assert bundle["domains"] == ["sports"]
+        assert bundle["execution_gate"]["passed"] is False
+        assert bundle["requests"][0]["query_url"].startswith("https://query.wikidata.org/sparql?")
+        assert len(bundle["bundle_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_industry_event_fetch_cache_route_dry_run(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        query_plan = Path("examples/mingli_5agents/providers/industry_event_source_query_plan_example.json")
+        cache_dir = tmp_path / "cache"
+        result = _request(
+            base_url,
+            "GET",
+            (
+                f"/industry-event-fetch-cache?query_plan={query_plan.as_posix()}"
+                f"&cache_dir={cache_dir.as_posix()}"
+                "&case_id=roger_federer&public_name=Roger%20Federer&person_qid=Q1426"
+                "&start_year=2002&end_year=2004&split_role=holdout&domain=sports"
+            ),
+        )
+        fetch_plan = result["fetch_cache_plan"]
+
+        assert result["live_requested"] is False
+        assert fetch_plan["status"] == "dry_run"
+        assert fetch_plan["planned_cache_count"] == 1
+        assert fetch_plan["cache_write_count"] == 0
+        assert fetch_plan["execution_gate"]["passed"] is False
+        assert len(fetch_plan["fetch_cache_receipt"]["sha256"]) == 64
+    finally:
+        httpd.shutdown()
+        thread.join(timeout=5)
+
+
+def test_http_api_industry_event_draft_manifest_route(tmp_path):
+    repo = tmp_path / "repo"
+    httpd = serve("127.0.0.1", 0, repo)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    host, port = httpd.server_address
+    base_url = f"http://{host}:{port}"
+    try:
+        query_plan = Path("examples/mingli_5agents/providers/industry_event_source_query_plan_example.json")
+        response = Path("examples/mingli_5agents/providers/wikidata_sports_response_example.json")
+        result = _request(
+            base_url,
+            "GET",
+            (
+                f"/industry-event-draft-manifest?query_plan={query_plan.as_posix()}"
+                f"&response={response.as_posix()}"
+                "&case_id=roger_federer&public_name=Roger%20Federer&person_qid=Q1426"
+                "&start_year=2002&end_year=2004&split_role=holdout&domain=sports"
+            ),
+        )
+        draft = result["draft"]
+
+        assert result["offline_only"] is True
+        assert draft["valid"] is True
+        assert draft["draft_manifest_audit"]["positive_event_count"] == 1
+        assert draft["draft_manifest_audit"]["negative_event_count"] == 2
+        assert len(draft["draft_receipt"]["sha256"]) == 64
     finally:
         httpd.shutdown()
         thread.join(timeout=5)
@@ -936,6 +1554,22 @@ def test_http_api_status_schema_analyze_and_benchmark(tmp_path):
         )
         assert "GET /history" in schema["endpoints"]
         assert "GET /outcome-dataset" in schema["endpoints"]
+        assert "GET /industry-events" in schema["endpoints"]
+        assert "GET /industry-event-labels" in schema["endpoints"]
+        assert "GET /industry-event-scoring-readiness" in schema["endpoints"]
+        assert "GET /industry-event-symbolic-score" in schema["endpoints"]
+        assert "GET /industry-event-evidence-workplan" in schema["endpoints"]
+        assert "GET /birth-profile-review" in schema["endpoints"]
+        assert "GET /birth-profile-source-review-workplan" in schema["endpoints"]
+        assert "GET /birth-profile-import-preview" in schema["endpoints"]
+        assert "GET /birth-profile-fixture-patch-preview" in schema["endpoints"]
+        assert "GET /industry-event-queries" in schema["endpoints"]
+        assert "GET /industry-event-candidates" in schema["endpoints"]
+        assert "GET /industry-event-candidate-fetch-cache" in schema["endpoints"]
+        assert "GET /industry-event-candidate-draft-import" in schema["endpoints"]
+        assert "GET /industry-event-requests" in schema["endpoints"]
+        assert "GET /industry-event-fetch-cache" in schema["endpoints"]
+        assert "GET /industry-event-draft-manifest" in schema["endpoints"]
         assert "GET /classical-sources" in schema["endpoints"]
         assert "GET /production-readiness" in schema["endpoints"]
         assert "GET /release-manifest" in schema["endpoints"]
@@ -970,9 +1604,39 @@ def test_http_api_status_schema_analyze_and_benchmark(tmp_path):
         assert audit["capabilities"]["classical_text_index"] is True
         assert audit["capabilities"]["classical_source_refresh_governance"] is True
         assert audit["capabilities"]["classical_source_refresh_receipt"] is True
-        assert audit["classical_source_refresh"]["status"] == "unconfigured"
-        assert "SEMAS_CLASSIC_SOURCE_LIST" in audit["classical_source_refresh"]["failures"][0]
+        assert audit["classical_source_refresh"]["status"] == "ready"
+        assert audit["classical_source_refresh"]["failures"] == []
         assert len(audit["classical_source_refresh"]["source_list_receipt"]["sha256"]) == 64
+        fixture_receipt = audit["industry_event_cross_domain_fixture_import"]
+        audit_material_fixture = audit["audit_receipt"]["material"]["industry_event_cross_domain_fixture_import"]
+        schema_doc = _request(base_url, "GET", "/schema")
+        assert audit["capabilities"]["industry_event_cross_domain_fixture_import"] is True
+        assert fixture_receipt["schema_version"] == "industry-event-cross-domain-fixture-import-receipt-v1"
+        assert fixture_receipt["material"]["candidate_count"] == 9
+        assert fixture_receipt["material"]["positive_record_count"] == 9
+        assert fixture_receipt["material"]["negative_record_count"] == 273
+        assert fixture_receipt["material"]["cross_domain_coverage_gate_passed"] is True
+        assert audit_material_fixture["sha256"] == fixture_receipt["sha256"]
+        assert (
+            audit_material_fixture["material"]["validation_label_table_receipt_sha256"]
+            == fixture_receipt["material"]["validation_label_table_receipt_sha256"]
+        )
+        assert (
+            schema_validation_errors(
+                fixture_receipt,
+                schema_name="IndustryEventCrossDomainFixtureImportReceipt",
+                schema_doc=schema_doc,
+            )
+            == []
+        )
+        assert (
+            schema_validation_errors(
+                audit_material_fixture,
+                schema_name="IndustryEventCrossDomainFixtureImportReceipt",
+                schema_doc=schema_doc,
+            )
+            == []
+        )
         audit_source_list = tmp_path / "audit_classical_sources.json"
         audit_source_list.write_text(
             json.dumps(
@@ -1245,6 +1909,15 @@ def test_http_api_status_schema_analyze_and_benchmark(tmp_path):
         assert outcome["audit"]["quality_task_projection"]["projected_task_count"] == 1
         assert outcome["evolution_gate"]["passed"] is True
         assert outcome["evolution_gate"]["predictive_optimization_enabled"] is False
+        industry_manifest = Path("examples/mingli_5agents/providers/industry_event_source_manifest_example.json")
+        industry_events = _request(base_url, "GET", f"/industry-events?manifest={industry_manifest.as_posix()}")
+        assert industry_events["configured"] is True
+        assert industry_events["audit"]["valid"] is True
+        assert industry_events["audit"]["domains"] == ["film", "music", "sports"]
+        assert industry_events["audit"]["positive_event_count"] == 3
+        assert industry_events["audit"]["negative_event_count"] == 3
+        assert industry_events["production_gate"]["passed"] is False
+        assert len(industry_events["industry_event_manifest_receipt"]["sha256"]) == 64
         classical_unconfigured = _request(base_url, "GET", "/classical-sources")
         assert classical_unconfigured["configured"] is False
         assert classical_unconfigured["audit"]["status"] == "unconfigured"
@@ -1336,16 +2009,16 @@ def test_http_api_status_schema_analyze_and_benchmark(tmp_path):
             "xuanze",
         ]
         assert readiness_unconfigured["resolution_plan"]["status"] == "actions_required"
-        assert readiness_unconfigured["classical_source_refresh"]["status"] == "unconfigured"
+        assert readiness_unconfigured["classical_source_refresh"]["status"] == "ready"
         assert (
             readiness_unconfigured["readiness_receipt"]["material"]["classical_source_refresh"]["status"]
-            == "unconfigured"
+            == "ready"
         )
         assert any(
             item["id"] == "configure_outcome_dataset_manifest"
             for item in readiness_unconfigured["resolution_plan"]["steps"]
         )
-        assert any(
+        assert not any(
             item["id"] == "configure_classical_source_refresh"
             for item in readiness_unconfigured["resolution_plan"]["steps"]
         )

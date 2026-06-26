@@ -14,13 +14,34 @@ if str(ROOT) not in sys.path:
 
 from examples.mingli_5agents.api_core import (
     analyze_case,
+    birth_profile_fixture_patch_preview,
     benchmark,
+    birth_profile_import_preview,
+    birth_profile_reviewed_manifest_draft_preview,
+    birth_profile_reviewed_manifest_file_preview,
+    birth_profile_source_cache_audit,
+    birth_profile_source_cache_template_preview,
+    birth_profile_source_lookup_plan,
+    birth_profile_source_review_workplan,
+    birth_profile_review_status,
     capability_audit,
     classical_sources_refresh,
     classical_sources_status,
     ensure_repo,
     evolve_case,
     init_repo,
+    industry_event_candidate_cases_status,
+    industry_event_candidate_pool_fetch_cache,
+    industry_event_candidate_pool_draft_import,
+    industry_event_collection_requests,
+    industry_event_evidence_workplan,
+    industry_event_fetch_cache,
+    industry_event_manifest_draft_from_response,
+    industry_event_manifest_status,
+    industry_event_query_plan_status,
+    industry_event_symbolic_annual_score,
+    industry_event_symbolic_scoring_readiness,
+    industry_event_validation_labels,
     known_gap_handoff,
     known_gap_handoff_implementation_checklist,
     outcome_dataset_manifest_status,
@@ -197,6 +218,213 @@ def cmd_provider_protocols(args: argparse.Namespace) -> int:
 
 def cmd_outcome_dataset(args: argparse.Namespace) -> int:
     write_json(outcome_dataset_manifest_status(args.repo, manifest_path=args.manifest))
+    return 0
+
+
+def cmd_industry_events(args: argparse.Namespace) -> int:
+    write_json(industry_event_manifest_status(args.repo, manifest_path=args.manifest))
+    return 0
+
+
+def cmd_industry_event_labels(args: argparse.Namespace) -> int:
+    write_json(industry_event_validation_labels(args.repo, manifest_path=args.manifest))
+    return 0
+
+
+def cmd_industry_event_scoring_readiness(args: argparse.Namespace) -> int:
+    write_json(industry_event_symbolic_scoring_readiness(args.repo, manifest_path=args.manifest))
+    return 0
+
+
+def cmd_industry_event_symbolic_score(args: argparse.Namespace) -> int:
+    write_json(industry_event_symbolic_annual_score(args.repo, manifest_path=args.manifest))
+    return 0
+
+
+def cmd_industry_event_evidence_workplan(args: argparse.Namespace) -> int:
+    write_json(
+        industry_event_evidence_workplan(
+            args.repo,
+            manifest_path=args.manifest,
+            candidate_path=args.candidates,
+            query_plan_path=args.query_plan,
+            cache_dir=args.cache_dir,
+        )
+    )
+    return 0
+
+
+def cmd_birth_profile_review(args: argparse.Namespace) -> int:
+    write_json(birth_profile_review_status(args.repo, args.manifest))
+    return 0
+
+
+def cmd_birth_profile_source_review_workplan(args: argparse.Namespace) -> int:
+    write_json(birth_profile_source_review_workplan(args.repo, args.manifest))
+    return 0
+
+
+def cmd_birth_profile_source_lookup_plan(args: argparse.Namespace) -> int:
+    write_json(
+        birth_profile_source_lookup_plan(
+            args.repo,
+            args.manifest,
+            cache_dir=args.cache_dir,
+            domain=args.domain,
+        )
+    )
+    return 0
+
+
+def cmd_birth_profile_source_cache_audit(args: argparse.Namespace) -> int:
+    write_json(
+        birth_profile_source_cache_audit(
+            args.repo,
+            args.manifest,
+            cache_dir=args.cache_dir,
+            domain=args.domain,
+        )
+    )
+    return 0
+
+
+def cmd_birth_profile_source_cache_template_preview(args: argparse.Namespace) -> int:
+    write_json(
+        birth_profile_source_cache_template_preview(
+            args.repo,
+            args.manifest,
+            cache_dir=args.cache_dir,
+            domain=args.domain,
+        )
+    )
+    return 0
+
+
+def cmd_birth_profile_reviewed_manifest_draft_preview(args: argparse.Namespace) -> int:
+    write_json(
+        birth_profile_reviewed_manifest_draft_preview(
+            args.repo,
+            args.manifest,
+            cache_dir=args.cache_dir,
+            domain=args.domain,
+        )
+    )
+    return 0
+
+
+def cmd_birth_profile_reviewed_manifest_file_preview(args: argparse.Namespace) -> int:
+    write_json(
+        birth_profile_reviewed_manifest_file_preview(
+            args.repo,
+            args.manifest,
+            cache_dir=args.cache_dir,
+            domain=args.domain,
+            target_path=args.target,
+        )
+    )
+    return 0
+
+
+def cmd_birth_profile_import_preview(args: argparse.Namespace) -> int:
+    write_json(birth_profile_import_preview(args.repo, args.manifest))
+    return 0
+
+
+def cmd_birth_profile_fixture_patch_preview(args: argparse.Namespace) -> int:
+    write_json(birth_profile_fixture_patch_preview(args.repo, args.manifest))
+    return 0
+
+
+def cmd_industry_event_queries(args: argparse.Namespace) -> int:
+    write_json(industry_event_query_plan_status(args.repo, query_plan_path=args.query_plan))
+    return 0
+
+
+def cmd_industry_event_candidates(args: argparse.Namespace) -> int:
+    write_json(industry_event_candidate_cases_status(args.repo, candidate_path=args.candidates))
+    return 0
+
+
+def cmd_industry_event_candidate_fetch_cache(args: argparse.Namespace) -> int:
+    write_json(
+        industry_event_candidate_pool_fetch_cache(
+            args.repo,
+            candidate_path=args.candidates,
+            query_plan_path=args.query_plan,
+            cache_dir=args.cache_dir,
+            domain=args.domain,
+            split_role=args.split_role,
+            live=args.live,
+        )
+    )
+    return 0
+
+
+def cmd_industry_event_candidate_draft_import(args: argparse.Namespace) -> int:
+    write_json(
+        industry_event_candidate_pool_draft_import(
+            args.repo,
+            candidate_path=args.candidates,
+            query_plan_path=args.query_plan,
+            cache_dir=args.cache_dir,
+            domain=args.domain,
+            split_role=args.split_role,
+        )
+    )
+    return 0
+
+
+def cmd_industry_event_requests(args: argparse.Namespace) -> int:
+    write_json(
+        industry_event_collection_requests(
+            args.repo,
+            query_plan_path=args.query_plan,
+            case_id=args.case_id,
+            public_name=args.public_name,
+            person_qid=args.person_qid,
+            start_year=args.start_year,
+            end_year=args.end_year,
+            split_role=args.split_role,
+            domain=args.domain,
+        )
+    )
+    return 0
+
+
+def cmd_industry_event_fetch_cache(args: argparse.Namespace) -> int:
+    write_json(
+        industry_event_fetch_cache(
+            args.repo,
+            cache_dir=args.cache_dir,
+            query_plan_path=args.query_plan,
+            case_id=args.case_id,
+            public_name=args.public_name,
+            person_qid=args.person_qid,
+            start_year=args.start_year,
+            end_year=args.end_year,
+            split_role=args.split_role,
+            domain=args.domain,
+            live=args.live,
+        )
+    )
+    return 0
+
+
+def cmd_industry_event_draft_manifest(args: argparse.Namespace) -> int:
+    write_json(
+        industry_event_manifest_draft_from_response(
+            args.repo,
+            response_path=args.response,
+            query_plan_path=args.query_plan,
+            case_id=args.case_id,
+            public_name=args.public_name,
+            person_qid=args.person_qid,
+            start_year=args.start_year,
+            end_year=args.end_year,
+            split_role=args.split_role,
+            domain=args.domain,
+        )
+    )
     return 0
 
 
@@ -445,6 +673,349 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional outcome dataset manifest JSON path; omitted shows the unconfigured boundary",
     )
     outcome_parser.set_defaults(func=cmd_outcome_dataset)
+
+    industry_events_parser = sub.add_parser(
+        "industry-events",
+        help="Audit a public famous-case industry-event manifest",
+    )
+    industry_events_parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="Optional industry-event manifest JSON path; omitted audits the bundled example contract",
+    )
+    industry_events_parser.set_defaults(func=cmd_industry_events)
+
+    industry_event_labels_parser = sub.add_parser(
+        "industry-event-labels",
+        help="Convert a public famous-case industry-event manifest into annual validation labels",
+    )
+    industry_event_labels_parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="Optional industry-event manifest JSON path; omitted converts the bundled example contract",
+    )
+    industry_event_labels_parser.set_defaults(func=cmd_industry_event_labels)
+
+    industry_event_scoring_readiness_parser = sub.add_parser(
+        "industry-event-scoring-readiness",
+        help="Check which industry-event labels have birth profiles for symbolic annual scoring",
+    )
+    industry_event_scoring_readiness_parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="Optional industry-event manifest JSON path; omitted checks the bundled example contract",
+    )
+    industry_event_scoring_readiness_parser.set_defaults(func=cmd_industry_event_scoring_readiness)
+
+    industry_event_symbolic_score_parser = sub.add_parser(
+        "industry-event-symbolic-score",
+        help="Score ready industry-event labels against symbolic annual rows",
+    )
+    industry_event_symbolic_score_parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="Optional industry-event manifest JSON path; omitted scores the bundled example contract",
+    )
+    industry_event_symbolic_score_parser.set_defaults(func=cmd_industry_event_symbolic_score)
+
+    industry_event_evidence_workplan_parser = sub.add_parser(
+        "industry-event-evidence-workplan",
+        help="Convert industry-event symbolic score tasks into reviewable collection work",
+    )
+    industry_event_evidence_workplan_parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="Optional industry-event manifest JSON path; omitted uses the bundled example contract",
+    )
+    industry_event_evidence_workplan_parser.add_argument(
+        "--candidates",
+        type=Path,
+        help="Optional industry-event candidate pool path; omitted uses the bundled example candidate pool",
+    )
+    industry_event_evidence_workplan_parser.add_argument(
+        "--query-plan",
+        type=Path,
+        help="Optional industry-event query-plan path; omitted uses the bundled example query plan",
+    )
+    industry_event_evidence_workplan_parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        help="Optional cache directory for generated collection commands",
+    )
+    industry_event_evidence_workplan_parser.set_defaults(func=cmd_industry_event_evidence_workplan)
+
+    birth_profile_review_parser = sub.add_parser(
+        "birth-profile-review",
+        help="Audit a reviewed-birth-profile collection worklist before importing celebrity birth data",
+    )
+    birth_profile_review_parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="Optional birth-profile review manifest JSON path; omitted audits the bundled example worklist",
+    )
+    birth_profile_review_parser.set_defaults(func=cmd_birth_profile_review)
+
+    birth_profile_source_review_workplan_parser = sub.add_parser(
+        "birth-profile-source-review-workplan",
+        help="Build a non-mutating human source-review workplan for celebrity birth-profile requests",
+    )
+    birth_profile_source_review_workplan_parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="Optional birth-profile review manifest JSON path; omitted uses the bundled example worklist",
+    )
+    birth_profile_source_review_workplan_parser.set_defaults(func=cmd_birth_profile_source_review_workplan)
+
+    birth_profile_source_lookup_plan_parser = sub.add_parser(
+        "birth-profile-source-lookup-plan",
+        help="Build a dry-run source lookup plan for celebrity birth-profile review tasks",
+    )
+    birth_profile_source_lookup_plan_parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="Optional birth-profile review manifest JSON path; omitted uses the bundled example worklist",
+    )
+    birth_profile_source_lookup_plan_parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        help="Optional cache directory for planned source lookup payloads; no files are written",
+    )
+    birth_profile_source_lookup_plan_parser.add_argument(
+        "--domain",
+        choices=["film", "music", "sports"],
+        help="Optional domain filter for the lookup plan",
+    )
+    birth_profile_source_lookup_plan_parser.set_defaults(func=cmd_birth_profile_source_lookup_plan)
+
+    birth_profile_source_cache_template_preview_parser = sub.add_parser(
+        "birth-profile-source-cache-template-preview",
+        help="Build non-mutating JSON templates for manual celebrity birth-profile source cache files",
+    )
+    birth_profile_source_cache_template_preview_parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="Optional birth-profile review manifest JSON path; omitted uses the bundled example worklist",
+    )
+    birth_profile_source_cache_template_preview_parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        help="Optional cache directory for planned source lookup payloads; no files are written",
+    )
+    birth_profile_source_cache_template_preview_parser.add_argument(
+        "--domain",
+        choices=["film", "music", "sports"],
+        help="Optional domain filter for generated cache templates",
+    )
+    birth_profile_source_cache_template_preview_parser.set_defaults(
+        func=cmd_birth_profile_source_cache_template_preview
+    )
+
+    birth_profile_source_cache_audit_parser = sub.add_parser(
+        "birth-profile-source-cache-audit",
+        help="Audit manually prepared source lookup cache files without importing celebrity birth profiles",
+    )
+    birth_profile_source_cache_audit_parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="Optional birth-profile review manifest JSON path; omitted uses the bundled example worklist",
+    )
+    birth_profile_source_cache_audit_parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        help="Optional cache directory containing manually prepared lookup result JSON files",
+    )
+    birth_profile_source_cache_audit_parser.add_argument(
+        "--domain",
+        choices=["film", "music", "sports"],
+        help="Optional domain filter for the cache audit",
+    )
+    birth_profile_source_cache_audit_parser.set_defaults(func=cmd_birth_profile_source_cache_audit)
+
+    birth_profile_reviewed_manifest_draft_preview_parser = sub.add_parser(
+        "birth-profile-reviewed-manifest-draft-preview",
+        help="Build a non-mutating reviewed-manifest draft preview from accepted source cache evidence",
+    )
+    birth_profile_reviewed_manifest_draft_preview_parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="Optional birth-profile review manifest JSON path; omitted uses the bundled example worklist",
+    )
+    birth_profile_reviewed_manifest_draft_preview_parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        help="Optional cache directory containing manually prepared lookup result JSON files",
+    )
+    birth_profile_reviewed_manifest_draft_preview_parser.add_argument(
+        "--domain",
+        choices=["film", "music", "sports"],
+        help="Optional domain filter for the reviewed manifest draft preview",
+    )
+    birth_profile_reviewed_manifest_draft_preview_parser.set_defaults(
+        func=cmd_birth_profile_reviewed_manifest_draft_preview
+    )
+
+    birth_profile_reviewed_manifest_file_preview_parser = sub.add_parser(
+        "birth-profile-reviewed-manifest-file-preview",
+        help="Build a non-mutating file-write preview for an approved reviewed birth-profile manifest draft",
+    )
+    birth_profile_reviewed_manifest_file_preview_parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="Optional birth-profile review manifest JSON path; omitted uses the bundled example worklist",
+    )
+    birth_profile_reviewed_manifest_file_preview_parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        help="Optional cache directory containing manually prepared lookup result JSON files",
+    )
+    birth_profile_reviewed_manifest_file_preview_parser.add_argument(
+        "--domain",
+        choices=["film", "music", "sports"],
+        help="Optional domain filter for the reviewed manifest file preview",
+    )
+    birth_profile_reviewed_manifest_file_preview_parser.add_argument(
+        "--target",
+        type=Path,
+        help="Optional target reviewed manifest path for the non-mutating file preview",
+    )
+    birth_profile_reviewed_manifest_file_preview_parser.set_defaults(
+        func=cmd_birth_profile_reviewed_manifest_file_preview
+    )
+
+    birth_profile_import_preview_parser = sub.add_parser(
+        "birth-profile-import-preview",
+        help="Build a non-mutating preview for reviewed birth-profile fixture import",
+    )
+    birth_profile_import_preview_parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="Optional birth-profile review manifest JSON path; omitted previews the bundled example worklist",
+    )
+    birth_profile_import_preview_parser.set_defaults(func=cmd_birth_profile_import_preview)
+
+    birth_profile_fixture_patch_preview_parser = sub.add_parser(
+        "birth-profile-fixture-patch-preview",
+        help="Build a non-mutating fixture patch preview from reviewed birth-profile candidates",
+    )
+    birth_profile_fixture_patch_preview_parser.add_argument(
+        "--manifest",
+        type=Path,
+        help="Optional birth-profile review manifest JSON path; omitted previews the bundled example worklist",
+    )
+    birth_profile_fixture_patch_preview_parser.set_defaults(func=cmd_birth_profile_fixture_patch_preview)
+
+    industry_event_queries_parser = sub.add_parser(
+        "industry-event-queries",
+        help="Audit public famous-case industry-event source query templates",
+    )
+    industry_event_queries_parser.add_argument(
+        "--query-plan",
+        type=Path,
+        help="Optional industry-event source query-plan JSON path; omitted audits the bundled example contract",
+    )
+    industry_event_queries_parser.set_defaults(func=cmd_industry_event_queries)
+
+    industry_event_candidates_parser = sub.add_parser(
+        "industry-event-candidates",
+        help="Audit public celebrity candidate cases for future industry-event validation",
+    )
+    industry_event_candidates_parser.add_argument(
+        "--candidates",
+        type=Path,
+        help="Optional candidate-cases JSON path; omitted audits the bundled example contract",
+    )
+    industry_event_candidates_parser.set_defaults(func=cmd_industry_event_candidates)
+
+    industry_event_candidate_fetch_parser = sub.add_parser(
+        "industry-event-candidate-fetch-cache",
+        help="Plan or execute fetch/cache steps for a public celebrity candidate pool",
+    )
+    industry_event_candidate_fetch_parser.add_argument("--candidates", type=Path, help="Optional candidate-cases JSON path")
+    industry_event_candidate_fetch_parser.add_argument("--query-plan", type=Path, help="Optional query-plan JSON path")
+    industry_event_candidate_fetch_parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        default=None,
+        help="Directory for planned or fetched source-response cache files",
+    )
+    industry_event_candidate_fetch_parser.add_argument("--domain", choices=["film", "music", "sports"])
+    industry_event_candidate_fetch_parser.add_argument("--split-role", choices=["train", "holdout"])
+    industry_event_candidate_fetch_parser.add_argument(
+        "--live",
+        action="store_true",
+        help="Execute live source fetches only when all downstream collection gates allow it",
+    )
+    industry_event_candidate_fetch_parser.set_defaults(func=cmd_industry_event_candidate_fetch_cache)
+
+    industry_event_candidate_draft_parser = sub.add_parser(
+        "industry-event-candidate-draft-import",
+        help="Import cached source responses for a public celebrity candidate pool into draft manifests",
+    )
+    industry_event_candidate_draft_parser.add_argument("--candidates", type=Path, help="Optional candidate-cases JSON path")
+    industry_event_candidate_draft_parser.add_argument("--query-plan", type=Path, help="Optional query-plan JSON path")
+    industry_event_candidate_draft_parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        default=None,
+        help="Directory containing cached source-response JSON files from candidate fetch/cache plans",
+    )
+    industry_event_candidate_draft_parser.add_argument("--domain", choices=["film", "music", "sports"])
+    industry_event_candidate_draft_parser.add_argument("--split-role", choices=["train", "holdout"])
+    industry_event_candidate_draft_parser.set_defaults(func=cmd_industry_event_candidate_draft_import)
+
+    industry_event_requests_parser = sub.add_parser(
+        "industry-event-requests",
+        help="Build offline public famous-case industry-event collection requests",
+    )
+    industry_event_requests_parser.add_argument("--query-plan", type=Path, help="Optional query-plan JSON path")
+    industry_event_requests_parser.add_argument("--case-id", required=True, help="Case id used in future manifest rows")
+    industry_event_requests_parser.add_argument("--public-name", required=True, help="Public person name")
+    industry_event_requests_parser.add_argument("--person-qid", required=True, help="Wikidata person QID, e.g. Q762")
+    industry_event_requests_parser.add_argument("--start-year", type=int, required=True)
+    industry_event_requests_parser.add_argument("--end-year", type=int, required=True)
+    industry_event_requests_parser.add_argument("--split-role", choices=["train", "holdout"], default="holdout")
+    industry_event_requests_parser.add_argument("--domain", choices=["film", "music", "sports"])
+    industry_event_requests_parser.set_defaults(func=cmd_industry_event_requests)
+
+    industry_event_fetch_parser = sub.add_parser(
+        "industry-event-fetch-cache",
+        help="Plan or execute reviewed public famous-case industry-event source fetches into cache",
+    )
+    industry_event_fetch_parser.add_argument("--query-plan", type=Path, help="Optional query-plan JSON path")
+    industry_event_fetch_parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        default=None,
+        help="Directory for planned or fetched source-response cache files",
+    )
+    industry_event_fetch_parser.add_argument("--case-id", required=True, help="Case id used in future manifest rows")
+    industry_event_fetch_parser.add_argument("--public-name", required=True, help="Public person name")
+    industry_event_fetch_parser.add_argument("--person-qid", required=True, help="Wikidata person QID, e.g. Q762")
+    industry_event_fetch_parser.add_argument("--start-year", type=int, required=True)
+    industry_event_fetch_parser.add_argument("--end-year", type=int, required=True)
+    industry_event_fetch_parser.add_argument("--split-role", choices=["train", "holdout"], default="holdout")
+    industry_event_fetch_parser.add_argument("--domain", choices=["film", "music", "sports"])
+    industry_event_fetch_parser.add_argument(
+        "--live",
+        action="store_true",
+        help="Execute live source fetches only when the query plan is externally reviewed and collection_ready",
+    )
+    industry_event_fetch_parser.set_defaults(func=cmd_industry_event_fetch_cache)
+
+    industry_event_draft_parser = sub.add_parser(
+        "industry-event-draft-manifest",
+        help="Build a draft industry-event manifest from a cached source response",
+    )
+    industry_event_draft_parser.add_argument("--response", type=Path, required=True, help="Cached source response JSON")
+    industry_event_draft_parser.add_argument("--query-plan", type=Path, help="Optional query-plan JSON path")
+    industry_event_draft_parser.add_argument("--case-id", required=True, help="Case id used in future manifest rows")
+    industry_event_draft_parser.add_argument("--public-name", required=True, help="Public person name")
+    industry_event_draft_parser.add_argument("--person-qid", required=True, help="Wikidata person QID, e.g. Q1426")
+    industry_event_draft_parser.add_argument("--start-year", type=int, required=True)
+    industry_event_draft_parser.add_argument("--end-year", type=int, required=True)
+    industry_event_draft_parser.add_argument("--split-role", choices=["train", "holdout"], default="holdout")
+    industry_event_draft_parser.add_argument("--domain", choices=["film", "music", "sports"], required=True)
+    industry_event_draft_parser.set_defaults(func=cmd_industry_event_draft_manifest)
 
     classical_sources_parser = sub.add_parser(
         "classical-sources",

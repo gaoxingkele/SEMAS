@@ -49,6 +49,7 @@ def test_capability_audit_binds_provider_production_guidance():
     assert audit["capabilities"]["analyze_response_runtime_schema_validation"] is True
     assert audit["capabilities"]["provider_raw_contract_receipt"] is True
     assert audit["capabilities"]["topic_synthesis_timing_schema_contract"] is True
+    assert audit["capabilities"]["industry_event_cross_domain_fixture_import"] is True
     implemented_ids = {item["id"] for item in audit["implemented_requirements"]}
     assert "provider_production_guidance" in implemented_ids
     assert "evolution_trigger_receipt" in implemented_ids
@@ -84,6 +85,7 @@ def test_capability_audit_binds_provider_production_guidance():
     assert "final_report_metadata_schema_contract" in implemented_ids
     assert "analyze_response_runtime_schema_validation" in implemented_ids
     assert "topic_synthesis_timing_schema_contract" in implemented_ids
+    assert "industry_event_cross_domain_fixture_import" in implemented_ids
     provider_governance = next(item for item in audit["implemented_requirements"] if item["id"] == "provider_protocol_governance")
     assert "raw provider contract receipts" in provider_governance["requirement"]
     assert "provider_checks._raw_provider_contract_receipt" in provider_governance["evidence"]
@@ -110,6 +112,17 @@ def test_capability_audit_binds_provider_production_guidance():
     assert "record-level label provenance" in empirical_validation["requirement"]
     assert "outcome_dataset.record_label_provenance_gate" in empirical_validation["evidence"]
     assert "outcome_dataset.statistical_plan_preregistration_gate" in empirical_validation["evidence"]
+    fixture_import = next(
+        item for item in audit["implemented_requirements"] if item["id"] == "industry_event_cross_domain_fixture_import"
+    )
+    assert "Sports, film, and music celebrity candidate pools" in fixture_import["requirement"]
+    assert "capability_audit._industry_event_cross_domain_fixture_import_receipt" in fixture_import["evidence"]
+    assert (
+        "api_core.schema_document.CapabilityAuditResponse.industry_event_cross_domain_fixture_import"
+        in fixture_import["evidence"]
+    )
+    assert "tests/test_cli.py" in fixture_import["evidence"]
+    assert "tests/test_api_server.py" in fixture_import["evidence"]
     release_gate_binding = next(
         item for item in audit["implemented_requirements"] if item["id"] == "release_manifest_readiness_gate_binding"
     )
@@ -164,6 +177,46 @@ def test_capability_audit_binds_provider_production_guidance():
     assert "--domain" in gap_coverage["valid_cli_options_by_subcommand"]["provider-protocols"]
     assert "production-readiness" in gap_coverage["command_subcommands_by_gap"]["professional_ziwei_provider"]
     assert "--live" in gap_coverage["command_options_by_gap"]["professional_ziwei_provider"]
+    assert "celebrity_birth_profile_review" in {item["id"] for item in audit["known_gaps"]}
+    assert "birth-profile-review" in gap_coverage["command_subcommands_by_gap"]["celebrity_birth_profile_review"]
+    assert "birth-profile-source-review-workplan" in gap_coverage["command_subcommands_by_gap"][
+        "celebrity_birth_profile_review"
+    ]
+    assert "birth-profile-source-lookup-plan" in gap_coverage["command_subcommands_by_gap"][
+        "celebrity_birth_profile_review"
+    ]
+    assert "birth-profile-source-cache-template-preview" in gap_coverage["command_subcommands_by_gap"][
+        "celebrity_birth_profile_review"
+    ]
+    assert "birth-profile-source-cache-audit" in gap_coverage["command_subcommands_by_gap"][
+        "celebrity_birth_profile_review"
+    ]
+    assert "birth-profile-reviewed-manifest-draft-preview" in gap_coverage["command_subcommands_by_gap"][
+        "celebrity_birth_profile_review"
+    ]
+    assert "birth-profile-reviewed-manifest-file-preview" in gap_coverage["command_subcommands_by_gap"][
+        "celebrity_birth_profile_review"
+    ]
+    assert "birth-profile-import-preview" in gap_coverage["command_subcommands_by_gap"][
+        "celebrity_birth_profile_review"
+    ]
+    assert "birth-profile-fixture-patch-preview" in gap_coverage["command_subcommands_by_gap"][
+        "celebrity_birth_profile_review"
+    ]
+    assert "birth_profile_source_review_workplan_available" in gap_coverage["valid_production_gate_ids"]
+    assert "birth_profile_source_lookup_plan_dry_run" in gap_coverage["valid_production_gate_ids"]
+    assert "birth_profile_source_family_catalog_bound" in gap_coverage["valid_production_gate_ids"]
+    assert "birth_profile_source_cache_template_preview_non_mutating" in gap_coverage["valid_production_gate_ids"]
+    assert "birth_profile_source_family_cache_enforcement_probe" in gap_coverage["valid_production_gate_ids"]
+    assert (
+        "birth_profile_substantive_evidence_cache_enforcement_probe"
+        in gap_coverage["valid_production_gate_ids"]
+    )
+    assert "birth_profile_source_cache_audit_read_only" in gap_coverage["valid_production_gate_ids"]
+    assert "birth_profile_reviewed_manifest_draft_preview_non_mutating" in gap_coverage["valid_production_gate_ids"]
+    assert "birth_profile_import_preview_blocked" in gap_coverage["valid_production_gate_ids"]
+    assert "birth_profile_fixture_patch_preview_blocked" in gap_coverage["valid_production_gate_ids"]
+    assert gap_coverage["gate_counts"]["celebrity_birth_profile_review"] == 11
     command_release_binding = next(
         item for item in audit["implemented_requirements"]
         if item["id"] == "known_gap_command_coverage_release_binding"

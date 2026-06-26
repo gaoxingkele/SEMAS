@@ -18,6 +18,7 @@ from examples.mingli_5agents.api_core import (
     _provider_action_plan_coverage,
     _readiness_deliberation_receipt_coverage,
     analyze_case,
+    capability_audit,
     schema_document,
     schema_validation_errors,
 )
@@ -57,6 +58,33 @@ def test_analyze_response_runtime_output_matches_public_schema_contract(tmp_path
     broken = dict(json_result)
     broken.pop("result")
     assert any("result: missing required" in item for item in schema_validation_errors(broken, schema_doc=schema))
+
+
+def test_industry_fixture_import_runtime_output_matches_public_schema_contract(tmp_path: Path):
+    schema = schema_document()
+    result = capability_audit(tmp_path / "repo")
+    fixture_receipt = json.loads(json.dumps(result["industry_event_cross_domain_fixture_import"], ensure_ascii=False))
+    audit_material_receipt = json.loads(
+        json.dumps(
+            result["audit_receipt"]["material"]["industry_event_cross_domain_fixture_import"],
+            ensure_ascii=False,
+        )
+    )
+
+    assert schema_validation_errors(
+        fixture_receipt,
+        schema_name="IndustryEventCrossDomainFixtureImportReceipt",
+        schema_doc=schema,
+    ) == []
+    assert schema_validation_errors(
+        audit_material_receipt,
+        schema_name="IndustryEventCrossDomainFixtureImportReceipt",
+        schema_doc=schema,
+    ) == []
+    assert audit_material_receipt["sha256"] == fixture_receipt["sha256"]
+    assert audit_material_receipt["material"]["validation_label_table_receipt_sha256"] == (
+        fixture_receipt["material"]["validation_label_table_receipt_sha256"]
+    )
 
 
 def test_governance_schemas_do_not_expose_loose_object_properties():
@@ -201,6 +229,7 @@ def test_known_gap_resolution_plan_release_fallback_matches_schema_contract():
     assert "xuanze_rule_table_audit_contract" in coverage["valid_production_gate_ids"]
     assert "classical_source_latest_refresh_receipt_present" in coverage["valid_production_gate_ids"]
     assert "blocked_capability_coverage_complete" in coverage["valid_production_gate_ids"]
+    assert "benchmark_chinese_render_quality_diagnostics" in coverage["valid_production_gate_ids"]
     assert coverage["command_validation_complete"] is False
     assert coverage["invalid_verification_commands_by_gap"] == {}
 
@@ -385,9 +414,19 @@ def test_schema_contract_score_gates_release_governance_contracts():
         "CapabilityAuditReceipt",
         "CapabilityAuditReceiptMaterial",
         "CapabilityFlagMap",
+        "FamousCaseAnnualEventCalibrationReceiptSummary",
+        "FamousCaseValidationReceiptSummary",
+        "FamousCaseSchoolCalibrationReceiptSummary",
         "GitHubComparisonReceipt",
         "GitHubComparisonReceiptMaterial",
         "RequestScopedProviderContractSummary",
+        "BirthProfileFixturePatchPreviewResponse",
+        "BirthProfileReviewedManifestDraftPreviewResponse",
+        "BirthProfileReviewedManifestFilePreviewResponse",
+        "BirthProfileSourceCacheAuditResponse",
+        "BirthProfileSourceCacheTemplatePreviewResponse",
+        "BirthProfileSourceLookupPlanResponse",
+        "BirthProfileSourceReviewWorkplanResponse",
         "EvolutionTriggerReceipt",
         "EvolutionTriggerReceiptMaterial",
         "EvidenceSummaryItem",
@@ -415,6 +454,13 @@ def test_schema_contract_score_gates_release_governance_contracts():
         "GET /classical-sources",
         "GET /provider-examples",
         "GET /provider-onboarding",
+        "GET /birth-profile-fixture-patch-preview",
+        "GET /birth-profile-reviewed-manifest-draft-preview",
+        "GET /birth-profile-reviewed-manifest-file-preview",
+        "GET /birth-profile-source-cache-audit",
+        "GET /birth-profile-source-cache-template-preview",
+        "GET /birth-profile-source-lookup-plan",
+        "GET /birth-profile-source-review-workplan",
     }.issubset(REQUIRED_ENDPOINTS)
     assert "trigger_receipt" in schema["schemas"]["EvolveResponse"]["required"]
     assert schema["schemas"]["EvolveResponse"]["properties"]["trigger_receipt"]["$ref"] == (
@@ -575,6 +621,12 @@ def test_schema_contract_score_gates_release_governance_contracts():
         "#/schemas/BenchmarkCaseReportFeatures"
     )
     benchmark_features = schema["schemas"]["BenchmarkCaseReportFeatures"]["properties"]
+    assert benchmark_features["chinese_render_duplicate_bullet_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_topic_evidence_anchor_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_topic_judgment_structure_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_ascii_letter_count"]["type"] == "integer"
+    assert benchmark_features["chinese_render_ascii_question_present"]["type"] == "boolean"
+    assert benchmark_features["chinese_render_code_marker_present"]["type"] == "boolean"
     assert "external_payload_birth_match_statuses" in benchmark_features
     assert benchmark_features["external_payload_birth_match_statuses"]["items"]["$ref"] == (
         "#/schemas/BenchmarkExternalPayloadBirthMatchStatus"
@@ -849,6 +901,65 @@ def test_schema_contract_score_gates_release_governance_contracts():
         "#/schemas/MethodLineageReceiptSummary"
     )
     assert schema["schemas"]["MethodLineageReceiptSummary"]["properties"]["sha256"]["pattern"] == "^[0-9a-f]{64}$"
+    assert "famous_case_validation" in schema["schemas"]["CapabilityAuditResponse"]["required"]
+    assert schema["schemas"]["CapabilityAuditResponse"]["properties"]["famous_case_validation"]["$ref"] == (
+        "#/schemas/FamousCaseValidationReceiptSummary"
+    )
+    assert schema["schemas"]["FamousCaseValidationReceiptSummary"]["properties"]["sha256"]["pattern"] == (
+        "^[0-9a-f]{64}$"
+    )
+    assert schema["schemas"]["FamousCaseValidationReceiptSummary"]["properties"]["schema_version"]["const"] == (
+        "mingli-famous-case-validation-v2"
+    )
+    assert "birth_source_quality" in schema["schemas"]["FamousCaseValidationReceiptSummary"]["required"]
+    assert schema["schemas"]["FamousCaseValidationReceiptSummary"]["properties"]["birth_source_quality"]["type"] == (
+        "object"
+    )
+    assert "famous_case_school_calibration" in schema["schemas"]["CapabilityAuditResponse"]["required"]
+    assert schema["schemas"]["CapabilityAuditResponse"]["properties"]["famous_case_school_calibration"]["$ref"] == (
+        "#/schemas/FamousCaseSchoolCalibrationReceiptSummary"
+    )
+    assert schema["schemas"]["FamousCaseSchoolCalibrationReceiptSummary"]["properties"]["sha256"]["pattern"] == (
+        "^[0-9a-f]{64}$"
+    )
+    assert schema["schemas"]["FamousCaseSchoolCalibrationReceiptSummary"]["properties"]["fixture_sha256"]["pattern"] == (
+        "^[0-9a-f]{64}$"
+    )
+    assert schema["schemas"]["FamousCaseSchoolCalibrationReceiptSummary"]["properties"]["schema_version"]["const"] == (
+        "mingli-famous-case-school-calibration-v1"
+    )
+    assert "famous_case_annual_event_calibration" in schema["schemas"]["CapabilityAuditResponse"]["required"]
+    assert schema["schemas"]["CapabilityAuditResponse"]["properties"]["famous_case_annual_event_calibration"]["$ref"] == (
+        "#/schemas/FamousCaseAnnualEventCalibrationReceiptSummary"
+    )
+    assert schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["properties"]["sha256"]["pattern"] == (
+        "^[0-9a-f]{64}$"
+    )
+    assert "birth_source_quality_summary" in schema["schemas"][
+        "FamousCaseAnnualEventCalibrationReceiptSummary"
+    ]["required"]
+    assert schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["properties"][
+        "birth_source_quality_summary"
+    ]["type"] == "object"
+    assert schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["properties"]["fixture_sha256"][
+        "pattern"
+    ] == "^[0-9a-f]{64}$"
+    assert schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["properties"]["schema_version"][
+        "const"
+    ] == "mingli-famous-case-annual-event-calibration-v1"
+    assert "negative_year_count" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
+    assert "false_positive_count" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
+    assert "exact_precision" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
+    assert "false_positive_rate" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
+    assert "strict_exact_hit_count" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
+    assert "strict_false_positive_count" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
+    assert "strict_exact_precision" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
+    assert "strict_false_positive_rate" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
+    assert "topic_summary" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
+    assert "event_subtype_summary" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
+    assert "rule_variant_sweep" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
+    assert "rule_refinement_queue" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
+    assert "evolution_task_plan" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
     assert "provider_example_smoke" in schema["schemas"]["CapabilityAuditResponse"]["required"]
     assert schema["schemas"]["CapabilityAuditResponse"]["properties"]["provider_example_smoke"]["$ref"] == (
         "#/schemas/ProviderExampleSmokeResponse"
@@ -881,6 +992,337 @@ def test_schema_contract_score_gates_release_governance_contracts():
     assert schema["schemas"]["CapabilityAuditReceiptMaterial"]["properties"]["capabilities"]["$ref"] == (
         "#/schemas/CapabilityFlagMap"
     )
+    assert "famous_case_validation" in schema["schemas"]["CapabilityAuditReceiptMaterial"]["required"]
+    assert schema["schemas"]["CapabilityAuditReceiptMaterial"]["properties"]["famous_case_validation"]["$ref"] == (
+        "#/schemas/FamousCaseValidationReceiptSummary"
+    )
+    assert "famous_case_school_calibration" in schema["schemas"]["CapabilityAuditReceiptMaterial"]["required"]
+    assert schema["schemas"]["CapabilityAuditReceiptMaterial"]["properties"]["famous_case_school_calibration"]["$ref"] == (
+        "#/schemas/FamousCaseSchoolCalibrationReceiptSummary"
+    )
+    assert "famous_case_annual_event_calibration" in schema["schemas"]["CapabilityAuditReceiptMaterial"]["required"]
+    assert schema["schemas"]["CapabilityAuditReceiptMaterial"]["properties"]["famous_case_annual_event_calibration"][
+        "$ref"
+    ] == "#/schemas/FamousCaseAnnualEventCalibrationReceiptSummary"
+    assert "industry_event_cross_domain_fixture_import" in schema["schemas"]["CapabilityAuditResponse"]["required"]
+    assert schema["schemas"]["CapabilityAuditResponse"]["properties"][
+        "industry_event_cross_domain_fixture_import"
+    ]["$ref"] == "#/schemas/IndustryEventCrossDomainFixtureImportReceipt"
+    assert "industry_event_cross_domain_fixture_import" in schema["schemas"]["CapabilityAuditReceiptMaterial"]["required"]
+    assert schema["schemas"]["CapabilityAuditReceiptMaterial"]["properties"][
+        "industry_event_cross_domain_fixture_import"
+    ]["$ref"] == "#/schemas/IndustryEventCrossDomainFixtureImportReceipt"
+    assert schema["schemas"]["IndustryEventCrossDomainFixtureImportReceipt"]["properties"]["material"]["$ref"] == (
+        "#/schemas/IndustryEventCrossDomainFixtureImportMaterial"
+    )
+    assert schema["schemas"]["IndustryEventCrossDomainFixtureImportReceipt"]["properties"]["sha256"]["pattern"] == (
+        "^[0-9a-f]{64}$"
+    )
+    fixture_material = schema["schemas"]["IndustryEventCrossDomainFixtureImportMaterial"]
+    assert fixture_material["properties"]["schema_version"]["const"] == (
+        "industry-event-cross-domain-fixture-import-receipt-v1"
+    )
+    assert "candidate_count" in fixture_material["required"]
+    assert "positive_record_count" in fixture_material["required"]
+    assert "negative_record_count" in fixture_material["required"]
+    assert "cross_domain_coverage_gate_passed" in fixture_material["required"]
+    assert "symbolic_scoring_readiness_summary" in fixture_material["required"]
+    readiness_schema = fixture_material["properties"]["symbolic_scoring_readiness_summary"]
+    assert "ready_label_count" in readiness_schema["required"]
+    assert "missing_birth_profile_case_ids" in readiness_schema["required"]
+    assert "birth_profile_completion_task_plan" in readiness_schema["required"]
+    assert "birth_profile_completion_workplan_summary" in readiness_schema["required"]
+    assert "birth_profile_review_manifest_summary" in readiness_schema["required"]
+    assert "birth_profile_source_review_workplan_summary" in readiness_schema["required"]
+    assert "birth_profile_source_lookup_plan_summary" in readiness_schema["required"]
+    assert "birth_profile_source_cache_template_preview_summary" in readiness_schema["required"]
+    assert "birth_profile_source_family_cache_enforcement_summary" in readiness_schema["required"]
+    assert "birth_profile_substantive_evidence_cache_enforcement_summary" in readiness_schema["required"]
+    assert "birth_profile_source_cache_audit_summary" in readiness_schema["required"]
+    assert "birth_profile_reviewed_manifest_draft_preview_summary" in readiness_schema["required"]
+    assert "birth_profile_reviewed_manifest_file_preview_summary" in readiness_schema["required"]
+    assert "birth_profile_import_preview_summary" in readiness_schema["required"]
+    assert "birth_profile_fixture_patch_preview_summary" in readiness_schema["required"]
+    assert "symbolic_annual_score_receipt_sha256" in readiness_schema["required"]
+    assert "evidence_workplan_receipt_sha256" in readiness_schema["required"]
+    assert "birth_profile_review_manifest_receipt_sha256" in readiness_schema["required"]
+    assert "birth_profile_source_review_workplan_receipt_sha256" in readiness_schema["required"]
+    assert "birth_profile_source_lookup_plan_receipt_sha256" in readiness_schema["required"]
+    assert "birth_profile_source_cache_template_preview_receipt_sha256" in readiness_schema["required"]
+    assert "birth_profile_source_cache_audit_receipt_sha256" in readiness_schema["required"]
+    assert "birth_profile_reviewed_manifest_draft_preview_receipt_sha256" in readiness_schema["required"]
+    assert "birth_profile_reviewed_manifest_file_preview_receipt_sha256" in readiness_schema["required"]
+    assert "birth_profile_import_preview_receipt_sha256" in readiness_schema["required"]
+    assert "birth_profile_fixture_patch_preview_receipt_sha256" in readiness_schema["required"]
+    task_plan_schema = readiness_schema["properties"]["birth_profile_completion_task_plan"]["items"]
+    assert "blocked_case_ids" in task_plan_schema["required"]
+    assert "acceptance_criteria" in task_plan_schema["required"]
+    assert task_plan_schema["properties"]["blocked_label_count"]["type"] == "integer"
+    workplan_summary_schema = readiness_schema["properties"]["birth_profile_completion_workplan_summary"]
+    assert "deferred_task_summaries" in workplan_summary_schema["required"]
+    assert "readiness_status" in workplan_summary_schema["required"]
+    deferred_task_schema = workplan_summary_schema["properties"]["deferred_task_summaries"]["items"]
+    assert "local_birth_profile_suggestion_case_ids" in deferred_task_schema["required"]
+    assert "completion_work_order_status" in deferred_task_schema["required"]
+    assert deferred_task_schema["properties"]["blocked_gate_count"]["type"] == "integer"
+    review_manifest_schema = readiness_schema["properties"]["birth_profile_review_manifest_summary"]
+    assert "request_count" in review_manifest_schema["required"]
+    assert "ready_for_import" in review_manifest_schema["required"]
+    assert review_manifest_schema["properties"]["blocked_label_count"]["type"] == "integer"
+    source_workplan_summary_schema = readiness_schema["properties"]["birth_profile_source_review_workplan_summary"]
+    assert "would_fetch_live_sources" in source_workplan_summary_schema["required"]
+    assert "would_write_review_manifest" in source_workplan_summary_schema["required"]
+    assert "review_progress_summary" in source_workplan_summary_schema["required"]
+    assert "field_gap_summary" in source_workplan_summary_schema["required"]
+    assert "source_review_gate_passed" in source_workplan_summary_schema["required"]
+    assert source_workplan_summary_schema["properties"]["work_item_count"]["type"] == "integer"
+    assert source_workplan_summary_schema["properties"]["review_progress_summary"]["type"] == "object"
+    assert source_workplan_summary_schema["properties"]["field_gap_summary"]["type"] == "object"
+    source_lookup_summary_schema = readiness_schema["properties"]["birth_profile_source_lookup_plan_summary"]
+    assert "would_fetch_live_sources" in source_lookup_summary_schema["required"]
+    assert "would_write_cache" in source_lookup_summary_schema["required"]
+    assert "lookup_gate_passed" in source_lookup_summary_schema["required"]
+    assert "source_family_count" in source_lookup_summary_schema["required"]
+    assert "source_family_catalog_bound" in source_lookup_summary_schema["required"]
+    assert "birth_time_source_policy_bound" in source_lookup_summary_schema["required"]
+    assert "identity_anchor_birth_time_disallowed" in source_lookup_summary_schema["required"]
+    assert source_lookup_summary_schema["properties"]["query_count"]["type"] == "integer"
+    assert source_lookup_summary_schema["properties"]["source_family_count"]["type"] == "integer"
+    assert source_lookup_summary_schema["properties"]["source_family_catalog_bound"]["type"] == "boolean"
+    assert source_lookup_summary_schema["properties"]["birth_time_source_policy_bound"]["type"] == "boolean"
+    assert source_lookup_summary_schema["properties"]["identity_anchor_birth_time_disallowed"]["type"] == "boolean"
+    source_template_summary_schema = readiness_schema["properties"][
+        "birth_profile_source_cache_template_preview_summary"
+    ]
+    assert "would_fetch_live_sources" in source_template_summary_schema["required"]
+    assert "would_write_cache" in source_template_summary_schema["required"]
+    assert "would_import_profiles" in source_template_summary_schema["required"]
+    assert "template_count" in source_template_summary_schema["required"]
+    assert "template_preview_gate_passed" in source_template_summary_schema["required"]
+    assert source_template_summary_schema["properties"]["template_count"]["type"] == "integer"
+    family_probe_schema = readiness_schema["properties"]["birth_profile_source_family_cache_enforcement_summary"]
+    assert "probe_executed" in family_probe_schema["required"]
+    assert "identity_anchor_birth_time_rejected" in family_probe_schema["required"]
+    assert "accepted_cache_count_after_probe" in family_probe_schema["required"]
+    assert "failure_contains_birth_time_policy" in family_probe_schema["required"]
+    assert family_probe_schema["properties"]["identity_anchor_birth_time_rejected"]["type"] == "boolean"
+    substantive_probe_schema = readiness_schema["properties"][
+        "birth_profile_substantive_evidence_cache_enforcement_summary"
+    ]
+    assert "probe_executed" in substantive_probe_schema["required"]
+    assert "metadata_only_reviewed_cache_rejected" in substantive_probe_schema["required"]
+    assert "accepted_cache_count_after_probe" in substantive_probe_schema["required"]
+    assert "failure_contains_substantive_birth_policy" in substantive_probe_schema["required"]
+    assert substantive_probe_schema["properties"]["metadata_only_reviewed_cache_rejected"]["type"] == "boolean"
+    assert substantive_probe_schema["properties"]["failure_contains_substantive_birth_policy"]["type"] == "boolean"
+    source_cache_summary_schema = readiness_schema["properties"]["birth_profile_source_cache_audit_summary"]
+    assert "would_fetch_live_sources" in source_cache_summary_schema["required"]
+    assert "would_write_cache" in source_cache_summary_schema["required"]
+    assert "would_import_profiles" in source_cache_summary_schema["required"]
+    assert "cache_audit_gate_passed" in source_cache_summary_schema["required"]
+    assert source_cache_summary_schema["properties"]["expected_cache_count"]["type"] == "integer"
+    reviewed_draft_summary_schema = readiness_schema["properties"][
+        "birth_profile_reviewed_manifest_draft_preview_summary"
+    ]
+    assert "would_write_review_manifest" in reviewed_draft_summary_schema["required"]
+    assert "would_import_profiles" in reviewed_draft_summary_schema["required"]
+    assert "draft_ready_for_human_approval" in reviewed_draft_summary_schema["required"]
+    assert "draft_gate_passed" in reviewed_draft_summary_schema["required"]
+    assert reviewed_draft_summary_schema["properties"]["review_request_count"]["type"] == "integer"
+    reviewed_file_summary_schema = readiness_schema["properties"][
+        "birth_profile_reviewed_manifest_file_preview_summary"
+    ]
+    assert "would_write_file" in reviewed_file_summary_schema["required"]
+    assert "would_import_profiles" in reviewed_file_summary_schema["required"]
+    assert "write_ready_for_human_approval" in reviewed_file_summary_schema["required"]
+    assert "target_file_sha256" in reviewed_file_summary_schema["required"]
+    assert "file_preview_gate_passed" in reviewed_file_summary_schema["required"]
+    assert reviewed_file_summary_schema["properties"]["target_file"]["type"] == "string"
+    assert reviewed_file_summary_schema["properties"]["target_file_sha256"]["pattern"] == "^[0-9a-f]{64}$"
+    import_preview_summary_schema = readiness_schema["properties"]["birth_profile_import_preview_summary"]
+    assert "would_write_file" in import_preview_summary_schema["required"]
+    assert "import_allowed" in import_preview_summary_schema["required"]
+    assert "import_gate_passed" in import_preview_summary_schema["required"]
+    assert import_preview_summary_schema["properties"]["blocked_request_count"]["type"] == "integer"
+    patch_preview_summary_schema = readiness_schema["properties"]["birth_profile_fixture_patch_preview_summary"]
+    assert "would_write_file" in patch_preview_summary_schema["required"]
+    assert "patch_ready_for_review" in patch_preview_summary_schema["required"]
+    assert "patch_gate_passed" in patch_preview_summary_schema["required"]
+    assert patch_preview_summary_schema["properties"]["candidate_count"]["type"] == "integer"
+    assert patch_preview_summary_schema["properties"]["target_file_sha256"]["pattern"] == "^[0-9a-f]{64}$"
+    assert patch_preview_summary_schema["properties"]["patch_text_sha256"]["pattern"] == "^[0-9a-f]{64}$"
+    assert readiness_schema["properties"]["symbolic_scoring_readiness_receipt_sha256"]["pattern"] == (
+        "^[0-9a-f]{64}$"
+    )
+    assert readiness_schema["properties"]["symbolic_annual_score_receipt_sha256"]["pattern"] == "^[0-9a-f]{64}$"
+    assert readiness_schema["properties"]["evidence_workplan_receipt_sha256"]["pattern"] == "^[0-9a-f]{64}$"
+    assert (
+        readiness_schema["properties"]["birth_profile_review_manifest_receipt_sha256"]["pattern"]
+        == "^[0-9a-f]{64}$"
+    )
+    assert (
+        readiness_schema["properties"]["birth_profile_source_review_workplan_receipt_sha256"]["pattern"]
+        == "^[0-9a-f]{64}$"
+    )
+    assert (
+        readiness_schema["properties"]["birth_profile_source_lookup_plan_receipt_sha256"]["pattern"]
+        == "^[0-9a-f]{64}$"
+    )
+    assert (
+        readiness_schema["properties"]["birth_profile_source_cache_template_preview_receipt_sha256"]["pattern"]
+        == "^[0-9a-f]{64}$"
+    )
+    assert (
+        readiness_schema["properties"]["birth_profile_source_cache_audit_receipt_sha256"]["pattern"]
+        == "^[0-9a-f]{64}$"
+    )
+    assert (
+        readiness_schema["properties"]["birth_profile_reviewed_manifest_draft_preview_receipt_sha256"]["pattern"]
+        == "^[0-9a-f]{64}$"
+    )
+    assert (
+        readiness_schema["properties"]["birth_profile_reviewed_manifest_file_preview_receipt_sha256"]["pattern"]
+        == "^[0-9a-f]{64}$"
+    )
+    assert (
+        readiness_schema["properties"]["birth_profile_import_preview_receipt_sha256"]["pattern"]
+        == "^[0-9a-f]{64}$"
+    )
+    assert (
+        readiness_schema["properties"]["birth_profile_fixture_patch_preview_receipt_sha256"]["pattern"]
+        == "^[0-9a-f]{64}$"
+    )
+    assert "BirthProfileReviewStatusResponse" in schema["schemas"]
+    birth_review_response = schema["schemas"]["BirthProfileReviewStatusResponse"]
+    assert "birth_profile_review_manifest_receipt" in birth_review_response["required"]
+    assert "production_gate" in birth_review_response["required"]
+    assert birth_review_response["properties"]["birth_profile_review_manifest_receipt"]["properties"]["sha256"][
+        "pattern"
+    ] == "^[0-9a-f]{64}$"
+    assert birth_review_response["properties"]["production_gate"]["properties"]["id"]["const"] == (
+        "birth_profile_review_manifest_ready_for_import"
+    )
+    assert "BirthProfileSourceReviewWorkplanResponse" in schema["schemas"]
+    source_workplan_response = schema["schemas"]["BirthProfileSourceReviewWorkplanResponse"]
+    assert "source_review_workplan" in source_workplan_response["required"]
+    source_workplan_schema = source_workplan_response["properties"]["source_review_workplan"]
+    assert "would_fetch_live_sources" in source_workplan_schema["required"]
+    assert "would_write_review_manifest" in source_workplan_schema["required"]
+    assert "work_item_count" in source_workplan_schema["required"]
+    assert "review_progress_summary" in source_workplan_schema["required"]
+    assert "field_gap_summary" in source_workplan_schema["required"]
+    assert source_workplan_schema["properties"]["review_progress_summary"]["type"] == "object"
+    assert source_workplan_schema["properties"]["field_gap_summary"]["type"] == "object"
+    assert source_workplan_schema["properties"]["source_review_workplan_sha256"]["pattern"] == "^[0-9a-f]{64}$"
+    assert source_workplan_schema["properties"]["source_review_gate"]["properties"]["id"]["const"] == (
+        "birth_profile_source_review_required"
+    )
+    assert "BirthProfileSourceLookupPlanResponse" in schema["schemas"]
+    source_lookup_response = schema["schemas"]["BirthProfileSourceLookupPlanResponse"]
+    assert "source_lookup_plan" in source_lookup_response["required"]
+    source_lookup_schema = source_lookup_response["properties"]["source_lookup_plan"]
+    assert "would_fetch_live_sources" in source_lookup_schema["required"]
+    assert "would_write_cache" in source_lookup_schema["required"]
+    assert "would_write_review_manifest" in source_lookup_schema["required"]
+    assert "source_family_catalog" in source_lookup_schema["required"]
+    assert "query_count" in source_lookup_schema["required"]
+    assert source_lookup_schema["properties"]["source_lookup_plan_sha256"]["pattern"] == "^[0-9a-f]{64}$"
+    assert source_lookup_schema["properties"]["source_family_catalog"]["properties"]["schema_version"]["const"] == (
+        "birth-profile-source-family-catalog-v1"
+    )
+    assert (
+        source_lookup_schema["properties"]["source_family_catalog"]["properties"]["source_family_catalog_receipt"][
+            "properties"
+        ]["schema_version"]["const"]
+        == "birth-profile-source-family-catalog-receipt-v1"
+    )
+    assert source_lookup_schema["properties"]["lookup_gate"]["properties"]["id"]["const"] == (
+        "birth_profile_source_lookup_requires_human_execution"
+    )
+    assert "BirthProfileSourceCacheTemplatePreviewResponse" in schema["schemas"]
+    source_cache_template_response = schema["schemas"]["BirthProfileSourceCacheTemplatePreviewResponse"]
+    assert "source_cache_template_preview" in source_cache_template_response["required"]
+    source_cache_template_schema = source_cache_template_response["properties"]["source_cache_template_preview"]
+    assert "would_write_cache" in source_cache_template_schema["required"]
+    assert "would_fetch_live_sources" in source_cache_template_schema["required"]
+    assert "would_import_profiles" in source_cache_template_schema["required"]
+    assert "template_count" in source_cache_template_schema["required"]
+    assert source_cache_template_schema["properties"]["source_cache_template_preview_sha256"]["pattern"] == (
+        "^[0-9a-f]{64}$"
+    )
+    assert source_cache_template_schema["properties"]["template_preview_gate"]["properties"]["id"]["const"] == (
+        "birth_profile_source_cache_template_requires_manual_fill"
+    )
+    assert "BirthProfileSourceCacheAuditResponse" in schema["schemas"]
+    source_cache_response = schema["schemas"]["BirthProfileSourceCacheAuditResponse"]
+    assert "source_cache_audit" in source_cache_response["required"]
+    source_cache_schema = source_cache_response["properties"]["source_cache_audit"]
+    assert "would_fetch_live_sources" in source_cache_schema["required"]
+    assert "would_write_cache" in source_cache_schema["required"]
+    assert "would_write_review_manifest" in source_cache_schema["required"]
+    assert "would_import_profiles" in source_cache_schema["required"]
+    assert "expected_cache_count" in source_cache_schema["required"]
+    assert source_cache_schema["properties"]["source_cache_audit_sha256"]["pattern"] == "^[0-9a-f]{64}$"
+    assert source_cache_schema["properties"]["cache_audit_gate"]["properties"]["id"]["const"] == (
+        "birth_profile_source_cache_requires_reviewed_manifest_draft"
+    )
+    assert "BirthProfileReviewedManifestDraftPreviewResponse" in schema["schemas"]
+    reviewed_draft_response = schema["schemas"]["BirthProfileReviewedManifestDraftPreviewResponse"]
+    assert "reviewed_manifest_draft_preview" in reviewed_draft_response["required"]
+    reviewed_draft_schema = reviewed_draft_response["properties"]["reviewed_manifest_draft_preview"]
+    assert "would_write_review_manifest" in reviewed_draft_schema["required"]
+    assert "would_import_profiles" in reviewed_draft_schema["required"]
+    assert "draft_ready_for_human_approval" in reviewed_draft_schema["required"]
+    assert "draft_manifest_sha256" in reviewed_draft_schema["required"]
+    assert reviewed_draft_schema["properties"]["reviewed_manifest_draft_preview_sha256"]["pattern"] == (
+        "^[0-9a-f]{64}$"
+    )
+    assert reviewed_draft_schema["properties"]["draft_gate"]["properties"]["id"]["const"] == (
+        "birth_profile_reviewed_manifest_draft_requires_human_approval"
+    )
+    assert "BirthProfileReviewedManifestFilePreviewResponse" in schema["schemas"]
+    reviewed_file_response = schema["schemas"]["BirthProfileReviewedManifestFilePreviewResponse"]
+    assert "reviewed_manifest_file_preview" in reviewed_file_response["required"]
+    reviewed_file_schema = reviewed_file_response["properties"]["reviewed_manifest_file_preview"]
+    assert "target_file" in reviewed_file_schema["required"]
+    assert "would_write_file" in reviewed_file_schema["required"]
+    assert "would_import_profiles" in reviewed_file_schema["required"]
+    assert "write_ready_for_human_approval" in reviewed_file_schema["required"]
+    assert reviewed_file_schema["properties"]["reviewed_manifest_file_preview_sha256"]["pattern"] == (
+        "^[0-9a-f]{64}$"
+    )
+    assert reviewed_file_schema["properties"]["file_preview_gate"]["properties"]["id"]["const"] == (
+        "birth_profile_reviewed_manifest_file_write_requires_human_approval"
+    )
+    assert "BirthProfileImportPreviewResponse" in schema["schemas"]
+    import_preview_response = schema["schemas"]["BirthProfileImportPreviewResponse"]
+    assert "import_preview" in import_preview_response["required"]
+    import_preview_schema = import_preview_response["properties"]["import_preview"]
+    assert "would_write_file" in import_preview_schema["required"]
+    assert "import_allowed" in import_preview_schema["required"]
+    assert "candidate_profiles" in import_preview_schema["required"]
+    assert import_preview_schema["properties"]["import_preview_sha256"]["pattern"] == "^[0-9a-f]{64}$"
+    assert import_preview_schema["properties"]["candidate_profiles"]["items"]["properties"]["birth"]["required"] == [
+        "birth_date",
+        "birth_time",
+        "gender",
+        "birthplace",
+    ]
+    assert import_preview_schema["properties"]["import_gate"]["properties"]["id"]["const"] == (
+        "birth_profile_import_reviewed_profiles_present"
+    )
+    assert "BirthProfileFixturePatchPreviewResponse" in schema["schemas"]
+    patch_preview_response = schema["schemas"]["BirthProfileFixturePatchPreviewResponse"]
+    assert "fixture_patch_preview" in patch_preview_response["required"]
+    patch_preview_schema = patch_preview_response["properties"]["fixture_patch_preview"]
+    assert "target_file_sha256" in patch_preview_schema["required"]
+    assert "patch_text_sha256" in patch_preview_schema["required"]
+    assert "would_write_file" in patch_preview_schema["required"]
+    assert patch_preview_schema["properties"]["fixture_patch_preview_sha256"]["pattern"] == "^[0-9a-f]{64}$"
+    assert patch_preview_schema["properties"]["patch_gate"]["properties"]["id"]["const"] == (
+        "birth_profile_fixture_patch_preview_ready"
+    )
+    assert fixture_material["properties"]["validation_label_table_receipt_sha256"]["pattern"] == "^[0-9a-f]{64}$"
     assert "blocked_capability_coverage" in schema["schemas"]["CapabilityAuditResponse"]["required"]
     assert schema["schemas"]["CapabilityAuditResponse"]["properties"]["blocked_capability_coverage"]["$ref"] == (
         "#/schemas/BlockedCapabilityCoverage"
@@ -1460,6 +1902,7 @@ def test_schema_contract_score_gates_release_governance_contracts():
     assert "source_review_sha256" in schema["schemas"]["DeliberationReceipt"]["required"]
     assert schema["schemas"]["AnnualLuck"]["properties"]["rows"]["items"]["$ref"] == "#/schemas/AnnualLuckRow"
     assert schema["schemas"]["AnnualLuckRow"]["properties"]["elements"]["$ref"] == "#/schemas/AnnualLuckRowElements"
+    assert schema["schemas"]["AnnualLuckRow"]["properties"]["event_markers"]["$ref"] == "#/schemas/AnnualEventMarkers"
     assert schema["schemas"]["AnnualLuckRow"]["properties"]["bazi_evidence"]["$ref"] == (
         "#/schemas/AnnualLuckBaziEvidence"
     )
@@ -1473,6 +1916,9 @@ def test_schema_contract_score_gates_release_governance_contracts():
         "#/schemas/AnnualLuckNatalPillarMatch"
     )
     assert "finance" in schema["schemas"]["AnnualLuckRow"]["required"]
+    assert "event_markers" in schema["schemas"]["AnnualLuckRow"]["required"]
+    assert "career_launch" in schema["schemas"]["AnnualEventMarkers"]["required"]
+    assert "role_power" in schema["schemas"]["AnnualEventMarkers"]["required"]
     assert "focus" in schema["schemas"]["AnnualLuckRowElements"]["required"]
     assert "annual_ten_gods" in schema["schemas"]["AnnualLuckBaziEvidence"]["required"]
     assert "stem" in schema["schemas"]["AnnualLuckTenGodPair"]["required"]

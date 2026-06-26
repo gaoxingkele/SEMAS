@@ -1,0 +1,33 @@
+{
+  "head": {
+    "vars": [
+      "event",
+      "eventLabel",
+      "date",
+      "source"
+    ]
+  },
+  "results": {
+    "bindings": [
+      {
+        "event": {
+          "type": "uri",
+          "value": "https://www.wikidata.org/entity/Q123456"
+        },
+        "eventLabel": {
+          "type": "literal",
+          "value": "Example major title event"
+        },
+        "date": {
+          "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+          "type": "literal",
+          "value": "2003-07-06T00:00:00Z"
+        },
+        "source": {
+          "type": "uri",
+          "value": "https://query.wikidata.org/"
+        }
+      }
+    ]
+  }
+}

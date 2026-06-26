@@ -1,0 +1,214 @@
+{
+  "schema_version": "industry-event-candidate-cases-v1",
+  "status": "example_only_not_production_candidate_pool",
+  "purpose": "Demonstrate a public celebrity candidate pool for future sports, film, and music industry-event validation.",
+  "boundary": "This file identifies public people and suggested event collection windows only. It does not certify birth data, event labels, identity review, or production validation readiness.",
+  "review": {
+    "externally_reviewed": false,
+    "reviewer": "example steward required before production use",
+    "review_date": null,
+    "approval": "not_approved_for_candidate_pool"
+  },
+  "selection_policy": {
+    "candidate_domains": [
+      "film",
+      "music",
+      "sports"
+    ],
+    "min_candidates_per_domain": 3,
+    "requires_qid_source_url": true,
+    "requires_identity_review_before_production": true,
+    "requires_negative_year_collection": true,
+    "collected_before_rule_change": true,
+    "source_identity_anchor": "Wikidata entity URL verified through wbsearchentities lookup on 2026-06-26."
+  },
+  "required_candidate_fields": [
+    "case_id",
+    "public_name",
+    "domain",
+    "industry",
+    "person_qid",
+    "public_source_url",
+    "source_name",
+    "source_lookup_method",
+    "identity_review_status",
+    "split_role",
+    "event_query_domain",
+    "collection_window",
+    "selection_reason",
+    "collected_before_rule_change"
+  ],
+  "candidates": [
+    {
+      "case_id": "roger_federer",
+      "public_name": "Roger Federer",
+      "domain": "sports",
+      "industry": "tennis",
+      "person_qid": "Q1426",
+      "public_source_url": "https://www.wikidata.org/wiki/Q1426",
+      "source_name": "Wikidata",
+      "source_lookup_method": "wbsearchentities_exact_label",
+      "identity_review_status": "machine_lookup_not_external_reviewed",
+      "split_role": "holdout",
+      "event_query_domain": "sports",
+      "collection_window": {
+        "start_year": 1998,
+        "end_year": 2022
+      },
+      "selection_reason": "Long public sports career with many competition-result years and non-peak years for negative-year testing.",
+      "collected_before_rule_change": true
+    },
+    {
+      "case_id": "serena_williams",
+      "public_name": "Serena Williams",
+      "domain": "sports",
+      "industry": "tennis",
+      "person_qid": "Q11459",
+      "public_source_url": "https://www.wikidata.org/wiki/Q11459",
+      "source_name": "Wikidata",
+      "source_lookup_method": "wbsearchentities_exact_label",
+      "identity_review_status": "machine_lookup_not_external_reviewed",
+      "split_role": "holdout",
+      "event_query_domain": "sports",
+      "collection_window": {
+        "start_year": 1995,
+        "end_year": 2022
+      },
+      "selection_reason": "Long public sports career with repeated major-title and comeback periods.",
+      "collected_before_rule_change": true
+    },
+    {
+      "case_id": "michael_jordan",
+      "public_name": "Michael Jordan",
+      "domain": "sports",
+      "industry": "basketball",
+      "person_qid": "Q41421",
+      "public_source_url": "https://www.wikidata.org/wiki/Q41421",
+      "source_name": "Wikidata",
+      "source_lookup_method": "wbsearchentities_exact_label",
+      "identity_review_status": "machine_lookup_not_external_reviewed",
+      "split_role": "train",
+      "event_query_domain": "sports",
+      "collection_window": {
+        "start_year": 1984,
+        "end_year": 2003
+      },
+      "selection_reason": "Public sports career includes clear title years, retirement transitions, and brand/business crossover years.",
+      "collected_before_rule_change": true
+    },
+    {
+      "case_id": "jackie_chan",
+      "public_name": "Jackie Chan",
+      "domain": "film",
+      "industry": "film_or_television",
+      "person_qid": "Q36970",
+      "public_source_url": "https://www.wikidata.org/wiki/Q36970",
+      "source_name": "Wikidata",
+      "source_lookup_method": "wbsearchentities_exact_label",
+      "identity_review_status": "machine_lookup_not_external_reviewed",
+      "split_role": "holdout",
+      "event_query_domain": "film",
+      "collection_window": {
+        "start_year": 1978,
+        "end_year": 2023
+      },
+      "selection_reason": "Long film career with regional and international visibility shifts.",
+      "collected_before_rule_change": true
+    },
+    {
+      "case_id": "meryl_streep",
+      "public_name": "Meryl Streep",
+      "domain": "film",
+      "industry": "film_or_television",
+      "person_qid": "Q873",
+      "public_source_url": "https://www.wikidata.org/wiki/Q873",
+      "source_name": "Wikidata",
+      "source_lookup_method": "wbsearchentities_exact_label",
+      "identity_review_status": "machine_lookup_not_external_reviewed",
+      "split_role": "holdout",
+      "event_query_domain": "film",
+      "collection_window": {
+        "start_year": 1977,
+        "end_year": 2023
+      },
+      "selection_reason": "Film career has many award and nomination years plus quieter years for contrast.",
+      "collected_before_rule_change": true
+    },
+    {
+      "case_id": "tom_hanks",
+      "public_name": "Tom Hanks",
+      "domain": "film",
+      "industry": "film_or_television",
+      "person_qid": "Q2263",
+      "public_source_url": "https://www.wikidata.org/wiki/Q2263",
+      "source_name": "Wikidata",
+      "source_lookup_method": "wbsearchentities_exact_label",
+      "identity_review_status": "machine_lookup_not_external_reviewed",
+      "split_role": "train",
+      "event_query_domain": "film",
+      "collection_window": {
+        "start_year": 1980,
+        "end_year": 2023
+      },
+      "selection_reason": "Film career has clear public-fame, award, and role-release markers.",
+      "collected_before_rule_change": true
+    },
+    {
+      "case_id": "taylor_swift",
+      "public_name": "Taylor Swift",
+      "domain": "music",
+      "industry": "music",
+      "person_qid": "Q26876",
+      "public_source_url": "https://www.wikidata.org/wiki/Q26876",
+      "source_name": "Wikidata",
+      "source_lookup_method": "wbsearchentities_exact_label",
+      "identity_review_status": "machine_lookup_not_external_reviewed",
+      "split_role": "holdout",
+      "event_query_domain": "music",
+      "collection_window": {
+        "start_year": 2006,
+        "end_year": 2024
+      },
+      "selection_reason": "Music career has visible release, award, public-fame, and controversy periods.",
+      "collected_before_rule_change": true
+    },
+    {
+      "case_id": "beyonce",
+      "public_name": "Beyonce",
+      "domain": "music",
+      "industry": "music",
+      "person_qid": "Q36153",
+      "public_source_url": "https://www.wikidata.org/wiki/Q36153",
+      "source_name": "Wikidata",
+      "source_lookup_method": "wbsearchentities_exact_label",
+      "identity_review_status": "machine_lookup_not_external_reviewed",
+      "split_role": "holdout",
+      "event_query_domain": "music",
+      "collection_window": {
+        "start_year": 1997,
+        "end_year": 2024
+      },
+      "selection_reason": "Music career spans group, solo, award, public-fame, and business visibility periods.",
+      "collected_before_rule_change": true
+    },
+    {
+      "case_id": "jay_chou",
+      "public_name": "Jay Chou",
+      "domain": "music",
+      "industry": "music",
+      "person_qid": "Q238819",
+      "public_source_url": "https://www.wikidata.org/wiki/Q238819",
+      "source_name": "Wikidata",
+      "source_lookup_method": "wbsearchentities_exact_label",
+      "identity_review_status": "machine_lookup_not_external_reviewed",
+      "split_role": "train",
+      "event_query_domain": "music",
+      "collection_window": {
+        "start_year": 2000,
+        "end_year": 2024
+      },
+      "selection_reason": "Music career gives an East Asian public-fame sample outside English-language celebrity data.",
+      "collected_before_rule_change": true
+    }
+  ]
+}

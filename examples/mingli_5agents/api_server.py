@@ -18,11 +18,32 @@ if str(ROOT) not in sys.path:
 from examples.mingli_5agents.api_core import (
     analyze_case,
     benchmark,
+    birth_profile_import_preview,
+    birth_profile_fixture_patch_preview,
+    birth_profile_reviewed_manifest_draft_preview,
+    birth_profile_reviewed_manifest_file_preview,
+    birth_profile_source_cache_audit,
+    birth_profile_source_cache_template_preview,
+    birth_profile_source_lookup_plan,
+    birth_profile_source_review_workplan,
+    birth_profile_review_status,
     capability_audit,
     classical_sources_refresh,
     classical_sources_status,
     evolve_case,
     init_repo,
+    industry_event_candidate_cases_status,
+    industry_event_candidate_pool_fetch_cache,
+    industry_event_candidate_pool_draft_import,
+    industry_event_collection_requests,
+    industry_event_evidence_workplan,
+    industry_event_fetch_cache,
+    industry_event_manifest_draft_from_response,
+    industry_event_manifest_status,
+    industry_event_query_plan_status,
+    industry_event_symbolic_annual_score,
+    industry_event_symbolic_scoring_readiness,
+    industry_event_validation_labels,
     known_gap_handoff,
     known_gap_handoff_implementation_checklist,
     outcome_dataset_manifest_status,
@@ -129,6 +150,244 @@ class MingliApiHandler(BaseHTTPRequestHandler):
                         manifest_path=Path(manifest) if manifest else None,
                     )
                 )
+            elif route == "/industry-events":
+                manifest = _first(query.get("manifest"))
+                self._write_json(
+                    industry_event_manifest_status(
+                        self.repo_path,
+                        manifest_path=Path(manifest) if manifest else None,
+                    )
+                )
+            elif route == "/industry-event-labels":
+                manifest = _first(query.get("manifest"))
+                self._write_json(
+                    industry_event_validation_labels(
+                        self.repo_path,
+                        manifest_path=Path(manifest) if manifest else None,
+                    )
+                )
+            elif route == "/industry-event-scoring-readiness":
+                manifest = _first(query.get("manifest"))
+                self._write_json(
+                    industry_event_symbolic_scoring_readiness(
+                        self.repo_path,
+                        manifest_path=Path(manifest) if manifest else None,
+                    )
+                )
+            elif route == "/industry-event-symbolic-score":
+                manifest = _first(query.get("manifest"))
+                self._write_json(
+                    industry_event_symbolic_annual_score(
+                        self.repo_path,
+                        manifest_path=Path(manifest) if manifest else None,
+                    )
+                )
+            elif route == "/industry-event-evidence-workplan":
+                manifest = _first(query.get("manifest"))
+                candidates = _first(query.get("candidates"))
+                query_plan = _first(query.get("query_plan"))
+                cache_dir = _first(query.get("cache_dir"))
+                self._write_json(
+                    industry_event_evidence_workplan(
+                        self.repo_path,
+                        manifest_path=Path(manifest) if manifest else None,
+                        candidate_path=Path(candidates) if candidates else None,
+                        query_plan_path=Path(query_plan) if query_plan else None,
+                        cache_dir=Path(cache_dir) if cache_dir else None,
+                    )
+                )
+            elif route == "/birth-profile-review":
+                manifest = _first(query.get("manifest"))
+                self._write_json(
+                    birth_profile_review_status(
+                        self.repo_path,
+                        manifest_path=Path(manifest) if manifest else None,
+                    )
+                )
+            elif route == "/birth-profile-source-review-workplan":
+                manifest = _first(query.get("manifest"))
+                self._write_json(
+                    birth_profile_source_review_workplan(
+                        self.repo_path,
+                        manifest_path=Path(manifest) if manifest else None,
+                    )
+                )
+            elif route == "/birth-profile-source-lookup-plan":
+                manifest = _first(query.get("manifest"))
+                cache_dir = _first(query.get("cache_dir"))
+                domain = _first(query.get("domain"))
+                self._write_json(
+                    birth_profile_source_lookup_plan(
+                        self.repo_path,
+                        manifest_path=Path(manifest) if manifest else None,
+                        cache_dir=Path(cache_dir) if cache_dir else None,
+                        domain=domain,
+                    )
+                )
+            elif route == "/birth-profile-source-cache-audit":
+                manifest = _first(query.get("manifest"))
+                cache_dir = _first(query.get("cache_dir"))
+                domain = _first(query.get("domain"))
+                self._write_json(
+                    birth_profile_source_cache_audit(
+                        self.repo_path,
+                        manifest_path=Path(manifest) if manifest else None,
+                        cache_dir=Path(cache_dir) if cache_dir else None,
+                        domain=domain,
+                    )
+                )
+            elif route == "/birth-profile-source-cache-template-preview":
+                manifest = _first(query.get("manifest"))
+                cache_dir = _first(query.get("cache_dir"))
+                domain = _first(query.get("domain"))
+                self._write_json(
+                    birth_profile_source_cache_template_preview(
+                        self.repo_path,
+                        manifest_path=Path(manifest) if manifest else None,
+                        cache_dir=Path(cache_dir) if cache_dir else None,
+                        domain=domain,
+                    )
+                )
+            elif route == "/birth-profile-reviewed-manifest-draft-preview":
+                manifest = _first(query.get("manifest"))
+                cache_dir = _first(query.get("cache_dir"))
+                domain = _first(query.get("domain"))
+                self._write_json(
+                    birth_profile_reviewed_manifest_draft_preview(
+                        self.repo_path,
+                        manifest_path=Path(manifest) if manifest else None,
+                        cache_dir=Path(cache_dir) if cache_dir else None,
+                        domain=domain,
+                    )
+                )
+            elif route == "/birth-profile-reviewed-manifest-file-preview":
+                manifest = _first(query.get("manifest"))
+                cache_dir = _first(query.get("cache_dir"))
+                domain = _first(query.get("domain"))
+                target = _first(query.get("target"))
+                self._write_json(
+                    birth_profile_reviewed_manifest_file_preview(
+                        self.repo_path,
+                        manifest_path=Path(manifest) if manifest else None,
+                        cache_dir=Path(cache_dir) if cache_dir else None,
+                        domain=domain,
+                        target_path=Path(target) if target else None,
+                    )
+                )
+            elif route == "/birth-profile-import-preview":
+                manifest = _first(query.get("manifest"))
+                self._write_json(
+                    birth_profile_import_preview(
+                        self.repo_path,
+                        manifest_path=Path(manifest) if manifest else None,
+                    )
+                )
+            elif route == "/birth-profile-fixture-patch-preview":
+                manifest = _first(query.get("manifest"))
+                self._write_json(
+                    birth_profile_fixture_patch_preview(
+                        self.repo_path,
+                        manifest_path=Path(manifest) if manifest else None,
+                    )
+                )
+            elif route == "/industry-event-queries":
+                query_plan = _first(query.get("query_plan"))
+                self._write_json(
+                    industry_event_query_plan_status(
+                        self.repo_path,
+                        query_plan_path=Path(query_plan) if query_plan else None,
+                    )
+                )
+            elif route == "/industry-event-candidates":
+                candidates = _first(query.get("candidates"))
+                self._write_json(
+                    industry_event_candidate_cases_status(
+                        self.repo_path,
+                        candidate_path=Path(candidates) if candidates else None,
+                    )
+                )
+            elif route == "/industry-event-candidate-fetch-cache":
+                candidates = _first(query.get("candidates"))
+                query_plan = _first(query.get("query_plan"))
+                cache_dir = _first(query.get("cache_dir"))
+                self._write_json(
+                    industry_event_candidate_pool_fetch_cache(
+                        self.repo_path,
+                        candidate_path=Path(candidates) if candidates else None,
+                        query_plan_path=Path(query_plan) if query_plan else None,
+                        cache_dir=Path(cache_dir) if cache_dir else None,
+                        domain=_first(query.get("domain")),
+                        split_role=_first(query.get("split_role")),
+                        live=_truthy(_first(query.get("live"))),
+                    )
+                )
+            elif route == "/industry-event-candidate-draft-import":
+                candidates = _first(query.get("candidates"))
+                query_plan = _first(query.get("query_plan"))
+                cache_dir = _first(query.get("cache_dir"))
+                self._write_json(
+                    industry_event_candidate_pool_draft_import(
+                        self.repo_path,
+                        candidate_path=Path(candidates) if candidates else None,
+                        query_plan_path=Path(query_plan) if query_plan else None,
+                        cache_dir=Path(cache_dir) if cache_dir else None,
+                        domain=_first(query.get("domain")),
+                        split_role=_first(query.get("split_role")),
+                    )
+                )
+            elif route == "/industry-event-requests":
+                query_plan = _first(query.get("query_plan"))
+                self._write_json(
+                    industry_event_collection_requests(
+                        self.repo_path,
+                        query_plan_path=Path(query_plan) if query_plan else None,
+                        case_id=_first(query.get("case_id")) or "",
+                        public_name=_first(query.get("public_name")) or "",
+                        person_qid=_first(query.get("person_qid")) or "",
+                        start_year=_optional_int(_first(query.get("start_year"))) or 0,
+                        end_year=_optional_int(_first(query.get("end_year"))) or 0,
+                        split_role=_first(query.get("split_role")) or "holdout",
+                        domain=_first(query.get("domain")),
+                    )
+                )
+            elif route == "/industry-event-fetch-cache":
+                query_plan = _first(query.get("query_plan"))
+                cache_dir = _first(query.get("cache_dir"))
+                self._write_json(
+                    industry_event_fetch_cache(
+                        self.repo_path,
+                        cache_dir=Path(cache_dir) if cache_dir else None,
+                        query_plan_path=Path(query_plan) if query_plan else None,
+                        case_id=_first(query.get("case_id")) or "",
+                        public_name=_first(query.get("public_name")) or "",
+                        person_qid=_first(query.get("person_qid")) or "",
+                        start_year=_optional_int(_first(query.get("start_year"))) or 0,
+                        end_year=_optional_int(_first(query.get("end_year"))) or 0,
+                        split_role=_first(query.get("split_role")) or "holdout",
+                        domain=_first(query.get("domain")),
+                        live=_truthy(_first(query.get("live"))),
+                    )
+                )
+            elif route == "/industry-event-draft-manifest":
+                query_plan = _first(query.get("query_plan"))
+                response_path = _first(query.get("response"))
+                if not response_path:
+                    self._write_json({"error": "bad_request", "message": "missing query field: response"}, HTTPStatus.BAD_REQUEST)
+                else:
+                    self._write_json(
+                        industry_event_manifest_draft_from_response(
+                            self.repo_path,
+                            response_path=Path(response_path),
+                            query_plan_path=Path(query_plan) if query_plan else None,
+                            case_id=_first(query.get("case_id")) or "",
+                            public_name=_first(query.get("public_name")) or "",
+                            person_qid=_first(query.get("person_qid")) or "",
+                            start_year=_optional_int(_first(query.get("start_year"))) or 0,
+                            end_year=_optional_int(_first(query.get("end_year"))) or 0,
+                            split_role=_first(query.get("split_role")) or "holdout",
+                            domain=_first(query.get("domain")) or "",
+                        )
+                    )
             elif route == "/classical-sources":
                 source_list = _first(query.get("source_list"))
                 self._write_json(

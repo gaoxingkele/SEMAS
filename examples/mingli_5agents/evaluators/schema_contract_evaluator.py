@@ -7,6 +7,7 @@ from typing import Any
 
 REQUIRED_SCHEMAS = {
     "AnnualLuck",
+    "AnnualEventMarkers",
     "AnnualLuckActiveMajorLuck",
     "AnnualLuckBaziEvidence",
     "AnnualLuckRangeSummary",
@@ -56,10 +57,24 @@ REQUIRED_SCHEMAS = {
     "BenchmarkResponse",
     "BenchmarkResult",
     "BirthProfile",
+    "BirthProfileFixturePatchPreviewResponse",
+    "BirthProfileImportPreviewResponse",
+    "BirthProfileReviewedManifestDraftPreviewResponse",
+    "BirthProfileReviewedManifestFilePreviewResponse",
+    "BirthProfileReviewStatusResponse",
+    "BirthProfileSourceCacheAuditResponse",
+    "BirthProfileSourceCacheTemplatePreviewResponse",
+    "BirthProfileSourceLookupPlanResponse",
+    "BirthProfileSourceReviewWorkplanResponse",
     "CapabilityAuditReceipt",
     "CapabilityAuditReceiptMaterial",
     "CapabilityAuditResponse",
     "CapabilityFlagMap",
+    "FamousCaseAnnualEventCalibrationReceiptSummary",
+    "FamousCaseValidationReceiptSummary",
+    "FamousCaseSchoolCalibrationReceiptSummary",
+    "IndustryEventCrossDomainFixtureImportMaterial",
+    "IndustryEventCrossDomainFixtureImportReceipt",
     "ClassicalSourceListAudit",
     "ClassicalSourceListReceipt",
     "ClassicalSourceListReceiptMaterial",
@@ -273,6 +288,13 @@ REQUIRED_ENDPOINTS = {
     "POST /evolve": "EvolveResponse",
     "POST /rollback": "RollbackResponse",
     "POST /benchmark": "BenchmarkResponse",
+    "GET /birth-profile-fixture-patch-preview": "BirthProfileFixturePatchPreviewResponse",
+    "GET /birth-profile-reviewed-manifest-draft-preview": "BirthProfileReviewedManifestDraftPreviewResponse",
+    "GET /birth-profile-reviewed-manifest-file-preview": "BirthProfileReviewedManifestFilePreviewResponse",
+    "GET /birth-profile-source-cache-audit": "BirthProfileSourceCacheAuditResponse",
+    "GET /birth-profile-source-cache-template-preview": "BirthProfileSourceCacheTemplatePreviewResponse",
+    "GET /birth-profile-source-lookup-plan": "BirthProfileSourceLookupPlanResponse",
+    "GET /birth-profile-source-review-workplan": "BirthProfileSourceReviewWorkplanResponse",
 }
 
 
@@ -350,6 +372,7 @@ def _response_refs_ok(schemas: object) -> float:
         _ref(schemas, "AnnualLuck", "rows.items") == "#/schemas/AnnualLuckRow",
         _ref(schemas, "AnnualLuckRow", "elements") == "#/schemas/AnnualLuckRowElements",
         _ref(schemas, "AnnualLuckRow", "bazi_evidence") == "#/schemas/AnnualLuckBaziEvidence",
+        _ref(schemas, "AnnualLuckRow", "event_markers") == "#/schemas/AnnualEventMarkers",
         _ref(schemas, "AnnualLuckBaziEvidence", "annual_ten_gods") == "#/schemas/AnnualLuckTenGodPair",
         _ref(schemas, "AnnualLuckBaziEvidence", "active_major_luck") == "#/schemas/AnnualLuckActiveMajorLuck",
         _ref(schemas, "AnnualLuckBaziEvidence", "natal_pillar_matches.items")
@@ -532,6 +555,24 @@ def _response_refs_ok(schemas: object) -> float:
         _ref(schemas, "PlanComplianceReceipt", "material") == "#/schemas/PlanComplianceReceiptMaterial",
         _ref(schemas, "CapabilityAuditResponse", "feedback_memory_safety") == "#/schemas/FeedbackMemorySafetyAudit",
         _ref(schemas, "CapabilityAuditResponse", "method_surface") == "#/schemas/MethodSurfaceReceiptSummary",
+        _ref(schemas, "CapabilityAuditResponse", "famous_case_validation")
+        == "#/schemas/FamousCaseValidationReceiptSummary",
+        _ref(schemas, "CapabilityAuditReceiptMaterial", "famous_case_validation")
+        == "#/schemas/FamousCaseValidationReceiptSummary",
+        _ref(schemas, "CapabilityAuditResponse", "famous_case_school_calibration")
+        == "#/schemas/FamousCaseSchoolCalibrationReceiptSummary",
+        _ref(schemas, "CapabilityAuditReceiptMaterial", "famous_case_school_calibration")
+        == "#/schemas/FamousCaseSchoolCalibrationReceiptSummary",
+        _ref(schemas, "CapabilityAuditResponse", "famous_case_annual_event_calibration")
+        == "#/schemas/FamousCaseAnnualEventCalibrationReceiptSummary",
+        _ref(schemas, "CapabilityAuditReceiptMaterial", "famous_case_annual_event_calibration")
+        == "#/schemas/FamousCaseAnnualEventCalibrationReceiptSummary",
+        _ref(schemas, "CapabilityAuditResponse", "industry_event_cross_domain_fixture_import")
+        == "#/schemas/IndustryEventCrossDomainFixtureImportReceipt",
+        _ref(schemas, "CapabilityAuditReceiptMaterial", "industry_event_cross_domain_fixture_import")
+        == "#/schemas/IndustryEventCrossDomainFixtureImportReceipt",
+        _ref(schemas, "IndustryEventCrossDomainFixtureImportReceipt", "material")
+        == "#/schemas/IndustryEventCrossDomainFixtureImportMaterial",
         _ref(schemas, "CapabilityAuditResponse", "github_comparison_matrix.items") == "#/schemas/GitHubComparisonItem",
         _ref(schemas, "CapabilityAuditResponse", "github_comparison_receipt") == "#/schemas/GitHubComparisonReceipt",
         _ref(schemas, "GitHubComparisonReceipt", "material") == "#/schemas/GitHubComparisonReceiptMaterial",

@@ -374,6 +374,25 @@ def test_annual_luck_builds_structured_year_rows():
     assert set(annual["rows"][0]["bazi_evidence"]["annual_ten_gods"]) == {"stem", "branch"}
     assert annual["rows"][0]["bazi_evidence"]["useful_state"]
     assert "interpretation_basis" in annual["rows"][0]["bazi_evidence"]
+    assert set(annual["rows"][0]["event_markers"]) == {
+        "career_launch",
+        "role_power",
+        "role_transition",
+        "business_power",
+        "relationship",
+        "movement",
+        "study_exam",
+        "public_visibility",
+        "health_pressure",
+        "adult_career_stage",
+        "basis",
+    }
+    assert isinstance(annual["rows"][0]["event_markers"]["career_launch"], bool)
+    assert isinstance(annual["rows"][0]["event_markers"]["role_transition"], bool)
+    assert "annual ten-god pair" in annual["rows"][0]["event_markers"]["basis"]
+    assert "useful-state" in annual["rows"][0]["event_markers"]["basis"]
+    assert "major-luck activity" in annual["rows"][0]["event_markers"]["basis"]
+    assert "natal-pillar activation" in annual["rows"][0]["event_markers"]["basis"]
     assert annual["phase_summary"]
     assert annual["phase_summary"][0]["source"] == "annual_luck.rows"
     assert annual["phase_summary"][0]["source_row_indexes"] == [0, 1, 2]

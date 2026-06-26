@@ -112,6 +112,12 @@ def test_run_benchmark_returns_aggregate_metrics(tmp_path: Path):
     ]
     assert zh_case["report_features"]["auspicious_calendar_count"] == 7
     assert zh_case["report_features"]["has_chinese_render"] is True
+    assert zh_case["report_features"]["chinese_render_duplicate_bullet_ratio"] == 0.0
+    assert zh_case["report_features"]["chinese_render_topic_evidence_anchor_ratio"] == 1.0
+    assert zh_case["report_features"]["chinese_render_topic_judgment_structure_ratio"] == 1.0
+    assert zh_case["report_features"]["chinese_render_ascii_letter_count"] == 0
+    assert zh_case["report_features"]["chinese_render_ascii_question_present"] is False
+    assert zh_case["report_features"]["chinese_render_code_marker_present"] is False
     assert zh_case["report_features"]["output_language"] == "zh"
     assert zh_case["report_features"]["provider_summary_status"] in {"production_ready", "ready_with_provider_gaps"}
     assert zh_case["report_features"]["provider_blocker_count"] >= 0
@@ -152,6 +158,12 @@ def test_run_benchmark_returns_aggregate_metrics(tmp_path: Path):
     assert len(production_case["report_features"]["auspicious_calendar_receipt_sha256"]) == 64
     assert production_case["report_features"]["auspicious_calendar_row_count"] == 1
     assert production_case["report_features"]["auspicious_calendar_receipt_bound_to_provenance"] is True
+    assert production_case["report_features"]["chinese_render_duplicate_bullet_ratio"] == 0.0
+    assert production_case["report_features"]["chinese_render_topic_evidence_anchor_ratio"] == 1.0
+    assert production_case["report_features"]["chinese_render_topic_judgment_structure_ratio"] == 1.0
+    assert production_case["report_features"]["chinese_render_ascii_letter_count"] == 0
+    assert production_case["report_features"]["chinese_render_ascii_question_present"] is False
+    assert production_case["report_features"]["chinese_render_code_marker_present"] is False
     assert production_case["report_features"]["topic_confidence_boundaries_ok"] is True
     assert production_case["report_features"]["topic_confidence_missing_topics"] == []
     assert production_case["report_features"]["provider_summary_status"] == "production_ready"
