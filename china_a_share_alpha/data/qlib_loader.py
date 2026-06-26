@@ -14,13 +14,16 @@ import pandas as pd
 
 from china_a_share_alpha.data.sector_mapping import merge_sector_market_cap
 from china_a_share_alpha.data.synthetic import make_synthetic_panel
+from china_a_share_alpha.data.tushare_loader import load_tushare_data
 
 
 def load_data(config: dict[str, Any]) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Load train/test data. Falls back to synthetic if Qlib not available."""
+    """Load train/test data from synthetic, Qlib, or Tushare."""
     data_source = config.get("data_source", "synthetic")
     if data_source == "qlib":
         return _load_qlib_data(config)
+    if data_source == "tushare":
+        return load_tushare_data(config)
     return make_synthetic_panel(
         n_symbols=config.get("n_symbols", 50),
         n_days=config.get("n_days", 252),

@@ -230,6 +230,8 @@ def test_known_gap_resolution_plan_release_fallback_matches_schema_contract():
     assert "classical_source_latest_refresh_receipt_present" in coverage["valid_production_gate_ids"]
     assert "blocked_capability_coverage_complete" in coverage["valid_production_gate_ids"]
     assert "benchmark_chinese_render_quality_diagnostics" in coverage["valid_production_gate_ids"]
+    assert "famous_case_source_review_routing_complete" in coverage["valid_production_gate_ids"]
+    assert "famous_case_source_review_queue_aligned" in coverage["valid_production_gate_ids"]
     assert coverage["command_validation_complete"] is False
     assert coverage["invalid_verification_commands_by_gap"] == {}
 
@@ -624,6 +626,12 @@ def test_schema_contract_score_gates_release_governance_contracts():
     assert benchmark_features["chinese_render_duplicate_bullet_ratio"]["type"] == "number"
     assert benchmark_features["chinese_render_topic_evidence_anchor_ratio"]["type"] == "number"
     assert benchmark_features["chinese_render_topic_judgment_structure_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_annual_pillar_anchor_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_monthly_pillar_anchor_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_annual_ten_god_anchor_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_monthly_ten_god_anchor_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_annual_useful_state_anchor_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_monthly_useful_state_anchor_ratio"]["type"] == "number"
     assert benchmark_features["chinese_render_ascii_letter_count"]["type"] == "integer"
     assert benchmark_features["chinese_render_ascii_question_present"]["type"] == "boolean"
     assert benchmark_features["chinese_render_code_marker_present"]["type"] == "boolean"
@@ -940,6 +948,12 @@ def test_schema_contract_score_gates_release_governance_contracts():
     ]["required"]
     assert schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["properties"][
         "birth_source_quality_summary"
+    ]["type"] == "object"
+    assert "source_review_routing_summary" in schema["schemas"][
+        "FamousCaseAnnualEventCalibrationReceiptSummary"
+    ]["required"]
+    assert schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["properties"][
+        "source_review_routing_summary"
     ]["type"] == "object"
     assert schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["properties"]["fixture_sha256"][
         "pattern"

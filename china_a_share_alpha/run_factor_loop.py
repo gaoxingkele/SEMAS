@@ -30,8 +30,19 @@ def load_config(path: Path) -> dict[str, Any]:
         return yaml.safe_load(f)
 
 
+def _write_checkpoint(output_dir: Path | None, leaderboard: pd.DataFrame, history: list[dict[str, Any]]) -> None:
+    if output_dir is None:
+        return
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    leaderboard.to_csv(out / "factor_loop_leaderboard.csv", index=False)
+    with open(out / "factor_loop_history.json", "w", encoding="utf-8") as f:
+        json.dump(history, f, indent=2, ensure_ascii=False, default=str)
+
+
 def run(config_path: Path) -> dict[str, Any]:
     cfg = load_config(config_path)
+    output_dir = cfg.get("output_dir")
     train_data, test_data = load_data(cfg)
 
     repo_dir = Path(cfg.get("repo_dir", ".semas_factor_loop_repo"))
@@ -64,6 +75,12 @@ def run(config_path: Path) -> dict[str, Any]:
             f"Gen {pop._generation - 1:02d}: best_train_ic={best.train_ic:.4f}  "
             f"best_test_ic={best.test_ic:.4f}  expr={best.expression}"
         )
+        # Checkpoint after every generation so partial results are preserved.
+        _write_checkpoint(
+            output_dir,
+            pop.leaderboard(n=cfg.get("leaderboard_size", 10)),
+            pop.history,
+        )
 
     leaderboard = pop.leaderboard(n=cfg.get("leaderboard_size", 10))
     history = pop.history
@@ -88,18 +105,10 @@ def run(config_path: Path) -> dict[str, Any]:
         "rounds": len(history),
     }
 
-    output_dir = cfg.get("output_dir")
     if output_dir:
-        out = Path(output_dir)
-        out.mkdir(parents=True, exist_ok=True)
-        leaderboard_path = out / "factor_loop_leaderboard.csv"
-        leaderboard.to_csv(leaderboard_path, index=False)
-        history_path = out / "factor_loop_history.json"
-        with open(history_path, "w", encoding="utf-8") as f:
-            json.dump(history, f, indent=2, ensure_ascii=False, default=str)
-        report_path = generate_report(result, cfg, out)
-        print(f"Leaderboard: {leaderboard_path}")
-        print(f"History: {history_path}")
+        report_path = generate_report(result, cfg, Path(output_dir))
+        print(f"Leaderboard: {Path(output_dir) / 'factor_loop_leaderboard.csv'}")
+        print(f"History: {Path(output_dir) / 'factor_loop_history.json'}")
         print(f"Report: {report_path}")
 
     return {

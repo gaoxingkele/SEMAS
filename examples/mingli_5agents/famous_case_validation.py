@@ -771,6 +771,18 @@ def famous_case_annual_event_calibration_receipt() -> dict[str, Any]:
     event_subtype_summary = _annual_event_subtype_summary(case_scores)
     rule_variant_sweep = _annual_rule_variant_sweep(case_scores)
     rule_refinement_queue = _annual_rule_refinement_queue(topic_summary)
+    domain_topic_refinement_queue = _domain_topic_refinement_queue(domain_topic_summary)
+    evolution_task_plan = _annual_evolution_task_plan(
+        topic_summary,
+        event_subtype_summary,
+        rule_variant_sweep,
+        rule_refinement_queue,
+    )
+    source_review_routing_summary = _source_review_routing_summary(
+        rule_refinement_queue,
+        domain_topic_refinement_queue,
+        evolution_task_plan,
+    )
     material = {
         "schema_version": "mingli-famous-case-annual-event-calibration-v1",
         "fixture_sha256": fixture_receipt["sha256"],
@@ -806,9 +818,10 @@ def famous_case_annual_event_calibration_receipt() -> dict[str, Any]:
         ),
         "case_scores": case_scores,
         "birth_source_quality_summary": birth_source_quality_summary,
+        "source_review_routing_summary": source_review_routing_summary,
         "domain_summary": _annual_domain_summary(case_scores),
         "domain_topic_summary": domain_topic_summary,
-        "domain_topic_refinement_queue": _domain_topic_refinement_queue(domain_topic_summary),
+        "domain_topic_refinement_queue": domain_topic_refinement_queue,
         "domain_topic_variant_sweep": domain_topic_variant_sweep,
         "topic_summary": topic_summary,
         "industry_event_evidence_summary": _industry_event_evidence_summary(case_scores),
@@ -816,12 +829,7 @@ def famous_case_annual_event_calibration_receipt() -> dict[str, Any]:
         "event_subtype_summary": event_subtype_summary,
         "rule_variant_sweep": rule_variant_sweep,
         "rule_refinement_queue": rule_refinement_queue,
-        "evolution_task_plan": _annual_evolution_task_plan(
-            topic_summary,
-            event_subtype_summary,
-            rule_variant_sweep,
-            rule_refinement_queue,
-        ),
+        "evolution_task_plan": evolution_task_plan,
         "low_coverage_cases": [
             {
                 "case_id": case["case_id"],
@@ -977,6 +985,66 @@ def _annual_birth_source_quality_summary(case_scores: list[dict[str, Any]]) -> d
         "boundary": (
             "Hour-pillar-sensitive calibration should use eligible cases. Caution cases can remain in broad "
             "annual diagnostics only with source-quality caveats."
+        ),
+    }
+
+
+def _source_review_routing_summary(
+    rule_refinement_queue: list[dict[str, Any]],
+    domain_topic_refinement_queue: list[dict[str, Any]],
+    evolution_task_plan: list[dict[str, Any]],
+) -> dict[str, Any]:
+    global_source_review = [
+        str(item.get("event_topic"))
+        for item in rule_refinement_queue
+        if item.get("priority") == "source_review_first"
+    ]
+    domain_source_review = [
+        f"{item.get('domain')}/{item.get('event_topic')}"
+        for item in domain_topic_refinement_queue
+        if item.get("task_type") == "review_birth_sources"
+    ]
+    plan_source_review = [
+        str(item.get("event_topic"))
+        for item in evolution_task_plan
+        if item.get("task_type") == "review_birth_sources"
+    ]
+    global_bypassed = [
+        str(item.get("event_topic"))
+        for item in rule_refinement_queue
+        if float(item.get("eligible_event_rate", 1.0)) < 0.5
+        and int(item.get("event_count", 0)) >= 3
+        and item.get("priority") != "source_review_first"
+    ]
+    domain_bypassed = [
+        f"{item.get('domain')}/{item.get('event_topic')}"
+        for item in domain_topic_refinement_queue
+        if float(item.get("eligible_event_rate", 1.0)) < 0.5
+        and int(item.get("event_count", 0)) >= 3
+        and item.get("task_type") != "review_birth_sources"
+    ]
+    plan_bypassed = [
+        str(item.get("event_topic"))
+        for item in evolution_task_plan
+        if float(item.get("eligible_event_rate", 1.0)) < 0.5
+        and int(item.get("event_count", 0)) >= 3
+        and item.get("task_type") != "review_birth_sources"
+    ]
+    return {
+        "schema_version": "famous-case-source-review-routing-summary-v1",
+        "global_source_review_topic_count": len(global_source_review),
+        "global_source_review_topics": sorted(global_source_review),
+        "domain_source_review_slice_count": len(domain_source_review),
+        "domain_source_review_slices": sorted(domain_source_review),
+        "evolution_source_review_task_count": len(plan_source_review),
+        "evolution_source_review_topics": sorted(plan_source_review),
+        "global_bypassed_low_quality_topics": sorted(global_bypassed),
+        "domain_bypassed_low_quality_slices": sorted(domain_bypassed),
+        "evolution_bypassed_low_quality_topics": sorted(plan_bypassed),
+        "routing_complete": not global_bypassed and not domain_bypassed and not plan_bypassed,
+        "boundary": (
+            "This summary checks whether low-source-quality calibration topics are routed to source review. "
+            "It does not validate the source documents themselves."
         ),
     }
 
@@ -1595,7 +1663,10 @@ def _domain_topic_refinement_queue(domain_topic_summary: list[dict[str, Any]]) -
         strict_hit_rate = float(item.get("strict_exact_hit_rate", 0.0))
         strict_precision = float(item.get("strict_exact_precision", 0.0))
         strict_false_positive_rate = float(item.get("strict_false_positive_rate", 0.0))
-        if strict_hit_rate < 0.1:
+        eligible_event_rate = float(item.get("eligible_event_rate", 0.0))
+        if eligible_event_rate < 0.5:
+            task_type = "review_birth_sources"
+        elif strict_hit_rate < 0.1:
             task_type = "add_domain_specific_evidence"
         elif strict_false_positive_rate >= 0.1:
             task_type = "reduce_domain_false_positive"
@@ -1631,6 +1702,7 @@ def _domain_topic_refinement_queue(domain_topic_summary: list[dict[str, Any]]) -
             }
         )
     task_rank = {
+        "review_birth_sources": 0,
         "add_domain_specific_evidence": 0,
         "reduce_domain_false_positive": 1,
         "refine_domain_precision": 2,
@@ -1648,6 +1720,12 @@ def _domain_topic_refinement_queue(domain_topic_summary: list[dict[str, Any]]) -
 
 
 def _domain_topic_evidence(domain: str, topic: str, task_type: str) -> list[str]:
+    if task_type == "review_birth_sources":
+        return [
+            f"rated birth-time source review for {domain} {topic} cases",
+            "separate low-confidence birth-time cases from domain-specific rule tuning",
+            "rerun domain-topic calibration after source quality changes",
+        ]
     specific: dict[tuple[str, str], list[str]] = {
         ("影视", "public_fame"): [
             "film-or-television release marker separated from generic expression",
@@ -1688,6 +1766,12 @@ def _domain_topic_evidence(domain: str, topic: str, task_type: str) -> list[str]
 
 
 def _domain_topic_acceptance_criteria(task_type: str) -> list[str]:
+    if task_type == "review_birth_sources":
+        return [
+            "eligible_event_rate reaches at least 0.5 or the domain-topic slice remains source-review blocked",
+            "affected case ids have reviewed birth-source status before rule tuning",
+            "no domain-specific strict rule is changed before source review is complete",
+        ]
     if task_type == "add_domain_specific_evidence":
         return [
             "new domain-specific evidence field appears in event_evidence or event markers",
@@ -1929,9 +2013,12 @@ def _annual_rule_refinement_queue(topic_summary: list[dict[str, Any]]) -> list[d
     candidates = []
     for row in topic_summary:
         event_count = int(row.get("event_count", 0))
+        eligible_event_rate = float(row.get("eligible_event_rate", 0.0))
         strict_precision = float(row.get("strict_exact_precision", 0.0))
         strict_false_positive_rate = float(row.get("strict_false_positive_rate", 0.0))
-        if event_count < 3:
+        if event_count >= 3 and eligible_event_rate < 0.5:
+            priority = "source_review_first"
+        elif event_count < 3:
             priority = "watch"
         elif strict_precision < 0.1 and strict_false_positive_rate >= 0.1:
             priority = "high"
@@ -1949,11 +2036,11 @@ def _annual_rule_refinement_queue(topic_summary: list[dict[str, Any]]) -> list[d
                 "eligible_event_rate": float(row.get("eligible_event_rate", 0.0)),
                 "strict_exact_precision": strict_precision,
                 "strict_false_positive_rate": strict_false_positive_rate,
-                "recommended_evidence": _recommended_event_evidence(str(row["event_topic"])),
+                "recommended_evidence": _recommended_refinement_evidence(str(row["event_topic"]), priority),
                 "reason": _refinement_reason(row, priority),
             }
         )
-    priority_rank = {"high": 0, "medium": 1, "low": 2, "watch": 3}
+    priority_rank = {"source_review_first": 0, "high": 1, "medium": 2, "low": 3, "watch": 4}
     return sorted(
         candidates,
         key=lambda item: (
@@ -2051,8 +2138,11 @@ def _annual_evolution_task_plan(
         strict_precision = float(summary.get("strict_exact_precision", 0.0))
         strict_hit_rate = float(summary.get("strict_exact_hit_rate", 0.0))
         strict_false_positive_rate = float(summary.get("strict_false_positive_rate", 0.0))
+        eligible_event_rate = float(summary.get("eligible_event_rate", 0.0))
         subtype_coverage_rate = float(subtype_summary.get("subtype_coverage_rate", 0.0))
-        if subtype_coverage_rate < 0.5 and int(summary.get("event_count", 0)) >= 3:
+        if str(queue_item.get("priority")) == "source_review_first":
+            task_type = "review_birth_sources"
+        elif subtype_coverage_rate < 0.5 and int(summary.get("event_count", 0)) >= 3:
             task_type = "expand_subtypes"
         elif str(queue_item.get("priority")) == "watch":
             task_type = "monitor"
@@ -2069,6 +2159,9 @@ def _annual_evolution_task_plan(
                 "priority": queue_item.get("priority"),
                 "task_type": task_type,
                 "event_count": int(summary.get("event_count", 0)),
+                "eligible_event_count": int(summary.get("eligible_event_count", 0)),
+                "caution_event_count": int(summary.get("caution_event_count", 0)),
+                "eligible_event_rate": eligible_event_rate,
                 "strict_exact_hit_rate": strict_hit_rate,
                 "strict_exact_precision": strict_precision,
                 "strict_false_positive_rate": strict_false_positive_rate,
@@ -2086,9 +2179,10 @@ def _annual_evolution_task_plan(
                 ),
             }
         )
-    priority_rank = {"high": 0, "medium": 1, "low": 2, "watch": 3}
+    priority_rank = {"source_review_first": 0, "high": 1, "medium": 2, "low": 3, "watch": 4}
     task_rank = {"reduce_false_positive": 0, "add_specific_evidence": 1, "refine_precision": 2, "monitor": 3}
     task_rank["expand_subtypes"] = 0
+    task_rank["review_birth_sources"] = 0
     return sorted(
         tasks,
         key=lambda item: (
@@ -2113,6 +2207,12 @@ def _variant_metric_summary(row: dict[str, Any] | None) -> dict[str, Any]:
 
 
 def _next_evolution_evidence(topic: str, task_type: str, subtype_summary: dict[str, Any] | None = None) -> list[str]:
+    if task_type == "review_birth_sources":
+        return [
+            "collect rated birth-time sources for caution cases before rule tuning",
+            "exclude caution cases from hour-pillar-sensitive variant selection until reviewed",
+            "rerun annual calibration after birth-source quality changes",
+        ]
     if task_type == "expand_subtypes":
         default_count = 0
         if isinstance(subtype_summary, dict):
@@ -2160,6 +2260,12 @@ def _next_evolution_evidence(topic: str, task_type: str, subtype_summary: dict[s
 
 
 def _evolution_acceptance_criteria(task_type: str) -> list[str]:
+    if task_type == "review_birth_sources":
+        return [
+            "eligible_event_rate reaches at least 0.5 or task remains source_review_first",
+            "birth_source_quality_summary lists reviewed source status for affected cases",
+            "no strict-rule predicate is changed before source review is complete",
+        ]
     if task_type == "expand_subtypes":
         return [
             "subtype_coverage_rate improves for the event topic",
@@ -2519,6 +2625,12 @@ def _recommended_event_evidence(topic: str) -> list[str]:
             "require major-luck or natal-pillar activation before exact-year claims",
         ],
     )
+
+
+def _recommended_refinement_evidence(topic: str, priority: str) -> list[str]:
+    if priority == "source_review_first":
+        return _next_evolution_evidence(topic, "review_birth_sources")
+    return _recommended_event_evidence(topic)
 
 
 def _refinement_reason(row: dict[str, Any], priority: str) -> str:

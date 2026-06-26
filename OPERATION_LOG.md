@@ -1318,6 +1318,68 @@ source.
 
 ---
 
+## 2026-06-26 — China A-Share Alpha: Evolved Factors on Real Tushare Data
+
+### Motivation
+
+User asked how many factors had been built, which combined factor was best,
+and requested continuous evolution to expand the factor library without
+stopping.
+
+### Actions Taken
+
+1. **Wired Tushare into the factor mining loop**: updated
+   `china_a_share_alpha/data/qlib_loader.py` to route `data_source: tushare`
+   to `data/tushare_loader.py`, so the GP loop now mines factors on real
+   CSI300 data.
+2. **Loop configuration**: added `examples/tushare_loop_config.yaml` using the
+   shared Tushare cache from the backtest script.
+3. **Loop robustness fixes**: penalized NaN/constant factors with `-1.0` test
+   IC and added per-generation checkpointing so partial results are preserved.
+4. **Evolved factor comparison**: extended
+   `scripts/run_tushare_backtest.py` with `--evolved-csv` / `--evolved-top-n`
+   to merge a loop leaderboard into the same comparison report.
+
+### Verification
+
+- Ran the GP loop on real CSI300 data; it produced a 50-factor leaderboard in
+  `china_a_share_alpha_output/tushare_loop/`.
+- Ran the merged comparison (`--evolved-csv` leaderboard, top 10). Results:
+
+| Factor | IC | RankIC | Sharpe | Source |
+|---|---|---|---|---|
+| evolved_1 | 0.0139 | 0.0503 | 0.923 | GP-discovered |
+| momentum_20 | 0.0040 | -0.0138 | 0.406 | hand-designed |
+| value_pb | 0.0097 | 0.0335 | 0.108 | hand-designed |
+| ic_weighted_train | 0.0091 | 0.0376 | -0.057 | hand-designed combination |
+
+The best evolved expression was:
+`cs_rank(ts_mean(sub(cs_rank(ts_mean(cs_rank(ts_mean(log(volume), 5)), 5)), sub(ts_min(-0.714, 5), cs_zscore(0.494))), 5))`
+
+- `python -m pytest tests/ -q` — **39 passed, 2 skipped**.
+
+### Files Added/Modified
+
+- `china_a_share_alpha/data/qlib_loader.py`
+- `china_a_share_alpha/examples/tushare_loop_config.yaml`
+- `china_a_share_alpha/run_factor_loop.py`
+- `china_a_share_alpha/loop/population.py`
+- `china_a_share_alpha/scripts/run_tushare_backtest.py`
+- `china_a_share_alpha_output/tushare_backtest/factor_comparison.csv`
+- `china_a_share_alpha_output/tushare_backtest/factor_comparison_report.md`
+- `wiki/semas_evolution_ideas.md`
+- `OPERATION_LOG.md`
+
+### Notes
+
+- The evolved factor library now has 50+ candidates; the top 10 were evaluated
+  alongside the original six. The loop can be restarted with different seeds
+  or an LLM mutator to keep expanding.
+- Future work: combine the top evolved factors into a portfolio evolution
+  step and add sector/market-cap neutralization.
+
+---
+
 ## 2026-06-23 — Domain Fit Assessment: End-to-End AI Video Generation Agent
 
 ### Motivation
@@ -8151,3 +8213,647 @@ calibration output itself.
 This propagates input-quality metadata into annual calibration. It does not
 remove caution cases from broad annual diagnostics; it makes the caution visible
 so future rule evolution can filter hour-sensitive claims.
+
+## 2026-06-26 - Source Quality Aware Rule Refinement Queue
+
+### Motivation
+
+Birth-source quality reached annual calibration, but the rule-refinement queue
+still ranked weak topics by precision and false-positive rate alone. That could
+push the system to tune rules on low-confidence birth-time samples. Rule
+evolution should first ask whether the event labels come from cases eligible for
+hour-pillar-sensitive calibration.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `eligible_event_count`, `caution_event_count`, and
+     `eligible_event_rate` to `topic_summary`.
+   - Added the same fields to `domain_topic_summary`.
+   - Propagated those fields into `rule_refinement_queue` and
+     `domain_topic_refinement_queue`.
+   - Added `source_review_first` priority when a topic has at least 3 events
+     but fewer than half come from hour-pillar-eligible cases.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Asserted topic summaries and queues preserve quality counts.
+   - Asserted low-quality topics can be marked `source_review_first`.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\tests\test_empirical_validation.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q`
+  passed: `1 passed`.
+
+### Snapshot
+
+Top rule-refinement queue entries:
+
+- `career_power`: priority `source_review_first`, eligible event rate `0.0`,
+  eligible events `0`, caution events `4`.
+- `war_pressure`: priority `source_review_first`, eligible event rate `0.0`,
+  eligible events `0`, caution events `3`.
+- `study_exam`: priority `medium`, eligible event rate `1.0`, eligible events
+  `3`, caution events `0`.
+
+### Boundary
+
+This does not remove low-confidence samples from calibration. It prevents
+rule-refinement priority from treating low-confidence birth-source topics as
+ordinary tuning targets.
+
+## 2026-06-26 - Source Review First Evolution Tasks
+
+### Motivation
+
+The rule-refinement queue could mark low-quality source topics as
+`source_review_first`, but the downstream `evolution_task_plan` still converted
+them into ordinary evidence or rule-refinement tasks. That preserved the same
+failure mode one layer later: the plan could ask for rule tuning before source
+review.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - `evolution_task_plan` now preserves `eligible_event_count`,
+     `caution_event_count`, and `eligible_event_rate`.
+   - Queue items with priority `source_review_first` now become
+     `review_birth_sources` tasks.
+   - Added source-review-specific next evidence and acceptance criteria.
+   - Updated task sorting so source-review tasks appear before ordinary rule
+     tuning.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Asserted `career_power` becomes `review_birth_sources`.
+   - Asserted the task retains source-quality event counts.
+   - Asserted the next evidence explicitly asks for rated birth-time sources.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\tests\test_empirical_validation.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q`
+  passed: `1 passed`.
+
+### Snapshot
+
+Top evolution tasks:
+
+- `career_power`: priority `source_review_first`, task
+  `review_birth_sources`, eligible event rate `0.0`, eligible events `0`,
+  caution events `4`.
+- `war_pressure`: priority `source_review_first`, task
+  `review_birth_sources`, eligible event rate `0.0`, eligible events `0`,
+  caution events `3`.
+- `study_exam`: priority `medium`, task `add_specific_evidence`, eligible
+  event rate `1.0`, eligible events `3`, caution events `0`.
+- `career_project`: priority `medium`, task `add_specific_evidence`, eligible
+  event rate `1.0`, eligible events `32`, caution events `0`.
+
+### Boundary
+
+This change routes low-source-quality topics into source review. It does not
+change symbolic predicates, annual scoring, or event labels.
+
+## 2026-06-26 - Domain Topic Source Review Routing
+
+### Motivation
+
+Global rule-refinement and evolution plans now route low-source-quality topics
+into source review, but the domain-topic refinement queue still treated
+low-quality slices as ordinary domain evidence tasks. That allowed a narrower
+domain slice to bypass the same source-quality gate.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Domain-topic slices with at least 3 events and eligible event rate below
+     `0.5` now receive `task_type=review_birth_sources`.
+   - Added domain-topic source-review evidence instructions.
+   - Added domain-topic source-review acceptance criteria.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Asserted the `近代政治/career_power` domain-topic slice routes to
+     `review_birth_sources`.
+   - Asserted it preserves eligible/caution event counts and requests rated
+     birth-time source review.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\tests\test_empirical_validation.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q`
+  passed: `1 passed`.
+
+### Snapshot
+
+Leading domain-topic queue entries now include:
+
+- `影视/public_fame`: task `add_domain_specific_evidence`, eligible event rate
+  `1.0`.
+- `影视/career_project`: task `add_domain_specific_evidence`, eligible event
+  rate `1.0`.
+- `体育/career_project`: task `add_domain_specific_evidence`, eligible event
+  rate `1.0`.
+- `近代政治/career_power`: task `review_birth_sources`, eligible event rate
+  `0.0`, eligible events `0`, caution events `4`.
+
+### Boundary
+
+This change only routes low-source-quality domain slices. It does not remove
+the slices, change annual predicates, or assert predictive validity.
+
+## 2026-06-26 - Source Review Routing Summary
+
+### Motivation
+
+Source-quality routing now exists in global queues, domain-topic queues, and the
+final evolution task plan. However, downstream tools still needed a compact
+receipt-level summary that proves low-source-quality topics were routed to
+source review and did not bypass the gate.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `_source_review_routing_summary`.
+   - Added `source_review_routing_summary` to
+     `famous_case_annual_event_calibration_receipt()`.
+   - The summary tracks global source-review topics, domain source-review
+     slices, evolution source-review tasks, and any bypassed low-quality items.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `source_review_routing_summary` to
+     `FamousCaseAnnualEventCalibrationReceiptSummary`.
+
+3. Updated tests:
+   - Capability-audit test asserts routing is complete and no low-quality
+     topics bypass source review.
+   - Schema-contract test requires the new public field.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `1 passed`.
+
+### Snapshot
+
+- Routing complete:
+  `True`.
+- Global source-review topics:
+  `["career_power", "war_pressure"]`.
+- Domain source-review slices:
+  `["近代政治/career_power", "近代政治/war_pressure"]`.
+- Evolution source-review topics:
+  `["career_power", "war_pressure"]`.
+- Bypassed low-quality topics or slices:
+  `[]`.
+
+### Boundary
+
+This summary verifies routing behavior only. It does not validate source
+documents, event labels, or predictive claims.
+
+## 2026-06-26 - Source Review Routing Production Gate
+
+### Motivation
+
+`source_review_routing_summary` made routing visible, but production readiness
+still needed to enforce it. Otherwise the summary could show a bypass while the
+release gate remained green.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added capability flag `famous_case_source_review_routing_complete`.
+   - Added routing summary fields to capability-audit receipt material.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added production readiness gate
+     `famous_case_source_review_routing_complete`.
+   - Added failure diagnostics for missing routing summary, incomplete routing,
+     bypassed low-quality topics, and empty source-review task lists.
+
+3. Updated `examples/mingli_5agents/production_gates.py`:
+   - Registered the new production gate ID.
+
+4. Updated tests:
+   - Capability audit asserts the capability flag is true and receipt material
+     preserves the routing summary.
+   - Production readiness asserts the new gate passes and does not appear in
+     blockers.
+   - Schema contract / known-gap coverage recognizes the new gate ID.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\capability_audit.py examples\mingli_5agents\api_core.py examples\mingli_5agents\production_gates.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_known_gap_resolution_plan_release_fallback_matches_schema_contract examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema -q`
+  passed: `2 passed`.
+
+### Snapshot
+
+- Gate `famous_case_source_review_routing_complete`:
+  passed `True`, details `[]`, blocker `False`.
+- Routing complete:
+  `True`.
+- Global source-review topics:
+  `["career_power", "war_pressure"]`.
+- Domain source-review slices:
+  `["近代政治/career_power", "近代政治/war_pressure"]`.
+- Evolution source-review topics:
+  `["career_power", "war_pressure"]`.
+- Bypassed low-quality items:
+  `[]`.
+
+### Boundary
+
+This gate protects source-quality routing. It does not certify that reviewed
+source documents have been collected, and it does not validate predictive
+accuracy.
+
+## 2026-06-26 - Source Review Routing Gate Negative Probe
+
+### Motivation
+
+The source-review routing production gate had a positive readiness assertion.
+It also needed a negative probe proving that missing or bypassed routing data
+would fail, rather than only confirming that the current fixture stays green.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Imported `_famous_case_source_review_routing_complete`.
+   - Imported `_famous_case_source_review_routing_failures`.
+   - Added
+     `test_famous_case_source_review_routing_gate_rejects_bypassed_low_quality_topics`.
+
+2. The new probe covers:
+   - Missing `source_review_routing_summary`.
+   - `routing_complete=False`.
+   - Non-empty `global_bypassed_low_quality_topics`.
+   - Non-empty `domain_bypassed_low_quality_slices`.
+   - Non-empty `evolution_bypassed_low_quality_topics`.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_famous_case_source_review_routing_gate_rejects_bypassed_low_quality_topics -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q`
+  passed: `1 passed`.
+
+### Boundary
+
+This probe validates gate behavior for malformed or incomplete routing
+summaries. It does not collect new celebrity birth records, and it does not
+change prediction rules.
+
+## 2026-06-26 - Source Review Refinement Queue Alignment
+
+### Motivation
+
+`evolution_task_plan` correctly converted low-source-quality famous-case topics
+into `review_birth_sources`, but the upstream `rule_refinement_queue` still
+recommended ordinary rule evidence such as ten-god and branch-interaction
+features. That created a mixed signal: the final plan said "review sources
+first" while the earlier queue still looked like a rule-tuning task.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `_recommended_refinement_evidence`.
+   - Routed `source_review_first` queue items to the same birth-source review
+     evidence used by `review_birth_sources` evolution tasks.
+   - Left normal rule-tuning recommendations unchanged for non-source-review
+     priorities.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Asserted that all `source_review_first` queue items recommend rated
+     birth-time source review.
+   - Asserted that those queue items no longer recommend ordinary ten-god or
+     branch-interaction rule evidence.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\tests\test_empirical_validation.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+
+### Snapshot
+
+- `career_power` source-review queue evidence:
+  `collect rated birth-time sources for caution cases before rule tuning`,
+  `exclude caution cases from hour-pillar-sensitive variant selection until reviewed`,
+  `rerun annual calibration after birth-source quality changes`.
+- `war_pressure` source-review queue evidence:
+  same three source-review actions.
+
+### Boundary
+
+This change aligns queue language with the source-quality gate. It does not
+collect new source documents, change celebrity fixtures, or change strict
+symbolic predicates.
+
+## 2026-06-26 - Source Review Queue Alignment Production Gate
+
+### Motivation
+
+The source-review queue wording was aligned in the calibration code and covered
+by a unit assertion, but production readiness did not yet enforce it. A future
+change could reintroduce ordinary rule-tuning evidence into
+`source_review_first` queue items while the release gate stayed green.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/api_core.py`:
+   - Added production gate `famous_case_source_review_queue_aligned`.
+   - Added `_famous_case_source_review_queue_aligned`.
+   - Added `_famous_case_source_review_queue_failures`.
+   - The gate fails if source-review queue items are missing rated birth-time
+     source actions or include rule-tuning phrases such as branch-interaction
+     evidence.
+
+2. Updated `examples/mingli_5agents/capability_audit.py`:
+   - Added capability flag `famous_case_source_review_queue_aligned`.
+
+3. Updated `examples/mingli_5agents/production_gates.py`:
+   - Registered the new production gate ID.
+
+4. Updated tests:
+   - Capability audit asserts the new capability is true.
+   - Production readiness asserts the new gate passes and is not a blocker.
+   - Added a negative probe where a `source_review_first` queue item includes
+     `add branch interaction evidence`; the new gate must fail.
+   - Schema contract coverage recognizes the new production gate ID.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\capability_audit.py examples\mingli_5agents\production_gates.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_famous_case_source_review_queue_gate_rejects_rule_tuning_evidence -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_known_gap_resolution_plan_release_fallback_matches_schema_contract -q`
+  passed: `1 passed`.
+
+### Boundary
+
+This gate protects task semantics for source-review-first topics. It does not
+perform source collection and does not alter BaZi, Ziwei, Qimen, or strict
+annual-event predicates.
+
+## 2026-06-26 - Famous Case Source Review Gate Remediation Plan
+
+### Motivation
+
+`famous_case_source_review_routing_complete` and
+`famous_case_source_review_queue_aligned` were both production gates, but their
+failures were not yet mapped to targeted remediation steps in the production
+resolution plan. A gate that blocks release should also tell the next agent how
+to repair the blocked path.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `repair_famous_case_source_review_routing` to
+     `_production_resolution_plan`.
+   - Added `repair_famous_case_source_review_queue_semantics` to
+     `_production_resolution_plan`.
+   - Both steps preserve blocker diagnostics and point verification back to the
+     audit command.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Added
+     `test_production_resolution_plan_handles_famous_case_source_review_gate_failures`.
+   - The test constructs routing and queue-semantic blockers and verifies both
+     repair steps appear with the original diagnostics.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_resolution_plan_handles_famous_case_source_review_gate_failures -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_known_gap_resolution_plan_release_fallback_matches_schema_contract -q`
+  passed: `1 passed`.
+
+### Boundary
+
+This change improves remediation planning for famous-case source-review gates.
+It does not collect external birth records, change symbolic predicates, or
+claim empirical predictive accuracy.
+
+## 2026-06-26 - Chinese Render Quality Gate Remediation Plan
+
+### Motivation
+
+`benchmark_chinese_render_quality_diagnostics` already blocked production when
+benchmark Chinese reports had duplicated annual/monthly rows, weak evidence
+anchors, weak judgment structure, English leakage, question marks, or code
+markers. However, the production resolution plan did not map that gate failure
+to a targeted repair step.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `repair_benchmark_chinese_render_quality` to
+     `_production_resolution_plan`.
+   - The step preserves blocker diagnostics and routes verification through the
+     benchmark command.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Added
+     `test_production_resolution_plan_handles_chinese_render_quality_gate_failure`.
+   - The test constructs duplicate-ratio and judgment-structure diagnostics and
+     verifies they appear in the repair step.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_resolution_plan_handles_chinese_render_quality_gate_failure -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `1 passed`.
+
+### Boundary
+
+This change improves remediation planning for Chinese report quality gates. It
+does not change the renderer, annual/monthly scoring rules, or benchmark case
+fixtures.
+
+## 2026-06-26 - Chinese Render Pillar Anchor Gate
+
+### Motivation
+
+Chinese report quality gates checked repetition, evidence-anchor wording,
+judgment structure, English leakage, question marks, and code markers. They did
+not yet verify that topic-level annual and monthly focus lines actually exposed
+the relevant annual/monthly pillar. This left room for prose that looked
+well-structured but did not show the specific year/month evidence.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/benchmark.py`:
+   - Added `chinese_render_annual_pillar_anchor_ratio`.
+   - Added `chinese_render_monthly_pillar_anchor_ratio`.
+   - Added pinyin-to-Chinese GanZhi conversion for topic pillar anchors.
+   - Added fallback stem/branch splitting so monthly pillars like `WuChou`
+     become `戊丑` even when they are not standard sixty-cycle entries.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - `benchmark_chinese_render_quality_diagnostics` now fails if either annual
+     or monthly pillar anchor ratio is below `1.0`.
+   - Public schema exposes both new benchmark feature fields.
+
+3. Updated tests:
+   - Added a negative probe for low annual/monthly pillar anchor ratios.
+   - Production readiness asserts current Chinese benchmark cases have annual
+     and monthly pillar anchor ratios of `1.0`.
+   - Schema contract asserts the two feature fields are public.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\benchmark.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `1 passed`.
+
+### Boundary
+
+This gate checks whether rendered Chinese benchmark reports expose topic-level
+annual/monthly pillar anchors. It does not certify interpretive correctness,
+change scoring rules, or expand the benchmark dataset.
+
+## 2026-06-26 - Chinese Render Ten-God Anchor Gate
+
+### Motivation
+
+The previous gate required Chinese reports to expose annual and monthly pillar
+anchors. That still left a possible gap: a report could show the pillar name
+but omit the ten-god relationship that explains why the year or month was
+interpreted in a particular way.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/benchmark.py`:
+   - Added `chinese_render_annual_ten_god_anchor_ratio`.
+   - Added `chinese_render_monthly_ten_god_anchor_ratio`.
+   - Added English ten-god code to Chinese label mapping:
+     `peer -> 同类`, `wealth -> 财星`, `authority -> 官杀`,
+     `resource -> 印星`, `expression -> 食伤`.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - `benchmark_chinese_render_quality_diagnostics` now fails if annual or
+     monthly ten-god anchor ratios are below `1.0`.
+   - Public schema exposes both new benchmark feature fields.
+
+3. Updated tests:
+   - The Chinese render quality negative probe now covers low annual/monthly
+     ten-god anchor ratios.
+   - Production readiness asserts all Chinese benchmark cases score `1.0` on
+     annual/monthly pillar and ten-god anchor ratios.
+   - Schema contract asserts the two new ten-god fields are public.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\benchmark.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `1 passed`.
+
+### Snapshot
+
+All Chinese benchmark cases currently report:
+
+- annual pillar anchor ratio: `1.0`
+- monthly pillar anchor ratio: `1.0`
+- annual ten-god anchor ratio: `1.0`
+- monthly ten-god anchor ratio: `1.0`
+
+### Boundary
+
+This gate verifies rendered text carries ten-god anchors from structured topic
+evidence. It does not prove the ten-god interpretation is empirically correct.
+
+## 2026-06-26 - Chinese Render Useful-State Anchor Gate
+
+### Motivation
+
+Chinese render quality already checked pillar anchors and ten-god anchors. That
+still did not explicitly verify the useful-state / directionality layer: whether
+the report states if a year or month is favorable, excessive, or neutral from
+the useful-element perspective.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/benchmark.py`:
+   - Added `chinese_render_annual_useful_state_anchor_ratio`.
+   - Added `chinese_render_monthly_useful_state_anchor_ratio`.
+   - Added useful-state to Chinese label mapping:
+     `useful_element_activated -> 用神状态有利`,
+     `dominant_element_reinforced -> 用神状态忌偏重`,
+     `neutral_or_indirect -> 用神状态中性或间接`.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - `benchmark_chinese_render_quality_diagnostics` now fails if annual or
+     monthly useful-state anchor ratios are below `1.0`.
+   - Public schema exposes both new benchmark feature fields.
+
+3. Updated tests:
+   - The Chinese render quality negative probe now covers low annual/monthly
+     useful-state anchor ratios.
+   - Production readiness asserts all Chinese benchmark cases score `1.0` on
+     annual/monthly pillar, ten-god, and useful-state anchor ratios.
+   - Schema contract asserts the two useful-state fields are public.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\benchmark.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `1 passed`.
+
+### Snapshot
+
+All Chinese benchmark cases currently report `1.0` for annual/monthly pillar,
+ten-god, and useful-state anchor ratios.
+
+### Boundary
+
+This gate verifies rendered text carries useful-state anchors from structured
+topic evidence. It does not prove predictive truth or replace human review.

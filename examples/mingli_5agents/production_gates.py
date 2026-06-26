@@ -42,6 +42,8 @@ PRODUCTION_READINESS_GATE_IDS = frozenset(
         "benchmark_topic_confidence_boundaries",
         "benchmark_chinese_render_quality_diagnostics",
         "benchmark_analyze_response_schema_valid",
+        "famous_case_source_review_routing_complete",
+        "famous_case_source_review_queue_aligned",
         "birth_profile_source_review_workplan_available",
         "birth_profile_source_lookup_plan_dry_run",
         "birth_profile_source_family_catalog_bound",

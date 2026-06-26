@@ -1,0 +1,29 @@
+# Continuous factor mining loop on real Tushare CSI300 data.
+# Run with:
+#   export TUSHARE_TOKEN=...
+#   python -m china_a_share_alpha.run_factor_loop china_a_share_alpha/examples/tushare_loop_config.yaml
+
+data_source: tushare
+start_date: "20210601"
+end_date: "20260601"
+split_date: "20240101"
+universe: csi300
+
+population_size: 20
+max_generations: 15
+patience: 4
+elite_fraction: 0.2
+crossover_fraction: 0.25
+mutator: gp
+threshold: 0.005
+
+neutralize_sector: false
+neutralize_market_cap: false
+forward_period: 1
+transaction_cost: 0.001
+
+# Reuse the cache from run_tushare_backtest to avoid re-downloading.
+cache_dir: ./china_a_share_alpha_output/tushare_backtest/tushare_cache
+output_dir: ./china_a_share_alpha_output/tushare_loop
+repo_dir: .semas_factor_loop_tushare_repo
+leaderboard_size: 50

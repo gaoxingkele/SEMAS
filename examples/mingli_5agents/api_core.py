@@ -2648,6 +2648,20 @@ def production_readiness(
             benchmark_analyze_response_schema_failures,
         ),
         _readiness_gate(
+            "famous_case_source_review_routing_complete",
+            _famous_case_source_review_routing_complete(audit),
+            "Famous-case annual calibration routes low-source-quality topics to source review without bypasses.",
+            "Repair famous-case source-review routing so low-quality birth-source topics cannot enter rule tuning.",
+            _famous_case_source_review_routing_failures(audit),
+        ),
+        _readiness_gate(
+            "famous_case_source_review_queue_aligned",
+            _famous_case_source_review_queue_aligned(audit),
+            "Famous-case source-review queue items recommend birth-source review instead of rule tuning.",
+            "Repair famous-case source-review queue evidence so low-quality birth-source topics cannot be framed as rule-tuning work.",
+            _famous_case_source_review_queue_failures(audit),
+        ),
+        _readiness_gate(
             "birth_profile_source_review_workplan_available",
             _birth_profile_source_review_workplan_available(birth_profile_source_review_workplan_summary),
             "Celebrity birth-profile source-review workplan is present, non-mutating, and ready for human review.",
@@ -3199,6 +3213,21 @@ def _production_resolution_plan(
                 100,
             )
         )
+    if "benchmark_chinese_render_quality_diagnostics" in blocker_gates:
+        steps.append(
+            _resolution_step(
+                "repair_benchmark_chinese_render_quality",
+                "chinese_report_rendering",
+                "Restore benchmark Chinese report quality: no duplicated annual/monthly rows, full evidence anchors, judgment structure, and no English/code leakage.",
+                [f"python -m examples.mingli_5agents.cli --repo {repo_path} benchmark"],
+                [
+                    str(item.get("details", ""))
+                    for item in blockers
+                    if item.get("gate") == "benchmark_chinese_render_quality_diagnostics"
+                ],
+                100,
+            )
+        )
     if "benchmark_analyze_response_schema_valid" in blocker_gates:
         steps.append(
             _resolution_step(
@@ -3207,6 +3236,36 @@ def _production_resolution_plan(
                 "Repair analyze_case runtime output or the public schema so every benchmark AnalyzeResponse validates.",
                 [f"python -m examples.mingli_5agents.cli --repo {repo_path} benchmark"],
                 _benchmark_analyze_response_schema_failures(benchmark_analyze_response_schema),
+                100,
+            )
+        )
+    if "famous_case_source_review_routing_complete" in blocker_gates:
+        steps.append(
+            _resolution_step(
+                "repair_famous_case_source_review_routing",
+                "famous_case_validation",
+                "Route every low-source-quality famous-case topic to birth-source review before rule tuning.",
+                [f"python -m examples.mingli_5agents.cli --repo {repo_path} audit"],
+                [
+                    str(item.get("details", ""))
+                    for item in blockers
+                    if item.get("gate") == "famous_case_source_review_routing_complete"
+                ],
+                100,
+            )
+        )
+    if "famous_case_source_review_queue_aligned" in blocker_gates:
+        steps.append(
+            _resolution_step(
+                "repair_famous_case_source_review_queue_semantics",
+                "famous_case_validation",
+                "Rewrite source-review-first queue evidence as birth-source review work, not symbolic rule tuning.",
+                [f"python -m examples.mingli_5agents.cli --repo {repo_path} audit"],
+                [
+                    str(item.get("details", ""))
+                    for item in blockers
+                    if item.get("gate") == "famous_case_source_review_queue_aligned"
+                ],
                 100,
             )
         )
@@ -3438,6 +3497,12 @@ def _benchmark_chinese_render_quality_failures(benchmark_result: dict[str, Any])
         duplicate_ratio = float(features.get("chinese_render_duplicate_bullet_ratio", 1.0) or 0.0)
         anchor_ratio = float(features.get("chinese_render_topic_evidence_anchor_ratio", 0.0) or 0.0)
         judgment_ratio = float(features.get("chinese_render_topic_judgment_structure_ratio", 0.0) or 0.0)
+        annual_pillar_ratio = float(features.get("chinese_render_annual_pillar_anchor_ratio", 0.0) or 0.0)
+        monthly_pillar_ratio = float(features.get("chinese_render_monthly_pillar_anchor_ratio", 0.0) or 0.0)
+        annual_ten_god_ratio = float(features.get("chinese_render_annual_ten_god_anchor_ratio", 0.0) or 0.0)
+        monthly_ten_god_ratio = float(features.get("chinese_render_monthly_ten_god_anchor_ratio", 0.0) or 0.0)
+        annual_useful_state_ratio = float(features.get("chinese_render_annual_useful_state_anchor_ratio", 0.0) or 0.0)
+        monthly_useful_state_ratio = float(features.get("chinese_render_monthly_useful_state_anchor_ratio", 0.0) or 0.0)
         ascii_count = int(features.get("chinese_render_ascii_letter_count", 0) or 0)
         if duplicate_ratio > 0.02:
             failures.append(f"{case.get('name')} Chinese annual/monthly duplicate ratio={duplicate_ratio:.3f}")
@@ -3445,12 +3510,91 @@ def _benchmark_chinese_render_quality_failures(benchmark_result: dict[str, Any])
             failures.append(f"{case.get('name')} Chinese annual/monthly evidence-anchor ratio={anchor_ratio:.3f}")
         if judgment_ratio < 1.0:
             failures.append(f"{case.get('name')} Chinese annual/monthly judgment-structure ratio={judgment_ratio:.3f}")
+        if annual_pillar_ratio < 1.0:
+            failures.append(f"{case.get('name')} Chinese annual pillar anchor ratio={annual_pillar_ratio:.3f}")
+        if monthly_pillar_ratio < 1.0:
+            failures.append(f"{case.get('name')} Chinese monthly pillar anchor ratio={monthly_pillar_ratio:.3f}")
+        if annual_ten_god_ratio < 1.0:
+            failures.append(f"{case.get('name')} Chinese annual ten-god anchor ratio={annual_ten_god_ratio:.3f}")
+        if monthly_ten_god_ratio < 1.0:
+            failures.append(f"{case.get('name')} Chinese monthly ten-god anchor ratio={monthly_ten_god_ratio:.3f}")
+        if annual_useful_state_ratio < 1.0:
+            failures.append(f"{case.get('name')} Chinese annual useful-state anchor ratio={annual_useful_state_ratio:.3f}")
+        if monthly_useful_state_ratio < 1.0:
+            failures.append(f"{case.get('name')} Chinese monthly useful-state anchor ratio={monthly_useful_state_ratio:.3f}")
         if ascii_count != 0:
             failures.append(f"{case.get('name')} Chinese render ASCII letter count={ascii_count}")
         if features.get("chinese_render_ascii_question_present") is True:
             failures.append(f"{case.get('name')} Chinese render contains ASCII question mark")
         if features.get("chinese_render_code_marker_present") is True:
             failures.append(f"{case.get('name')} Chinese render contains code or provider command marker")
+    return failures
+
+
+def _famous_case_source_review_routing_complete(audit: dict[str, Any]) -> bool:
+    return not _famous_case_source_review_routing_failures(audit)
+
+
+def _famous_case_source_review_routing_failures(audit: dict[str, Any]) -> list[str]:
+    annual = audit.get("famous_case_annual_event_calibration", {}) if isinstance(audit, dict) else {}
+    routing = annual.get("source_review_routing_summary", {}) if isinstance(annual, dict) else {}
+    if not isinstance(routing, dict) or not routing:
+        return ["famous-case source-review routing summary missing"]
+    failures = []
+    if routing.get("routing_complete") is not True:
+        failures.append("famous-case source-review routing is not complete")
+    for key in (
+        "global_bypassed_low_quality_topics",
+        "domain_bypassed_low_quality_slices",
+        "evolution_bypassed_low_quality_topics",
+    ):
+        values = routing.get(key, [])
+        if values:
+            failures.append(f"{key}={values}")
+    if not routing.get("global_source_review_topics"):
+        failures.append("global source-review topic list is empty")
+    if not routing.get("domain_source_review_slices"):
+        failures.append("domain source-review slice list is empty")
+    if not routing.get("evolution_source_review_topics"):
+        failures.append("evolution source-review task list is empty")
+    return failures
+
+
+def _famous_case_source_review_queue_aligned(audit: dict[str, Any]) -> bool:
+    return not _famous_case_source_review_queue_failures(audit)
+
+
+def _famous_case_source_review_queue_failures(audit: dict[str, Any]) -> list[str]:
+    annual = audit.get("famous_case_annual_event_calibration", {}) if isinstance(audit, dict) else {}
+    queue = annual.get("rule_refinement_queue", []) if isinstance(annual, dict) else []
+    if not isinstance(queue, list) or not queue:
+        return ["famous-case rule refinement queue missing"]
+    source_review_items = [
+        item for item in queue if isinstance(item, dict) and item.get("priority") == "source_review_first"
+    ]
+    if not source_review_items:
+        return ["famous-case source-review-first queue items missing"]
+
+    failures = []
+    required_phrase = "rated birth-time sources"
+    forbidden_phrases = (
+        "ten-god evidence",
+        "branch interaction evidence",
+        "strict-rule predicate",
+        "rule tuning evidence",
+    )
+    for item in source_review_items:
+        topic = item.get("event_topic", "<unknown>")
+        evidence = item.get("recommended_evidence", [])
+        if not isinstance(evidence, list) or not evidence:
+            failures.append(f"{topic} source-review recommended_evidence missing")
+            continue
+        text_items = [str(value) for value in evidence]
+        if not any(required_phrase in value for value in text_items):
+            failures.append(f"{topic} source-review evidence lacks rated birth-time source action")
+        for phrase in forbidden_phrases:
+            if any(phrase in value for value in text_items):
+                failures.append(f"{topic} source-review evidence contains rule-tuning phrase: {phrase}")
     return failures
 
 
@@ -13001,6 +13145,7 @@ def schema_document() -> dict[str, Any]:
                     "strict_false_positive_rate",
                     "low_coverage_cases",
                     "birth_source_quality_summary",
+                    "source_review_routing_summary",
                     "domain_summary",
                     "domain_topic_summary",
                     "domain_topic_refinement_queue",
@@ -13036,6 +13181,7 @@ def schema_document() -> dict[str, Any]:
                     "strict_false_positive_rate": {"type": "number"},
                     "low_coverage_cases": {"type": "array", "items": {"type": "object"}},
                     "birth_source_quality_summary": {"type": "object"},
+                    "source_review_routing_summary": {"type": "object"},
                     "domain_summary": {"type": "array", "items": {"type": "object"}},
                     "domain_topic_summary": {"type": "array", "items": {"type": "object"}},
                     "domain_topic_refinement_queue": {"type": "array", "items": {"type": "object"}},
@@ -15051,6 +15197,12 @@ def schema_document() -> dict[str, Any]:
                     "chinese_render_duplicate_bullet_ratio": {"type": "number"},
                     "chinese_render_topic_evidence_anchor_ratio": {"type": "number"},
                     "chinese_render_topic_judgment_structure_ratio": {"type": "number"},
+                    "chinese_render_annual_pillar_anchor_ratio": {"type": "number"},
+                    "chinese_render_monthly_pillar_anchor_ratio": {"type": "number"},
+                    "chinese_render_annual_ten_god_anchor_ratio": {"type": "number"},
+                    "chinese_render_monthly_ten_god_anchor_ratio": {"type": "number"},
+                    "chinese_render_annual_useful_state_anchor_ratio": {"type": "number"},
+                    "chinese_render_monthly_useful_state_anchor_ratio": {"type": "number"},
                     "chinese_render_ascii_letter_count": {"type": "integer"},
                     "chinese_render_ascii_question_present": {"type": "boolean"},
                     "chinese_render_code_marker_present": {"type": "boolean"},

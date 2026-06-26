@@ -5,6 +5,34 @@
 
 ---
 
+## 2026-06-26 — China A-Share Alpha: Evolved Factors on Real Tushare Data
+
+After wiring the loop to real CSI300 data, we ran the GP outer loop with
+per-generation checkpointing. The best evolved factor outperformed all
+hand-designed baselines:
+
+| Factor | IC | RankIC | Sharpe | Expression |
+|---|---|---|---|---|
+| evolved_1 | 0.0139 | 0.0503 | 0.923 | `cs_rank(ts_mean(sub(cs_rank(ts_mean(cs_rank(ts_mean(log(volume), 5)), 5)), sub(ts_min(-0.714, 5), cs_zscore(0.494))), 5))` |
+| momentum_20 | 0.0040 | -0.0138 | 0.406 | hand-designed |
+| value_pb | 0.0097 | 0.0335 | 0.108 | hand-designed |
+
+The evolved expression is interpretable: it is a smoothed, cross-sectional
+rank of a 5-day mean of log-volume, combined with a constant-drift term.
+This demonstrates that the SEMAS loop can expand the factor library beyond
+the original six and find data-driven, transparent alphas.
+
+Key loop fixes along the way:
+
+- NaN/constant factors are now penalized with `-1.0` test IC so they are not
+  selected as elites.
+- Per-generation checkpointing preserves the leaderboard even if the long
+  loop is interrupted.
+- `run_tushare_backtest.py` can merge an evolved leaderboard into the
+  comparison report via `--evolved-csv`.
+
+---
+
 ## 2026-06-26 — China A-Share Alpha: Tushare Historical Backtest Comparison
 
 We added a real-data historical backtest pipeline using Tushare Pro data over

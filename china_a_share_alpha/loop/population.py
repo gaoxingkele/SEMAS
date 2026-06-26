@@ -13,6 +13,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from semas.evaluator.evaluator import Evaluator
@@ -129,13 +130,24 @@ class FactorPopulation:
         test_forward = output["forward_return_test"]
 
         eval_result = self.evaluator.evaluate(output)
+        train_ic = ic_score(train_factor, train_forward)
+        test_ic = ic_score(test_factor, test_forward)
+
+        # Penalize constant / NaN factors so they are not selected as elites.
+        if not np.isfinite(train_ic) or not np.isfinite(test_ic):
+            train_score = 0.0
+            train_ic = -1.0 if not np.isfinite(train_ic) else train_ic
+            test_ic = -1.0 if not np.isfinite(test_ic) else test_ic
+        else:
+            train_score = float(eval_result.score)
+
         cand = FactorCandidate(
             agent=agent,
             generation=self._generation,
-            train_score=float(eval_result.score),
-            train_ic=ic_score(train_factor, train_forward),
+            train_score=train_score,
+            train_ic=train_ic,
             train_rank_ic=rank_ic_score(train_factor, train_forward),
-            test_ic=ic_score(test_factor, test_forward),
+            test_ic=test_ic,
             test_rank_ic=rank_ic_score(test_factor, test_forward),
             turnover=turnover_score(train_factor),
             backtest_train=run_long_short_backtest(
@@ -164,9 +176,13 @@ class FactorPopulation:
         n_crossover = int(pop_size * crossover_frac)
         n_mutate = pop_size - n_elites - n_crossover
 
-        # Select by test IC to reduce overfitting to the training set.
+        # Select by test IC to reduce overfitting; drop NaN/constant factors.
         evaluated_sorted = sorted(evaluated, key=lambda c: c.test_ic, reverse=True)
-        elites = [c.agent for c in evaluated_sorted[:n_elites]]
+        elites = [c.agent for c in evaluated_sorted[:n_elites] if np.isfinite(c.test_ic)]
+        if not elites:
+            elites = [c.agent for c in evaluated_sorted if np.isfinite(c.test_ic)][:n_elites]
+        if not elites:
+            elites = [self._make_agent(_random_expression(max_depth=4), generation=self._generation + 1)]
 
         # Build next population from elites.
         next_pop = [agent.model_copy() for agent in elites]

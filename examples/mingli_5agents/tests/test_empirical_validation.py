@@ -20,6 +20,11 @@ from examples.mingli_5agents.birth_profile_review import (
     default_birth_profile_review_manifest_path,
 )
 from examples.mingli_5agents.api_core import (
+    _benchmark_chinese_render_quality_failures,
+    _famous_case_source_review_queue_aligned,
+    _famous_case_source_review_queue_failures,
+    _famous_case_source_review_routing_complete,
+    _famous_case_source_review_routing_failures,
     _production_resolution_plan,
     birth_profile_fixture_patch_preview,
     birth_profile_import_preview,
@@ -696,6 +701,115 @@ def test_production_resolution_plan_keeps_split_specific_outcome_step(tmp_path):
     assert any("unassigned case_ids: case_002" in diagnostic for diagnostic in split_step["diagnostics"])
 
 
+def test_production_resolution_plan_handles_famous_case_source_review_gate_failures(tmp_path):
+    plan = _production_resolution_plan(
+        repo_path=tmp_path / "repo",
+        manifest_path=None,
+        live=False,
+        providers={},
+        outcome={},
+        provider_ledger={},
+        provider_drift={},
+        release_ledger={},
+        evidence_materialization={},
+        classical_source_refresh={},
+        current_benchmark={},
+        benchmark_analyze_response_schema={},
+        blockers=[
+            {
+                "gate": "famous_case_source_review_routing_complete",
+                "details": "global_bypassed_low_quality_topics=['career_power']",
+            },
+            {
+                "gate": "famous_case_source_review_queue_aligned",
+                "details": "career_power source-review evidence contains rule-tuning phrase: branch interaction evidence",
+            },
+        ],
+    )
+
+    step_by_id = {step["id"]: step for step in plan["steps"]}
+
+    assert "repair_famous_case_source_review_routing" in step_by_id
+    assert "repair_famous_case_source_review_queue_semantics" in step_by_id
+    assert any(
+        "global_bypassed_low_quality_topics" in diagnostic
+        for diagnostic in step_by_id["repair_famous_case_source_review_routing"]["diagnostics"]
+    )
+    assert any(
+        "branch interaction evidence" in diagnostic
+        for diagnostic in step_by_id["repair_famous_case_source_review_queue_semantics"]["diagnostics"]
+    )
+    assert all("audit" in command for step in step_by_id.values() for command in step["commands"])
+
+
+def test_production_resolution_plan_handles_chinese_render_quality_gate_failure(tmp_path):
+    plan = _production_resolution_plan(
+        repo_path=tmp_path / "repo",
+        manifest_path=None,
+        live=False,
+        providers={},
+        outcome={},
+        provider_ledger={},
+        provider_drift={},
+        release_ledger={},
+        evidence_materialization={},
+        classical_source_refresh={},
+        current_benchmark={},
+        benchmark_analyze_response_schema={},
+        blockers=[
+            {
+                "gate": "benchmark_chinese_render_quality_diagnostics",
+                "details": "林凡 Chinese annual/monthly duplicate ratio=0.210",
+            },
+            {
+                "gate": "benchmark_chinese_render_quality_diagnostics",
+                "details": "林凡 Chinese annual/monthly judgment-structure ratio=0.620",
+            },
+        ],
+    )
+
+    step = next(step for step in plan["steps"] if step["id"] == "repair_benchmark_chinese_render_quality")
+
+    assert step["category"] == "chinese_report_rendering"
+    assert any("duplicate ratio" in diagnostic for diagnostic in step["diagnostics"])
+    assert any("judgment-structure ratio" in diagnostic for diagnostic in step["diagnostics"])
+    assert any("benchmark" in command for command in step["commands"])
+
+
+def test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors():
+    failures = _benchmark_chinese_render_quality_failures(
+        {
+            "cases": [
+                {
+                    "name": "pillar_probe",
+                    "report_features": {
+                        "has_chinese_render": True,
+                        "chinese_render_duplicate_bullet_ratio": 0.0,
+                        "chinese_render_topic_evidence_anchor_ratio": 1.0,
+                        "chinese_render_topic_judgment_structure_ratio": 1.0,
+                        "chinese_render_annual_pillar_anchor_ratio": 0.5,
+                        "chinese_render_monthly_pillar_anchor_ratio": 0.0,
+                        "chinese_render_annual_ten_god_anchor_ratio": 0.5,
+                        "chinese_render_monthly_ten_god_anchor_ratio": 0.0,
+                        "chinese_render_annual_useful_state_anchor_ratio": 0.5,
+                        "chinese_render_monthly_useful_state_anchor_ratio": 0.0,
+                        "chinese_render_ascii_letter_count": 0,
+                        "chinese_render_ascii_question_present": False,
+                        "chinese_render_code_marker_present": False,
+                    },
+                }
+            ]
+        }
+    )
+
+    assert "pillar_probe Chinese annual pillar anchor ratio=0.500" in failures
+    assert "pillar_probe Chinese monthly pillar anchor ratio=0.000" in failures
+    assert "pillar_probe Chinese annual ten-god anchor ratio=0.500" in failures
+    assert "pillar_probe Chinese monthly ten-god anchor ratio=0.000" in failures
+    assert "pillar_probe Chinese annual useful-state anchor ratio=0.500" in failures
+    assert "pillar_probe Chinese monthly useful-state anchor ratio=0.000" in failures
+
+
 def test_capability_audit_reports_outcome_dataset_configuration(tmp_path, monkeypatch):
     assert capability_audit()["outcome_dataset"]["status"] == "not_configured"
 
@@ -964,6 +1078,8 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert result["capabilities"]["famous_case_validation_receipt"] is True
     assert result["capabilities"]["famous_case_school_calibration_receipt"] is True
     assert result["capabilities"]["famous_case_annual_event_calibration_receipt"] is True
+    assert result["capabilities"]["famous_case_source_review_routing_complete"] is True
+    assert result["capabilities"]["famous_case_source_review_queue_aligned"] is True
     assert result["famous_case_validation"]["schema_version"] == "mingli-famous-case-validation-v2"
     assert len(result["famous_case_validation"]["sha256"]) == 64
     assert result["famous_case_validation"]["case_count"] >= 12
@@ -1028,6 +1144,15 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert annual_birth_quality["caution_event_count"] > 0
     assert annual_birth_quality["eligible_event_count"] > annual_birth_quality["caution_event_count"]
     assert 0 < annual_birth_quality["eligible_event_rate"] <= 1
+    source_routing = result["famous_case_annual_event_calibration"]["source_review_routing_summary"]
+    assert source_routing["schema_version"] == "famous-case-source-review-routing-summary-v1"
+    assert source_routing["routing_complete"] is True
+    assert source_routing["global_bypassed_low_quality_topics"] == []
+    assert source_routing["domain_bypassed_low_quality_slices"] == []
+    assert source_routing["evolution_bypassed_low_quality_topics"] == []
+    assert "career_power" in source_routing["global_source_review_topics"]
+    assert "career_power" in source_routing["evolution_source_review_topics"]
+    assert "近代政治/career_power" in source_routing["domain_source_review_slices"]
     assert result["famous_case_annual_event_calibration"]["event_count"] > 0
     assert result["famous_case_annual_event_calibration"]["negative_year_count"] > result[
         "famous_case_annual_event_calibration"
@@ -1059,6 +1184,9 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     )
     assert sports_peak_domain["case_count"] == 3
     assert sports_peak_domain["event_count"] >= 10
+    assert sports_peak_domain["eligible_event_count"] == sports_peak_domain["event_count"]
+    assert sports_peak_domain["caution_event_count"] == 0
+    assert sports_peak_domain["eligible_event_rate"] == 1.0
     assert 0 <= sports_peak_domain["strict_exact_precision"] <= 1
     assert 0 <= sports_peak_domain["strict_false_positive_rate"] <= 1
     assert "roger_federer" in sports_peak_domain["case_ids"]
@@ -1067,11 +1195,23 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     domain_topic_task_keys = {(item["domain"], item["event_topic"]) for item in domain_topic_queue}
     assert ("影视", "public_fame") in domain_topic_task_keys
     assert ("影视", "career_project") in domain_topic_task_keys
+    politics_power_task = next(
+        item for item in domain_topic_queue if item["domain"] == "近代政治" and item["event_topic"] == "career_power"
+    )
+    assert politics_power_task["task_type"] == "review_birth_sources"
+    assert politics_power_task["eligible_event_rate"] == 0.0
+    assert politics_power_task["eligible_event_count"] == 0
+    assert politics_power_task["caution_event_count"] == politics_power_task["event_count"]
+    assert any("rated birth-time source review" in item for item in politics_power_task["next_evidence_to_add"])
     film_fame_task = next(
         item for item in domain_topic_queue if item["domain"] == "影视" and item["event_topic"] == "public_fame"
     )
     assert film_fame_task["task_type"] == "add_domain_specific_evidence"
     assert film_fame_task["event_count"] >= 3
+    assert 0 <= film_fame_task["eligible_event_rate"] <= 1
+    assert film_fame_task["eligible_event_count"] + film_fame_task["caution_event_count"] == film_fame_task[
+        "event_count"
+    ]
     assert film_fame_task["next_evidence_to_add"]
     assert any("film-or-television release marker" in item for item in film_fame_task["next_evidence_to_add"])
     domain_topic_variant_sweep = result["famous_case_annual_event_calibration"]["domain_topic_variant_sweep"]
@@ -1102,6 +1242,8 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert {"sports_peak", "public_fame", "health_risk", "relationship"}.issubset(annual_topics)
     for item in result["famous_case_annual_event_calibration"]["topic_summary"]:
         assert item["event_count"] > 0
+        assert item["eligible_event_count"] + item["caution_event_count"] == item["event_count"]
+        assert 0 <= item["eligible_event_rate"] <= 1
         assert 0 <= item["exact_precision"] <= 1
         assert 0 <= item["strict_exact_precision"] <= 1
     first_case_score = result["famous_case_annual_event_calibration"]["case_scores"][0]
@@ -1129,8 +1271,21 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert "useful_state" in first_event_evidence
     refinement_queue = result["famous_case_annual_event_calibration"]["rule_refinement_queue"]
     assert refinement_queue
+    assert any(item["priority"] == "source_review_first" for item in refinement_queue)
     assert any(item["priority"] in {"medium", "high"} for item in refinement_queue)
     assert all(item["recommended_evidence"] for item in refinement_queue)
+    assert all("eligible_event_rate=" in item["reason"] for item in refinement_queue)
+    assert all(item["eligible_event_count"] + item["caution_event_count"] == item["event_count"] for item in refinement_queue)
+    source_review_items = [item for item in refinement_queue if item["priority"] == "source_review_first"]
+    assert source_review_items
+    assert all(
+        any("rated birth-time sources" in evidence for evidence in item["recommended_evidence"])
+        for item in source_review_items
+    )
+    assert all(
+        not any("ten-god evidence" in evidence or "branch interaction evidence" in evidence for evidence in item["recommended_evidence"])
+        for item in source_review_items
+    )
     variant_sweep = result["famous_case_annual_event_calibration"]["rule_variant_sweep"]
     assert variant_sweep
     assert any(item["event_topic"] == "career_project" and item["selected"] for item in variant_sweep)
@@ -1162,6 +1317,14 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert evolution_task_plan
     task_topics = {item["event_topic"] for item in evolution_task_plan}
     assert {"career_power", "study_exam"}.issubset(task_topics)
+    career_power_task = next(item for item in evolution_task_plan if item["event_topic"] == "career_power")
+    assert career_power_task["priority"] == "source_review_first"
+    assert career_power_task["task_type"] == "review_birth_sources"
+    assert career_power_task["eligible_event_rate"] < 0.5
+    assert career_power_task["eligible_event_count"] + career_power_task["caution_event_count"] == career_power_task[
+        "event_count"
+    ]
+    assert any("rated birth-time sources" in item for item in career_power_task["next_evidence_to_add"])
     assert any(item["task_type"] == "add_specific_evidence" for item in evolution_task_plan)
     assert all(item["next_evidence_to_add"] for item in evolution_task_plan)
     assert all(item["acceptance_criteria"] for item in evolution_task_plan)
@@ -1294,6 +1457,9 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert result["audit_receipt"]["material"]["famous_case_annual_event_calibration"][
         "domain_topic_refinement_queue"
     ] == result["famous_case_annual_event_calibration"]["domain_topic_refinement_queue"]
+    assert result["audit_receipt"]["material"]["famous_case_annual_event_calibration"][
+        "source_review_routing_summary"
+    ] == result["famous_case_annual_event_calibration"]["source_review_routing_summary"]
     assert result["audit_receipt"]["material"]["famous_case_annual_event_calibration"][
         "domain_topic_variant_sweep"
     ] == result["famous_case_annual_event_calibration"]["domain_topic_variant_sweep"]
@@ -2567,6 +2733,12 @@ def test_production_readiness_gates_birth_profile_import_preview(tmp_path):
     chinese_quality_gate = next(
         item for item in result["gates"] if item["id"] == "benchmark_chinese_render_quality_diagnostics"
     )
+    famous_routing_gate = next(
+        item for item in result["gates"] if item["id"] == "famous_case_source_review_routing_complete"
+    )
+    famous_queue_gate = next(
+        item for item in result["gates"] if item["id"] == "famous_case_source_review_queue_aligned"
+    )
 
     assert source_gate["passed"] is True
     assert source_gate["details"] == []
@@ -2580,6 +2752,19 @@ def test_production_readiness_gates_birth_profile_import_preview(tmp_path):
     assert family_probe_gate["details"] == []
     assert chinese_quality_gate["passed"] is True
     assert chinese_quality_gate["details"] == []
+    for case in result["current_benchmark"]["cases"]:
+        features = case["report_features"]
+        if features.get("has_chinese_render") is True:
+            assert features["chinese_render_annual_pillar_anchor_ratio"] == 1.0
+            assert features["chinese_render_monthly_pillar_anchor_ratio"] == 1.0
+            assert features["chinese_render_annual_ten_god_anchor_ratio"] == 1.0
+            assert features["chinese_render_monthly_ten_god_anchor_ratio"] == 1.0
+            assert features["chinese_render_annual_useful_state_anchor_ratio"] == 1.0
+            assert features["chinese_render_monthly_useful_state_anchor_ratio"] == 1.0
+    assert famous_routing_gate["passed"] is True
+    assert famous_routing_gate["details"] == []
+    assert famous_queue_gate["passed"] is True
+    assert famous_queue_gate["details"] == []
     assert substantive_probe_gate["passed"] is True
     assert substantive_probe_gate["details"] == []
     assert cache_gate["passed"] is True
@@ -2607,6 +2792,14 @@ def test_production_readiness_gates_birth_profile_import_preview(tmp_path):
         for item in result["blockers"]
     )
     assert not any(
+        item["gate"] == "famous_case_source_review_routing_complete"
+        for item in result["blockers"]
+    )
+    assert not any(
+        item["gate"] == "famous_case_source_review_queue_aligned"
+        for item in result["blockers"]
+    )
+    assert not any(
         item["gate"] == "birth_profile_substantive_evidence_cache_enforcement_probe"
         for item in result["blockers"]
     )
@@ -2617,6 +2810,61 @@ def test_production_readiness_gates_birth_profile_import_preview(tmp_path):
     )
     assert not any(item["gate"] == "birth_profile_import_preview_blocked" for item in result["blockers"])
     assert not any(item["gate"] == "birth_profile_fixture_patch_preview_blocked" for item in result["blockers"])
+
+
+def test_famous_case_source_review_routing_gate_rejects_bypassed_low_quality_topics():
+    assert _famous_case_source_review_routing_failures({}) == [
+        "famous-case source-review routing summary missing"
+    ]
+
+    audit = {
+        "famous_case_annual_event_calibration": {
+            "source_review_routing_summary": {
+                "routing_complete": False,
+                "global_source_review_topics": ["career_power"],
+                "domain_source_review_slices": ["近代政治/career_power"],
+                "evolution_source_review_topics": ["career_power"],
+                "global_bypassed_low_quality_topics": ["war_pressure"],
+                "domain_bypassed_low_quality_slices": ["近代政治/war_pressure"],
+                "evolution_bypassed_low_quality_topics": ["war_pressure"],
+            }
+        }
+    }
+
+    failures = _famous_case_source_review_routing_failures(audit)
+
+    assert _famous_case_source_review_routing_complete(audit) is False
+    assert "famous-case source-review routing is not complete" in failures
+    assert any("global_bypassed_low_quality_topics" in item for item in failures)
+    assert any("domain_bypassed_low_quality_slices" in item for item in failures)
+    assert any("evolution_bypassed_low_quality_topics" in item for item in failures)
+
+
+def test_famous_case_source_review_queue_gate_rejects_rule_tuning_evidence():
+    assert _famous_case_source_review_queue_failures({}) == [
+        "famous-case rule refinement queue missing"
+    ]
+
+    audit = {
+        "famous_case_annual_event_calibration": {
+            "rule_refinement_queue": [
+                {
+                    "event_topic": "career_power",
+                    "priority": "source_review_first",
+                    "recommended_evidence": [
+                        "collect rated birth-time sources for caution cases before rule tuning",
+                        "add branch interaction evidence",
+                    ],
+                }
+            ]
+        }
+    }
+
+    failures = _famous_case_source_review_queue_failures(audit)
+
+    assert _famous_case_source_review_queue_aligned(audit) is False
+    assert any("career_power" in item for item in failures)
+    assert any("branch interaction evidence" in item for item in failures)
 
 
 def test_industry_event_manifest_audit_accepts_example_contract():

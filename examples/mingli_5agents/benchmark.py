@@ -232,6 +232,36 @@ def run_benchmark(repo: GenomeRepository, version: int | None = None) -> Benchma
                             section_count=2,
                         )
                     ),
+                    "chinese_render_annual_pillar_anchor_ratio": _topic_pillar_anchor_ratio(
+                        final_report.get("topic_synthesis", {}),
+                        rendered_zh,
+                        level="annual",
+                    ),
+                    "chinese_render_monthly_pillar_anchor_ratio": _topic_pillar_anchor_ratio(
+                        final_report.get("topic_synthesis", {}),
+                        rendered_zh,
+                        level="monthly",
+                    ),
+                    "chinese_render_annual_ten_god_anchor_ratio": _topic_ten_god_anchor_ratio(
+                        final_report.get("topic_synthesis", {}),
+                        rendered_zh,
+                        level="annual",
+                    ),
+                    "chinese_render_monthly_ten_god_anchor_ratio": _topic_ten_god_anchor_ratio(
+                        final_report.get("topic_synthesis", {}),
+                        rendered_zh,
+                        level="monthly",
+                    ),
+                    "chinese_render_annual_useful_state_anchor_ratio": _topic_useful_state_anchor_ratio(
+                        final_report.get("topic_synthesis", {}),
+                        rendered_zh,
+                        level="annual",
+                    ),
+                    "chinese_render_monthly_useful_state_anchor_ratio": _topic_useful_state_anchor_ratio(
+                        final_report.get("topic_synthesis", {}),
+                        rendered_zh,
+                        level="monthly",
+                    ),
                     "chinese_render_ascii_letter_count": sum(
                         1 for char in rendered_zh if char.isascii() and char.isalpha()
                     ),
@@ -572,6 +602,205 @@ def _auspicious_calendar_receipt_bound_to_provenance(
         and report_material.get("auspicious_calendar_receipt_sha256")
         == auspicious_calendar_receipt.get("sha256")
     )
+
+
+_GANZHI_PINYIN_TO_ZH = {
+    "JiaZi": "甲子",
+    "YiChou": "乙丑",
+    "BingYin": "丙寅",
+    "DingMao": "丁卯",
+    "WuChen": "戊辰",
+    "JiSi": "己巳",
+    "GengWu": "庚午",
+    "XinWei": "辛未",
+    "RenShen": "壬申",
+    "GuiYou": "癸酉",
+    "JiaXu": "甲戌",
+    "YiHai": "乙亥",
+    "BingZi": "丙子",
+    "DingChou": "丁丑",
+    "WuYin": "戊寅",
+    "JiMao": "己卯",
+    "GengChen": "庚辰",
+    "XinSi": "辛巳",
+    "RenWu": "壬午",
+    "GuiWei": "癸未",
+    "JiaShen": "甲申",
+    "YiYou": "乙酉",
+    "BingXu": "丙戌",
+    "DingHai": "丁亥",
+    "WuZi": "戊子",
+    "JiChou": "己丑",
+    "GengYin": "庚寅",
+    "XinMao": "辛卯",
+    "RenChen": "壬辰",
+    "GuiSi": "癸巳",
+    "JiaWu": "甲午",
+    "YiWei": "乙未",
+    "BingShen": "丙申",
+    "DingYou": "丁酉",
+    "WuXu": "戊戌",
+    "JiHai": "己亥",
+    "GengZi": "庚子",
+    "XinChou": "辛丑",
+    "RenYin": "壬寅",
+    "GuiMao": "癸卯",
+    "JiaChen": "甲辰",
+    "YiSi": "乙巳",
+    "BingWu": "丙午",
+    "DingWei": "丁未",
+    "WuShen": "戊申",
+    "JiYou": "己酉",
+    "GengXu": "庚戌",
+    "XinHai": "辛亥",
+    "RenZi": "壬子",
+    "GuiChou": "癸丑",
+    "JiaYin": "甲寅",
+    "YiMao": "乙卯",
+    "BingChen": "丙辰",
+    "DingSi": "丁巳",
+    "WuWu": "戊午",
+    "JiWei": "己未",
+    "GengShen": "庚申",
+    "XinYou": "辛酉",
+    "RenXu": "壬戌",
+    "GuiHai": "癸亥",
+}
+
+
+_STEM_PINYIN_TO_ZH = {
+    "Jia": "甲",
+    "Yi": "乙",
+    "Bing": "丙",
+    "Ding": "丁",
+    "Wu": "戊",
+    "Ji": "己",
+    "Geng": "庚",
+    "Xin": "辛",
+    "Ren": "壬",
+    "Gui": "癸",
+}
+
+_BRANCH_PINYIN_TO_ZH = {
+    "Zi": "子",
+    "Chou": "丑",
+    "Yin": "寅",
+    "Mao": "卯",
+    "Chen": "辰",
+    "Si": "巳",
+    "Wu": "午",
+    "Wei": "未",
+    "Shen": "申",
+    "You": "酉",
+    "Xu": "戌",
+    "Hai": "亥",
+}
+
+
+def _ganzhi_pinyin_to_zh(value: str) -> str:
+    if value in _GANZHI_PINYIN_TO_ZH:
+        return _GANZHI_PINYIN_TO_ZH[value]
+    for stem_pinyin, stem_zh in _STEM_PINYIN_TO_ZH.items():
+        if not value.startswith(stem_pinyin):
+            continue
+        branch_pinyin = value[len(stem_pinyin) :]
+        branch_zh = _BRANCH_PINYIN_TO_ZH.get(branch_pinyin)
+        if branch_zh:
+            return f"{stem_zh}{branch_zh}"
+    return value
+
+
+def _topic_pillar_anchor_ratio(topic_synthesis: Any, rendered_zh: str, *, level: str) -> float:
+    if not isinstance(topic_synthesis, dict) or not rendered_zh:
+        return 0.0
+    required: list[str] = []
+    for topic in topic_synthesis.values():
+        if not isinstance(topic, dict):
+            continue
+        timing = topic.get("timing_evidence", {})
+        timing_level = timing.get(level, {}) if isinstance(timing, dict) else {}
+        pillar = timing_level.get("pillar") if isinstance(timing_level, dict) else None
+        if not isinstance(pillar, str) or not pillar:
+            focus = topic.get(f"{level}_focus", {})
+            evidence = focus.get("bazi_evidence", {}) if isinstance(focus, dict) else {}
+            key = "annual_pillar" if level == "annual" else "monthly_pillar"
+            pillar = evidence.get(key) if isinstance(evidence, dict) else None
+        if isinstance(pillar, str) and pillar:
+            required.append(_ganzhi_pinyin_to_zh(pillar))
+    if not required:
+        return 0.0
+    matched = 0
+    for pillar in sorted(set(required)):
+        matched += min(required.count(pillar), rendered_zh.count(pillar))
+    return round(matched / len(required), 3)
+
+
+_TEN_GOD_TO_ZH = {
+    "peer": "同类",
+    "wealth": "财星",
+    "authority": "官杀",
+    "resource": "印星",
+    "expression": "食伤",
+}
+
+
+def _topic_ten_god_anchor_ratio(topic_synthesis: Any, rendered_zh: str, *, level: str) -> float:
+    if not isinstance(topic_synthesis, dict) or not rendered_zh:
+        return 0.0
+    required: list[str] = []
+    for topic in topic_synthesis.values():
+        if not isinstance(topic, dict):
+            continue
+        timing = topic.get("timing_evidence", {})
+        timing_level = timing.get(level, {}) if isinstance(timing, dict) else {}
+        ten_gods = timing_level.get("ten_gods") if isinstance(timing_level, dict) else None
+        if not isinstance(ten_gods, dict):
+            focus = topic.get(f"{level}_focus", {})
+            evidence = focus.get("bazi_evidence", {}) if isinstance(focus, dict) else {}
+            key = "annual_ten_gods" if level == "annual" else "monthly_ten_gods"
+            ten_gods = evidence.get(key) if isinstance(evidence, dict) else None
+        if not isinstance(ten_gods, dict):
+            continue
+        for value in (ten_gods.get("stem"), ten_gods.get("branch")):
+            if isinstance(value, str) and value:
+                required.append(_TEN_GOD_TO_ZH.get(value, value))
+    if not required:
+        return 0.0
+    matched = 0
+    for label in sorted(set(required)):
+        matched += min(required.count(label), rendered_zh.count(label))
+    return round(matched / len(required), 3)
+
+
+_USEFUL_STATE_TO_ZH = {
+    "useful_element_activated": "用神状态有利",
+    "dominant_element_reinforced": "用神状态忌偏重",
+    "neutral_or_indirect": "用神状态中性或间接",
+}
+
+
+def _topic_useful_state_anchor_ratio(topic_synthesis: Any, rendered_zh: str, *, level: str) -> float:
+    if not isinstance(topic_synthesis, dict) or not rendered_zh:
+        return 0.0
+    required: list[str] = []
+    for topic in topic_synthesis.values():
+        if not isinstance(topic, dict):
+            continue
+        timing = topic.get("timing_evidence", {})
+        timing_level = timing.get(level, {}) if isinstance(timing, dict) else {}
+        useful_state = timing_level.get("useful_state") if isinstance(timing_level, dict) else None
+        if not isinstance(useful_state, str) or not useful_state:
+            focus = topic.get(f"{level}_focus", {})
+            evidence = focus.get("bazi_evidence", {}) if isinstance(focus, dict) else {}
+            useful_state = evidence.get("useful_state") if isinstance(evidence, dict) else None
+        if isinstance(useful_state, str) and useful_state:
+            required.append(_USEFUL_STATE_TO_ZH.get(useful_state, useful_state))
+    if not required:
+        return 0.0
+    matched = 0
+    for label in sorted(set(required)):
+        matched += min(required.count(label), rendered_zh.count(label))
+    return round(matched / len(required), 3)
 
 
 def _benchmark_receipt(result: dict[str, Any]) -> dict[str, Any]:

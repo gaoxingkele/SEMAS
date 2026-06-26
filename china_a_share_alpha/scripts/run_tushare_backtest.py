@@ -64,6 +64,8 @@ def main() -> int:
     parser.add_argument("--output-dir", type=Path, default="./china_a_share_alpha_output/tushare_backtest")
     parser.add_argument("--token", default=None, help="Tushare token (or set TUSHARE_TOKEN env)")
     parser.add_argument("--max-symbols", type=int, default=None, help="Limit universe size for quick test")
+    parser.add_argument("--evolved-csv", type=Path, default=None, help="Optional factor loop leaderboard CSV to include evolved factors")
+    parser.add_argument("--evolved-top-n", type=int, default=20, help="Number of evolved factors to include")
     args = parser.parse_args()
 
     output_dir = Path(args.output_dir)
@@ -146,15 +148,41 @@ def main() -> int:
         combined_train = combined_train + w * _zscore_series(factor_series_train[name])
         combined_test = combined_test + w * _zscore_series(factor_series_test[name])
 
-    row = _evaluate_factor(
+    ic_weighted_row = _evaluate_factor(
         "ic_weighted_train",
         combined_full,
         full["forward_return"],
         train_ic=ic_score(combined_train, train["forward_return"]),
         test_ic=ic_score(combined_test, test["forward_return"]),
     )
-    row["weights"] = json.dumps(weights, ensure_ascii=False)
-    results.append(row)
+    ic_weighted_row["weights"] = json.dumps(weights, ensure_ascii=False)
+    results.append(ic_weighted_row)
+
+    # Optionally evaluate evolved factors from a loop leaderboard.
+    if args.evolved_csv and args.evolved_csv.exists():
+        from china_a_share_alpha.factor.parser import parse_expression
+
+        evolved_df = pd.read_csv(args.evolved_csv)
+        evolved_exprs = []
+        for idx, expr_str in enumerate(evolved_df["expression"].head(args.evolved_top_n)):
+            try:
+                expr = parse_expression(expr_str)
+                evolved_exprs.append((f"evolved_{idx + 1}", expr))
+            except Exception as exc:
+                print(f"Skipping evolved expression {expr_str}: {exc}")
+        for name, expr in evolved_exprs:
+            print(f"Evaluating {name} ...")
+            factor_full = expr.eval(full)
+            factor_train = expr.eval(train)
+            factor_test = expr.eval(test)
+            row = _evaluate_factor(
+                name,
+                factor_full,
+                full["forward_return"],
+                train_ic=ic_score(factor_train, train["forward_return"]),
+                test_ic=ic_score(factor_test, test["forward_return"]),
+            )
+            results.append(row)
 
     df = pd.DataFrame(results)
     df = df.sort_values("sharpe", ascending=False)
@@ -208,7 +236,7 @@ def main() -> int:
         "The IC-weighted combination is constructed transparently from training-set",
         "performance: each factor receives weight proportional to its signed IC,",
         "so the portfolio mechanically overweights styles that were predictive in-sample.",
-        f"Learned weights: `{row['weights']}`.",
+        f"Learned weights: `{ic_weighted_row['weights']}`.",
         "",
         "### Caveats",
         "",

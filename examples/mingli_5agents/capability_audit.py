@@ -2046,6 +2046,40 @@ def _industry_event_source_manifest_example_receipt() -> dict[str, Any]:
     }
 
 
+def _famous_case_source_review_routing_complete(famous_case_annual: dict[str, Any]) -> bool:
+    routing = famous_case_annual.get("source_review_routing_summary")
+    if not isinstance(routing, dict):
+        return False
+    return (
+        routing.get("routing_complete") is True
+        and routing.get("global_bypassed_low_quality_topics") == []
+        and routing.get("domain_bypassed_low_quality_slices") == []
+        and routing.get("evolution_bypassed_low_quality_topics") == []
+    )
+
+
+def _famous_case_source_review_queue_aligned(famous_case_annual: dict[str, Any]) -> bool:
+    queue = famous_case_annual.get("rule_refinement_queue")
+    if not isinstance(queue, list) or not queue:
+        return False
+    source_review_items = [
+        item for item in queue if isinstance(item, dict) and item.get("priority") == "source_review_first"
+    ]
+    if not source_review_items:
+        return False
+    forbidden_phrases = ("ten-god evidence", "branch interaction evidence", "strict-rule predicate")
+    for item in source_review_items:
+        evidence = item.get("recommended_evidence")
+        if not isinstance(evidence, list) or not evidence:
+            return False
+        text_items = [str(value) for value in evidence]
+        if not any("rated birth-time sources" in value for value in text_items):
+            return False
+        if any(any(phrase in value for value in text_items) for phrase in forbidden_phrases):
+            return False
+    return True
+
+
 def _industry_event_source_query_plan_example_receipt() -> dict[str, Any]:
     audit = audit_industry_event_query_plan(INDUSTRY_EVENT_SOURCE_QUERY_PLAN_EXAMPLE)
     receipt = industry_event_query_plan_receipt(audit)
@@ -3292,6 +3326,8 @@ def _capability_audit_receipt_material(response: dict[str, Any]) -> dict[str, An
             "strict_exact_precision": famous_case_annual.get("strict_exact_precision"),
             "strict_false_positive_rate": famous_case_annual.get("strict_false_positive_rate"),
             "low_coverage_cases": famous_case_annual.get("low_coverage_cases", []),
+            "birth_source_quality_summary": famous_case_annual.get("birth_source_quality_summary", {}),
+            "source_review_routing_summary": famous_case_annual.get("source_review_routing_summary", {}),
             "domain_summary": famous_case_annual.get("domain_summary", []),
             "domain_topic_summary": famous_case_annual.get("domain_topic_summary", []),
             "domain_topic_refinement_queue": famous_case_annual.get("domain_topic_refinement_queue", []),
@@ -3722,6 +3758,12 @@ def capability_audit(
         and famous_case_annual.get("fixture_sha256") == famous_cases.get("sha256")
         and int(famous_case_annual.get("case_count", 0)) >= 12
         and int(famous_case_annual.get("event_count", 0)) > 0,
+        "famous_case_source_review_routing_complete": _famous_case_source_review_routing_complete(
+            famous_case_annual
+        ),
+        "famous_case_source_review_queue_aligned": _famous_case_source_review_queue_aligned(
+            famous_case_annual
+        ),
         "industry_event_source_manifest_example": isinstance(industry_event_manifest.get("sha256"), str)
         and len(industry_event_manifest.get("sha256", "")) == 64
         and industry_event_manifest.get("material", {}).get("status") == "ready_example",
