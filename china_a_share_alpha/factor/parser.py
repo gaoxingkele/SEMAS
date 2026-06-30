@@ -32,9 +32,9 @@ from china_a_share_alpha.factor.expression import (
     Var,
 )
 
-UNARY_FUNCS = {"abs", "log", "sign", "neg", "cs_rank", "cs_zscore"}
-BINARY_FUNCS = {"add", "sub", "mul", "div", "greater", "less"}
-ROLLING_FUNCS = {"ts_mean", "ts_std", "ts_sum", "ts_min", "ts_max", "ts_delta", "ts_delay"}
+UNARY_FUNCS = {"abs", "log", "sign", "neg", "cs_rank", "cs_zscore", "signed_power", "winsorize"}
+BINARY_FUNCS = {"add", "sub", "mul", "div", "greater", "less", "if_positive"}
+ROLLING_FUNCS = {"ts_mean", "ts_std", "ts_sum", "ts_min", "ts_max", "ts_delta", "ts_delay", "ts_shift", "ts_ema", "ts_pct_change", "ts_zscore"}
 ROLLING_BINARY_FUNCS = {"ts_corr", "ts_cov"}
 ALL_FUNCS = UNARY_FUNCS | BINARY_FUNCS | ROLLING_FUNCS | ROLLING_BINARY_FUNCS
 

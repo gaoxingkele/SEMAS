@@ -55,9 +55,16 @@ class Const(FactorExpr):
         return f"{self.value:.4g}"
 
 
+def _winsorize(s: pd.Series, lower: float = 0.01, upper: float = 0.99) -> pd.Series:
+    """Cross-sectional winsorization by percentile."""
+    q_low = s.quantile(lower)
+    q_high = s.quantile(upper)
+    return s.clip(lower=q_low, upper=q_high)
+
+
 @dataclass
 class UnaryOp(FactorExpr):
-    op: str  # abs, log, sign, neg, cs_rank, cs_zscore
+    op: str  # abs, log, sign, neg, cs_rank, cs_zscore, signed_power, winsorize
     child: FactorExpr
 
     def eval(self, data: pd.DataFrame) -> pd.Series:
@@ -74,6 +81,10 @@ class UnaryOp(FactorExpr):
             return x.groupby(level="date").rank(pct=True)
         if self.op == "cs_zscore":
             return x.groupby(level="date").transform(lambda s: (s - s.mean()) / (s.std() + 1e-8))
+        if self.op == "signed_power":
+            return np.sign(x) * (np.abs(x) ** 0.5)
+        if self.op == "winsorize":
+            return x.groupby(level="date").transform(_winsorize)
         raise ValueError(f"Unknown unary op: {self.op}")
 
     def __repr__(self) -> str:
@@ -101,6 +112,8 @@ class BinaryOp(FactorExpr):
             return (l > r).astype(float)
         if self.op == "less":
             return (l < r).astype(float)
+        if self.op == "if_positive":
+            return ((l > 0).astype(float) * r).fillna(0)
         raise ValueError(f"Unknown binary op: {self.op}")
 
     def __repr__(self) -> str:
@@ -131,6 +144,16 @@ class RollingOp(FactorExpr):
                 return group - group.shift(self.window)
             if self.op == "ts_delay":
                 return group.shift(self.window)
+            if self.op == "ts_shift":
+                return group.shift(self.window)
+            if self.op == "ts_ema":
+                return group.ewm(span=self.window, min_periods=1).mean()
+            if self.op == "ts_pct_change":
+                return group.pct_change(periods=self.window)
+            if self.op == "ts_zscore":
+                ma = group.rolling(self.window, min_periods=1).mean()
+                std = group.rolling(self.window, min_periods=1).std()
+                return (group - ma) / (std + 1e-8)
             raise ValueError(f"Unknown rolling op: {self.op}")
 
         return x.groupby(level="symbol").transform(_roll)
@@ -151,6 +174,10 @@ class RollingBinaryOp(FactorExpr):
         r = self.right.eval(data)
 
         def _roll(group: pd.DataFrame) -> pd.Series:
+            # If either series is constant within the rolling window, correlation/covariance
+            # is mathematically undefined; return NaN to avoid spurious signals.
+            if group["l"].nunique() <= 1 or group["r"].nunique() <= 1:
+                return pd.Series(np.nan, index=group.index)
             if self.op == "ts_corr":
                 return group["l"].rolling(self.window, min_periods=2).corr(group["r"])
             if self.op == "ts_cov":

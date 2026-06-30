@@ -9,9 +9,9 @@ end_date: "20260601"
 split_date: "20240101"
 universe: csi300
 
-population_size: 20
-max_generations: 15
-patience: 4
+population_size: 15
+max_generations: 10
+patience: 3
 elite_fraction: 0.2
 crossover_fraction: 0.25
 mutator: gp

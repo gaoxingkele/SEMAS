@@ -134,7 +134,17 @@ class FactorPopulation:
         test_ic = ic_score(test_factor, test_forward)
 
         # Penalize constant / NaN factors so they are not selected as elites.
-        if not np.isfinite(train_ic) or not np.isfinite(test_ic):
+        train_std = float(np.nanstd(train_factor))
+        test_std = float(np.nanstd(test_factor))
+        nan_frac = float(train_factor.isna().mean())
+        is_degenerate = (
+            not np.isfinite(train_ic)
+            or not np.isfinite(test_ic)
+            or nan_frac > 0.5
+            or train_std < 1e-8
+            or test_std < 1e-8
+        )
+        if is_degenerate:
             train_score = 0.0
             train_ic = -1.0 if not np.isfinite(train_ic) else train_ic
             test_ic = -1.0 if not np.isfinite(test_ic) else test_ic

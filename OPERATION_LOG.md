@@ -9009,3 +9009,1670 @@ Famous-person fixtures are useful for regression testing, source-routing,
 industry-event label expansion, and weak calibration. They are not statistical
 proof of predictive validity. New candidates should enter through the source
 review and event-label review path before they are allowed to adjust rules.
+
+## 2026-06-26 - Chinese Render Five-Element Anchor Gate
+
+### Motivation
+
+Chinese annual/monthly report quality gates already required pillar, ten-god,
+useful-state, and branch-interaction anchors. The remaining gap was five-element
+evidence. Annual/monthly rows had element data at the row level, but the compact
+topic evidence and render-quality gates did not prove that stem element, branch
+element, and focus element reached the user-facing Chinese report.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/tools/annual_luck.py`:
+   - Added `elements` to annual BaZi evidence.
+   - Monthly evidence inherits the same element structure through the shared
+     evidence helper.
+
+2. Updated `examples/mingli_5agents/topic_synthesis.py`:
+   - Added `elements` to compact annual/monthly timing evidence.
+   - Included element evidence in timing summaries.
+
+3. Updated `examples/mingli_5agents/report_renderers.py`:
+   - Rendered five-element evidence in contextual topic rows.
+   - Rendered five-element evidence in annual/monthly BaZi evidence lines.
+   - Chinese anchor form: `五行=天干X、地支Y、主轴Z`.
+
+4. Updated `examples/mingli_5agents/benchmark.py`:
+   - Added `chinese_render_annual_element_anchor_ratio`.
+   - Added `chinese_render_monthly_element_anchor_ratio`.
+
+5. Updated `examples/mingli_5agents/api_core.py` and tests:
+   - Production Chinese render quality gate fails when element anchors are
+     missing.
+   - Public schema requires `elements` on topic timing signals.
+   - Benchmark schema exposes annual/monthly element-anchor ratios.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\annual_luck.py examples\mingli_5agents\tools\monthly_luck.py examples\mingli_5agents\topic_synthesis.py examples\mingli_5agents\report_renderers.py examples\mingli_5agents\benchmark.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_mingli_system.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors examples\mingli_5agents\tests\test_mingli_system.py::test_five_agent_executor_returns_required_artifacts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `3 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- Benchmark snapshot: all Chinese benchmark cases have annual element anchor
+  ratio `1.0` and monthly element anchor ratio `1.0`.
+
+### Boundary
+
+This adds explicit five-element anchors to structured evidence, rendered
+Chinese text, benchmark diagnostics, schema, and production gates. It still does
+not implement full five-element circulation chains such as 生、克、泄、耗、制.
+
+## 2026-06-26 - Five-Element Flow Path Evidence
+
+### Motivation
+
+The previous step made annual/monthly reports show stem element, branch element,
+and focus element. That proved the five-element anchors were visible, but it
+still did not explain how those elements act on the useful element and the
+dominant element. User feedback asks for monthly five-element and useful-god
+correspondence, so the next executable layer is a structured flow path.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/tools/annual_luck.py`:
+   - Added generating and controlling element tables.
+   - Added `element_flow` to BaZi evidence.
+   - Each flow row records source slot, source element, target role, target
+     element, and relation.
+   - Relations cover `same`, `generate`, `drain`, `control`, and `consume`.
+
+2. Updated `examples/mingli_5agents/topic_synthesis.py`:
+   - Added `element_flow` to compact annual/monthly timing evidence.
+
+3. Updated `examples/mingli_5agents/report_renderers.py`:
+   - Rendered element flow as Chinese phrases such as
+     `天干木耗用神金` and `地支土生用神金`.
+   - Added flow text to contextual topic rows and annual/monthly evidence
+     lines.
+
+4. Updated `examples/mingli_5agents/benchmark.py`:
+   - Added `chinese_render_annual_element_flow_anchor_ratio`.
+   - Added `chinese_render_monthly_element_flow_anchor_ratio`.
+
+5. Updated `examples/mingli_5agents/api_core.py` and tests:
+   - Production Chinese render quality gate now fails when flow anchors are
+     missing.
+   - Public schema requires `element_flow` on annual/monthly BaZi evidence and
+     topic timing signals.
+   - Calendar tests assert concrete element-flow relations for annual and
+     monthly rows.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\annual_luck.py examples\mingli_5agents\tools\monthly_luck.py examples\mingli_5agents\topic_synthesis.py examples\mingli_5agents\report_renderers.py examples\mingli_5agents\benchmark.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_calendar_tools.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_mingli_system.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_calendar_tools.py::test_annual_luck_builds_structured_year_rows examples\mingli_5agents\tests\test_calendar_tools.py::test_monthly_luck_builds_selected_year_rows examples\mingli_5agents\tests\test_empirical_validation.py::test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors examples\mingli_5agents\tests\test_mingli_system.py::test_five_agent_executor_returns_required_artifacts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `5 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- Benchmark snapshot: all Chinese benchmark cases have annual element-flow
+  anchor ratio `1.0` and monthly element-flow anchor ratio `1.0`.
+
+### Boundary
+
+This implements the first executable flow path from current stem/branch/focus
+elements to useful and dominant elements. It does not yet model combination
+transformation, hidden stems, seasonal strength, or palace-specific flow.
+
+## 2026-06-26 - Hidden-Stem Flow Path Evidence
+
+### Motivation
+
+The five-element flow path previously covered current stem, branch main element,
+and focus element. That still left out branch hidden stems, which are important
+for BaZi reasoning because a branch can carry multiple internal stems and
+therefore multiple element influences.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/tools/calendar_core.py`:
+   - Added a deterministic `BRANCH_HIDDEN_STEMS` table for all twelve branches.
+
+2. Updated `examples/mingli_5agents/tools/annual_luck.py`:
+   - Added `hidden_stem_flow` to annual BaZi evidence.
+   - Monthly evidence inherits the same field through the shared evidence
+     helper.
+   - Each hidden-stem flow row records branch, hidden stem, source element,
+     target role, target element, and relation.
+
+3. Updated `examples/mingli_5agents/topic_synthesis.py`:
+   - Added `hidden_stem_flow` to compact annual/monthly timing evidence.
+
+4. Updated `examples/mingli_5agents/report_renderers.py`:
+   - Rendered hidden-stem flow as Chinese phrases such as
+     `辰藏戊生用神金` and `寅藏丙克用神金`.
+   - Added `藏干=...` to contextual topic rows and annual/monthly evidence
+     lines.
+
+5. Updated `examples/mingli_5agents/benchmark.py`, `api_core.py`, and tests:
+   - Added annual/monthly hidden-stem-flow anchor ratios.
+   - Production Chinese render quality gate fails when hidden-stem-flow anchors
+     are missing.
+   - Public schema requires `hidden_stem_flow` on annual/monthly BaZi evidence
+     and topic timing signals.
+   - Calendar tests assert concrete hidden-stem flow rows for 2024 `JiaChen`
+     and 2025-01 `YiYin`.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\calendar_core.py examples\mingli_5agents\tools\annual_luck.py examples\mingli_5agents\tools\monthly_luck.py examples\mingli_5agents\topic_synthesis.py examples\mingli_5agents\report_renderers.py examples\mingli_5agents\benchmark.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_calendar_tools.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_mingli_system.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_calendar_tools.py::test_annual_luck_builds_structured_year_rows examples\mingli_5agents\tests\test_calendar_tools.py::test_monthly_luck_builds_selected_year_rows examples\mingli_5agents\tests\test_empirical_validation.py::test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors examples\mingli_5agents\tests\test_mingli_system.py::test_five_agent_executor_returns_required_artifacts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `5 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- Benchmark snapshot: all Chinese benchmark cases have annual hidden-stem-flow
+  anchor ratio `1.0` and monthly hidden-stem-flow anchor ratio `1.0`.
+
+### Boundary
+
+This adds hidden stems as visible symbolic flow evidence. It does not yet weight
+principal, middle, and residual hidden stems differently and does not apply
+seasonal strength correction.
+
+## 2026-06-26 - Hidden-Stem Weight Evidence
+
+### Motivation
+
+Hidden-stem flow made branch internals visible, but all hidden stems were still
+treated equally. BaZi reasoning normally distinguishes principal, middle, and
+residual hidden stems. The next executable step was to carry that hierarchy into
+structured evidence, rendered Chinese text, benchmark anchors, and schema.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/tools/calendar_core.py`:
+   - Added `BRANCH_HIDDEN_STEM_WEIGHTS`.
+   - Principal hidden stem weight: `1.0`.
+   - Middle hidden stem weight: `0.5`.
+   - Residual hidden stem weight: `0.25`.
+
+2. Updated `examples/mingli_5agents/tools/annual_luck.py`:
+   - `hidden_stem_flow` rows now include `hidden_stem_role` and numeric
+     `weight`.
+   - Monthly evidence inherits the weighted hidden-stem rows through the shared
+     evidence helper.
+
+3. Updated `examples/mingli_5agents/report_renderers.py` and `benchmark.py`:
+   - Rendered phrases now include role and weight, such as
+     `辰藏戊本气权重1.00生用神金`.
+   - Existing hidden-stem-flow anchor ratios now require the role and weight
+     tokens to appear in rendered Chinese.
+
+4. Updated `examples/mingli_5agents/api_core.py` and schema tests:
+   - Added `AnnualLuckHiddenStemFlow` schema.
+   - `weight` is required and typed as `number`.
+   - Annual/monthly BaZi evidence and topic timing signals reference the shared
+     hidden-stem-flow schema.
+
+5. Updated tests:
+   - Calendar tests assert principal/middle/residual roles and numeric weights
+     for 2024 `JiaChen` and 2025-01 `YiYin`.
+   - End-to-end system test checks rendered Chinese contains `权重`.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\calendar_core.py examples\mingli_5agents\tools\annual_luck.py examples\mingli_5agents\tools\monthly_luck.py examples\mingli_5agents\topic_synthesis.py examples\mingli_5agents\report_renderers.py examples\mingli_5agents\benchmark.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_calendar_tools.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_mingli_system.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_calendar_tools.py::test_annual_luck_builds_structured_year_rows examples\mingli_5agents\tests\test_calendar_tools.py::test_monthly_luck_builds_selected_year_rows examples\mingli_5agents\tests\test_empirical_validation.py::test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors examples\mingli_5agents\tests\test_mingli_system.py::test_five_agent_executor_returns_required_artifacts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `5 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- Benchmark snapshot: all Chinese benchmark cases keep annual/monthly
+  hidden-stem-flow anchor ratios at `1.0`.
+
+### Boundary
+
+This adds fixed principal/middle/residual weights. It does not yet adjust those
+weights by season, month command, combination transformation, or actual
+professional-provider strength scores.
+
+## 2026-06-26 - Seasonal Hidden-Stem Weight Evidence and Celebrity Source Review
+
+### Motivation
+
+User asked whether sports, film, and music celebrities can be found for
+validation. Before expanding the validation set, the interrupted hidden-stem
+seasonal weighting layer also needed to be finished, and the existing famous
+case fixture file had visible mojibake in Chinese fields.
+
+### Actions Taken
+
+1. Completed seasonal hidden-stem weighting:
+   - Added branch season mapping and seasonal element mapping.
+   - `hidden_stem_flow` rows now carry `season`, `seasonal_phase`,
+     `seasonal_factor`, and `adjusted_weight`.
+   - Renderer now exposes text such as `辰藏戊本气权重1.00春旺系数1.20调权1.20生用神金`.
+   - Benchmark/schema/tests now require the seasonal factor and adjusted weight
+     to survive into structured evidence and Chinese reports.
+
+2. Fixed famous-case fixture readability:
+   - Restored Chinese names, domains, source ratings, birthplace strings, and
+     validation notes in `examples/mingli_5agents/famous_case_validation.py`.
+   - Kept the existing 12-case formal fixture set and event-year labels.
+   - Current formal fixture domains cover sports, film, martial-arts film,
+     music, science/culture, and modern politics.
+
+3. Reviewed celebrity expansion direction:
+   - Existing formal cases include Arthur Ashe, Mark Spitz, Roger Federer,
+     Marilyn Monroe, Lucille Ball, Sean Penn, Bruce Lee, Aretha Franklin,
+     Michael Jackson, and Madonna.
+   - Candidate/review queues already include Roger Federer, Serena Williams,
+     Michael Jordan, Jackie Chan, Meryl Streep, Tom Hanks, Aretha Franklin,
+     Madonna, and Michael Jackson.
+   - Expansion rule remains: high-source birth time first; public event labels
+     second; low-confidence or hour-missing records stay out of time-sensitive
+     validation.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\tools\calendar_core.py examples\mingli_5agents\tools\annual_luck.py examples\mingli_5agents\tools\monthly_luck.py examples\mingli_5agents\topic_synthesis.py examples\mingli_5agents\report_renderers.py examples\mingli_5agents\benchmark.py examples\mingli_5agents\api_core.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_calendar_tools.py::test_annual_luck_builds_structured_year_rows examples\mingli_5agents\tests\test_calendar_tools.py::test_monthly_luck_builds_selected_year_rows examples\mingli_5agents\tests\test_empirical_validation.py::test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors examples\mingli_5agents\tests\test_mingli_system.py::test_five_agent_executor_returns_required_artifacts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `5 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview examples\mingli_5agents\tests\test_empirical_validation.py::test_industry_event_candidate_cases_status_exposes_gate_and_guidance examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `4 passed`.
+- Benchmark snapshot: all Chinese benchmark cases have annual/monthly
+  hidden-stem-flow anchor ratios at `1.0`.
+- Famous-case receipt: `12` cases; domains are `体育`, `影视`, `影视武术`,
+  `歌手`, `科学文化`, `近代政治`; receipt hash
+  `6b708ce5c327eb48785945ea43ec7c53ac5a21b8c10f5618361ed396f186b900`.
+
+### Boundary
+
+Celebrity cases are useful regression fixtures, not proof of predictive
+validity. Sports/film/music samples are best used to pressure-test event-year
+signals such as championship peak, release year, award year, public fame,
+controversy, relationship, injury, health crisis, and retirement. They must not
+be used to reverse-engineer birth time or silently tune rules without a
+pre-registered scoring plan.
+
+## 2026-06-26 - Famous-Case Birth-Source Gate Decisions
+
+### Motivation
+
+The famous-case fixture set had source ratings and a broad source-quality
+summary, but the executable contract still needed an explicit per-case decision
+that separates hour-pillar scoring from source-review-only cases. Without a
+decision matrix, a lower-quality birth-time record could accidentally influence
+rule tuning through downstream calibration summaries.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `_high_confidence_birth_source_ratings()`.
+   - Added `_birth_source_gate_decision()`.
+   - Fixture-level `birth_source_quality` now includes:
+     - `source_gate_schema_version`
+     - `source_gate_decision_counts`
+     - `source_gate_decisions`
+     - `source_gate_blocked_case_count`
+     - `source_gate_blocked_case_ids`
+   - Case-level `birth_source_quality` now includes:
+     - `source_gate_decision`
+     - `source_gate_reasons`
+     - `blocks_rule_tuning`
+   - Annual birth-source summary now includes source-gate counts and blocked
+     event count.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added public schema definitions for `FamousCaseSourceGateDecision`,
+     `FamousCaseBirthSourceQualitySummary`, and
+     `FamousCaseAnnualBirthSourceQualitySummary`.
+   - Bound famous-case validation summaries to the new schema refs.
+
+3. Updated tests:
+   - Capability audit now requires the source-quality gate schema, decision
+     counts, blocked case ids, blocked tuning flag, and blocked event count.
+   - Schema tests require source-gate fields and the explicit decision enum:
+     `allow_hour_pillar_scoring` or `hold_for_source_review`.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `2 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- Receipt smoke check:
+  - Famous fixture hash:
+    `38ec5cffa1dc9464c5123a4564a14ca508eb0f43aa8a703b8a4581f021400ea3`.
+  - Source-gate decision counts:
+    `allow_hour_pillar_scoring=11`, `hold_for_source_review=1`.
+  - Blocked case ids: `chiang_kai_shek`.
+  - Annual blocked event count: `10`.
+
+### Boundary
+
+The gate only controls birth-source hygiene. It does not validate the life-event
+labels and does not prove predictive validity. A case blocked by this gate may
+remain visible as a broad historical diagnostic, but it must not tune
+hour-sensitive rules until source review upgrades the birth record.
+
+## 2026-06-26 - Famous-Case Event-Label Source Gate
+
+### Motivation
+
+Birth-source gating prevents low-quality birth times from tuning hour-sensitive
+rules, but famous-case calibration also depends on event labels. Championship
+years, film releases, awards, public fame, health events, relationship events,
+and retirements need their own source-quality gate. Otherwise a weak or generic
+biographical tag could still enter rule tuning even when the birth data is
+clean.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `_event_label_source_gate_decision()`.
+   - Added `_event_label_source_quality_summary()` at case level.
+   - Added `_annual_event_label_source_quality_summary()` at annual-calibration
+     level.
+   - Every scored famous-case event now carries:
+     - `event_label_source_gate`
+     - `event_label_gate_decision`
+     - `event_label_blocks_rule_tuning`
+   - Event labels are split into:
+     - `allow_event_label_scoring`
+     - `hold_event_label_for_source_review`
+
+2. Added domain-sensitive gate logic:
+   - Sports peak labels require competition, medal, title, ranking, record, or
+     comparable markers.
+   - Film/television fame labels require release, award, recognition, or media
+     markers.
+   - Film/television project labels require release, award, production, launch,
+     role, or similar project markers.
+   - Music fame labels require chart, album, award, media, or comparable public
+     markers.
+   - Music project labels require release markers.
+   - Other labels need at least a domain-specific event marker, otherwise they
+     are held for source review.
+
+3. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `FamousCaseAnnualEventLabelSourceQualitySummary`.
+   - Made annual famous-case calibration responses require
+     `event_label_source_quality_summary`.
+
+4. Updated tests:
+   - Capability audit requires event-label source gate schema version, decision
+     counts, eligible count, review count, blocked tuning flag, and review case
+     ids.
+   - Schema contract tests require the new annual event-label source-quality
+     summary schema and gate version.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `2 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- Receipt smoke check:
+  - Annual famous-case receipt hash:
+    `ab46a5f1031f0498492ae75553bd08e3f608b68a5ed5627591b2258e9abdd607`.
+  - Event labels: `130`.
+  - `allow_event_label_scoring`: `83`.
+  - `hold_event_label_for_source_review`: `47`.
+
+### Boundary
+
+This is a source-quality gate for known event labels, not a prediction accuracy
+claim. Held labels may remain visible for diagnostics, but they must not tune
+rules until a reviewed event-source provider supplies stronger evidence.
+
+## 2026-06-26 - Event-Label-Gated Variant Metrics
+
+### Motivation
+
+The previous event-label source gate marked weak labels as
+`hold_event_label_for_source_review`, but rule-variant sweeps still computed
+hit rates over all known event labels. That preserved diagnostics, but it meant
+held labels could still influence how future rule variants looked. The next
+step was to keep all-label metrics while adding gate-qualified metrics for
+future evolution decisions.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Added `_event_label_scoring_eligible_items()`.
+   - Domain-topic summaries now include:
+     - `event_label_scoring_eligible_count`
+     - `event_label_source_review_count`
+     - `event_label_eligible_strict_exact_hit_count`
+     - `event_label_eligible_strict_exact_hit_rate`
+     - `event_label_eligible_strict_exact_precision`
+   - `domain_topic_variant_sweep` now reports both all-label and
+     event-label-gated metrics.
+   - `rule_variant_sweep` now reports both all-label and event-label-gated
+     metrics.
+   - Evolution task variant summaries now include event-label-gated metrics.
+
+2. Updated `examples/mingli_5agents/api_core.py`:
+   - Added `FamousCaseVariantSweepRow`.
+   - `domain_topic_variant_sweep` and `rule_variant_sweep` now reference that
+     schema instead of generic object rows.
+
+3. Updated tests:
+   - Capability audit requires event-label-gated variant metrics.
+   - Schema contract requires `FamousCaseVariantSweepRow` and the gated metric
+     fields.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `2 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- Receipt smoke check:
+  - Annual famous-case receipt hash:
+    `e7d7ec5c6a635d2a61f1f8a0367ae4119bf7ec92669ac2c90c5bf422668184fd`.
+  - Example rule variant `career_project/legacy_broad_launch`:
+    `event_count=32`, `event_label_scoring_eligible_count=29`,
+    `event_label_source_review_count=3`,
+    `event_label_eligible_strict_exact_precision=0.046`.
+
+### Boundary
+
+This does not select or promote a new prediction rule. It adds cleaner
+diagnostics so future rule evolution can distinguish all known labels from
+event-source-gated labels and avoid optimizing against held-for-review events.
+
+## 2026-06-26 - Event-Label-Gated Evolution Planning
+
+### Motivation
+
+The previous layer exposed event-label-gated metrics in variant sweeps, but
+evolution queues and task plans could still rank work from all-label strict
+metrics. That left a weak path for held-for-review labels to influence future
+rule tuning. This layer makes the plan itself use only event-label-gated
+strict hit and precision metrics when choosing whether to add evidence, reduce
+false positives, or refine precision.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/famous_case_validation.py`:
+   - Topic summaries now carry event-label-gated strict hit and precision
+     metrics.
+   - Domain-topic refinement queue rows include
+     `task_metric_basis=event_label_gated_strict_metrics`.
+   - Rule refinement queue rows include
+     `priority_metric_basis=event_label_gated_strict_metrics`.
+   - Annual evolution task plan rows include gated strict hit and precision
+     metrics and use them for task type selection.
+   - Source-review rows still route to evidence review first instead of rule
+     tuning.
+
+2. Updated `examples/mingli_5agents/tests/test_empirical_validation.py`:
+   - Assertions now verify that task queues and evolution plans expose and use
+     event-label-gated metrics.
+   - `relationship` and `health_risk` now correctly route to
+     `add_specific_evidence` because their gated strict hit/precision is zero.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_capability_audit_reports_github_state_of_art_comparison examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `2 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- Receipt smoke check:
+  - Annual famous-case receipt hash:
+    `c39d7de9660fe2559512ed7288a0ef184c9af9312df4d00b4abaf9f232a71bd8`.
+  - `relationship`: `add_specific_evidence`,
+    gated hit `0.0`, gated precision `0.0`.
+  - `public_fame`: `refine_precision`,
+    gated hit `0.121`, gated precision `0.148`.
+  - `career_project`: `add_specific_evidence`,
+    gated hit `0.034`, gated precision `0.143`.
+  - `health_risk`: `add_specific_evidence`,
+    gated hit `0.0`, gated precision `0.0`.
+  - `sports_peak`: `reduce_false_positive`,
+    gated hit `0.333`, gated precision `0.333`.
+
+### Boundary
+
+This still does not promote any new prediction rule. It changes the governance
+of evolution planning: held-for-review labels can produce source-review or
+evidence-collection tasks, but they cannot make a rule variant or a refinement
+task look better.
+
+## 2026-06-26 - Monthly Solar-Term Window Evidence
+
+### Motivation
+
+Monthly BaZi rows were still indexed by a simple symbolic month sequence. The
+user specifically asked for each month to be independently reasoned through
+five-element and useful-god relationships, and the method wiki already pointed
+out that real Jieqi boundaries should eventually outrank civil-month shortcuts.
+This layer adds an explicit approximate solar-term month window to every
+monthly row without changing the existing month-pillar sequence yet.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/tools/calendar_core.py`:
+   - Added `SOLAR_MONTH_STARTS_APPROX`.
+   - Added `solar_month_window(year, solar_month_index)`.
+   - Each window records schema version, approximate Jieqi basis, month index,
+     branch, start term, next term, start date, end date, and next start date.
+
+2. Updated monthly analysis flow:
+   - `examples/mingli_5agents/tools/monthly_luck.py` now attaches
+     `solar_term_window` at row level and inside `bazi_evidence`.
+   - `examples/mingli_5agents/topic_synthesis.py` preserves the monthly
+     window in compact timing evidence.
+
+3. Updated report rendering and gates:
+   - `examples/mingli_5agents/report_renderers.py` renders a Chinese
+     `节气月` anchor such as `寅，立春至惊蛰，2025-02-04至2025-03-05`.
+   - `examples/mingli_5agents/benchmark.py` added
+     `chinese_render_monthly_solar_term_window_anchor_ratio`.
+   - `examples/mingli_5agents/api_core.py` added public schema coverage and a
+     production gate requiring the rendered Chinese monthly solar-term window
+     anchor ratio to be `1.0`.
+
+4. Updated tests:
+   - Monthly calendar tests assert the first 2025 symbolic flow month uses the
+     approximate `立春` to `惊蛰` window.
+   - Chinese render gate tests now fail when the monthly solar-term window
+     anchor is missing.
+   - Production readiness tests require the new anchor ratio to be `1.0`.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\calendar_core.py examples\mingli_5agents\tools\monthly_luck.py examples\mingli_5agents\topic_synthesis.py examples\mingli_5agents\report_renderers.py examples\mingli_5agents\benchmark.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_calendar_tools.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_calendar_tools.py::test_monthly_luck_builds_selected_year_rows examples\mingli_5agents\tests\test_empirical_validation.py::test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `3 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_mingli_system.py::test_five_agent_executor_returns_required_artifacts -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_benchmark.py -q`
+  passed: `2 passed`.
+- Smoke output for 2025 first symbolic flow month:
+  `solar_month_index=1`, branch `Yin`, `start_term_zh=立春`,
+  `next_term_zh=惊蛰`, `start_date=2025-02-04`,
+  `end_date=2025-03-05`.
+
+### Boundary
+
+This is an approximate Jieqi-month evidence layer. It does not yet compute
+exact local solar-term transition times from an ephemeris provider and does not
+change the existing month-pillar algorithm. The next hardening step is to let a
+professional calendar provider supply exact month pillars and exact Jieqi
+timestamps.
+
+## 2026-06-26 - Provider-Override Solar-Term Month Windows
+
+### Motivation
+
+The previous layer made monthly Jieqi windows visible, but they were still
+always approximate. The next executable improvement is not to pretend the
+approximate table is exact, but to create a provider override path: if a
+professional or external calendar provider supplies exact Jieqi month windows,
+monthly luck rows must use those windows and keep their provenance.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/tools/calendar_core.py`:
+   - `solar_month_window()` now includes `provider_quality` and `precision`.
+   - Added `normalize_solar_month_window()` for provider-supplied windows.
+   - Public basis can now be approximate or provider-supplied.
+
+2. Updated `examples/mingli_5agents/tools/monthly_luck.py`:
+   - Monthly rows now check `context["solar_month_windows"]` first.
+   - Supported provider keys include flat `YYYY-MM` and nested
+     `year -> month` mappings.
+   - If no provider window exists, rows fall back to the deterministic
+     approximate Jieqi table.
+
+3. Updated schemas and rendering:
+   - `examples/mingli_5agents/api_core.py` allows
+     `provider_jieqi_month_boundaries` and requires provider quality and
+     precision fields on `SolarMonthWindow`.
+   - `examples/mingli_5agents/report_renderers.py` formats exact timestamps for
+     Chinese output without leaking raw `T` separators.
+   - `examples/mingli_5agents/benchmark.py` checks the same rendered timestamp
+     format as the report.
+
+4. Updated tests:
+   - Added a monthly luck test proving an `ExternalCalendarProvider` can supply
+     an exact 2025-01 Jieqi window.
+   - Existing approximate-window tests now assert provider quality and
+     precision.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\report_renderers.py examples\mingli_5agents\benchmark.py examples\mingli_5agents\tools\calendar_core.py examples\mingli_5agents\tools\monthly_luck.py examples\mingli_5agents\tests\test_calendar_tools.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_calendar_tools.py::test_monthly_luck_builds_selected_year_rows examples\mingli_5agents\tests\test_calendar_tools.py::test_monthly_luck_uses_provider_solar_term_windows_when_available examples\mingli_5agents\tests\test_empirical_validation.py::test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors examples\mingli_5agents\tests\test_benchmark.py -q`
+  passed: `5 passed`.
+- `pytest examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `2 passed`.
+- `pytest examples\mingli_5agents\tests\test_benchmark.py -q`
+  passed: `2 passed`.
+- Provider override smoke:
+  `basis=provider_jieqi_month_boundaries`,
+  `provider_quality=external_calendar`, `precision=exact_datetime`,
+  `start_date=2025-02-03T22:10:00+08:00`.
+
+### Boundary
+
+This creates the exact-Jieqi provider lane, but it does not yet implement a
+built-in astronomical ephemeris calculation. Exactness depends on a configured
+external/professional provider supplying `solar_month_windows`.
+
+## 2026-06-26 - Provider-Override Monthly Pillars
+
+### Motivation
+
+The previous layer let providers override Jieqi month windows, but the monthly
+pillar itself still came from the deterministic symbolic month sequence. That
+meant exact Jieqi timestamps could be visible while ten-gods, elements, hidden
+stems, and branch interactions still used the approximate monthly pillar. This
+layer lets a provider override the monthly pillar so downstream reasoning is
+recomputed from the supplied pillar.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/tools/monthly_luck.py`:
+   - Added `_monthly_pillar_for_month()`.
+   - Monthly rows now check `context["monthly_pillars"]` before using
+     `_month_ganzhi()`.
+   - Supported provider keys include flat `YYYY-MM` and nested
+     `year -> month` mappings.
+   - Added row-level `pillar_source` and evidence-level
+     `monthly_pillar_source`.
+   - Provider-supplied pillars now drive stem, branch, elements, focus,
+     ten-gods, hidden-stem flow, and branch interactions.
+
+2. Updated report evidence flow:
+   - `examples/mingli_5agents/topic_synthesis.py` preserves monthly pillar
+     source in timing evidence and evidence summaries.
+   - `examples/mingli_5agents/report_renderers.py` renders monthly pillar
+     source as readable Chinese and translates provider-quality tokens.
+   - `examples/mingli_5agents/benchmark.py` added
+     `chinese_render_monthly_pillar_source_anchor_ratio`.
+
+3. Updated schemas and gates:
+   - `examples/mingli_5agents/api_core.py` added `MonthlyPillarSource`.
+   - `MonthlyLuckRow`, `MonthlyLuckBaziEvidence`, and topic timing evidence now
+     carry the monthly pillar source.
+   - Production Chinese render quality gates require the monthly pillar-source
+     anchor ratio to be `1.0`.
+
+4. Updated tests:
+   - Approximate monthly rows assert `approximate_symbolic_month_sequence`.
+   - External provider test supplies `GengShen` for 2025-01 and verifies the
+     row, elements, evidence pillar, source metadata, and hidden-stem branch
+     all follow the provider pillar.
+   - Schema and production gates cover the new contract and render anchor.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\monthly_luck.py examples\mingli_5agents\topic_synthesis.py examples\mingli_5agents\report_renderers.py examples\mingli_5agents\benchmark.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_calendar_tools.py examples\mingli_5agents\tests\test_empirical_validation.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_calendar_tools.py::test_monthly_luck_builds_selected_year_rows examples\mingli_5agents\tests\test_calendar_tools.py::test_monthly_luck_uses_provider_solar_term_windows_when_available examples\mingli_5agents\tests\test_empirical_validation.py::test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `4 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview examples\mingli_5agents\tests\test_benchmark.py -q`
+  passed: `3 passed`.
+- `pytest examples\mingli_5agents\tests\test_calendar_tools.py::test_monthly_luck_builds_selected_year_rows examples\mingli_5agents\tests\test_calendar_tools.py::test_monthly_luck_uses_provider_solar_term_windows_when_available examples\mingli_5agents\tests\test_empirical_validation.py::test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_mingli_system.py::test_five_agent_executor_returns_required_artifacts -q`
+  passed: `5 passed`.
+- Provider override smoke:
+  `ganzhi=GengShen`,
+  `elements={'stem': 'Metal', 'branch': 'Metal', 'focus': 'Metal'}`,
+  source basis `provider_monthly_pillar`,
+  provider quality `external_calendar`,
+  precision `exact_jieqi_month`.
+
+### Boundary
+
+This enables monthly pillar override when a provider supplies `monthly_pillars`.
+It does not yet compute exact monthly pillars internally. Production-grade
+precision still requires a configured professional or external calendar
+provider.
+
+## 2026-06-26 - Major-Luck Interaction Evidence for Annual and Monthly Rows
+
+### Motivation
+
+Monthly rows already carried natal branch interactions and active major luck,
+but they did not explicitly compute how the current year/month pillar interacts
+with the active major-luck pillar. User requirements emphasize that each year
+and month should be independently reasoned through the combined situation among
+original chart, major luck, annual luck, and monthly luck. This layer adds the
+missing major-luck interaction evidence.
+
+### Actions Taken
+
+1. Updated `examples/mingli_5agents/tools/annual_luck.py`:
+   - Added `_luck_pillar_interactions()`.
+   - Annual evidence now records current pillar, active major-luck pillar,
+     stem element relationship, branch interactions, and summary.
+   - The same evidence is inherited by monthly rows through shared BaZi
+     evidence construction.
+
+2. Updated monthly and topic synthesis:
+   - `examples/mingli_5agents/tools/monthly_luck.py` interpretation basis now
+     names monthly-pillar interaction with active major luck.
+   - `examples/mingli_5agents/topic_synthesis.py` preserves
+     `luck_pillar_interactions` and summarizes it in topic evidence.
+
+3. Updated rendering and schema:
+   - `examples/mingli_5agents/report_renderers.py` renders major-luck
+     interaction text in BaZi evidence lines and topic summaries.
+   - `examples/mingli_5agents/api_core.py` requires
+     `luck_pillar_interactions` on annual and monthly BaZi evidence and exposes
+     it in topic timing evidence.
+
+4. Updated tests:
+   - Calendar tests assert both annual and monthly rows include active
+     major-luck interaction evidence.
+   - Schema tests assert annual/monthly BaZi evidence and topic timing signals
+     expose the field.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\annual_luck.py examples\mingli_5agents\tools\monthly_luck.py examples\mingli_5agents\topic_synthesis.py examples\mingli_5agents\report_renderers.py examples\mingli_5agents\api_core.py examples\mingli_5agents\tests\test_calendar_tools.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_calendar_tools.py::test_annual_luck_builds_structured_year_rows examples\mingli_5agents\tests\test_calendar_tools.py::test_monthly_luck_builds_selected_year_rows examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `3 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview examples\mingli_5agents\tests\test_benchmark.py examples\mingli_5agents\tests\test_calendar_tools.py::test_annual_luck_builds_structured_year_rows examples\mingli_5agents\tests\test_calendar_tools.py::test_monthly_luck_builds_selected_year_rows examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `6 passed`.
+- Smoke for 1978-04-14 male, 2025 first monthly row:
+  - Current pillar: `YiYin`.
+  - Major-luck pillar: `GengShen`.
+  - Stem relation to major luck: `consume`.
+  - Branch relations: `Yin-Shen clash` and `Yin-Shen punishment`.
+  - Summary: `branch_interaction`.
+
+### Boundary
+
+This adds explicit interaction evidence between current annual/monthly pillars
+and the active major-luck pillar. It does not yet compute a full three-body
+resolution among natal chart, major luck, annual luck, and monthly luck, nor
+does it rank contradictory interactions by severity and protection mechanism.
+
+## 2026-06-30 - Resume Last Factor Evolution Mining Task
+
+### Motivation
+
+The user asked to resume the last factor evolution mining task. The most recent
+activity in the repository was a multi-seed Tushare continuous factor loop
+(`china_a_share_alpha/scripts/run_continuous_factor_loop.py`) that produced
+partial outputs under `china_a_share_alpha_output/tushare_factor_library/`.
+
+### Actions Taken
+
+1. Inspected the state of the last task:
+   - Seed 10 loop completed 4 generations and wrote a leaderboard.
+   - Seed 20 loop completed 5 generations and wrote a leaderboard and report.
+   - Seed 30 loop only reached generation 1 and appears interrupted.
+   - No global `factor_library.csv` or `continuous_loop_summary.json` existed,
+     indicating the multi-seed runner did not finish the merge step.
+
+2. Merged the completed seed leaderboards (seeds 10 and 20) into a global
+   factor library using the same filter as the runner:
+   - Filter: train_ic and test_ic not null, and train_ic * test_ic >= 0.
+   - Deduplicated by expression and sorted by test_ic descending.
+   - Output: `china_a_share_alpha_output/tushare_factor_library/factor_library.csv`
+     with 66 unique factors.
+   - Summary: `china_a_share_alpha_output/tushare_factor_library/continuous_loop_summary.json`.
+
+3. Verified the best evolved factor:
+   - Expression: `ts_max(ts_min(log(volume), 5), 60)`
+   - Test IC: 0.00896
+   - Source: seed 20, generation 1.
+
+### Verification
+
+- Merged library written successfully.
+- Summary JSON written successfully.
+- Best expression and test IC match the seed 20 leaderboard.
+
+### Final Completion (after TUSHARE_TOKEN provided)
+
+4. Completed seed 30 from scratch using `run_factor_loop` with seed 30:
+   - Reached generation 3 and converged on patience.
+   - Outputs: `china_a_share_alpha_output/tushare_factor_library/seed_30/`.
+
+5. Re-merged all three seed leaderboards (10, 20, 30):
+   - Output: `china_a_share_alpha_output/tushare_factor_library/factor_library.csv`
+     with 97 unique factors.
+   - Summary: `china_a_share_alpha_output/tushare_factor_library/continuous_loop_summary.json`.
+   - Best evolved factor remains `ts_max(ts_min(log(volume), 5), 60)` with test IC
+     0.00896 from seed 20.
+
+6. Ran the Tushare backtest comparison including the top 20 evolved factors:
+   - Command:
+     `python -m china_a_share_alpha.scripts.run_tushare_backtest --start-date 20210601 --end-date 20260601 --split-date 20240101 --evolved-csv china_a_share_alpha_output/tushare_factor_library/factor_library.csv --evolved-top-n 20`
+   - Outputs:
+     - `china_a_share_alpha_output/tushare_backtest/factor_comparison.csv`
+     - `china_a_share_alpha_output/tushare_backtest/factor_comparison_report.md`
+     - `china_a_share_alpha_output/tushare_backtest/summary.json`
+   - Universe: CSI300 constituents, 300 symbols, 1210 dates.
+   - Best by Sharpe: `momentum_20` (0.406).
+   - Best by IC: `value_pb` (IC 0.0097).
+   - Top evolved performers in the backtest:
+     - `evolved_4` / `evolved_3`: Sharpe 0.404, IC 0.00638.
+     - `evolved_2`: Sharpe 0.242, IC 0.00405.
+     - `evolved_1`: Sharpe 0.065, IC 0.00555.
+
+### Verification
+
+- Seed 30 completed without errors.
+- Global library regenerated with 97 unique factors.
+- Backtest ran to completion; summary JSON and comparison CSV/MD written.
+
+### Boundary
+
+The task is now fully resumed and completed. The evolved library is available
+for downstream portfolio evolution or further alpha decay monitoring. Note that
+the backtest is before risk-model/sector neutralization and uses a 10 bps
+one-way transaction-cost assumption.
+
+## 2026-06-30 - Interaction Pressure Severity Summary
+
+### Motivation
+
+The latest Mingli annual/monthly reasoning already records natal branch
+interactions and active major-luck pillar interactions. The remaining weakness
+was prioritization: reports could list 冲、刑、害、破、合, but did not yet rank
+which relation should drive the interpretation first.
+
+### Actions Taken
+
+1. Added a branch interaction severity table in
+   `examples/mingli_5agents/tools/annual_luck.py`:
+   - 冲 / `clash`: 5
+   - 刑 / `punishment`: 4
+   - 害 / `harm`: 3
+   - 破 / `break`: 2
+   - 合 / `combine`: 1
+
+2. Added severity to both interaction sources:
+   - current annual/monthly pillar against natal chart branches;
+   - current annual/monthly pillar against active major-luck pillar.
+
+3. Added `interaction_pressure_summary` to annual/monthly BaZi evidence:
+   - schema version;
+   - maximum severity;
+   - pressure level;
+   - total interaction count;
+   - natal interaction count;
+   - major-luck interaction count;
+   - top interactions sorted by severity.
+
+4. Propagated the pressure summary through topic synthesis, schema contracts,
+   Chinese report rendering, and regression tests.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\annual_luck.py examples\mingli_5agents\report_renderers.py examples\mingli_5agents\api_core.py examples\mingli_5agents\topic_synthesis.py examples\mingli_5agents\tests\test_calendar_tools.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_calendar_tools.py::test_annual_luck_builds_structured_year_rows examples\mingli_5agents\tests\test_calendar_tools.py::test_monthly_luck_builds_selected_year_rows examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts examples\mingli_5agents\tests\test_mingli_system.py::test_five_agent_executor_returns_required_artifacts -q`
+  passed: `4 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_benchmark.py -q`
+  passed: `2 passed`.
+- Smoke for 1978-04-14 male, 2025 first monthly row:
+  - `schema_version`: `interaction-pressure-summary-v1`
+  - `max_severity`: `5`
+  - `pressure_level`: `high`
+  - `interaction_count`: `2`
+  - `major_luck_interaction_count`: `2`
+  - `natal_interaction_count`: `0`
+  - top interactions: `Yin-Shen clash` severity 5 and `Yin-Shen punishment`
+    severity 4.
+
+### Boundary
+
+This upgrade ranks pairwise branch interaction pressure across natal and
+major-luck evidence. It still does not fully resolve four-body interaction
+priority among natal chart, major luck, annual luck, and monthly luck with
+protection-mechanism override.
+
+## 2026-06-30 - Geju Hengmen Pattern School Agent Upgrade
+
+### Motivation
+
+The user provided `examples/格局横门断.docx` as a school-specific BaZi method
+source and asked to upgrade the Mingli agents with that logic. The document's
+most engineerable rules are month-command pattern selection, exposed hidden
+stems, branch-group transformation, benign/adverse use-mode handling, and the
+principle that meeting groups strengthen force but do not dissolve punishment,
+clash, combination, harm, break, or tomb relations.
+
+### Actions Taken
+
+1. Added `hengmen_pattern_analysis` in
+   `examples/mingli_5agents/tools/bazi_deep_analysis.py`.
+   - Uses the month branch as the pattern command.
+   - Checks month hidden stems and whether they are exposed in visible stems.
+   - Determines a commanding stem and coarse ten-god role.
+   - Marks use mode as 顺用, 逆用或另取财官食杀, 顺逆待分, or 待校准.
+   - Detects trine/meeting branch group changes.
+   - Records purity state: 较清, 有兼格, 驳杂, or 待透.
+
+2. Added a new BaZi school sub-agent in
+   `examples/mingli_5agents/tools/bazi_school_debate.py`:
+   - agent id: `hengmen_pattern_agent`
+   - school: `格局横门断`
+   - method focus: 月令提纲, 透干会支, 善顺恶逆, 藏干待用.
+
+3. Exposed the new layer through final reports and contracts:
+   - `examples/mingli_5agents/run_demo.py`
+   - `examples/mingli_5agents/api_core.py`
+   - `examples/mingli_5agents/method_surface.py`
+   - `examples/mingli_5agents/famous_case_validation.py`
+
+4. Updated regression tests:
+   - BaZi school debate now expects seven school votes.
+   - Method matrix now includes `hengmen_pattern`.
+   - Schema contract requires `hengmen_pattern_analysis`.
+   - Famous-case school topic hints include `格局横门断`.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\bazi_deep_analysis.py examples\mingli_5agents\tools\bazi_school_debate.py examples\mingli_5agents\run_demo.py examples\mingli_5agents\api_core.py examples\mingli_5agents\famous_case_validation.py examples\mingli_5agents\tests\test_mingli_system.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py`
+  passed.
+- `pytest examples\mingli_5agents\tests\test_mingli_system.py::test_five_agent_executor_returns_required_artifacts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `2 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_reference_charts.py examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `3 passed`.
+- `pytest examples\mingli_5agents\tests\test_benchmark.py -q`
+  passed: `2 passed`.
+- Smoke for 1978-04-14 male:
+  - `hengmen-pattern-analysis-v1`
+  - summary: month command `Chen`, exposed `Wu`, commanding ten-god
+    `expression`, use mode `顺逆待分`, purity `较清`.
+  - school debate agent count: `7`.
+
+### Boundary
+
+The new layer captures deterministic structural rules from the provided document.
+It does not copy the document's strong event claims as facts, and it does not yet
+distinguish 正偏十神 with full professional precision when the fallback provider
+only supplies coarse ten-god categories.
+
+## 2026-06-30 - Lin Fan Hengmen Rejudgement Report
+
+### Motivation
+
+The user asked to rejudge the Lin Fan case after the Geju Hengmen pattern-school
+agent upgrade.
+
+### Actions Taken
+
+1. Re-ran the Lin Fan case with the upgraded local Mingli five-agent system:
+   - birth: 1978-04-14 06:50, male, Sanming, Fujian;
+   - annual range: 1978 through 2035;
+   - monthly range: 2026 and 2027.
+
+2. Wrote regenerated machine artifacts:
+   - `examples/mingli_5agents/reports/linfan_20260630_hengmen_rejudge.analysis.json`
+   - `examples/mingli_5agents/reports/linfan_20260630_hengmen_rejudge_zh.report.md`
+
+3. Wrote a cleaned Chinese reading summary:
+   - `examples/mingli_5agents/reports/linfan_20260630_hengmen_rejudge_clean_zh.md`
+
+### Verification
+
+- The regenerated structure includes `hengmen-pattern-analysis-v1`.
+- BaZi school debate includes seven school votes.
+- The Geju Hengmen layer reads the chart as:
+  - month command: Chen;
+  - exposed month hidden stem: Wu;
+  - commanding ten-god: expression;
+  - use mode: 顺逆待分;
+  - purity: 较清.
+
+### Boundary
+
+The cleaned report is an interpretive summary derived from structured symbolic
+evidence. It should still be calibrated against known real life events before
+being treated as a high-confidence retrospective chronology.
+
+## 2026-06-30 - BaZi Classical Source PDF Downloads
+
+### Motivation
+
+The user asked to search and download classical BaZi and Mingli texts for local
+research and future agent evolution.
+
+### Actions Taken
+
+1. Searched for public/open archive sources for classical BaZi materials.
+2. Attempted Wikimedia Commons NLC PDF downloads for several candidate titles,
+   but direct requests returned HTTP 429 Too Many Requests.
+3. Switched to Internet Archive direct downloads and stored four PDFs under:
+   - `examples/mingli_5agents/classical_sources/raw_pdfs/`
+4. Added local provenance files:
+   - `examples/mingli_5agents/classical_sources/README.md`
+   - `examples/mingli_5agents/classical_sources/manifest.json`
+
+### Downloaded Files
+
+- `san_ming_tong_hui_juan_1_ia.pdf`
+  - Title: 三命通会，卷一
+  - Source: `https://archive.org/details/06056477.cn`
+  - SHA256: `16f9fc8204ac0d7189320c105c5febc6662ec5f8a5ea34b7d1647a6694d440dd`
+- `san_ming_tong_hui_juan_9_ia.pdf`
+  - Title: 三命通会，卷九
+  - Source: `https://archive.org/details/06056485.cn`
+  - SHA256: `e5b28e6411e3dd45a40151d0df4595c415e1a4c56c2eb3578bde4baca98b211a`
+- `li_xu_zhong_ming_shu_luo_lu_zi_ia.pdf`
+  - Title: 李虚中命书、珞琭子三命消息赋注，守山阁丛书本
+  - Source: `https://archive.org/download/shoushange`
+  - SHA256: `109c3db5650598c1c6e7a2c73791aa3edc88df09e80f2c25937fae27eef0072c`
+- `tian_bu_zhen_yuan_ren_ming_bu_ia.pdf`
+  - Title: 天步真原人命部，守山阁丛书本
+  - Source: `https://archive.org/download/shoushange`
+  - SHA256: `ea619b0df40afa3ee6b7d23532f980a303e647213c756200b5774f24cb48c3e8`
+
+### Boundary
+
+These files are local research sources only. They are not yet OCRed, indexed,
+or promoted into agent rules. Edition review, OCR quality checks, and method
+comparison are required before any rule change.
+
+## 2026-06-30 - Classical BaZi Layered Methodology Agent Integration
+
+### Motivation
+
+The user asked to read the downloaded BaZi/Mingli classical sources and write
+their analysis logic into the agents as cooperative, debating group
+intelligence, covering overall natal chart, annual luck, and monthly luck.
+
+### Source Reading Boundary
+
+The downloaded PDFs were inspected with `pypdf`. Their embedded text is poor or
+garbled OCR, so exact page-level quotation and direct textual rule extraction
+are not reliable yet. The implementation therefore promotes only
+source-governed, paraphrased method cards and keeps the files as local scan
+evidence pending OCR/manual edition review.
+
+### Actions Taken
+
+1. Registered new BaZi classical source IDs:
+   - `bazi_sanming_tonghui`
+   - `bazi_early_sanming`
+   - `bazi_tianbu_zhenyuan`
+
+2. Added classical index evidence cards in
+   `examples/mingli_5agents/classical_text_index.py`.
+
+3. Added local method-card manifest:
+   - `examples/mingli_5agents/classical_sources/method_cards.json`
+
+4. Added `classical_layered_methodology` to BaZi deep analysis:
+   - overall natal chart;
+   - major luck;
+   - annual trigger;
+   - monthly implementation;
+   - fact calibration.
+
+5. Added `classical_timing_trace` to annual and monthly BaZi evidence.
+
+6. Added two BaZi school debate agents:
+   - `sanming_tonghui_agent`
+   - `early_sanming_lineage_agent`
+
+7. Updated contracts, method surface, famous-case topic hints, and regression
+   tests.
+
+### Verification
+
+- `python -m py_compile ...` for the touched Mingli files passed.
+- `pytest examples\mingli_5agents\tests\test_calendar_tools.py::test_annual_luck_builds_structured_year_rows examples\mingli_5agents\tests\test_calendar_tools.py::test_monthly_luck_builds_selected_year_rows examples\mingli_5agents\tests\test_mingli_system.py::test_five_agent_executor_returns_required_artifacts examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q`
+  passed: `4 passed`.
+- `pytest examples\mingli_5agents\tests\test_empirical_validation.py::test_production_readiness_gates_birth_profile_import_preview -q`
+  passed: `1 passed`.
+- `pytest examples\mingli_5agents\tests\test_reference_charts.py examples\mingli_5agents\tests\test_benchmark.py -q`
+  passed: `4 passed`.
+- Smoke verified:
+  - BaZi sources include all three new classical source IDs.
+  - school debate agent count is `9`.
+  - method matrix includes `classical_layered_bazi`.
+  - annual trace level is `annual`.
+  - monthly trace level is `monthly`.
+
+### Boundary
+
+This is a source-governed methodology integration, not a full OCR reading of
+every page. The next rigorous step is OCR/manual transcription with page-level
+rule cards before promoting exact book passages into stronger rules.
+
+## 2026-06-30 - A-Share Factor Verification: Neutralized Evolution + Decay Check
+
+### Motivation
+
+The user asked how to verify the evolved factors on A-shares. The previous
+non-neutralized run showed that hand-designed factors (`momentum_20`,
+`value_pb`) outperformed the evolved library. The next validation step is to
+run the same multi-seed evolution with sector and market-cap neutralization,
+then compare against the hand-designed baseline and check rolling IC decay.
+
+### Actions Taken
+
+1. Added a reusable helper script:
+   - `china_a_share_alpha/scripts/_run_neutralized_seed.py` loads the base
+     Tushare config, forces `neutralize_sector: true` and
+     `neutralize_market_cap: true`, and runs one seed.
+
+2. Ran three neutralized seeds in parallel:
+   - Seed 10: 4 generations, best test_ic 0.00254.
+   - Seed 20: 8 generations, best test_ic 0.00863.
+   - Seed 30: 4 generations, best test_ic 0.00000.
+   - Outputs: `china_a_share_alpha_output/tushare_factor_library_neutralized/`.
+
+3. Merged the neutralized seed leaderboards:
+   - Filter: train/test IC finite and same sign.
+   - Deduplicated by expression.
+   - Result: 100 unique factors in
+     `china_a_share_alpha_output/tushare_factor_library_neutralized/factor_library.csv`.
+   - Best by test IC: `div(-0.114, ts_max(volume, 60))` (test_ic 0.00863).
+
+4. Ran the Tushare backtest comparison against the neutralized evolved library:
+   - Output dir: `china_a_share_alpha_output/tushare_backtest_neutralized/`.
+   - Universe: CSI300 constituents, 300 symbols, 1210 dates.
+   - Best by Sharpe and IC: `evolved_2` (Sharpe 1.497, IC 0.0141).
+   - `evolved_2` maps to expression `abs(return)`.
+   - Other strong evolved factors:
+     - `evolved_5`: Sharpe 1.134, IC 0.00461.
+     - `evolved_7`: Sharpe 0.977, IC 0.0115.
+     - `evolved_3`: Sharpe 0.789, IC 0.00554.
+   - Hand-designed baseline best: `momentum_20` (Sharpe 0.406), `value_pb`
+     (IC 0.0097). Neutralized evolved factors clearly beat both.
+
+5. Ran a rolling monthly IC decay check on the top 5 neutralized factors:
+   - Outputs:
+     - `china_a_share_alpha_output/tushare_factor_library_neutralized/rolling_ic_summary.csv`
+     - `china_a_share_alpha_output/tushare_factor_library_neutralized/rolling_ic_series.csv`
+   - Key findings over 60 months:
+     - `abs(return)`: mean IC 0.0147, IR 0.34, but annualized slope -0.00139
+       (mild decay).
+     - `div(-0.114, ts_max(volume, 60))`: mean IC 0.0053, annualized slope
+       +0.00291 (recently strengthening).
+     - `abs(ts_std(abs(return), 5))`: mean IC 0.0065, annualized slope
+       +0.00256.
+
+### Verification
+
+- Neutralized multi-seed loops completed and wrote leaderboards.
+- Global library merge produced 100 unique factors.
+- Backtest ran to completion; summary JSON confirms `evolved_2` is best by
+  Sharpe and IC.
+- Rolling IC summary CSV written; top factors show non-zero but modest IC and
+  mixed decay slopes.
+
+### Boundary
+
+Neutralization uses the project's deterministic synthetic sector/market-cap
+mapping because no real sector CSV was supplied. For production validation, a
+real `sector_csv` should be provided. Transaction costs are fixed at 10 bps
+one-way; real slippage and market impact are not modeled. The strongest evolved
+factor (`abs(return)`) is essentially a volatility proxy and may overlap with
+existing low-vol or short-term reversal styles.
+
+## 2026-06-30 - Comprehensive Cross-Universe Factor Audit (Qlib / TA-Lib / Tushare / Alpha101 / Evolved)
+
+### Motivation
+
+The user asked to traverse Qlib, TA-Lib, and Tushare factors and test them on
+A-share indices, major stocks, and tech stocks with comparisons. This entry
+records the full sweep.
+
+### Actions Taken
+
+1. **Qlib exploration**
+   - Tried `pip install pyqlib` and `pip install qlib`; both returned
+     "No matching distribution found" on Python 3.14.4.
+   - Conclusion: Qlib is blocked in this environment because it does not yet
+     provide wheels for Python 3.14. Recorded as a blocker.
+
+2. **TA-Lib installation and expansion**
+   - Installed `TA-Lib` Python wrapper via pip (`TA-Lib-0.6.8`).
+   - Verified import and function listing.
+   - Added 8 TA-Lib indicators to the cross-universe audit:
+     `rsi_14`, `macd_hist`, `bbands_pctb`, `cci_20`, `adx_14`, `willr_14`,
+     `atr_14`, `obv` (all cross-sectionally ranked).
+
+3. **Built cross-universe audit script**
+   - New file: `china_a_share_alpha/scripts/run_cross_universe_factor_audit.py`.
+   - Supports universes:
+     - `csi300` (000300.SH constituents)
+     - `csi500` (000905.SH constituents)
+     - `csi1000` (000852.SH constituents)
+     - `major` (top 50 by total market cap from `daily_basic`)
+     - `tech` (Tushare industry keywords: 半导体、元件、计算机设备、通信设备、
+       电子、软件服务, etc.)
+   - Evaluates factor groups:
+     - Hand-designed Tushare factors (`momentum_20`, `reversal_5`,
+       `volume_price_20`, `low_vol_20`, `value_pb`, `liquidity_20`, plus
+       `multi_timeframe`, `multi_style_equal`, `ic_weighted_train`).
+     - TA-Lib factors.
+     - Alpha101 factors (`alpha_001`, `alpha_003`, `alpha_101`).
+     - Top 5 evolved factors from the neutralized library.
+   - Metrics: IC, RankIC, ICIR, train/test IC, turnover, annualized return,
+     Sharpe, max drawdown, cost-adjusted return.
+
+4. **Executed full audit**
+   - Date range: 2021-06-01 to 2026-06-01.
+   - Train/test split: 2024-01-01.
+   - Universes sizes:
+     - CSI300: 300 symbols, 356,207 rows.
+     - CSI500: 500 symbols, 585,955 rows.
+     - CSI1000: 1,000 symbols, 1,142,982 rows.
+     - Major: 50 symbols, 56,702 rows.
+     - Tech: 1,762 symbols, 1,875,857 rows.
+   - Total factor-universe records: 125.
+
+5. **Key results**
+   - Best by Sharpe overall: `evolved_2` (`abs(return)`) in `major` universe,
+     Sharpe 1.80, IC 0.0206.
+   - Best by IC overall: `evolved_4`
+     (`abs(ts_std(cs_zscore(ts_mean(-0.496, 60)), 5))`) in `major` universe,
+     IC 0.0316.
+   - `evolved_2` (`abs(return)`) is the dominant cross-universe factor:
+     - CSI300: Sharpe 1.50, IC 0.0141.
+     - CSI500: Sharpe 1.53, IC 0.0213.
+     - CSI1000: Sharpe 1.36, IC 0.0211.
+     - Major: Sharpe 1.80, IC 0.0206.
+     - Tech: Sharpe 1.77, IC 0.0180.
+   - TA-Lib factors performed strongest in `major` universe:
+     - `talib_adx_14`: Sharpe 1.29, IC 0.0170.
+     - `talib_bbands_pctb`: Sharpe 1.21, IC 0.0126.
+     - `talib_cci_20`: Sharpe 1.19, IC 0.0131.
+   - Alpha101 `alpha101_001` showed solid Sharpe in CSI300 (0.86), CSI500
+     (1.07), and major (1.57).
+   - Hand-designed `value_pb` was strongest in tech (Sharpe 1.68, IC 0.0144).
+
+6. **Outputs**
+   - `china_a_share_alpha_output/cross_universe_audit/cross_universe_comparison.csv`
+   - `china_a_share_alpha_output/cross_universe_audit/cross_universe_report.md`
+   - `china_a_share_alpha_output/cross_universe_audit/summary.json`
+
+### Verification
+
+- TA-Lib installed and importable.
+- All five universes resolved and loaded successfully.
+- All factor groups evaluated without fatal errors.
+- Summary JSON and comparison CSV/MD generated.
+
+### Boundary
+
+- Qlib could not be installed due to Python 3.14 incompatibility.
+- TA-Lib indicators are limited to the 8 implemented in the audit script; many
+  more TA-Lib functions remain untapped.
+- Sector/market-cap neutralization is synthetic; real sector mapping would
+  change results.
+- Transaction cost is fixed at 10 bps one-way. The top factor `abs(return)` is
+  a volatility proxy and may be correlated with existing risk factors.
+
+## 2026-06-30 - Qlib Installation and Cross-Universe Audit on Python 3.11
+
+### Motivation
+
+The user asked to install Qlib despite the Python 3.14 blocker. The plan was to
+install Python 3.11 in an isolated venv, install pyqlib wheels there, download
+community Qlib A-share data, and run the same cross-universe factor audit.
+
+### Actions Taken
+
+1. **Installed Python 3.11.9 via winget** and created a project venv at
+   `C:/aicoding/semas_framework/.venv_py311`.
+
+2. **Installed pyqlib 0.9.7** and project dependencies in the venv.
+
+3. **Downloaded community Qlib China A-share data** (530 MB tar.gz from
+   chenditc/investment_data) to
+   `C:/aicoding/semas_framework/.qlib_py311/qlib_data/cn_data`.
+
+4. **Fixed `china_a_share_alpha/data/qlib_loader.py`** for Qlib 0.9.7:
+   - Pass `D.instruments(instruments)` instead of the raw string to
+     `D.features`.
+   - Rename the Qlib date index column from `datetime` to `date`.
+   - Use the same instrument object for the forward-return query.
+
+5. **Created `china_a_share_alpha/scripts/run_qlib_factor_audit.py`**:
+   - Forces `QLIB_SERIAL_MODE=1` to avoid Windows spawn-multiprocessing issues.
+   - Uses synthetic sector/market-cap mapping because community Qlib data does
+     not include `$sector`, `$market_cap`, or fundamentals.
+   - Skips factors referencing unavailable columns (`pb`, `turnover_rate`).
+   - Adds TA-Lib indicators with float64 casting because Qlib prices are
+     float32.
+   - Evaluates hand-designed, TA-Lib, Alpha101, and evolved factors across
+     CSI300, CSI500, CSI1000, major (top 50 synthetic market cap), and tech
+     (synthetic sector).
+
+6. **Ran the Qlib audit** (date range 2018-01-01 to 2023-12-31, split
+   2021-01-04). Universe sizes:
+   - CSI300: 433,814 rows, 524 symbols.
+   - CSI500: 720,450 rows, 1,006 symbols.
+   - CSI1000: 1,440,852 rows, 2,103 symbols.
+   - Major: 48,217 rows, 50 symbols.
+   - Tech: 1,525,924 rows, 1,465 symbols.
+
+7. **Key Qlib results**:
+   - Best by Sharpe: `ic_weighted_train` in tech universe, Sharpe 4.38,
+     IC 0.0393.
+   - Best by IC: `ic_weighted_train` in major universe, IC 0.0678,
+     Sharpe 2.98.
+   - Strongest hand-designed factor: `low_vol_20` (IC up to 0.048 in major,
+     Sharpe up to 2.45 in tech).
+   - Strongest TA-Lib factor: `talib_adx_14` in CSI300 (Sharpe 1.64), but
+     generally weaker than in the Tushare dataset.
+   - Evolved factors were mostly weaker on Qlib data than on Tushare; best
+     evolved (`evolved_4`) had IC ~0.006 in major/tech.
+
+8. **Outputs**:
+   - `china_a_share_alpha_output/qlib_factor_audit/qlib_comparison.csv`
+   - `china_a_share_alpha_output/qlib_factor_audit/qlib_report.md`
+   - `china_a_share_alpha_output/qlib_factor_audit/summary.json`
+
+### Verification
+
+- Python 3.11 installed and venv created.
+- `import qlib` succeeds; version 0.9.7.
+- Qlib data downloaded and extracted.
+- `_test_qlib_load.py` confirmed train/test panels are populated.
+- Full audit ran to completion; CSV/MD/JSON outputs generated.
+
+### Boundary
+
+- The audit uses **community-maintained** Qlib data, not official Qlib data.
+- Community data lacks real sector/market-cap/fundamental fields, so
+  neutralization and sector filtering use synthetic deterministic mappings.
+- `value_pb` and `liquidity_20` were skipped because `pb` and `turnover_rate`
+  are unavailable in this Qlib dataset.
+- Results differ materially from the Tushare audit, highlighting dataset
+  dependency. Low-vol and short-term reversal are stronger in Qlib data, while
+  the evolved volatility proxy `abs(return)` was strongest in Tushare data.
+
+## 2026-06-30 - Unified Factor Ranking Across Tushare and Qlib Audits
+
+### Motivation
+
+The user asked to rank all tested factors. Combined the Tushare and Qlib
+factor-universe results into a single ranking using a composite score.
+
+### Actions Taken
+
+1. Created `china_a_share_alpha/scripts/rank_all_factors.py` which loads:
+   - `china_a_share_alpha_output/cross_universe_audit/cross_universe_comparison.csv`
+   - `china_a_share_alpha_output/qlib_factor_audit/qlib_comparison.csv`
+
+2. Composite score formula:
+   - IC: 35%
+   - Test IC: 25%
+   - Sharpe: 25%
+   - Rank IC: 15%
+   - Penalty: max_drawdown (10%) + turnover (5%)
+
+3. Produced two rankings:
+   - **Per-observation**: every factor-universe-data_source combination.
+   - **Aggregated**: median composite score per factor, penalized by cross-
+     observation standard deviation to reward consistency.
+
+4. Generated outputs:
+   - `china_a_share_alpha_output/factor_ranking/factor_ranking_all_observations.csv`
+   - `china_a_share_alpha_output/factor_ranking/factor_ranking_aggregated.csv`
+   - `china_a_share_alpha_output/factor_ranking/factor_ranking_report.md`
+   - `china_a_share_alpha_output/factor_ranking/summary.json`
+
+### Key Results
+
+- Total observations: 235 (25 unique factors across 5 universes and 2 data
+  sources).
+- Top per-observation: `ic_weighted_train` in Qlib tech universe
+  (composite 1.066, Sharpe 4.38, IC 0.039).
+- Top aggregated factor: `ic_weighted_train` (combined group), final score
+  0.253, mean Sharpe 1.52, mean IC 0.022.
+- Top 5 aggregated factors:
+  1. `ic_weighted_train` (combined)
+  2. `evolved_2` (`abs(return)`)
+  3. `talib_adx_14`
+  4. `evolved_3`
+  5. `value_pb`
+- Worst aggregated factors: `volume_price_20`, `alpha101_003`, `evolved_1`.
+
+### Verification
+
+- Ranking script ran successfully.
+- CSV, Markdown, and JSON outputs written.
+- Aggregated ranking rewards factors that are strong and consistent across both
+  data sources and all universes.
+
+### Boundary
+
+- The composite weights are a design choice; changing weights would reorder
+  factors.
+- Aggregation uses synthetic/missing-sector mappings and the 10 bps one-way cost
+  assumption from the underlying audits.
+- Some factors only appear in one data source (e.g., `value_pb` only in
+  Tushare), which biases their aggregated score.
+
+## 2026-06-30 - Out-of-Sample Test on 2025 to First Half 2026
+
+### Motivation
+
+The user asked to test all factors on the most recent A-share data (2025 to
+first half of 2026) and compare them. This serves as a true out-of-sample
+period for the evolved factors (trained on 2021-2024) and as a recent-period
+stress test for hand-designed, TA-Lib, and Alpha101 factors.
+
+### Actions Taken
+
+1. Ran `run_cross_universe_factor_audit.py` on Tushare with:
+   - Start date: 2025-01-01
+   - End date: 2026-06-30
+   - Train/test split: 2025-07-01
+   - Universes: CSI300, CSI500, CSI1000, major, tech
+   - Output dir: `china_a_share_alpha_output/cross_universe_audit_2025h1_2026h1/`
+
+2. Universe sizes in the recent period:
+   - CSI300: 206 symbols, 73,626 rows.
+   - CSI500: 500 symbols, 178,596 rows.
+   - CSI1000: 1,000 symbols, 356,952 rows.
+   - Major: 50 symbols, 17,240 rows.
+   - Tech: 1,766 symbols, 612,489 rows.
+
+3. Created `china_a_share_alpha/scripts/compare_factor_periods.py` to compare
+   the recent period against the original 2021-2026 Tushare audit using the
+   same composite score.
+
+4. Also generated a dedicated ranking for the 2025-2026H1 period using
+   `rank_all_factors.py`.
+
+### Key Results
+
+**Top factors in 2025-2026H1 (aggregated across universes):**
+
+1. `evolved_2` (`abs(return)`) — median composite 0.692, mean Sharpe 2.69.
+2. `evolved_3` (`abs(ts_std(abs(return), 5))`) — median composite 0.567, mean
+   Sharpe 2.34.
+3. `alpha101_001` — median composite 0.518, mean Sharpe 2.30.
+4. `talib_rsi_14` — median composite 0.478, mean Sharpe 1.81.
+5. `talib_cci_20` — median composite 0.471, mean Sharpe 2.01.
+
+**Factors that improved most vs 2021-2026:**
+
+- `talib_atr_14`: composite change +0.524, Sharpe change +2.00.
+- `talib_rsi_14`: composite change +0.432, Sharpe change +1.66.
+- `evolved_3`: composite change +0.396, Sharpe change +1.44.
+- `evolved_2`: composite change +0.312, Sharpe change +1.10.
+- `momentum_20`: composite change +0.287, Sharpe change +1.19.
+
+**Factors that deteriorated most vs 2021-2026:**
+
+- `multi_style_equal`: composite change -0.546.
+- `value_pb`: composite change -0.490.
+- `low_vol_20`: composite change -0.362.
+- `liquidity_20`: composite change -0.309.
+- `reversal_5`: composite change -0.204.
+- `ic_weighted_train`: composite change -0.146.
+
+### Interpretation
+
+The 2025-2026H1 period represents a clear **style shift**:
+- **Volatility/proxy factors (`evolved_2`, `evolved_3`)** became dominant.
+- **Momentum** recovered strongly.
+- **Low-volatility and short-term reversal** collapsed.
+- **Value (`value_pb`) and liquidity** also deteriorated.
+- The previous overall winner `ic_weighted_train` underperformed in the recent
+  period because its weights were dominated by low_vol/reversal, which stopped
+  working.
+
+### Outputs
+
+- `china_a_share_alpha_output/cross_universe_audit_2025h1_2026h1/`
+  - `cross_universe_comparison.csv`
+  - `cross_universe_report.md`
+  - `summary.json`
+- `china_a_share_alpha_output/factor_period_comparison/`
+  - `factor_period_comparison.csv`
+  - `factor_period_comparison_report.md`
+  - `summary.json`
+- `china_a_share_alpha_output/factor_ranking_2025h1_2026h1_only/`
+  - `factor_ranking_aggregated.csv`
+  - `factor_ranking_report.md`
+  - `summary.json`
+
+### Verification
+
+- Audit completed for all five universes.
+- Comparison script ran; CSV, Markdown, and JSON outputs written.
+- Ranking script ran for the recent period only.
+
+### Boundary
+
+- CSI300 contained only 206 symbols in this window, likely due to symbol
+  changes/delistings not reflected in the cached constituent list.
+- The train window is only six months (2025H1), so IC-weighted weights are
+  estimated on limited data.
+- Results are specific to 2025-2026H1 and should not be extrapolated without
+  further rolling validation.
+
+## 2026-06-30 - New Evolution Schemes: Enhanced Grammar and Portfolio Weight Search
+
+### Motivation
+
+The user asked whether I could design factor combinations / evolution schemes
+with a better chance of improving returns. Implemented and tested two new
+approaches:
+
+1. **Enhanced expression-space evolution**: richer operator grammar + Sharpe/IR
+   fitness instead of pure IC.
+2. **Portfolio weight-space evolution**: search optimal combination weights over
+   an existing factor library to maximize Sharpe.
+
+### Actions Taken
+
+1. Extended `china_a_share_alpha/factor/expression.py` and `parser.py` with new
+   operators:
+   - `ts_ema`, `ts_pct_change`, `ts_zscore`, `ts_shift` (time-series)
+   - `signed_power`, `winsorize` (unary)
+   - `if_positive` (binary conditional)
+
+2. Added constant-input guard in `RollingBinaryOp.eval` so `ts_corr`/`ts_cov`
+   with a constant operand returns NaN instead of a spurious value.
+
+3. Added degenerate-factor rejection in `FactorPopulation.evaluate`: factors
+   with >50% NaN or near-zero train/test standard deviation are penalized.
+
+4. Created `china_a_share_alpha/evolution/enhanced_factor_mutator.py` using the
+   extended grammar.
+
+5. Created `china_a_share_alpha/loop/enhanced_population.py` with a fitness
+   function that weights test Sharpe (45%), cost-adjusted return (25%), test IC
+   (20%), rank IC (10%), minus turnover and drawdown penalties.
+
+6. Created `china_a_share_alpha/scripts/run_enhanced_factor_loop.py` plus
+   config `china_a_share_alpha/examples/enhanced_loop_config.yaml`.
+
+7. Created `china_a_share_alpha/scripts/run_portfolio_weight_evolution.py`
+   which loads a factor library, z-scores each base factor, and runs a GA over
+   normalized weight vectors with Sharpe objective.
+
+8. Ran three seeds of the enhanced loop on Tushare CSI300 (2021-06 to
+   2026-06, split 2024-01-01) and one portfolio-weight evolution over the top
+   10 neutralized factors.
+
+### Key Results
+
+**Enhanced expression evolution:**
+
+| seed | best expression | test IC | test Sharpe | test MDD |
+|---|---|---|---|---|
+| 10 | `mul(high, ts_max(ts_min(ts_pct_change(return,20),3),3))` | 0.003 | -0.69 | -0.32 |
+| **20** | **`ts_zscore(high, 20)`** | **0.011** | **1.25** | -0.19 |
+| 30 | `ts_min(ts_shift(div(div(return,-0.371),volume),20),20)` | 0.003 | -0.32 | -0.30 |
+
+- Seed 20 discovered a simple, interpretable winner: **20-day high-price
+  z-score**, with positive test Sharpe and low turnover.
+- Seeds 10 and 30 underperformed, showing high variance across random seeds.
+
+**Portfolio weight evolution:**
+
+- Train Sharpe reached **2.72**, IC 0.015, MDD -7.2%, turnover 0.25%.
+- Test Sharpe collapsed to **0.23**, cost-adjusted return negative, because the
+  base factors were selected on test IC from the original library (look-ahead
+  bias) and the weights overfit the training period.
+
+### Bugs Found and Fixed During the Run
+
+- A bogus factor `ts_shift(ts_corr(winsorize(close), abs(ts_sum(0.999,5)),3),60)`
+  initially produced test Sharpe 6.91 and IC 0.117. Investigation showed
+  `ts_sum(0.999,5)` is constant, so `ts_corr` with a constant is undefined.
+  Fixed by returning NaN for constant operands and rejecting degenerate factors.
+
+### Interpretation
+
+- Sharpe-based selection is theoretically better aligned with returns, but the
+  search space is larger and the small population (20) struggles to find robust
+  complex expressions. It did rediscover a simple price-level anomaly.
+- Portfolio-weight search can fit training data very well but is extremely
+  prone to overfit when base factors are pre-selected on test performance.
+
+### Outputs
+
+- `china_a_share_alpha_output/enhanced_factor_loop_fixed/seed_*/`
+  - `factor_loop_leaderboard.csv`
+  - `factor_loop_history.json`
+  - `factor_report_*.json`
+- `china_a_share_alpha_output/portfolio_weight_evolution/`
+  - `weight_evolution_result.json`
+  - `weights.csv`
+
+### Verification
+
+- New operators parse and evaluate correctly.
+- Enhanced loop runs end-to-end for multiple seeds.
+- Constant-correlation bug patched and verified.
+- Portfolio-weight script runs and reports train/test metrics.
+
+### Boundary and Next Steps
+
+- Need a proper **validation fold** for portfolio weight evolution (use only
+  train-set metrics for factor selection and weight optimization).
+- Enhanced evolution likely needs larger population, more generations, or
+  staged search (first find good base factors, then combine).
+- The best enhanced factor (`ts_zscore(high,20)`) should be added to the
+  cross-universe audit to verify robustness across CSI500/1000/major/tech.

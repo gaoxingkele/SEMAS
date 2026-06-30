@@ -59,7 +59,8 @@ def _load_qlib_data(config: dict[str, Any]) -> tuple[pd.DataFrame, pd.DataFrame]
     if config.get("load_market_cap", False):
         fields.append("$market_cap")
 
-    df = D.features(instruments, fields, start_time=start_time, end_time=end_time)
+    inst_obj = D.instruments(instruments) if isinstance(instruments, str) else instruments
+    df = D.features(inst_obj, fields, start_time=start_time, end_time=end_time)
     rename = {
         "$open": "open",
         "$high": "high",
@@ -76,13 +77,13 @@ def _load_qlib_data(config: dict[str, Any]) -> tuple[pd.DataFrame, pd.DataFrame]
 
     # Compute forward return using Qlib Ref operator.
     df["forward_return"] = (
-        D.features(instruments, [f"Ref($close, -{forward_period}) / $close - 1"], start_time, end_time)
+        D.features(inst_obj, [f"Ref($close, -{forward_period}) / $close - 1"], start_time, end_time)
         .iloc[:, 0]
         .rename("forward_return")
     )
 
     df = df.reset_index()
-    df = df.rename(columns={"instrument": "symbol"})
+    df = df.rename(columns={"instrument": "symbol", "datetime": "date"})
     df["date"] = pd.to_datetime(df["date"])
     df = df.set_index(["symbol", "date"]).sort_index().dropna()
 
