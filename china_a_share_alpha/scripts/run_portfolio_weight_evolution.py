@@ -54,11 +54,22 @@ class WeightCandidate:
         }
 
 
+def _smooth_series(s: pd.Series, span: int | None) -> pd.Series:
+    """Apply an EMA smoother per symbol to reduce factor turnover."""
+    if not span or span <= 1:
+        return s
+    return s.groupby(level="symbol").transform(
+        lambda x: x.ewm(span=span, min_periods=1).mean()
+    )
+
+
 def evaluate_weights(
     weights: np.ndarray,
     factor_matrix: pd.DataFrame,
     forward: pd.Series,
     generation: int = 0,
+    max_turnover: float = 1.0,
+    smooth_span: int | None = None,
 ) -> WeightCandidate:
     """Evaluate one weight vector on train data."""
     cand = WeightCandidate(weights, generation)
@@ -67,6 +78,9 @@ def evaluate_weights(
     combined = pd.Series(0.0, index=factor_matrix.index)
     for i, col in enumerate(factor_matrix.columns):
         combined = combined + weights[i] * _zscore(factor_matrix[col])
+
+    # Smooth the combined factor to reduce daily churn.
+    combined = _smooth_series(combined, smooth_span)
 
     # Avoid extreme concentration.
     combined = combined.clip(-5, 5)
@@ -80,12 +94,17 @@ def evaluate_weights(
     cand.mdd = bt.get("max_drawdown", 0.0)
     cand.cost_adj_return = bt.get("cost_adjusted_return", 0.0)
 
-    # Fitness: Sharpe primary, cost-adjusted return secondary, penalize turnover/mdd.
+    # Hard turnover constraint: reject candidates that trade too much.
     if not np.isfinite(cand.sharpe):
         cand.sharpe = 0.0
+    if cand.turnover > max_turnover:
+        cand.fitness = -np.inf
+        return cand
+
+    # Fitness: cost-adjusted return primary (after costs), Sharpe/IC secondary.
     cand.fitness = (
-        0.5 * cand.sharpe
-        + 0.25 * cand.cost_adj_return
+        0.45 * cand.cost_adj_return
+        + 0.30 * cand.sharpe
         + 0.15 * abs(cand.ic)
         - 0.05 * cand.turnover
         - 0.05 * max(0.0, -cand.mdd)
@@ -127,6 +146,8 @@ def run_weight_evolution(
     cfg: dict[str, Any],
     factor_matrix_train: pd.DataFrame,
     forward_train: pd.Series,
+    max_turnover: float = 1.0,
+    smooth_span: int | None = None,
 ) -> dict[str, Any]:
     """Run a genetic algorithm in weight space."""
     n_factors = factor_matrix_train.shape[1]
@@ -143,7 +164,7 @@ def run_weight_evolution(
     random.seed(cfg.get("seed", 42))
     np.random.seed(cfg.get("seed", 42))
 
-    population = [evaluate_weights(_random_weights(n_factors), factor_matrix_train, forward_train, 0) for _ in range(pop_size)]
+    population = [evaluate_weights(_random_weights(n_factors), factor_matrix_train, forward_train, 0, max_turnover, smooth_span) for _ in range(pop_size)]
     archive = population[:]
 
     best_fitness = -np.inf
@@ -179,14 +200,14 @@ def run_weight_evolution(
         for _ in range(n_mutate):
             parent = random.choice(elites)
             child_w = _mutate_weights(parent.weights)
-            next_pop.append(evaluate_weights(child_w, factor_matrix_train, forward_train, gen + 1))
+            next_pop.append(evaluate_weights(child_w, factor_matrix_train, forward_train, gen + 1, max_turnover, smooth_span))
 
         # Crossover among elites.
         for _ in range(n_crossover):
             if len(elites) >= 2:
                 p1, p2 = random.sample(elites, 2)
                 child_w = _crossover_weights(p1.weights, p2.weights)
-                next_pop.append(evaluate_weights(child_w, factor_matrix_train, forward_train, gen + 1))
+                next_pop.append(evaluate_weights(child_w, factor_matrix_train, forward_train, gen + 1, max_turnover, smooth_span))
 
         population = next_pop[:pop_size]
         archive.extend(population)
@@ -212,6 +233,8 @@ def main() -> int:
     parser.add_argument("--output-dir", type=Path, default=Path("china_a_share_alpha_output/portfolio_weight_evolution"))
     parser.add_argument("--top-n", type=int, default=10, help="Use top N factors from CSV")
     parser.add_argument("--sort-by", type=str, default="test_ic", help="Column to sort factor library by (e.g. train_ic, test_ic)")
+    parser.add_argument("--max-turnover", type=float, default=0.3, help="Hard maximum daily turnover for a candidate")
+    parser.add_argument("--smooth-span", type=int, default=3, help="EMA span for smoothing the combined factor (1 = no smoothing)")
     args = parser.parse_args()
 
     with open(args.config, "r", encoding="utf-8") as f:
@@ -248,7 +271,11 @@ def main() -> int:
     forward_train = train["forward_return"].loc[factor_matrix_train.index]
 
     # Run evolution.
-    result = run_weight_evolution(cfg, factor_matrix_train, forward_train)
+    result = run_weight_evolution(
+        cfg, factor_matrix_train, forward_train,
+        max_turnover=args.max_turnover,
+        smooth_span=args.smooth_span,
+    )
 
     # Save outputs.
     with open(args.output_dir / "weight_evolution_result.json", "w", encoding="utf-8") as f:
@@ -279,8 +306,11 @@ def main() -> int:
     combined_test = pd.Series(0.0, index=factor_matrix_test.index)
     for i, col in enumerate(factor_matrix_test.columns):
         combined_test = combined_test + best_w[i] * _zscore(factor_matrix_test[col])
+    combined_test = _smooth_series(combined_test, args.smooth_span)
     combined_test = combined_test.clip(-5, 5)
     bt_test = run_long_short_backtest(combined_test, forward_test, transaction_cost=0.001)
+    from china_a_share_alpha.evaluator.metrics import turnover_score
+    bt_test["turnover"] = turnover_score(combined_test)
     print("\nTest-set backtest:")
     print(json.dumps(bt_test, indent=2, ensure_ascii=False, default=str))
 

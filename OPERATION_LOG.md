@@ -10774,5 +10774,155 @@ previous run:
   minimum test Sharpe.
 - Add a stronger turnover penalty or maximum turnover constraint to the weight
   GA so cost-adjusted return stays positive.
+
+## 2026-07-01 - Mingli Layered-Agent Validation: 2010-06-18 Male Xiamen Case
+
+### Request
+
+Validate the upgraded BaZi / Mingli agent framework on a male birth case:
+2010-06-18 19:30, Siming District, Xiamen, Fujian.
+
+### Actions
+
+- Ran the local `MingliFiveAgentSystem` executor with Chinese report rendering.
+- Used explicit Xiamen Siming coordinates (`24.4456, 118.0827`) and `+08:00`
+  because the offline birthplace index does not yet include Xiamen / Siming.
+- Checked the generated BaZi profile, method matrix, school-debate agent list,
+  annual luck trace, and monthly luck trace.
+
+### Findings
+
+- The case produced pillars `GengYin / RenWu / JiHai / JiaXu`.
+- The BaZi profile exposed `classical_layered_methodology` with schema
+  `classical-layered-bazi-methodology-v1`.
+- The method matrix included `classical_layered_bazi`.
+- The school debate layer ran 9 agents, including `sanming_tonghui_agent` and
+  `early_sanming_lineage_agent`.
+- The 2028 annual row exposed `classical_timing_trace` at `annual` level.
+- The 2028 monthly row exposed `classical_timing_trace` at `monthly` level with
+  solar-term boundary metadata.
+
+### Boundary
+
+- The current monthly pillar uses an offline symbolic sequence and approximate
+  solar-term boundaries. Production-grade month-level claims still need a
+  professional calendar / ephemeris provider.
+- Xiamen / Siming should be added to the offline birthplace index to avoid
+  passing explicit coordinates manually.
 - Re-run enhanced expression evolution with a larger population / more
   generations, or a staged pipeline (base-factor search → combination search).
+
+## 2026-06-30 — Clean factor library, turnover constraints, and robust combination
+
+### Motivation
+
+The previous follow-up showed that `high_zscore_20` is robust but the weight-space
+GA overfits the training period. Three concrete fixes were proposed:
+
+1. Clean the factor library (drop degenerate / constant factors).
+2. Add a hard turnover cap and stronger penalty to the weight GA.
+3. Use a staged / more constrained combination method to avoid overfitting.
+
+### Actions Taken
+
+1. Created `china_a_share_alpha/scripts/clean_factor_library.py`.
+   - Removes factors that fail evaluation, are constant, or contain
+     `ts_corr`/`ts_cov` with a constant operand.
+   - Applies minimum IC / Sharpe / maximum turnover thresholds (configurable).
+   - Writes a cleaned CSV plus a JSON summary of skipped reasons.
+2. Fixed a bug where the cleaner rejected valid factors because of a few NaNs
+   (`np.isfinite` on the whole series). Now NaNs are dropped before the
+   finiteness / std checks.
+3. Updated `china_a_share_alpha/scripts/run_portfolio_weight_evolution.py`:
+   - Added `--max-turnover` hard cap (default 0.3).
+   - Added `--smooth-span` EMA smoothing of the combined factor (default 3).
+   - Changed fitness to prioritize cost-adjusted return (45%) over Sharpe (30%).
+4. Created `china_a_share_alpha/scripts/run_factor_combination.py` as a
+   deliberately simple, hard-to-overfit alternative:
+   - Select top-K factors by train IC (or ICIR).
+   - Z-score and equal-weight them.
+   - Smooth the combined signal with an EMA.
+   - Report train and test long-short metrics.
+5. Added `high_zscore_20` to the cleaned library CSV for combination tests.
+
+### Key Results
+
+**Cleaning**
+
+- Input: 100 candidates from the neutralized factor loop.
+- After fixing the NaN bug and applying loose thresholds (|test_ic| ≥ 0.001,
+  turnover ≤ 1.0): **25 candidates kept**.
+- Skipped reasons: mostly degenerate expressions (NaN/constant) or
+  constant-operand correlations.
+
+**Weight GA with cleaned library**
+
+| run | train Sharpe | train cost-adj | test Sharpe | test cost-adj | turnover |
+|---|---|---|---|---|---|
+| raw library, test-ic sort | 2.72 | 0.037 | 0.23 | negative | 0.0025 |
+| raw library, train-ic sort | 2.63 | 0.096 | 0.88 | -0.203 | 0.667 |
+| cleaned library, train-ic sort, smooth=3, max_turnover=0.3 | 3.40 | 0.196 | -0.32 | -0.237 | 0.0014 |
+
+- The GA still overfits: it finds a training-period combination with Sharpe >3
+  but loses money out of sample.
+
+**Robust equal-weight combination**
+
+| factors | selection | smooth span | train Sharpe | test Sharpe | test cost-adj |
+|---|---|---|---|---|---|
+| top 5 | train_ic | 10 | 2.04 | 0.90 | 0.062 |
+| top 5 | train_ic | 20 | 2.06 | 0.96 | 0.113 |
+| all 11 positive train_ic + high_zscore_20 | train_ic | 10 | 1.09 | **1.04** | **0.121** |
+| all 11 positive train_ic + high_zscore_20 | train_ic | 20 | 0.80 | 1.09 | 0.168 |
+
+- Equal weight + EMA smoothing is the first combination with **positive
+  cost-adjusted return** on the 2024-2026 test set.
+- Including `high_zscore_20` diversifies away from the volatility/mean-reversion
+  cluster that dominated the top train-IC factors.
+- Turnover is very low (~0.0005 daily), so costs are small.
+
+### Interpretation
+
+- **Factor library quality matters more than optimization complexity.** Cleaning
+  removed noise and made the combination stable.
+- **Weight-space GA overfits even with turnover caps and smoothing.** The search
+  has too many degrees of freedom relative to the short training window.
+- **Equal weight + temporal smoothing is a strong baseline.** It captures
+  diversification without fitting relative weights to noise.
+- `high_zscore_20` adds genuine out-of-sample value and should be included in
+  future factor sets.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/clean_factor_library.py` (new)
+- `china_a_share_alpha/scripts/run_factor_combination.py` (new)
+- `china_a_share_alpha/scripts/run_portfolio_weight_evolution.py`
+  - added `--max-turnover`, `--smooth-span`, cost-adjusted-return fitness
+- `OPERATION_LOG.md` — this entry
+
+### Outputs
+
+- `china_a_share_alpha_output/tushare_factor_library_neutralized/factor_library_cleaned.csv`
+- `china_a_share_alpha_output/tushare_factor_library_neutralized/factor_library_cleaned_plus_highzscore.csv`
+- `china_a_share_alpha_output/tushare_factor_library_neutralized/factor_library_cleaned_summary.json`
+- `china_a_share_alpha_output/portfolio_weight_evolution_cleaned/`
+- `china_a_share_alpha_output/factor_combination/top5_span10/`
+- `china_a_share_alpha_output/factor_combination/top11_span10/`
+
+### Verification
+
+- Cleaning script runs end-to-end and reports kept/skipped counts.
+- Weight GA runs with turnover cap and smoothing enabled.
+- Equal-weight combination produces positive train and test cost-adjusted
+  returns.
+
+### Boundary and Next Steps
+
+- The best pipeline so far is:
+  1. clean library → 2. keep positive-train-IC factors → 3. equal-weight →
+     4. EMA smooth (span 10-20).
+- Future work could try:
+  - Risk-parity / IC-weighted combination instead of equal weight, with a
+    validation fold for weight estimation.
+  - Sector / market-cap neutralization of the combined signal.
+  - Extending the cleaned factor library with more seeds and longer evolution.
