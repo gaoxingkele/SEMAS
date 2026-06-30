@@ -58,11 +58,17 @@ def liquidity_factor(window: int = 20):
     return UnaryOp("neg", UnaryOp("cs_rank", RollingOp("ts_mean", Var("turnover_rate"), window)))
 
 
+def high_zscore_factor(window: int = 20):
+    """Rolling z-score of high price: mean-reversion around recent high range."""
+    return UnaryOp("cs_rank", RollingOp("ts_zscore", Var("high"), window))
+
+
 SINGLE_FACTORS = {
     "momentum_20": momentum_factor(20),
     "reversal_5": reversal_factor(5),
     "volume_price_20": volume_price_factor(20),
     "low_vol_20": low_volatility_factor(20),
+    "high_zscore_20": high_zscore_factor(20),
     "value_pb": value_factor(),
     "liquidity_20": liquidity_factor(20),
 }

@@ -211,6 +211,7 @@ def main() -> int:
     parser.add_argument("--factor-csv", type=Path, required=True, help="CSV with columns factor,expression,group")
     parser.add_argument("--output-dir", type=Path, default=Path("china_a_share_alpha_output/portfolio_weight_evolution"))
     parser.add_argument("--top-n", type=int, default=10, help="Use top N factors from CSV")
+    parser.add_argument("--sort-by", type=str, default="test_ic", help="Column to sort factor library by (e.g. train_ic, test_ic)")
     args = parser.parse_args()
 
     with open(args.config, "r", encoding="utf-8") as f:
@@ -221,9 +222,12 @@ def main() -> int:
     # Load data.
     train, test = load_tushare_data(cfg)
 
-    # Load factor library and pick top N by test_ic.
+    # Load factor library and pick top N by the requested column.
     lib = pd.read_csv(args.factor_csv)
-    lib = lib.sort_values("test_ic", ascending=False).head(args.top_n)
+    sort_col = args.sort_by
+    if sort_col not in lib.columns:
+        raise ValueError(f"Sort column '{sort_col}' not in {lib.columns.tolist()}")
+    lib = lib.sort_values(sort_col, ascending=False).head(args.top_n)
     if "factor" not in lib.columns:
         lib["factor"] = lib["rank"].apply(lambda r: f"factor_{r}")
     if "group" not in lib.columns:

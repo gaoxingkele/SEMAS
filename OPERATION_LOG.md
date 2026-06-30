@@ -10676,3 +10676,103 @@ approaches:
   staged search (first find good base factors, then combine).
 - The best enhanced factor (`ts_zscore(high,20)`) should be added to the
   cross-universe audit to verify robustness across CSI500/1000/major/tech.
+
+## 2026-06-30 — Follow-up verification of `high_zscore_20` and train-only portfolio evolution
+
+### Motivation
+
+The GitHub commit (`48b0d58`) pushed the enhanced expression evolution, Qlib
+audit, and cross-universe ranking code. Two follow-up checks remained from the
+previous run:
+
+1. Verify whether the best enhanced-evolution factor, `cs_rank(ts_zscore(high, 20))`,
+   generalizes across CSI300/500/1000, major stocks, and tech stocks.
+2. Re-run portfolio-weight evolution using only training-set metrics for factor
+   selection, removing the look-ahead bias from the first attempt.
+
+### Actions Taken
+
+1. Added `high_zscore_20` to the cross-universe Tushare audit by registering it
+   in `china_a_share_alpha/examples/tushare_factors.py` before the audit.
+2. Ran `run_cross_universe_factor_audit` for `high_zscore_20` plus the existing
+   25 factors on:
+   - Full sample: 2021-06-01 to 2026-06-01, split at 2024-01-01.
+   - Recent out-of-sample: 2025-01-01 to 2026-06-30, split at 2025-07-01.
+3. Re-ran `run_portfolio_weight_evolution` with `--sort-by train_ic` so base
+   factors were chosen without peeking at the test period.
+
+### Key Results
+
+**`high_zscore_20` cross-universe robustness**
+
+| period | universe | test IC | Sharpe | test IC rank / 26 |
+|---|---|---|---|---|
+| 2021-2026 | csi300 | 0.0119 | 0.99 | 2 |
+| 2021-2026 | csi500 | 0.0082 | 0.65 | 8 |
+| 2021-2026 | csi1000 | 0.0023 | 0.25 | 12 |
+| 2021-2026 | major | 0.0196 | 1.21 | 6 |
+| 2021-2026 | tech | -0.0044 | -0.62 | 17 |
+| 2025-2026H1 | csi300 | 0.0264 | 2.09 | 7 |
+| 2025-2026H1 | csi500 | 0.0197 | 2.02 | 7 |
+| 2025-2026H1 | csi1000 | 0.0161 | 1.73 | 8 |
+| 2025-2026H1 | major | 0.0467 | 2.64 | 8 |
+| 2025-2026H1 | tech | 0.0171 | 1.51 | 5 |
+
+- The factor is strongly positive in the more recent 2025-2026H1 window across
+  all five universes, suggesting the 20-day high-price z-score has become a more
+  reliable momentum proxy after the 2024 regime shift.
+- It is weak or negative in the tech universe over the full 2021-2026 period,
+  so it is not unconditionally robust.
+
+**Train-only portfolio-weight evolution**
+
+| selection | train Sharpe | train IC | test Sharpe | test MDD | turnover | cost-adj return |
+|---|---|---|---|---|---|---|
+| sort by `test_ic` | 2.72 | 0.015 | 0.23 | - | 0.25% | negative |
+| sort by `train_ic` | 2.63 | 0.021 | 0.88 | -16.2% | 66.7% | -20.3% |
+
+- Removing look-ahead bias improved test Sharpe from 0.23 to 0.88.
+- However, the combined factor has 66.7% daily turnover, so after 0.1% one-way
+  costs the cost-adjusted return is still strongly negative.
+- The base-factor library still contains many low-quality / constant-heavy
+  expressions, so the optimizer is fitting noise and trading too much.
+
+### Interpretation
+
+- `high_zscore_20` is the most credible factor discovered so far, especially on
+  large-cap and major-stock universes, and its recent performance is encouraging.
+- Portfolio-weight evolution remains overfit; the next fix is to clean the input
+  factor library (drop degenerate / constant factors, enforce minimum IC) and add
+  an explicit turnover penalty or holding-period constraint.
+
+### Files Changed
+
+- `china_a_share_alpha/examples/tushare_factors.py` — registered `high_zscore_20`.
+- `OPERATION_LOG.md` — this entry.
+
+### Outputs
+
+- `china_a_share_alpha_output/cross_universe_audit_with_high_zscore/`
+  - `cross_universe_comparison.csv`
+  - `cross_universe_report.md`
+  - `summary.json`
+- `china_a_share_alpha_output/cross_universe_audit_2025h1_2026h1_with_high_zscore/`
+  - same files for the 2025-2026H1 window
+- `china_a_share_alpha_output/portfolio_weight_evolution_train_only/`
+  - `weight_evolution_result.json`
+  - `weights.csv`
+
+### Verification
+
+- Cross-universe audit ran end-to-end for both periods and produced rankings.
+- Train-only portfolio evolution completed and reported train/test metrics.
+
+### Boundary and Next Steps
+
+- Clean the neutralized factor library before the next portfolio evolution:
+  require finite train/test IC, drop constant-heavy expressions, enforce
+  minimum test Sharpe.
+- Add a stronger turnover penalty or maximum turnover constraint to the weight
+  GA so cost-adjusted return stays positive.
+- Re-run enhanced expression evolution with a larger population / more
+  generations, or a staged pipeline (base-factor search → combination search).

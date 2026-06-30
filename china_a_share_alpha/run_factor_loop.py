@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+import pandas as pd
 
 from semas.evaluator.evaluator import Evaluator
 from semas.genome.repository import GenomeRepository
@@ -40,8 +41,8 @@ def _write_checkpoint(output_dir: Path | None, leaderboard: pd.DataFrame, histor
         json.dump(history, f, indent=2, ensure_ascii=False, default=str)
 
 
-def run(config_path: Path) -> dict[str, Any]:
-    cfg = load_config(config_path)
+def run_config(cfg: dict[str, Any]) -> dict[str, Any]:
+    """Run one factor-mining loop from a loaded config dict."""
     output_dir = cfg.get("output_dir")
     train_data, test_data = load_data(cfg)
 
@@ -116,6 +117,11 @@ def run(config_path: Path) -> dict[str, Any]:
         "history": history,
         "best": top,
     }
+
+
+def run(config_path: Path) -> dict[str, Any]:
+    """Run a factor-mining loop from a YAML config file."""
+    return run_config(load_config(config_path))
 
 
 def main() -> int:
