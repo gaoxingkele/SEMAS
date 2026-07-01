@@ -42,18 +42,24 @@ def _has_constant_correlation(expr) -> bool:
     return False
 
 
-def _is_degenerate(factor: pd.Series, min_std: float = 1e-8) -> bool:
-    """Check whether a factor series is constant or mostly NaN."""
+def _is_degenerate(factor: pd.Series, min_std: float = 1e-8, max_nan_frac: float = 0.2, min_daily_coverage: float = 0.5) -> bool:
+    """Check whether a factor series is constant, mostly NaN, or too sparse."""
     if factor is None or factor.empty:
         return True
-    if factor.isna().mean() > 0.5:
+    if factor.isna().mean() > max_nan_frac:
         return True
     finite = factor.dropna()
     if finite.empty:
         return True
     if not np.isfinite(finite).all():
         return True
-    return float(finite.std()) < min_std
+    if float(finite.std()) < min_std:
+        return True
+    # Require reasonable cross-sectional coverage on most days.
+    coverage = factor.groupby(level="date").apply(lambda s: s.notna().mean())
+    if coverage.mean() < min_daily_coverage:
+        return True
+    return False
 
 
 def clean_library(
@@ -64,6 +70,8 @@ def clean_library(
     min_test_ic: float = 0.003,
     min_test_sharpe: float = 0.0,
     max_turnover: float = 0.5,
+    max_nan_frac: float = 0.2,
+    min_daily_coverage: float = 0.5,
 ) -> pd.DataFrame:
     """Load a factor library, evaluate each candidate, and write a cleaned CSV."""
     train, test = load_tushare_data(cfg)
@@ -96,7 +104,7 @@ def clean_library(
             skipped_reasons.append((name, "eval_error", str(exc)))
             continue
 
-        if _is_degenerate(f_train) or _is_degenerate(f_test):
+        if _is_degenerate(f_train, max_nan_frac=max_nan_frac, min_daily_coverage=min_daily_coverage) or _is_degenerate(f_test, max_nan_frac=max_nan_frac, min_daily_coverage=min_daily_coverage):
             skipped_reasons.append((name, "degenerate", expr_str))
             continue
 
@@ -158,6 +166,8 @@ def main() -> int:
     parser.add_argument("--min-test-ic", type=float, default=0.003)
     parser.add_argument("--min-test-sharpe", type=float, default=0.0)
     parser.add_argument("--max-turnover", type=float, default=0.5)
+    parser.add_argument("--max-nan-frac", type=float, default=0.2)
+    parser.add_argument("--min-daily-coverage", type=float, default=0.5)
     args = parser.parse_args()
 
     with open(args.config, "r", encoding="utf-8") as f:
@@ -171,6 +181,8 @@ def main() -> int:
         args.min_test_ic,
         args.min_test_sharpe,
         args.max_turnover,
+        args.max_nan_frac,
+        args.min_daily_coverage,
     )
     return 0
 

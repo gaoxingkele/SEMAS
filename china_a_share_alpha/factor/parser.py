@@ -9,12 +9,13 @@ The DSL uses function-call syntax:
     div(sub(close, open), open)
 
 Supported functions:
-- Unary: abs, log, sign, neg, cs_rank, cs_zscore
-- Binary: add, sub, mul, div, greater, less
-- Rolling (time-series): ts_mean, ts_std, ts_sum, ts_min, ts_max, ts_delta, ts_delay
+- Unary: abs, log, sign, neg, cs_rank, cs_zscore, signed_power, winsorize
+- Binary: add, sub, mul, div, greater, less, if_positive
+- Ternary: if_else
+- Rolling (time-series): ts_mean, ts_std, ts_sum, ts_min, ts_max, ts_delta, ts_delay, ts_shift, ts_ema, ts_pct_change, ts_zscore, ts_rank, ts_argmax, ts_argmin
 - Rolling binary: ts_corr, ts_cov
 
-Variables: open, high, low, close, volume, vwap, return
+Variables: open, high, low, close, volume, vwap, return, turnover_rate, pb, total_mv, circ_mv, roe, roe_dt, netprofit_yoy, dt_netprofit_yoy, grossprofit_margin, debt_to_assets, ocfps, eps, net_elg_amount, net_mf_amount, hk_vol, hk_ratio
 """
 
 from __future__ import annotations
@@ -28,15 +29,17 @@ from china_a_share_alpha.factor.expression import (
     FactorExpr,
     RollingBinaryOp,
     RollingOp,
+    TernaryOp,
     UnaryOp,
     Var,
 )
 
 UNARY_FUNCS = {"abs", "log", "sign", "neg", "cs_rank", "cs_zscore", "signed_power", "winsorize"}
 BINARY_FUNCS = {"add", "sub", "mul", "div", "greater", "less", "if_positive"}
-ROLLING_FUNCS = {"ts_mean", "ts_std", "ts_sum", "ts_min", "ts_max", "ts_delta", "ts_delay", "ts_shift", "ts_ema", "ts_pct_change", "ts_zscore"}
+TERNARY_FUNCS = {"if_else"}
+ROLLING_FUNCS = {"ts_mean", "ts_std", "ts_sum", "ts_min", "ts_max", "ts_delta", "ts_delay", "ts_shift", "ts_ema", "ts_pct_change", "ts_zscore", "ts_rank", "ts_argmax", "ts_argmin"}
 ROLLING_BINARY_FUNCS = {"ts_corr", "ts_cov"}
-ALL_FUNCS = UNARY_FUNCS | BINARY_FUNCS | ROLLING_FUNCS | ROLLING_BINARY_FUNCS
+ALL_FUNCS = UNARY_FUNCS | BINARY_FUNCS | TERNARY_FUNCS | ROLLING_FUNCS | ROLLING_BINARY_FUNCS
 
 
 def _norm_name(name: str) -> str:
@@ -72,6 +75,16 @@ def _parse_node(node: ast.AST) -> FactorExpr:
                 op=func_name,
                 left=_parse_node(node.args[0]),
                 right=_parse_node(node.args[1]),
+            )
+
+        if func_name in TERNARY_FUNCS:
+            if len(node.args) != 3:
+                raise ValueError(f"{func_name} expects 3 arguments, got {len(node.args)}")
+            return TernaryOp(
+                op=func_name,
+                pred=_parse_node(node.args[0]),
+                if_true=_parse_node(node.args[1]),
+                if_false=_parse_node(node.args[2]),
             )
 
         if func_name in ROLLING_FUNCS:

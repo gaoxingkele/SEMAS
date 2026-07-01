@@ -23,6 +23,27 @@ import tushare as ts
 
 DEFAULT_CACHE_DIR = Path("./china_a_share_alpha_output/tushare_cache")
 
+# Columns expected in the enriched cache. If a cached file lacks any of these,
+# it is re-fetched.
+ENRICHED_COLUMNS = {
+    "turnover_rate",
+    "pb",
+    "total_mv",
+    "circ_mv",
+    "roe",
+    "roe_dt",
+    "netprofit_yoy",
+    "dt_netprofit_yoy",
+    "grossprofit_margin",
+    "debt_to_assets",
+    "ocfps",
+    "eps",
+    "net_elg_amount",
+    "net_mf_amount",
+    "hk_vol",
+    "hk_ratio",
+}
+
 
 def _get_pro():
     token = os.environ.get("TUSHARE_TOKEN")
@@ -52,6 +73,66 @@ def _fetch_daily_basic(pro, ts_code: str, start_date: str, end_date: str) -> pd.
     return pro.daily_basic(ts_code=ts_code, start_date=start_date, end_date=end_date)
 
 
+def _fetch_fina_indicator(pro, ts_code: str, start_date: str, end_date: str) -> pd.DataFrame:
+    """Fetch quarterly financial indicators and keep the most useful fields."""
+    cols = [
+        "ts_code",
+        "ann_date",
+        "roe",
+        "roe_dt",
+        "netprofit_yoy",
+        "dt_netprofit_yoy",
+        "grossprofit_margin",
+        "debt_to_assets",
+        "ocfps",
+        "eps",
+    ]
+    try:
+        df = pro.fina_indicator(ts_code=ts_code, start_date=start_date, end_date=end_date)
+    except Exception as exc:
+        print(f"  fina_indicator failed for {ts_code}: {exc}")
+        return pd.DataFrame(columns=cols)
+    if df is None or df.empty:
+        return pd.DataFrame(columns=cols)
+    df = df[cols].copy()
+    df["ann_date"] = pd.to_datetime(df["ann_date"], format="%Y%m%d", errors="coerce")
+    df = df.dropna(subset=["ann_date"])
+    df = df.sort_values("ann_date")
+    return df
+
+
+def _fetch_moneyflow(pro, ts_code: str, start_date: str, end_date: str) -> pd.DataFrame:
+    """Fetch daily money-flow data and compute net elite / net mainforce amounts."""
+    try:
+        df = pro.moneyflow(ts_code=ts_code, start_date=start_date, end_date=end_date)
+    except Exception as exc:
+        print(f"  moneyflow failed for {ts_code}: {exc}")
+        return pd.DataFrame(columns=["ts_code", "trade_date", "net_elg_amount", "net_mf_amount"])
+    if df is None or df.empty:
+        return pd.DataFrame(columns=["ts_code", "trade_date", "net_elg_amount", "net_mf_amount"])
+    df = df[["ts_code", "trade_date", "buy_elg_amount", "sell_elg_amount", "net_mf_amount"]].copy()
+    df["trade_date"] = pd.to_datetime(df["trade_date"], format="%Y%m%d", errors="coerce")
+    df["net_elg_amount"] = df["buy_elg_amount"] - df["sell_elg_amount"]
+    df = df.sort_values("trade_date")
+    return df[["ts_code", "trade_date", "net_elg_amount", "net_mf_amount"]]
+
+
+def _fetch_hk_hold(pro, ts_code: str, start_date: str, end_date: str) -> pd.DataFrame:
+    """Fetch northbound (HK) holdings."""
+    try:
+        df = pro.hk_hold(ts_code=ts_code, start_date=start_date, end_date=end_date)
+    except Exception as exc:
+        print(f"  hk_hold failed for {ts_code}: {exc}")
+        return pd.DataFrame(columns=["ts_code", "trade_date", "hk_vol", "hk_ratio"])
+    if df is None or df.empty:
+        return pd.DataFrame(columns=["ts_code", "trade_date", "hk_vol", "hk_ratio"])
+    df = df[["ts_code", "trade_date", "vol", "ratio"]].copy()
+    df["trade_date"] = pd.to_datetime(df["trade_date"], format="%Y%m%d", errors="coerce")
+    df = df.rename(columns={"vol": "hk_vol", "ratio": "hk_ratio"})
+    df = df.sort_values("trade_date")
+    return df
+
+
 def _load_or_fetch(
     pro,
     ts_code: str,
@@ -59,21 +140,64 @@ def _load_or_fetch(
     end_date: str,
     cache_dir: Path,
 ) -> pd.DataFrame:
-    """Load cached daily data or fetch from Tushare."""
+    """Load cached daily data or fetch from Tushare with enriched fields."""
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
     cache_file = cache_dir / f"{ts_code}_{start_date}_{end_date}.parquet"
 
     if cache_file.exists():
-        return pd.read_parquet(cache_file)
+        cached = pd.read_parquet(cache_file)
+        if ENRICHED_COLUMNS.issubset(cached.columns):
+            return cached
+        print(f"  Cache outdated for {ts_code}, re-fetching enriched data.")
 
     price = _fetch_daily_price(pro, ts_code, start_date, end_date)
     if price is None or price.empty:
         return pd.DataFrame()
+    price["trade_date"] = pd.to_datetime(price["trade_date"], format="%Y%m%d", errors="coerce")
+
     basic = _fetch_daily_basic(pro, ts_code, start_date, end_date)
     if basic is not None and not basic.empty:
+        basic["trade_date"] = pd.to_datetime(basic["trade_date"], format="%Y%m%d", errors="coerce")
         price = price.merge(
             basic[["ts_code", "trade_date", "turnover_rate", "pb", "total_mv", "circ_mv"]],
+            on=["ts_code", "trade_date"],
+            how="left",
+        )
+
+    # Merge fundamentals by announcement date (forward-filled to trading days).
+    fina = _fetch_fina_indicator(pro, ts_code, start_date, end_date)
+    if not fina.empty:
+        fina = fina.rename(columns={"ann_date": "trade_date"})
+        price = pd.merge_asof(
+            price.sort_values("trade_date"),
+            fina.sort_values("trade_date"),
+            on="trade_date",
+            by="ts_code",
+            direction="backward",
+        )
+        # Forward-fill fundamentals within each symbol so quarterly values apply
+        # to all subsequent trading days until the next report.
+        fina_cols = ["roe", "roe_dt", "netprofit_yoy", "dt_netprofit_yoy",
+                     "grossprofit_margin", "debt_to_assets", "ocfps", "eps"]
+        for col in fina_cols:
+            if col in price.columns:
+                price[col] = price.groupby("ts_code")[col].ffill()
+
+    # Merge daily money flow.
+    mf = _fetch_moneyflow(pro, ts_code, start_date, end_date)
+    if not mf.empty:
+        price = price.merge(
+            mf[["ts_code", "trade_date", "net_elg_amount", "net_mf_amount"]],
+            on=["ts_code", "trade_date"],
+            how="left",
+        )
+
+    # Merge HK northbound holdings.
+    hk = _fetch_hk_hold(pro, ts_code, start_date, end_date)
+    if not hk.empty:
+        price = price.merge(
+            hk[["ts_code", "trade_date", "hk_vol", "hk_ratio"]],
             on=["ts_code", "trade_date"],
             how="left",
         )

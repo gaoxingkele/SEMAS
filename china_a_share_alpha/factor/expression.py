@@ -121,6 +121,28 @@ class BinaryOp(FactorExpr):
 
 
 @dataclass
+class TernaryOp(FactorExpr):
+    """Three-operand operator, e.g. if_else(predicate, if_true, if_false)."""
+
+    op: str  # if_else
+    pred: FactorExpr
+    if_true: FactorExpr
+    if_false: FactorExpr
+
+    def eval(self, data: pd.DataFrame) -> pd.Series:
+        p = self.pred.eval(data)
+        t = self.if_true.eval(data)
+        f = self.if_false.eval(data)
+        if self.op == "if_else":
+            mask = p > 0
+            return t.where(mask, f)
+        raise ValueError(f"Unknown ternary op: {self.op}")
+
+    def __repr__(self) -> str:
+        return f"{self.op}({self.pred}, {self.if_true}, {self.if_false})"
+
+
+@dataclass
 class RollingOp(FactorExpr):
     op: str  # ts_mean, ts_std, ts_sum, ts_min, ts_max, ts_delta, ts_delay
     child: FactorExpr
@@ -154,6 +176,16 @@ class RollingOp(FactorExpr):
                 ma = group.rolling(self.window, min_periods=1).mean()
                 std = group.rolling(self.window, min_periods=1).std()
                 return (group - ma) / (std + 1e-8)
+            if self.op == "ts_rank":
+                return group.rolling(self.window, min_periods=1).rank(pct=True)
+            if self.op == "ts_argmax":
+                return group.rolling(self.window, min_periods=1).apply(
+                    lambda s: float(s.argmax()) / max(1, len(s) - 1), raw=True
+                )
+            if self.op == "ts_argmin":
+                return group.rolling(self.window, min_periods=1).apply(
+                    lambda s: float(s.argmin()) / max(1, len(s) - 1), raw=True
+                )
             raise ValueError(f"Unknown rolling op: {self.op}")
 
         return x.groupby(level="symbol").transform(_roll)
@@ -202,6 +234,13 @@ def expr_from_dict(d: dict[str, Any]) -> FactorExpr:
         return UnaryOp(op=d["op"], child=expr_from_dict(d["child"]))
     if t == "binary":
         return BinaryOp(op=d["op"], left=expr_from_dict(d["left"]), right=expr_from_dict(d["right"]))
+    if t == "ternary":
+        return TernaryOp(
+            op=d["op"],
+            pred=expr_from_dict(d["pred"]),
+            if_true=expr_from_dict(d["if_true"]),
+            if_false=expr_from_dict(d["if_false"]),
+        )
     if t == "rolling":
         return RollingOp(op=d["op"], child=expr_from_dict(d["child"]), window=int(d["window"]))
     if t == "rolling_binary":
@@ -224,6 +263,14 @@ def expr_to_dict(e: FactorExpr) -> dict[str, Any]:
         return {"type": "unary", "op": e.op, "child": expr_to_dict(e.child)}
     if isinstance(e, BinaryOp):
         return {"type": "binary", "op": e.op, "left": expr_to_dict(e.left), "right": expr_to_dict(e.right)}
+    if isinstance(e, TernaryOp):
+        return {
+            "type": "ternary",
+            "op": e.op,
+            "pred": expr_to_dict(e.pred),
+            "if_true": expr_to_dict(e.if_true),
+            "if_false": expr_to_dict(e.if_false),
+        }
     if isinstance(e, RollingOp):
         return {"type": "rolling", "op": e.op, "child": expr_to_dict(e.child), "window": e.window}
     if isinstance(e, RollingBinaryOp):

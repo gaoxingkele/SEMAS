@@ -5,6 +5,100 @@
 
 ---
 
+## 2026-07-02 — China A-Share Alpha: Phase 1 Expansion (Data + Operators + Loop Robustness)
+
+Started implementing the additional factor-mining spaces identified on
+2026-06-30.
+
+### What was added
+
+1. **Enriched Tushare panel**
+   - Fundamentals from `fina_indicator`: ROE, ROE_DT, net-profit YoY,
+     gross-profit margin, debt-to-assets, OCFPS, EPS.
+   - Money flow: `net_elg_amount`, `net_mf_amount`.
+   - Northbound holdings: `hk_vol`, `hk_ratio`.
+   - Quarterly fundamentals are forward-filled to every trading day so the
+     panel stays dense. [source: `china_a_share_alpha/data/tushare_loader.py`]
+
+2. **Extended DSL**
+   - `ts_rank(x, window)` — time-series rank.
+   - `ts_argmax(x, window)` / `ts_argmin(x, window)` — index of extrema.
+   - `if_else(pred, if_true, if_false)` — conditional branching.
+   - Variables now include the enriched fields above.
+   [source: `china_a_share_alpha/factor/expression.py`]
+   [source: `china_a_share_alpha/evolution/factor_mutator.py`]
+
+3. **Loop robustness fixes**
+   - Added `is_reasonable_expression()` to reject degenerate trees such as
+     `ts_corr(const, x)`, `ts_mean(const)`, or ternary branches that are mostly
+     constants. This was the main reason the first enriched run produced so
+     many NaN/constant factors.
+   - Switched `EnhancedFactorPopulation` selection to **train-only** metrics.
+     The previous fitness looked at test Sharpe and test return, leaking the
+     hold-out set into the search.
+   - Tightened the NaN gate from 50% to 30% and added an extra turnover penalty
+     to the training score.
+   - Added a hard `MAX_NODES = 40` cap on expression-tree size. Generation,
+     mutation, and crossover roll back to a safe tree if the result would exceed
+     the cap, preventing runaway evaluation times.
+   - Fixed a bug where constants wrapped in `neg(...)` (e.g. `-0.172`) were not
+     recognised as constants, and where `is_reasonable_expression` did not
+     recurse into `RollingBinaryOp` (`ts_corr`). The first fast run produced a
+     top-ranked expression containing `ts_corr(0.4, -0.172, 5)` and
+     `greater(0.635, 0.541)` before this fix.
+   [source: `china_a_share_alpha/loop/enhanced_population.py`]
+   [source: `china_a_share_alpha/evolution/factor_mutator.py`]
+
+### Why these spaces are promising
+
+- Fundamentals provide slow-moving, diversifying signals that are weakly
+  correlated with price/volume alphas.
+- Money flow captures institutional and retail order-flow pressure.
+- Northbound holdings proxy foreign investor positioning, which has been a
+  documented driver in A-shares.
+  [source: Jiang, Li & Wang, *Foreign Ownership and Stock Liquidity*, RFS 2022]
+- Conditional operators let the GP learn regime-dependent alphas, e.g. use
+  fundamental signals only when volatility is high.
+
+### Measurement
+
+Ran the enhanced loop with the new data/operators across seeds 42, 10, 30
+(population 25, 10 generations, csi300, train 2021-06 to 2023-12, test
+2024-01 to 2026-06). After merging and cleaning:
+
+- **48 unique expressions** → **10 kept** after NaN/constant/sign-flip filters.
+- Equal-weight + EMA combination:
+
+| Selection | Smooth span | Test Sharpe | Test cost-adj return |
+|---|---|---|---|
+| Top 5 train-IC | 10 | **1.20** | **18.1%** |
+| Top 10 train-IC | 10 | 1.19 | 15.8% |
+| Top 11 + `high_zscore_20` | 10 | 1.11 | 15.3% |
+| Baseline 11 + `high_zscore_20` | 10 | 1.04 | 12.1% |
+
+The Phase 1 enriched ensemble improves on the previous baseline, with the
+simple top-5 cut delivering the best out-of-sample result.
+[source: `china_a_share_alpha_output/enhanced_loop_fast2/combination/`]
+
+### Why it improved
+
+- Fundamentals (`pb`, `roe`, `ocfps`, `dt_netprofit_yoy`) and money-flow
+  variables (`net_mf_amount`, `net_elg_amount`) provide signals that are weakly
+  correlated with the price/volume alphas in the old library.
+- Conditional operators let the GP mix these slower signals with faster price
+  signals in a single expression.
+- Cleaning and train-only selection keep the hold-out set from leaking into the
+  search.
+
+### Next experiments
+
+- Add an explicit validation fold so factor weights can be estimated without
+  test-set leakage.
+- Phase 2 spaces: cross-market transfer, ML-based combination, and
+  higher-frequency features.
+
+---
+
 ## 2026-06-30 — China A-Share Alpha: Evolved Factors Beat Hand-Designed Ones, But Simple Ensembles Beat Optimization
 
 This entry summarizes the head-to-head comparison between hand-designed style

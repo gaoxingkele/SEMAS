@@ -19,15 +19,23 @@ from china_a_share_alpha.factor.expression import (
     FactorExpr,
     RollingBinaryOp,
     RollingOp,
+    TernaryOp,
     UnaryOp,
     Var,
     expr_to_dict,
 )
 
-VARIABLES = ["open", "high", "low", "close", "volume", "vwap", "return"]
-ROLLING_OPS = ["ts_mean", "ts_std", "ts_sum", "ts_min", "ts_max", "ts_delta"]
+VARIABLES = [
+    "open", "high", "low", "close", "volume", "vwap", "return",
+    "turnover_rate", "pb", "total_mv", "circ_mv",
+    "roe", "roe_dt", "netprofit_yoy", "dt_netprofit_yoy",
+    "grossprofit_margin", "debt_to_assets", "ocfps", "eps",
+    "net_elg_amount", "net_mf_amount", "hk_vol", "hk_ratio",
+]
+ROLLING_OPS = ["ts_mean", "ts_std", "ts_sum", "ts_min", "ts_max", "ts_delta", "ts_rank", "ts_argmax", "ts_argmin"]
 UNARY_OPS = ["abs", "log", "sign", "neg", "cs_rank", "cs_zscore"]
-BINARY_OPS = ["add", "sub", "mul", "div"]
+BINARY_OPS = ["add", "sub", "mul", "div", "greater", "less", "if_positive"]
+TERNARY_OPS = ["if_else"]
 WINDOWS = [3, 5, 10, 20, 60]
 
 
@@ -43,34 +51,131 @@ def _random_terminal() -> FactorExpr:
     return random.choice([_random_variable, _random_constant])()
 
 
-def _random_expression(max_depth: int = 3) -> FactorExpr:
-    """Grow a random expression tree from the operator grammar."""
-    if max_depth <= 0:
-        return _random_terminal()
-
-    node_type = random.choice(["terminal", "unary", "binary", "rolling", "rolling_binary"])
-    if node_type == "terminal":
-        return _random_terminal()
-    if node_type == "unary":
-        return UnaryOp(op=random.choice(UNARY_OPS), child=_random_expression(max_depth - 1))
-    if node_type == "binary":
-        return BinaryOp(
-            op=random.choice(BINARY_OPS),
-            left=_random_expression(max_depth - 1),
-            right=_random_expression(max_depth - 1),
+def _is_constant(node: FactorExpr) -> bool:
+    """Return True if a sub-expression evaluates to a constant (no Variables)."""
+    if isinstance(node, Const):
+        return True
+    if isinstance(node, (UnaryOp, RollingOp)):
+        return _is_constant(node.child)
+    if isinstance(node, BinaryOp):
+        return _is_constant(node.left) and _is_constant(node.right)
+    if isinstance(node, TernaryOp):
+        return (
+            _is_constant(node.pred)
+            and _is_constant(node.if_true)
+            and _is_constant(node.if_false)
         )
-    if node_type == "rolling":
-        return RollingOp(
-            op=random.choice(ROLLING_OPS),
-            child=_random_expression(max_depth - 1),
+    return False
+
+
+def _is_degenerate_node(node: FactorExpr) -> bool:
+    """Return True for structurally constant or NaN-producing sub-expressions.
+
+    Examples include ``ts_corr(const, x)``, ``ts_mean(0.5)``, or
+    ``greater(const, const)``.
+    """
+    if isinstance(node, (UnaryOp, RollingOp)) and _is_constant(node.child):
+        return True
+    if isinstance(node, RollingBinaryOp) and (
+        _is_constant(node.left) or _is_constant(node.right)
+    ):
+        return True
+    if isinstance(node, BinaryOp) and _is_constant(node.left) and _is_constant(node.right):
+        return True
+    if isinstance(node, TernaryOp):
+        if _is_constant(node.if_true) and _is_constant(node.if_false):
+            return True
+        if (
+            _is_constant(node.pred)
+            and _is_constant(node.if_true)
+            and _is_constant(node.if_false)
+        ):
+            return True
+    return False
+
+
+def is_reasonable_expression(node: FactorExpr) -> bool:
+    """Recursively True if no degenerate sub-expression exists."""
+    if _is_degenerate_node(node):
+        return False
+    if isinstance(node, (UnaryOp, RollingOp)):
+        return is_reasonable_expression(node.child)
+    if isinstance(node, (BinaryOp, RollingBinaryOp)):
+        return is_reasonable_expression(node.left) and is_reasonable_expression(node.right)
+    if isinstance(node, TernaryOp):
+        return (
+            is_reasonable_expression(node.pred)
+            and is_reasonable_expression(node.if_true)
+            and is_reasonable_expression(node.if_false)
+        )
+    return True
+
+
+MAX_NODES = 40
+
+
+def _node_count(node: FactorExpr) -> int:
+    """Return number of nodes in an expression tree."""
+    if isinstance(node, (UnaryOp, RollingOp)):
+        return 1 + _node_count(node.child)
+    if isinstance(node, (BinaryOp, RollingBinaryOp)):
+        return 1 + _node_count(node.left) + _node_count(node.right)
+    if isinstance(node, TernaryOp):
+        return (
+            1
+            + _node_count(node.pred)
+            + _node_count(node.if_true)
+            + _node_count(node.if_false)
+        )
+    return 1
+
+
+def _random_expression(max_depth: int = 3, max_retries: int = 50) -> FactorExpr:
+    """Grow a random expression tree from the operator grammar."""
+
+    def _grow(depth: int) -> FactorExpr:
+        if depth <= 0:
+            return _random_terminal()
+
+        node_type = random.choice(
+            ["terminal", "unary", "binary", "ternary", "rolling", "rolling_binary"]
+        )
+        if node_type == "terminal":
+            return _random_terminal()
+        if node_type == "unary":
+            return UnaryOp(op=random.choice(UNARY_OPS), child=_grow(depth - 1))
+        if node_type == "binary":
+            return BinaryOp(
+                op=random.choice(BINARY_OPS),
+                left=_grow(depth - 1),
+                right=_grow(depth - 1),
+            )
+        if node_type == "ternary":
+            return TernaryOp(
+                op=random.choice(TERNARY_OPS),
+                pred=_grow(depth - 1),
+                if_true=_grow(depth - 1),
+                if_false=_grow(depth - 1),
+            )
+        if node_type == "rolling":
+            return RollingOp(
+                op=random.choice(ROLLING_OPS),
+                child=_grow(depth - 1),
+                window=random.choice(WINDOWS),
+            )
+        return RollingBinaryOp(
+            op="ts_corr",
+            left=_grow(depth - 1),
+            right=_grow(depth - 1),
             window=random.choice(WINDOWS),
         )
-    return RollingBinaryOp(
-        op="ts_corr",
-        left=_random_expression(max_depth - 1),
-        right=_random_expression(max_depth - 1),
-        window=random.choice(WINDOWS),
-    )
+
+    for _ in range(max_retries):
+        expr = _grow(max_depth)
+        if is_reasonable_expression(expr) and _node_count(expr) <= MAX_NODES:
+            return expr
+    # Fallback to a simple variable if random trees keep being degenerate.
+    return _random_variable()
 
 
 def _collect_nodes(node: FactorExpr) -> list[FactorExpr]:
@@ -81,6 +186,10 @@ def _collect_nodes(node: FactorExpr) -> list[FactorExpr]:
     elif isinstance(node, (BinaryOp, RollingBinaryOp)):
         nodes.extend(_collect_nodes(node.left))
         nodes.extend(_collect_nodes(node.right))
+    elif isinstance(node, TernaryOp):
+        nodes.extend(_collect_nodes(node.pred))
+        nodes.extend(_collect_nodes(node.if_true))
+        nodes.extend(_collect_nodes(node.if_false))
     return nodes
 
 
@@ -100,6 +209,13 @@ def _replace_random_node(root: FactorExpr, new_node: FactorExpr) -> FactorExpr:
             return RollingOp(op=node.op, child=_walk(node.child), window=node.window)
         if isinstance(node, BinaryOp):
             return BinaryOp(op=node.op, left=_walk(node.left), right=_walk(node.right))
+        if isinstance(node, TernaryOp):
+            return TernaryOp(
+                op=node.op,
+                pred=_walk(node.pred),
+                if_true=_walk(node.if_true),
+                if_false=_walk(node.if_false),
+            )
         if isinstance(node, RollingBinaryOp):
             return RollingBinaryOp(
                 op=node.op,
@@ -164,8 +280,7 @@ class FactorMutator(Mutator):
                 ["wrap_unary", "insert_binary", "change_window", "replace_op", "replace_subtree"]
             )
             if mutation == "wrap_unary":
-                op = random.choice(UNARY_OPS)
-                expr = UnaryOp(op=op, child=expr)
+                expr = UnaryOp(op=random.choice(UNARY_OPS), child=expr)
             elif mutation == "insert_binary":
                 op = random.choice(BINARY_OPS)
                 if random.random() < 0.5:
@@ -189,6 +304,11 @@ class FactorMutator(Mutator):
                         node.op = random.choice(BINARY_OPS)
             elif mutation == "replace_subtree":
                 expr = _replace_random_node(expr, _random_expression(max_depth=2))
+
+            # Reject mutations that blow up the tree or reintroduce degenerate
+            # constant sub-expressions.
+            if not is_reasonable_expression(expr) or _node_count(expr) > MAX_NODES:
+                expr = self._get_expr(agent).copy()
 
         evolved = self._set_expr(agent, expr)
         evolved_meta = copy.deepcopy(dict(evolved.meta))
@@ -222,6 +342,13 @@ class FactorMutator(Mutator):
                 return RollingOp(op=node.op, child=_walk(node.child), window=node.window)
             if isinstance(node, BinaryOp):
                 return BinaryOp(op=node.op, left=_walk(node.left), right=_walk(node.right))
+            if isinstance(node, TernaryOp):
+                return TernaryOp(
+                    op=node.op,
+                    pred=_walk(node.pred),
+                    if_true=_walk(node.if_true),
+                    if_false=_walk(node.if_false),
+                )
             if isinstance(node, RollingBinaryOp):
                 return RollingBinaryOp(
                     op=node.op,
@@ -231,7 +358,10 @@ class FactorMutator(Mutator):
                 )
             return node
 
-        return _walk(child)
+        child = _walk(child)
+        if not is_reasonable_expression(child) or _node_count(child) > MAX_NODES:
+            return parent1.copy()
+        return child
 
     def mutate_topology(self, agent: AgentGenome, failure_logs: list[str]) -> AgentGenome:
         """No-op."""

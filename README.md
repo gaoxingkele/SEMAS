@@ -117,6 +117,22 @@ python -m china_a_share_alpha.demo
 
 See `china_a_share_alpha/README.md`.
 
+## Mingli Five-Agent Example
+
+The `examples/mingli_5agents` demo now includes a governed BaZi school-debate
+layer. The BaZi analyst exposes seven sub-school votes, including the added
+`格局横门断` paper agent derived from `examples/格局横门断.docx`. Its structured
+layer is `hengmen_pattern_analysis`, focused on 月令提纲, 透干会支, 善顺恶逆,
+藏干待用, and branch-group transformation boundaries.
+
+Operational verification for this upgrade:
+
+```bash
+pytest examples/mingli_5agents/tests/test_mingli_system.py::test_five_agent_executor_returns_required_artifacts examples/mingli_5agents/tests/test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q
+pytest examples/mingli_5agents/tests/test_reference_charts.py examples/mingli_5agents/tests/test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts -q
+pytest examples/mingli_5agents/tests/test_benchmark.py -q
+```
+
 ## LLM Wiki
 
 Framework design ideas, absorbed papers, and their citation sources are recorded

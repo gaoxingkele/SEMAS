@@ -13,15 +13,17 @@ import pandas as pd
 
 
 def compute_ic_decay(history: list[dict[str, Any]], window: int = 3) -> float:
-    """Return the slope of best_test_ic over the last `window` generations.
+    """Return the slope of the best metric over the last `window` generations.
 
-    A negative slope indicates alpha decay.
+    A negative slope indicates alpha decay.  The key may be either the
+    train or test IC depending on the loop flavour.
     """
     if len(history) < window:
         return 0.0
+    key = "best_test_ic" if "best_test_ic" in history[-1] else "best_train_ic"
     recent = history[-window:]
     x = np.arange(len(recent))
-    y = np.array([g["best_test_ic"] for g in recent])
+    y = np.array([g[key] for g in recent])
     if np.isnan(y).any():
         return 0.0
     slope = np.polyfit(x, y, 1)[0]
@@ -45,8 +47,9 @@ def decay_summary(history: list[dict[str, Any]]) -> dict[str, Any]:
         return {}
     decay_3 = compute_ic_decay(history, window=3)
     decay_5 = compute_ic_decay(history, window=5)
+    key = "best_test_ic" if "best_test_ic" in history[-1] else "best_train_ic"
     return {
-        "latest_best_test_ic": history[-1]["best_test_ic"],
+        f"latest_{key}": history[-1][key],
         "ic_decay_slope_3gen": decay_3,
         "ic_decay_slope_5gen": decay_5,
         "decaying": bool(decay_3 < -0.005),

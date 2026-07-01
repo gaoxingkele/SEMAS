@@ -13,33 +13,34 @@ class EnhancedFactorPopulation(FactorPopulation):
     """Factor population that selects on risk-adjusted returns, not just IC."""
 
     def _fitness(self, c: FactorCandidate) -> float:
-        """Robust fitness combining test Sharpe, IC consistency, and turnover penalty."""
-        if not np.isfinite(c.train_ic) or not np.isfinite(c.test_ic):
-            return -np.inf
-        if np.sign(c.train_ic) != np.sign(c.test_ic):
-            return -1.0
+        """Train-only fitness combining Sharpe, IC, and turnover penalty.
 
-        test_sharpe = c.backtest_test.get("sharpe", 0.0)
-        test_return = c.backtest_test.get("cost_adjusted_return", 0.0)
-        mdd = c.backtest_test.get("max_drawdown", 0.0)
+        Test-set metrics are reserved for the leaderboard; using them for
+        selection would leak the hold-out set and encourage over-fitting.
+        """
+        if not np.isfinite(c.train_ic):
+            return -np.inf
+
+        train_sharpe = c.backtest_train.get("sharpe", 0.0)
+        train_return = c.backtest_train.get("cost_adjusted_return", 0.0)
+        train_mdd = c.backtest_train.get("max_drawdown", 0.0)
         turnover = c.turnover
 
-        if not np.isfinite(test_sharpe):
-            test_sharpe = 0.0
-        if not np.isfinite(test_return):
-            test_return = 0.0
-        if not np.isfinite(mdd):
-            mdd = 0.0
+        if not np.isfinite(train_sharpe):
+            train_sharpe = 0.0
+        if not np.isfinite(train_return):
+            train_return = 0.0
+        if not np.isfinite(train_mdd):
+            train_mdd = 0.0
 
-        # Sharpe is primary; IC consistency is required but secondary;
-        # penalize high turnover and deep drawdowns.
+        # Reward risk-adjusted train return, IC, and low turnover.
         score = (
-            0.45 * test_sharpe
-            + 0.25 * test_return
-            + 0.20 * abs(c.test_ic)
-            + 0.10 * abs(c.test_rank_ic)
-            - 0.15 * max(0.0, -mdd)
-            - 0.10 * min(turnover, 2.0)
+            0.35 * train_sharpe
+            + 0.25 * train_return
+            + 0.25 * abs(c.train_ic)
+            + 0.10 * abs(c.train_rank_ic)
+            - 0.15 * max(0.0, -train_mdd)
+            - 0.15 * min(turnover, 2.0)
         )
         return float(score)
 
@@ -92,7 +93,7 @@ class EnhancedFactorPopulation(FactorPopulation):
         return unique[:pop_size]
 
     def run_generation(self) -> list[FactorCandidate]:
-        """Run one generation tracking Sharpe-based best."""
+        """Run one generation tracking train-fitness best."""
         evaluated = self.evaluate_population()
         best = max(evaluated, key=self._fitness)
         best_fitness = self._fitness(best)
@@ -108,9 +109,9 @@ class EnhancedFactorPopulation(FactorPopulation):
             {
                 "generation": self._generation,
                 "best_train_ic": max(c.train_ic for c in evaluated),
-                "best_test_ic": best.test_ic,
-                "best_test_sharpe": best.backtest_test.get("sharpe", 0.0),
-                "mean_test_ic": float(np.mean([c.test_ic for c in evaluated])),
+                "best_train_sharpe": best.backtest_train.get("sharpe", 0.0),
+                "best_train_return": best.backtest_train.get("cost_adjusted_return", 0.0),
+                "mean_train_ic": float(np.mean([c.train_ic for c in evaluated])),
                 "best_expression": best.expression,
             }
         )

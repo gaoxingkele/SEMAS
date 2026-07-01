@@ -140,7 +140,7 @@ class FactorPopulation:
         is_degenerate = (
             not np.isfinite(train_ic)
             or not np.isfinite(test_ic)
-            or nan_frac > 0.5
+            or nan_frac > 0.3
             or train_std < 1e-8
             or test_std < 1e-8
         )
@@ -149,7 +149,10 @@ class FactorPopulation:
             train_ic = -1.0 if not np.isfinite(train_ic) else train_ic
             test_ic = -1.0 if not np.isfinite(test_ic) else test_ic
         else:
-            train_score = float(eval_result.score)
+            # Slightly penalize turnover inside the training score to favour
+            # lower-friction alphas during evolution.
+            turnover = turnover_score(train_factor)
+            train_score = max(0.0, float(eval_result.score) - 0.2 * turnover)
 
         cand = FactorCandidate(
             agent=agent,

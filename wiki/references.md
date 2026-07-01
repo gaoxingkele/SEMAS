@@ -39,6 +39,13 @@
   - Key insight: transaction costs and turnover can eliminate or even reverse
     the apparent profitability of many cross-sectional anomalies.
 
+- **Homemade Foreign Trading**
+  - He, Zhiguo, et al., BFI Working Paper 2022-170 / 2026
+  - https://bfi.uchicago.edu/wp-content/uploads/2023/01/BFI_WP_2022-170.pdf
+  - Key insight: northbound Stock Connect flows in A-shares predict future
+    returns, especially before the 2018 investor-identification reform; the
+    predictive power is heterogeneous across custodian types.
+
 ## GEO / AgenticGEO
 
 - **GEO: Generative Engine Optimization**

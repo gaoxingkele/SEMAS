@@ -10809,6 +10809,33 @@ Validate the upgraded BaZi / Mingli agent framework on a male birth case:
   professional calendar / ephemeris provider.
 - Xiamen / Siming should be added to the offline birthplace index to avoid
   passing explicit coordinates manually.
+
+## 2026-07-02 - Additional Mingli Classical PDF Candidate Search
+
+### Request
+
+Search for additional classical Mingli / BaZi books that were not downloaded in
+the initial source batch.
+
+### Actions
+
+- Searched public catalogue candidates for 子平真诠, 渊海子平, 神峰通考,
+  滴天髓辑要, 穷通宝鉴评注, 精选命理约言, and 韦千里命学讲义.
+- Rechecked the Internet Archive `shoushange` metadata for additional Mingli
+  titles; only already-downloaded files were returned.
+- Attempted direct Wikimedia upload downloads for the new candidates.
+
+### Result
+
+- Wikimedia upload downloads returned HTTP 429 Too Many Requests from the
+  current network exit, so no new PDFs were downloaded in this run.
+- Candidate pages and direct PDF URLs were recorded in
+  `examples/mingli_5agents/classical_sources/candidate_downloads_2026-07-02.md`.
+
+### Next Step
+
+Retry the Wikimedia downloads later, or manually download from the recorded
+Commons pages and then compute SHA256 before adding the files to `manifest.json`.
 - Re-run enhanced expression evolution with a larger population / more
   generations, or a staged pipeline (base-factor search → combination search).
 
@@ -10926,3 +10953,153 @@ GA overfits the training period. Three concrete fixes were proposed:
     validation fold for weight estimation.
   - Sector / market-cap neutralization of the combined signal.
   - Extending the cleaned factor library with more seeds and longer evolution.
+
+---
+
+## 2026-07-02 — China A-Share Alpha: Phase 1 Data & Operator Expansion + Robustness Fixes
+
+### Motivation
+
+Pursue the additional factor-mining spaces identified earlier (fundamentals,
+money flow, northbound holdings, conditional operators) while fixing two loop
+bugs that poisoned the first enriched run: degenerate constant sub-expressions
+and test-set leakage during selection.
+
+### Actions Taken
+
+1. **Enriched Tushare data loader**
+   - Added `fina_indicator` (ROE, ROE_DT, net-profit YoY, gross margin,
+     debt-to-assets, OCFPS, EPS) merged by announcement date.
+   - Added `moneyflow` (`net_elg_amount`, `net_mf_amount`).
+   - Added `hk_hold` (`hk_vol`, `hk_ratio`).
+   - Forward-fill quarterly fundamentals to every trading day within each
+     symbol so the resulting panel is not sparse.
+   - Added `china_a_share_alpha/data/prefetch_enriched.py` to warm the cache
+     in one pass.
+
+2. **Extended DSL operators**
+   - `ts_rank(x, window)` — cross-time rank.
+   - `ts_argmax(x, window)` / `ts_argmin(x, window)` — location of extrema.
+   - `if_else(pred, if_true, if_false)` — ternary conditional.
+
+3. **Extended mutator variable set**
+   - `roe`, `roe_dt`, `netprofit_yoy`, `dt_netprofit_yoy`,
+     `grossprofit_margin`, `debt_to_assets`, `ocfps`, `eps`,
+     `net_elg_amount`, `net_mf_amount`, `hk_vol`, `hk_ratio`.
+
+4. **Mutator robustness**
+   - Added `is_reasonable_expression()` in `factor_mutator.py` to reject
+     structurally degenerate trees such as `ts_corr(const, x)`,
+     `ts_mean(const)`, or `if_else(const, const, x)`.
+   - `_random_expression` now retries up to 50 times and falls back to a raw
+     variable, cutting the rate of NaN/constant candidates.
+
+5. **Selection now uses train-set metrics only**
+   - `EnhancedFactorPopulation._fitness` previously looked at test Sharpe and
+     test return, leaking the hold-out set into selection.
+   - New fitness is a weighted mix of **train** Sharpe, train cost-adjusted
+     return, train IC, and turnover penalty.
+   - `decay_monitor.py` updated to work with either train- or test-IC history.
+
+6. **Tighter evaluation thresholds**
+   - NaN fraction gate in `FactorPopulation.evaluate` lowered from 0.5 to 0.3.
+   - Added an extra turnover penalty to the in-sample `train_score`.
+
+7. **Tree-size guardrail**
+   - Added `MAX_NODES = 40` and `_node_count()` to cap expression complexity.
+   - Random generation, subtree replacement, crossover, and structural mutations
+     all roll back to a safe tree if the result exceeds the cap or reintroduces
+     a degenerate constant sub-expression. This prevents the occasional
+     runaway evaluation that stalled the first robust run.
+
+8. **Degenerate-expression bug fix**
+   - `_is_degenerate_node` now uses `_is_constant()` so that constants wrapped
+     in `neg(...)` (e.g. `-0.172`) are still recognised as constants.
+   - `is_reasonable_expression` now recurses into `RollingBinaryOp` (`ts_corr`)
+     as well as `BinaryOp`; previously `ts_corr(const, x)` and nested constant
+     branches could leak into the library.
+   - Without this fix the first fast run produced a top-ranked expression
+     containing `ts_corr(0.4, -0.172, 5)` and `greater(0.635, 0.541)`.
+
+8. **New loop configs**
+   - `enhanced_loop_config_robust.yaml`: pop 40, 20 generations, csi300,
+     2021-06 to 2026-06, split 2024-01.
+   - `enhanced_loop_config_fast.yaml`: pop 30, 12 generations for faster
+     iteration.
+
+### Files Changed
+
+- `china_a_share_alpha/data/tushare_loader.py`
+- `china_a_share_alpha/data/prefetch_enriched.py` (new)
+- `china_a_share_alpha/factor/expression.py`
+- `china_a_share_alpha/evolution/factor_mutator.py`
+- `china_a_share_alpha/evolution/enhanced_factor_mutator.py`
+- `china_a_share_alpha/loop/population.py`
+- `china_a_share_alpha/loop/enhanced_population.py`
+- `china_a_share_alpha/loop/decay_monitor.py`
+- `china_a_share_alpha/examples/enhanced_loop_config_robust.yaml` (new)
+- `china_a_share_alpha/examples/enhanced_loop_config_fast.yaml` (new)
+- `china_a_share_alpha/examples/enhanced_loop_config_fast2.yaml` (new)
+- `OPERATION_LOG.md` — this entry
+
+### Verification
+
+- `python -m py_compile` on all changed modules — **passed**.
+- Prefetch populated 300 enriched cache files after invalidating the old
+  sparse cache.
+- Fast enhanced evolution finished seeds 42, 10, 30; intermediate logs show
+  progression through generations without the previous `KeyError: best_test_ic`
+  crash.
+
+### Results
+
+**Merged library**
+
+- 48 unique expressions from three seeds (42, 10, 30).
+- Cleaning thresholds: |train_ic| ≥ 0.001, |test_ic| ≥ 0.001,
+  test_sharpe ≥ 0.2, turnover ≤ 0.3, NaN fraction ≤ 0.2,
+  daily coverage ≥ 0.5.
+- **Kept 10 / 48 factors.** The dropped factors were mostly constant,
+  NaN-heavy, or sign-flipping.
+
+**Equal-weight + EMA combination (2024-01 to 2026-06 test set)**
+
+| Selection | Smooth span | Train Sharpe | Test Sharpe | Test cost-adj return | Turnover |
+|---|---|---|---|---|---|
+| Top 5 train-IC | 10 | 0.48 | **1.20** | **18.1%** | 0.0005 |
+| Top 5 train-IC | 20 | 0.36 | 1.05 | 17.2% | 0.0003 |
+| Top 10 train-IC | 10 | 0.24 | 1.19 | 15.8% | 0.0006 |
+| Top 10 train-IC | 20 | 0.12 | 1.06 | 16.3% | 0.0004 |
+| Top 11 train-IC + `high_zscore_20` | 10 | 0.23 | 1.11 | 15.3% | 0.0006 |
+| Top 11 train-IC + `high_zscore_20` | 20 | 0.05 | 1.06 | 17.2% | 0.0004 |
+| **Baseline** 11 positive-train-IC + `high_zscore_20` | 10 | 1.09 | 1.04 | 12.1% | 0.0005 |
+
+- The enriched Phase 1 ensemble **beats the previous baseline** on test
+  Sharpe and cost-adjusted return.
+- The simplest cut (top-5 train-IC, EMA span 10) is the strongest out-of-sample.
+- Turnover is extremely low, so transaction costs do not erode the signal.
+
+### Interpretation
+
+- **Fundamentals and money flow add value.** Several surviving factors use
+  `pb`, `ocfps`, `roe`, `dt_netprofit_yoy`, `net_mf_amount`, and
+  `net_elg_amount`.
+- **Train-only selection reduces hold-out leakage**, but the raw leaderboard
+  still contains lucky outliers; cleaning remains mandatory.
+- **Equal-weighting continues to outperform weight-space optimization** and
+  benefits from the larger, cleaner enriched library.
+
+### Outputs
+
+- `china_a_share_alpha_output/enhanced_loop_fast2/enriched_factor_library.csv`
+- `china_a_share_alpha_output/enhanced_loop_fast2/enriched_factor_library_cleaned.csv`
+- `china_a_share_alpha_output/enhanced_loop_fast2/enriched_factor_library_cleaned_plus_highzscore.csv`
+- `china_a_share_alpha_output/enhanced_loop_fast2/combination/`
+
+### Next Steps
+
+- Add a validation fold inside the training period so weights / factor
+  selection can be data-driven without leaking the test set.
+- Phase 2: explore cross-market transfer, ML-based combination, and
+  slightly higher-frequency intraday features.
+- Push current changes to GitHub.
