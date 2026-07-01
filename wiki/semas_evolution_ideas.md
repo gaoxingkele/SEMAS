@@ -5,6 +5,103 @@
 
 ---
 
+## 2026-06-30 — China A-Share Alpha: Evolved Factors Beat Hand-Designed Ones, But Simple Ensembles Beat Optimization
+
+This entry summarizes the head-to-head comparison between hand-designed style
+factors and evolved factors on real Tushare CSI300/500/1000/major/tech universes.
+
+### Result: evolved factors dominate single-factor rankings
+
+| Period | Universe | Manual in top-10 (by test IC) | Evolved in top-10 | Avg rank — manual | Avg rank — evolved |
+|---|---|---|---|---|---|
+| 2021-2026 | csi300 | 2/10 | 8/10 | 16.3 | 11.8 |
+| 2021-2026 | csi500 | 1/10 | 9/10 | 18.9 | 10.1 |
+| 2021-2026 | csi1000 | 1/10 | 9/10 | 19.0 | 10.1 |
+| 2021-2026 | major | 2/10 | 8/10 | 18.5 | 10.4 |
+| 2025-2026H1 | csi300 | 2/10 | 8/10 | 17.2 | 11.2 |
+| 2025-2026H1 | csi500 | 3/10 | 7/10 | 17.0 | 11.3 |
+
+[source: `china_a_share_alpha_output/cross_universe_audit_with_high_zscore/`]
+[source: `china_a_share_alpha_output/cross_universe_audit_2025h1_2026h1_with_high_zscore/`]
+
+Top single factors in the recent 2025-2026H1 window are almost all evolved:
+`evolved_2` (`abs(return)`), `talib_rsi_14`, `alpha101_001`, `talib_atr_14`,
+`evolved_3` (`abs(ts_std(abs(return), 5))`). The only hand-designed factor that
+competes at the top is `high_zscore_20`, and it was itself discovered by the
+enhanced expression-evolution loop.
+
+### Why the manual factors lag
+
+The hand-designed factors (`momentum_20`, `reversal_5`, `volume_price_20`,
+`low_vol_20`, `value_pb`, `liquidity_20`) are classic cross-sectional style
+factors. Over the 2021-2026 A-share window they were weak: low-vol and reversal
+were particularly poor, and value (low PB) had a weak Sharpe despite a decent
+IC. This matches the broader finding that raw anomaly signals often fade once
+turnover and costs are considered.
+[source: Novy-Marx & Velikov, *Review of Financial Studies*, 2016]
+
+### Why weight-space optimization failed
+
+We tried three versions of portfolio-weight evolution:
+
+1. Sort base factors by `test_ic` (look-ahead): train Sharpe 2.72, test Sharpe
+   0.23.
+2. Sort base factors by `train_ic` (no look-ahead): train Sharpe 2.63, test
+   Sharpe 0.88, but 66.7% daily turnover made cost-adjusted return negative.
+3. Cleaned library + hard turnover cap (0.3) + EMA smoothing (span 3): train
+   Sharpe 3.40, test Sharpe -0.32.
+
+The GA consistently found training-period combinations that looked excellent
+and then lost money out of sample. The search has too many degrees of freedom
+relative to the short training window and the noisy base signals.
+[source: `china_a_share_alpha_output/portfolio_weight_evolution_cleaned/`]
+
+### What worked: equal weight + EMA smoothing
+
+A deliberately simple pipeline produced the first positive cost-adjusted return
+on the 2024-2026 test set:
+
+1. Clean the factor library (`clean_factor_library.py`).
+2. Keep factors with positive train IC.
+3. Z-score and equal-weight them.
+4. Apply a per-symbol EMA (span 10-20) to the combined signal.
+
+| Combination | Train Sharpe | Test Sharpe | Test cost-adj return | Turnover |
+|---|---|---|---|---|
+| Top 5 train-IC, span 10 | 2.04 | 0.90 | 6.2% | 0.0005 |
+| Top 5 train-IC, span 20 | 2.06 | 0.96 | 11.3% | 0.0003 |
+| 11 positive-train-IC + `high_zscore_20`, span 10 | 1.09 | 1.04 | 12.1% | 0.0005 |
+| 11 positive-train-IC + `high_zscore_20`, span 20 | 0.80 | 1.09 | 16.8% | 0.0003 |
+
+[source: `china_a_share_alpha_output/factor_combination/top5_span10/`]
+[source: `china_a_share_alpha_output/factor_combination/top11_span10/`]
+
+This is consistent with the finance literature: when parameter estimation error
+is large, simple equal-weighting often outperforms optimized weights.
+[source: DeMiguel, Garlappi, Uppal, *Review of Financial Studies*, 2009]
+
+### Takeaways
+
+- **Evolution is worth it for alpha discovery.** The evolved/TA-Lib factors
+  genuinely outrank hand-designed style factors in both the full sample and the
+  recent out-of-sample window.
+- **Do not trust weight-space GA for portfolio construction.** The optimizer
+  overfits unless you add strong regularization or a validation fold.
+- **Prefer simple, low-turnover ensembles.** Equal weight + temporal smoothing
+  is a robust baseline for combining formulaic alphas.
+- **Cleaning is mandatory.** The raw evolved library contains many degenerate or
+  constant-heavy expressions; they must be filtered before combination.
+
+### Next experiments
+
+- Try ICIR-weighted instead of equal weight, with a hold-out validation fold
+  for estimating the weights.
+- Add sector / market-cap neutralization of the combined signal.
+- Run the enhanced expression loop with more seeds and longer runs to expand
+  the cleaned library, then re-evaluate the ensemble.
+
+---
+
 ## 2026-06-26 — China A-Share Alpha: Evolved Factors on Real Tushare Data
 
 After wiring the loop to real CSI300 data, we ran the GP outer loop with

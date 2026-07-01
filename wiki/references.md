@@ -10,6 +10,35 @@
   - Core idea: frozen-weight LLM + selection-based evolution over prompts,
     tools, topologies, and memory.
 
+## China A-Share Alpha Factor Mining
+
+- Local operational record: `OPERATION_LOG.md` (entries 2026-06-24 through
+  2026-06-30).
+- Local code:
+  - `china_a_share_alpha/scripts/clean_factor_library.py`
+  - `china_a_share_alpha/scripts/run_factor_combination.py`
+  - `china_a_share_alpha/scripts/run_portfolio_weight_evolution.py`
+
+- **WorldQuant 101 Formulaic Alphas**
+  - Kakushadze, "101 Formulaic Alphas", 2016
+  - arXiv:1601.00991, https://arxiv.org/abs/1601.00991
+
+- **TA-Lib — Technical Analysis Library**
+  - https://ta-lib.org/
+
+- **Optimal versus Naive Diversification: How Inefficient is the 1/N Portfolio
+  Strategy?**
+  - DeMiguel, Garlappi, Uppal, *Review of Financial Studies*, 2009
+  - https://academic.oup.com/rofs/article/22/5/1915/1578602
+  - Key insight: sample-based mean-variance optimization often loses to a simple
+    equal-weighted portfolio because estimation error dominates.
+
+- **A Taxonomy of Anomalies and Their Trading Costs**
+  - Novy-Marx & Velikov, *Review of Financial Studies*, 2016
+  - https://academic.oup.com/rofs/article/29/2/397/1843824
+  - Key insight: transaction costs and turnover can eliminate or even reverse
+    the apparent profitability of many cross-sectional anomalies.
+
 ## GEO / AgenticGEO
 
 - **GEO: Generative Engine Optimization**
