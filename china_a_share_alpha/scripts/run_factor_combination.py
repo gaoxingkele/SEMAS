@@ -40,6 +40,8 @@ def _zscore(s: pd.Series) -> pd.Series:
 def _smooth(s: pd.Series, span: int) -> pd.Series:
     if span <= 1:
         return s
+    if s.empty:
+        return s.copy()
     return s.groupby(level="symbol").transform(
         lambda x: x.ewm(span=span, min_periods=1).mean()
     )

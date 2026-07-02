@@ -5,6 +5,54 @@
 
 ---
 
+## 2026-07-02 (further continued) — China A-Share Alpha: Rolling Combination + Cross-Market Transfer
+
+Implemented the remaining three directions from the previous note.
+
+### Rolling / walk-forward combination
+
+- Added `run_rolling_factor_combination.py` which rolls a 252-day fit window
+  through the test period in 63-day steps.
+- Supports equal, IC, Sharpe, risk-parity, ridge, GBDT, and LightGBM weights.
+- **Result**: rolling equal weight achieves test Sharpe 1.29 and cost-adjusted
+  return 16.5%, slightly better than static equal. IC / ridge / LGBM weights
+  produce negative Sharpe because the short fit window cannot reliably estimate
+  signs or coefficients.
+  [source: `china_a_share_alpha/scripts/run_rolling_factor_combination.py`]
+  [source: `china_a_share_alpha_output/rolling_combination/`]
+
+### Cross-market transfer
+
+- Extended `tushare_loader.py` to fetch CSI500 (000905.SH) and CSI1000
+  (000852.SH) constituents.
+- Evolved factors on CSI500 and CSI1000, then tested the expressions directly
+  on CSI300.
+- **Raw transfer fails**: many expressions become NaN or degenerate on the
+  target universe.
+- **Target-cleaned transfer works moderately**: after keeping only expressions
+  that evaluate cleanly on CSI300, CSI500 survivors reach Sharpe 1.06 / 16.9%
+  and CSI1000 survivors reach 0.93 / 15.4%. Still below the in-market CSI300
+  best of 1.20 / 18.1%.
+  [source: `china_a_share_alpha_output/cross_market/transfer/`]
+
+### Key take-away
+
+For this dataset, **in-market evolution + equal-weight combination remains the
+best recipe**. Cross-market transfer is possible but acts more like a safety
+filter than a source of additive alpha. Rolling windows help modestly by
+reducing stale observations, while ML weighting on short windows is too noisy.
+
+### Next ideas
+
+- **Template transfer** instead of expression transfer: evolve operator trees on
+  a source universe, then re-fill the leaves with target-universe variables.
+- **Sparse-feature guardrails**: ban direct use of quarterly fundamentals as
+  leaves to improve cross-market portability.
+- Longer in-market evolution with larger population to push the 1.20 Sharpe
+  barrier.
+
+---
+
 ## 2026-07-02 (continued) — China A-Share Alpha: Validation Fold + Weighted Combination
 
 Implemented the next evolution step: an in-sample validation fold for factor

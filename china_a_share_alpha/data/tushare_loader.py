@@ -62,13 +62,26 @@ def _get_pro():
     return ts.pro_api()
 
 
-def _fetch_csi300_constituents(pro, trade_date: str) -> list[str]:
-    """Fetch CSI300 constituents for a given date."""
-    df = pro.index_weight(index_code="000300.SH", start_date=trade_date, end_date=trade_date)
+def _fetch_index_constituents(pro, index_code: str, trade_date: str) -> list[str]:
+    """Fetch index constituents for a given date."""
+    df = pro.index_weight(index_code=index_code, start_date=trade_date, end_date=trade_date)
     if df is None or df.empty:
         # Fallback to latest available date if exact date missing.
-        df = pro.index_weight(index_code="000300.SH")
+        df = pro.index_weight(index_code=index_code)
     return df["con_code"].unique().tolist()
+
+
+# Keep the old name for backward compatibility.
+_fetch_csi300_constituents = lambda pro, trade_date: _fetch_index_constituents(
+    pro, "000300.SH", trade_date
+)
+
+
+_INDEX_CODES = {
+    "csi300": "000300.SH",
+    "csi500": "000905.SH",
+    "csi1000": "000852.SH",
+}
 
 
 def _fetch_daily_price(pro, ts_code: str, start_date: str, end_date: str) -> pd.DataFrame:
@@ -240,8 +253,11 @@ def load_tushare_data(
     cache_dir = Path(config.get("cache_dir", DEFAULT_CACHE_DIR))
 
     universe = config.get("universe", "csi300")
-    if universe == "csi300":
-        symbols = _fetch_csi300_constituents(pro, end_date)
+    if isinstance(universe, str) and universe.lower() in _INDEX_CODES:
+        symbols = _fetch_index_constituents(pro, _INDEX_CODES[universe.lower()], end_date)
+    elif isinstance(universe, str):
+        # Single symbol or comma-separated list provided as a string.
+        symbols = [s.strip() for s in universe.split(",") if s.strip()]
     else:
         symbols = list(universe)
 

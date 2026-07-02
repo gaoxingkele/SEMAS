@@ -51,6 +51,10 @@ def icir_score(factor: pd.Series, forward_return: pd.Series) -> float:
 
 def turnover_score(factor: pd.Series) -> float:
     """Average per-symbol turnover of normalized factor weights."""
+    if factor.empty:
+        return 0.0
+    if not isinstance(factor.index, pd.MultiIndex) or len(factor.index.names) < 2:
+        return 0.0
     normalized = factor.groupby(level="date").transform(lambda s: s / (s.abs().sum() + 1e-8))
     turnover = (
         normalized.groupby(level="symbol").diff().abs().groupby(level="date").mean()

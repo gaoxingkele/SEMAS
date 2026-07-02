@@ -11308,3 +11308,107 @@ final 2024-2026 test set.
 - Begin Phase 2 cross-market transfer: evolve factors on CSI500/CSI1000 and
   test on CSI300.
 - Push these changes to GitHub.
+
+---
+
+## 2026-07-02 (further continued) — China A-Share Alpha: Rolling Combination + Cross-Market Transfer
+
+### Motivation
+
+Complete the three follow-up directions: (1) rolling / expanding validation
+windows, (2) ML-based combination, and (3) cross-market transfer from
+CSI500/CSI1000 to CSI300.
+
+### Actions Taken
+
+1. **Rolling combination framework**
+   - New script `run_rolling_factor_combination.py` walks a ``fit_window_days``
+     history window through the test period and applies the next
+     ``step_days`` out-of-sample.
+   - Supports equal, IC, Sharpe, risk-parity weights, plus ridge / GBDT /
+     LightGBM meta-models trained on the rolling fit window.
+
+2. **Robustness fixes**
+   - `_smooth` now preserves index names on empty panels.
+   - `turnover_score` returns 0.0 for empty or non-MultiIndex inputs instead of
+     crashing.
+
+3. **Cross-market transfer**
+   - Added `_fetch_index_constituents()` and index-code mapping for CSI300,
+     CSI500, CSI1000 in `tushare_loader.py`.
+   - New configs `enhanced_loop_config_csi500.yaml` and
+     `enhanced_loop_config_csi1000.yaml`.
+   - Evolved factors on CSI500 and CSI1000 (seeds 42 and 10 each), merged the
+     leaderboards, then cleaned and evaluated them on CSI300.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/run_rolling_factor_combination.py` (new)
+- `china_a_share_alpha/scripts/run_factor_combination.py`
+- `china_a_share_alpha/evaluator/metrics.py`
+- `china_a_share_alpha/data/tushare_loader.py`
+- `china_a_share_alpha/examples/enhanced_loop_config_csi500.yaml` (new)
+- `china_a_share_alpha/examples/enhanced_loop_config_csi1000.yaml` (new)
+- `OPERATION_LOG.md` — this entry
+- `wiki/semas_evolution_ideas.md`
+
+### Verification
+
+- `python -m py_compile` on changed modules — **passed**.
+- Rolling combination ran for equal / IC / ridge / lgbm on top-10 enriched
+  factors.
+- Cross-market evolution produced CSI500 (26 unique expressions) and CSI1000
+  (29 unique expressions) libraries.
+
+### Results — Rolling combination (fit 252 days, step 63 days, top 10)
+
+| Weight method | Test Sharpe | Test cost-adj return | Comment |
+|---|---|---|---|
+| equal | **1.29** | **16.5%** | Best and most robust |
+| ic | -0.47 | -21.7% | Sign instability per window |
+| ridge | 0.08 | -5.5% | Too many correlated factors |
+| lgbm | -0.05 | -12.1% | Overfits rolling window |
+
+- Rolling equal weight improves slightly over static equal (1.20 Sharpe) by
+  allowing the signal to drop stale observations.
+- ML / IC weighting fails because the short fit window (252 days) cannot
+  reliably estimate factor signs or coefficients.
+
+### Results — Cross-market transfer to CSI300
+
+| Source | Cleaning on CSI300 | Selection | Test Sharpe | Test cost-adj return |
+|---|---|---|---|---|
+| CSI500 | no | top 5 equal | 0.00 | 0.00% | Top factors were NaN on CSI300 |
+| CSI1000 | no | top 5 equal | -0.24 | -21.8% | Poor transfer |
+| CSI500 | yes | top 5 equal | 1.06 | 16.9% |
+| CSI1000 | yes | top 5 equal | 0.93 | 15.4% |
+| CSI500 + CSI1000 + `high_zscore_20` | yes | top 5 equal | 1.04 | 14.4% |
+| CSI500 + CSI1000 + `high_zscore_20` | yes | top 10 equal | 1.06 | 15.7% |
+| **CSI300 in-market** (previous best) | yes | top 5 equal | **1.20** | **18.1%** |
+
+### Interpretation
+
+- **Direct expression transfer does not work.** CSI500/CSI1000-evolved
+  expressions often rely on sparsity patterns or universe-specific noise and
+  become NaN / degenerate on CSI300.
+- **Cleaning on the target market rescues some signal.** After keeping only
+  expressions that evaluate cleanly on CSI300, the transferred libraries
+  achieve respectable Sharpe (~1.0) but still trail the in-market ensemble.
+- **Cross-market ensembles do not improve over in-market.** Combining
+  CSI500/CSI1000 survivors with `high_zscore_20` yields 1.04-1.06 Sharpe,
+  below the 1.20 in-market result.
+- **Conclusion:** for this dataset, the best alpha comes from evolving and
+  combining factors directly on the target universe. Transfer is viable only
+  after target-market validation and provides a lower-bound safety net rather
+  than additive alpha.
+
+### Next Steps
+
+- Improve transfer by forcing simpler, more robust expression primitives
+  during evolution (e.g. ban sparse fundamentals as direct inputs).
+- Try "knowledge transfer" of operator templates rather than raw expressions:
+  evolve on CSI500, extract the top-performing *operator patterns*, and re-fill
+  them with CSI300 variables.
+- Run a longer / larger-population in-market evolution on CSI300 to see if the
+  1.20 Sharpe barrier can be raised.
+- Push these changes to GitHub.
