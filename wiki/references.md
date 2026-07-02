@@ -39,6 +39,14 @@
   - Key insight: transaction costs and turnover can eliminate or even reverse
     the apparent profitability of many cross-sectional anomalies.
 
+- **... and the Cross-Section of Expected Returns**
+  - Harvey, Campbell R., Liu, Yan, and Zhu, Heqing, *Review of Financial
+    Studies*, 2016
+  - https://academic.oup.com/rfs/article/29/1/5/1843824
+  - Key insight: after accounting for multiple testing, many claimed anomalies
+    disappear; simple, diversified, and robustly selected signals tend to
+    outperform complex optimization in noisy cross-sections.
+
 - **Homemade Foreign Trading**
   - He, Zhiguo, et al., BFI Working Paper 2022-170 / 2026
   - https://bfi.uchicago.edu/wp-content/uploads/2023/01/BFI_WP_2022-170.pdf

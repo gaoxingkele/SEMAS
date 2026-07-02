@@ -8,6 +8,12 @@ Usage:
     os.environ["TUSHARE_TOKEN"] = "..."
     from china_a_share_alpha.data.tushare_loader import load_tushare_data
     train, test = load_tushare_data({"start_date": "20210601", "end_date": "20260601"})
+
+With an in-sample validation fold:
+
+    train, val, test = load_tushare_data_with_val(
+        {"start_date": "20210601", "end_date": "20260601", "val_date": "20230101"}
+    )
 """
 
 from __future__ import annotations
@@ -283,3 +289,28 @@ def load_tushare_data(
     train = data.loc[pd.IndexSlice[:, :split_date], :]
     test = data.loc[pd.IndexSlice[:, split_date:], :]
     return train, test
+
+
+def split_by_date(
+    data: pd.DataFrame, date: str | pd.Timestamp
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Split a panel into (before, from) a calendar date (inclusive on both sides)."""
+    ts = pd.Timestamp(date)
+    before = data.loc[pd.IndexSlice[:, :ts], :]
+    after = data.loc[pd.IndexSlice[:, ts:], :]
+    return before, after
+
+
+def load_tushare_data_with_val(config: dict[str, Any]) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Load Tushare data and split it into train / validation / test panels.
+
+    ``val_date`` must lie between ``start_date`` and ``split_date`` in the
+    config.  The validation fold is used for factor selection and weight
+    estimation without leaking the final test set.
+    """
+    train, test = load_tushare_data(config)
+    val_date = config.get("val_date")
+    if not val_date:
+        raise ValueError("load_tushare_data_with_val requires 'val_date' in config.")
+    train_inner, val = split_by_date(train, val_date)
+    return train_inner, val, test

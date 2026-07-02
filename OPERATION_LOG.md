@@ -10836,6 +10836,121 @@ the initial source batch.
 
 Retry the Wikimedia downloads later, or manually download from the recorded
 Commons pages and then compute SHA256 before adding the files to `manifest.json`.
+
+## 2026-07-02 - Additional Mingli Classical PDF Downloads Completed
+
+### Request
+
+Continue and complete the downloads for the newly found classical Mingli PDF
+candidates.
+
+### Actions
+
+- Retried Wikimedia upload downloads with browser-like headers, a Commons
+  referer, and a short delay between files.
+- Downloaded 7 additional PDFs into
+  `examples/mingli_5agents/classical_sources/raw_pdfs/`.
+- Updated `examples/mingli_5agents/classical_sources/manifest.json` with source
+  pages, direct PDF URLs, byte sizes, SHA256 hashes, and local filenames.
+- Updated `examples/mingli_5agents/classical_sources/README.md`.
+- Updated `examples/mingli_5agents/classical_sources/candidate_downloads_2026-07-02.md`
+  from pending candidates to completed downloads.
+
+### Downloaded Files
+
+- 子平真诠
+- 渊海子平子平真诠 v.1
+- 神峰通考
+- 滴天髓辑要
+- 穷通宝鉴评注
+- 精选命理约言
+- 韦千里命学讲义
+
+### Verification
+
+- Parsed `manifest.json` successfully.
+- Recomputed local file sizes and SHA256 hashes for all 11 manifest items.
+- All manifest entries matched the local PDF files.
+
+## 2026-07-02 - Per-Book Classical Mingli Agents
+
+### Request
+
+Build a layered Mingli analysis framework where each downloaded classical book
+has its own corresponding paper agent, and where those book agents cooperate and
+debate with the existing BaZi agent system.
+
+### Actions
+
+- Added `examples/mingli_5agents/tools/classical_book_agents.py`.
+- Created 11 per-book paper agents, one for each downloaded PDF source.
+- Integrated the new `classical_book_agents` debate into BaZi deep analysis.
+- Exposed `classical_book_agents` in the final BaZi profile.
+- Added `classical_book_agents` to the BaZi method surface and API schema.
+- Updated `method_cards.json` with the per-book agent registry.
+- Updated focused tests for system output and schema contracts.
+- Added the reasoning evolution note to `wiki/llm_agent_evolution_mingli.md`.
+
+### Book-Agent Coverage
+
+- 三命通会卷一: overall chart, pattern, ten-god, and major-luck synthesis.
+- 三命通会卷九: annual/monthly triggering and auxiliary marker boundaries.
+- 李虚中命书 + 珞琭子三命消息赋注: early Sanming lineage and staged-life boundary.
+- 天步真原人命部: historical star-fate comparison and boundary control.
+- 子平真诠: month-command pattern and useful-god protection.
+- 渊海子平子平真诠 v.1: pillar palace, ten-god imagery, and triggered hidden-stem themes.
+- 神峰通考: disease-medicine, passage, and transformation checks.
+- 滴天髓辑要: qi-flow, clarity, mixedness, and circulation breakpoints.
+- 穷通宝鉴评注: month-command climate adjustment and state stability.
+- 精选命理约言: concise experience-rule review and anti-template audit.
+- 韦千里命学讲义: modern teaching decomposition and readable Chinese report style.
+
+### Verification
+
+- `python -m py_compile` passed for the new and touched Python modules.
+- `python -m json.tool` passed for `method_cards.json`.
+- Focused pytest passed:
+  - `test_five_agent_executor_returns_required_artifacts`
+  - `test_professional_bazi_deep_analysis_uses_lunar_python_when_available`
+  - `test_schema_contract_score_gates_release_governance_contracts`
+- CLI schema smoke check passed for `BaziProfile.classical_book_agents`.
+- A smoke birth case produced `classical-book-agent-debate-v1` with 11 votes and
+  `classical_book_agents` present in the BaZi method matrix.
+
+### Boundary
+
+- CLI end-to-end `test_cli_init_analyze_evolve_status` was attempted but timed
+  out after about 184 seconds; the narrower schema smoke check passed.
+- The book agents are method-card level until OCR/manual edition review promotes
+  individual page-level rules.
+
+## 2026-07-02 - San Ming Tong Hui Full Twelve-Volume Download
+
+### Request
+
+Clarify whether only two volumes of `San Ming Tong Hui` were available, and
+complete the missing volumes if present.
+
+### Actions
+
+- Checked the local manifest and confirmed only volumes 1 and 9 had previously
+  been downloaded.
+- Queried adjacent Internet Archive item IDs and found `San Ming Tong Hui`
+  volumes 1 through 12 at `06056477.cn` through `06056488.cn`.
+- Downloaded missing volumes 2-8 and 10-12 into
+  `examples/mingli_5agents/classical_sources/raw_pdfs/`.
+- Re-downloaded volume 7 after detecting a partial file from a timed-out batch
+  download.
+- Updated `manifest.json`, `README.md`, `method_cards.json`, and the classical
+  book-agent source labels.
+
+### Verification
+
+- `manifest.json` now has 21 PDF entries total.
+- `San Ming Tong Hui` has 12 manifest entries: volumes 1 through 12.
+- Recomputed all manifest file sizes and SHA256 hashes; no mismatches.
+- Python compile checks passed for the touched book-agent modules.
+- JSON validation passed for `manifest.json` and `method_cards.json`.
 - Re-run enhanced expression evolution with a larger population / more
   generations, or a staged pipeline (base-factor search → combination search).
 
@@ -11103,3 +11218,93 @@ and test-set leakage during selection.
 - Phase 2: explore cross-market transfer, ML-based combination, and
   slightly higher-frequency intraday features.
 - Push current changes to GitHub.
+
+---
+
+## 2026-07-02 (continued) — China A-Share Alpha: Validation Fold + Weighted Combination
+
+### Motivation
+
+The previous equal-weight ensemble beat the baseline, but factor selection was
+still driven by training-set IC. Adding an in-sample validation fold lets us
+estimate both **selection** and **combination weights** without touching the
+final 2024-2026 test set.
+
+### Actions Taken
+
+1. **Data split helper**
+   - Added `split_by_date()` and `load_tushare_data_with_val()` in
+     `china_a_share_alpha/data/tushare_loader.py`.
+   - New config `enhanced_loop_config_val.yaml` splits 2021-06 to 2023-12 into
+     train (2021-06 to 2022-12) and validation (2023-01 to 2023-12); test
+     remains 2024-01 to 2026-06.
+
+2. **Validation-aware cleaning**
+   - `clean_factor_library.py` now computes `val_ic`, `val_sharpe`, and
+     `val_cost_adj_return` when `val_date` is present.
+   - Cleaning enforces sign agreement between train and validation IC and sorts
+     the surviving factors by validation IC by default.
+
+3. **Weighted combination methods**
+   - `run_factor_combination.py` now supports:
+     - `equal` (baseline),
+     - `ic` — weights proportional to validation IC,
+     - `sharpe` — sign(IC) × validation Sharpe,
+     - `risk_parity` — inverse volatility of validation long-short returns.
+   - Weights are estimated on the validation fold and applied unchanged to the
+     test period.
+
+### Files Changed
+
+- `china_a_share_alpha/data/tushare_loader.py`
+- `china_a_share_alpha/scripts/clean_factor_library.py`
+- `china_a_share_alpha/scripts/run_factor_combination.py`
+- `china_a_share_alpha/examples/enhanced_loop_config_val.yaml` (new)
+- `OPERATION_LOG.md` — this entry
+- `wiki/semas_evolution_ideas.md`
+
+### Verification
+
+- `python -m py_compile` on changed modules — **passed**.
+- Re-cleaned the enriched library with validation metrics: 48 expressions →
+  6 kept (stricter sign-agreement filter).
+- Ran equal / IC / Sharpe / risk-parity combinations for top-5 and top-6
+  validation-selected factors, plus train-selected factors with validation
+  weights.
+
+### Results
+
+| Selection | Weight | Smooth span | Test Sharpe | Test cost-adj return |
+|---|---|---|---|---|
+| Top 5 by val_ic | equal | 10 | 0.91 | 12.6% |
+| Top 5 by val_ic | ic | 10 | 0.99 | 13.7% |
+| Top 5 by val_sharpe | equal | 10 | 0.99 | 13.1% |
+| Top 6 by val_ic + `high_zscore_20` | ic | 10 | **1.01** | **14.9%** |
+| Top 10 by train_ic + validation weights | equal | 10 | 1.20 | 16.2% |
+| Top 10 by train_ic + validation weights | sharpe | 10 | 1.29 | 11.0% |
+| **Previous best** (train-only top 5 equal) | equal | 10 | **1.20** | **18.1%** |
+
+### Interpretation
+
+- The validation fold is correctly wired and produces stable, low-turnover
+  combinations.
+- In this particular split, validation-based selection did **not** beat the
+  train-only top-5 equal ensemble. The 2023 validation period appears to favour
+  slightly different factors than 2024-2026, so the validation filter drops the
+  factors that perform best out-of-sample.
+- Validation-based **weighting** on train-selected factors preserves strong
+  performance (test Sharpe 1.20) and is a safer recipe for live trading because
+  it never peeks at the test set.
+- Equal weight remains surprisingly competitive; the extra degrees of freedom
+  in IC / Sharpe / risk-parity weights do not consistently translate to better
+  test results.
+
+### Next Steps
+
+- Try a **rolling validation window** (e.g. expanding or walk-forward) instead
+  of a single calendar split, so weights adapt to regime shifts.
+- Experiment with an ML combination layer (ridge / LightGBM on recent factor
+  returns) using only validation data for hyper-parameter selection.
+- Begin Phase 2 cross-market transfer: evolve factors on CSI500/CSI1000 and
+  test on CSI300.
+- Push these changes to GitHub.

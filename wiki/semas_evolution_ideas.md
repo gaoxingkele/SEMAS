@@ -5,6 +5,57 @@
 
 ---
 
+## 2026-07-02 (continued) — China A-Share Alpha: Validation Fold + Weighted Combination
+
+Implemented the next evolution step: an in-sample validation fold for factor
+selection and combination-weight estimation.
+
+### What changed
+
+- Added `split_by_date()` and `load_tushare_data_with_val()` so the panel can
+  be split into train / validation / test.
+  [source: `china_a_share_alpha/data/tushare_loader.py`]
+- `clean_factor_library.py` now computes validation IC, Sharpe and cost-adjusted
+  return when `val_date` is configured, and enforces train/validation sign
+  agreement before a factor is kept.
+  [source: `china_a_share_alpha/scripts/clean_factor_library.py`]
+- `run_factor_combination.py` supports `equal`, `ic`, `sharpe`, and
+  `risk_parity` weight methods. Weights are fit on the validation fold only.
+  [source: `china_a_share_alpha/scripts/run_factor_combination.py`]
+
+### Key result
+
+Validation-based selection did not beat the simpler train-only top-5 equal
+ensemble on this split, but it produced a safer, fully out-of-sample pipeline:
+
+| Selection | Weight | Test Sharpe | Test cost-adj return |
+|---|---|---|---|
+| Top 5 by val_ic | ic | 0.99 | 13.7% |
+| Top 6 by val_ic + `high_zscore_20` | ic | 1.01 | 14.9% |
+| Top 10 train-selected + validation weights | equal | 1.20 | 16.2% |
+| **Previous best** train-only top 5 equal | equal | **1.20** | **18.1%** |
+
+[source: `china_a_share_alpha_output/enhanced_loop_fast2/combination_val/`]
+
+### Why this is useful anyway
+
+- It removes any peeking at the test set during selection/weighting.
+- It gives a realistic way to set live weights: re-fit on the most recent
+  validation window and apply to the next period.
+- Equal weight is still competitive, which matches the finding that
+  diversification often beats optimization in noisy factor spaces.
+  [source: Harvey, Liu & Zhu, *... and the Cross-Section of Expected Returns*, RFS 2016]
+
+### Next ideas
+
+- Rolling / walk-forward validation windows instead of one fixed calendar
+  validation year.
+- ML combination layer (ridge, LightGBM) with hyper-parameters chosen only on
+  validation data.
+- Phase 2: cross-market transfer (evolve on CSI500/CSI1000, test on CSI300).
+
+---
+
 ## 2026-07-02 — China A-Share Alpha: Phase 1 Expansion (Data + Operators + Loop Robustness)
 
 Started implementing the additional factor-mining spaces identified on
