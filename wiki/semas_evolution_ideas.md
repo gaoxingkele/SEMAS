@@ -33,6 +33,40 @@ noisy, low signal-to-noise ratio of cross-sectional factor returns.
 
 ---
 
+## 2026-07-03 (further continued) — China A-Share Alpha: Iterative / X-Large Evolution
+
+Attempted to scale further by running a pop 60 / gen 30 evolution. It was too
+slow, so we used an iterative pop40+pop40 strategy seeded with the previous
+best library.
+
+### What changed
+
+- Added `enhanced_loop_config_csi300_iterative.yaml` and seeded the population
+  with the large local library.
+  [source: `china_a_share_alpha/examples/enhanced_loop_config_csi300_iterative.yaml`]
+
+### Results
+
+| Library | Selection | Test Sharpe | Test cost-adj return |
+|---|---|---|---|
+| Large local (pop40, gen20) + val-cleaned | top 10 val-IC equal | **1.41** | **18.33%** |
+| Large local + iterative (pop40+pop40) | top 10 val-IC equal | 1.14 | 13.13% |
+
+### Take-away
+
+More generations did not help. The iterative run converged to sparse
+fundamental expressions that look good in isolation but combine poorly. The
+best recipe remains a single large in-market evolution with validation-based
+selection and equal weight.
+
+### Next ideas
+
+- Smarter search: guided mutation that penalises sparse fundamental leaves.
+- LLM critic to reject NaN-prone branches during evolution.
+- Hybrid ensemble mixing evolved factors with proven manual alphas.
+
+---
+
 ## 2026-07-03 — China A-Share Alpha: Larger Evolution + Template Transfer via Seed Library
 
 Continued the next two directions: scale up in-market evolution and use

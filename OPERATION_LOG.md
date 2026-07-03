@@ -11578,3 +11578,60 @@ Sharpe, risk-parity, ridge) can improve over the simple equal-weight ensemble.
 - Launch CSI300 xlarge evolution (pop 60, gen 30) to see if more search budget
   raises the ceiling.
 - Push current changes once xlarge results are available.
+
+---
+
+## 2026-07-03 (further continued) — Iterative / X-Large Evolution Attempt
+
+### Motivation
+
+Run an even larger evolution (pop 60 / gen 30) to push the Sharpe ceiling. The
+raw configuration proved too slow, so a practical iterative alternative was
+used: seed a second pop40 gen10 run with the best pop40 gen20 library.
+
+### Actions Taken
+
+1. Added `enhanced_loop_config_csi300_xlarge.yaml` with pop 50 / gen 25, but
+   launched runs were too slow (~10 min per generation).
+2. Created `enhanced_loop_config_csi300_iterative.yaml` (pop 40, gen 10) and
+   seeded two runs with the previously evolved `local_library.csv`.
+3. Merged the original pop40 gen20 library with the iterative pop40 gen10
+   library (107 unique expressions).
+4. Validation-cleaned the iterative seed-42 library and combined it with the
+   validation-cleaned large local library + `high_zscore_20`.
+
+### Files Changed
+
+- `china_a_share_alpha/examples/enhanced_loop_config_csi300_xlarge.yaml`
+- `china_a_share_alpha/examples/enhanced_loop_config_csi300_iterative.yaml` (new)
+- `OPERATION_LOG.md` — this entry
+- `wiki/semas_evolution_ideas.md`
+
+### Results
+
+| Library | Selection | Weight | Test Sharpe | Test cost-adj return |
+|---|---|---|---|---|
+| Large local (pop40, gen20) + val-cleaned | top 10 val-IC | equal | **1.41** | **18.33%** |
+| Large local + iterative (pop40+pop40 ≈ gen30) + val-cleaned | top 10 val-IC | equal | 1.14 | 13.13% |
+| Iterative seed-42 cleaned (pop40 gen10) | top 10 val-IC | equal | 0.96 | 8.9% |
+
+### Interpretation
+
+- **More generations did not help in this case.** The iterative run converged
+  quickly (4-9 generations) to fundamental-heavy expressions that are sparse
+  and do not combine well.
+- The best result remains the **single pop40 gen20 evolution with validation
+  selection and equal weight**.
+- The return-scaling anomaly noted earlier (high Sharpe but low cost-adjusted
+  return) is most pronounced when fundamental-sparse factors dominate the
+  ensemble; equal weighting on a dense subset avoids it.
+
+### Next Steps
+
+- Instead of more raw generations, focus on **smarter search**: guided
+  mutation that prefers dense, price-volume-friendly expressions; or use an
+  LLM critic to reject sparse fundamental branches during evolution.
+- Try a broader ensemble that mixes the best local library with stable manual
+  factors (e.g. `high_zscore_20`, short-term reversal) rather than purely
+  evolved factors.
+- Push current changes to GitHub.
