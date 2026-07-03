@@ -107,7 +107,7 @@ def main() -> int:
         "--weight-method",
         type=str,
         default="equal",
-        choices=["equal", "ic", "sharpe", "risk_parity"],
+        choices=["equal", "ic", "sharpe", "risk_parity", "ridge"],
         help="How to weight selected factors",
     )
     parser.add_argument("--smooth-span", type=int, default=10, help="EMA span for smoothing (1 = none)")
@@ -219,6 +219,20 @@ def main() -> int:
         weights = signed / abs_sum
         if np.abs(weights.sum()) < 1e-6:
             weights = np.ones(len(selected)) / len(selected)
+    elif args.weight_method == "ridge":
+        from sklearn.linear_model import Ridge
+
+        X = weight_mat.values
+        y = period_results[weight_period].loc[weight_mat.index].values
+        mask = np.isfinite(X).all(axis=1) & np.isfinite(y)
+        if mask.sum() < 10:
+            weights = np.ones(len(selected)) / len(selected)
+        else:
+            model = Ridge(alpha=1.0, fit_intercept=True)
+            model.fit(X[mask], y[mask])
+            weights = model.coef_
+            if np.abs(weights).sum() < 1e-12:
+                weights = np.ones(len(selected)) / len(selected)
     else:
         raise ValueError(f"Unknown weight method: {args.weight_method}")
 

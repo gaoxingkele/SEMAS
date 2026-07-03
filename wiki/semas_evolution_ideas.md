@@ -5,6 +5,34 @@
 
 ---
 
+## 2026-07-03 (continued) — China A-Share Alpha: Validation-Based Weighted Combination
+
+Tested IC / Sharpe / ridge weights estimated on the validation fold.
+
+### What changed
+
+- Added `ridge` to `run_factor_combination.py`. The model is fit on validation
+  factor z-scores vs. forward returns and applied to the test period.
+  [source: `china_a_share_alpha/scripts/run_factor_combination.py`]
+
+### Results
+
+| Selection | Weight | Test Sharpe | Test cost-adj return |
+|---|---|---|---|
+| Top 10 val-IC | equal | **1.41** | **18.33%** |
+| Top 10 val-IC | ic | 1.32 | 14.53% |
+| Top 10 val-IC | sharpe | 1.16 | 10.11% |
+| Top 10 val-IC | ridge | 1.12 | 11.10% |
+
+### Take-away
+
+Equal weight remains the most robust. All non-equal schemes over-fit the
+validation fold and degrade on the test set. This is consistent with the
+noisy, low signal-to-noise ratio of cross-sectional factor returns.
+[source: `china_a_share_alpha_output/csi300_large/weighted_val/`]
+
+---
+
 ## 2026-07-03 — China A-Share Alpha: Larger Evolution + Template Transfer via Seed Library
 
 Continued the next two directions: scale up in-market evolution and use

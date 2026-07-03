@@ -10951,6 +10951,37 @@ complete the missing volumes if present.
 - Recomputed all manifest file sizes and SHA256 hashes; no mismatches.
 - Python compile checks passed for the touched book-agent modules.
 - JSON validation passed for `manifest.json` and `method_cards.json`.
+
+## 2026-07-03 - San Ming Tong Hui Volume Sub-Agents
+
+### Request
+
+Clarify that the San Ming Tong Hui volume-level units should be sub-agents, not
+only source notes.
+
+### Actions
+
+- Added 12 San Ming Tong Hui volume-level sub-agents under the two parent San
+  Ming Tong Hui book agents.
+- Exposed the hierarchy through `classical_book_agents.sub_agent_votes`.
+- Added `sub_agent_count` to the classical book-agent debate output.
+- Updated `method_cards.json` with the San Ming Tong Hui sub-agent pattern.
+- Updated tests to assert 12 volume sub-agents and their parent links.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\classical_book_agents.py`
+  passed.
+- `python -m json.tool method_cards.json` passed.
+- `pytest test_mingli_system.py::test_five_agent_executor_returns_required_artifacts`
+  passed.
+- Smoke run confirmed `agent_count = 11`, `sub_agent_count = 12`, and both San
+  Ming Tong Hui parent agents expose 12 sub-agents.
+
+### Boundary
+
+- Volume sub-agents are active source-level sub-agents now, but their
+  page-level rule extraction remains pending OCR or manual edition review.
 - Re-run enhanced expression evolution with a larger population / more
   generations, or a staged pipeline (base-factor search → combination search).
 
@@ -11499,3 +11530,51 @@ initial population with cross-market (CSI500/CSI1000) evolved expressions.
 - Investigate why some train-IC-selected factors have strong Sharpe but weak
   cost-adjusted returns; possibly sign/return scaling issues.
 - Push these changes to GitHub.
+
+---
+
+## 2026-07-03 (continued) — Validation-Based Weighted Combination
+
+### Motivation
+
+Test whether weighting the selected factors on the validation fold (IC,
+Sharpe, risk-parity, ridge) can improve over the simple equal-weight ensemble.
+
+### Actions Taken
+
+1. Added `ridge` as a weight method in `run_factor_combination.py`. The model
+   is a sklearn `Ridge(alpha=1.0)` trained on factor z-scores -> forward
+   returns using the validation fold.
+2. Ran equal, IC, Sharpe, and ridge weighting on the top 5 / top 10 factors
+   from the validation-cleaned large local library.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/run_factor_combination.py`
+
+### Results
+
+| Selection | Weight | Smooth span | Train Sharpe | Test Sharpe | Test cost-adj return |
+|---|---|---|---|---|---|
+| Top 10 val-IC | equal | 10 | 1.59 | **1.41** | **18.33%** |
+| Top 10 val-IC | ic | 10 | 1.66 | 1.32 | 14.53% |
+| Top 10 val-IC | sharpe | 10 | 1.91 | 1.16 | 10.11% |
+| Top 10 val-IC | ridge | 10 | 2.30 | 1.12 | 11.10% |
+| Top 5 val-IC | equal | 10 | 1.66 | 1.20 | 13.42% |
+| Top 5 val-IC | ic | 10 | 1.74 | 1.28 | 13.05% |
+| Top 5 val-IC | sharpe | 10 | 2.23 | 0.48 | 2.40% |
+
+### Interpretation
+
+- **Equal weight remains the most robust out-of-sample.** All non-equal weight
+  schemes improve the in-sample fit but degrade on the test set, indicating
+  over-fitting to the validation fold.
+- Sharpe weighting is particularly unstable: it chases the factor with the
+  highest validation Sharpe, which often mean-reverts in the test period.
+- The best recipe so far is **validation-based selection + equal weight**.
+
+### Next Steps
+
+- Launch CSI300 xlarge evolution (pop 60, gen 30) to see if more search budget
+  raises the ceiling.
+- Push current changes once xlarge results are available.
