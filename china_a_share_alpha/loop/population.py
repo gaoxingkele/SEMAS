@@ -37,6 +37,7 @@ from china_a_share_alpha.factor.expression import (
     expr_from_dict,
     expr_to_dict,
 )
+from china_a_share_alpha.factor.parser import parse_expression
 
 
 @dataclass
@@ -71,6 +72,7 @@ class FactorPopulation:
         evaluator: Evaluator,
         mutator: FactorMutator,
         config: dict[str, Any],
+        seed_library: list[str] | None = None,
     ):
         self.repo = repo
         self.train_data = train_data
@@ -78,6 +80,7 @@ class FactorPopulation:
         self.evaluator = evaluator
         self.mutator = mutator
         self.config = config
+        self.seed_library = seed_library or []
         self.population: list[AgentGenome] = []
         self.archive: list[FactorCandidate] = []
         self.history: list[dict[str, Any]] = []
@@ -93,26 +96,38 @@ class FactorPopulation:
         pop_size = self.config.get("population_size", 20)
         seeds: list[AgentGenome] = []
 
+        # Optional seed library (e.g. cross-market templates).
+        for expr_str in self.seed_library[:pop_size]:
+            try:
+                expr = parse_expression(expr_str)
+                seeds.append(self._make_agent(expr, generation=0))
+            except Exception as exc:
+                print(f"  [seed library] skipping invalid expression: {exc}")
+
         # Raw variable baselines.
         for var in ["open", "high", "low", "close", "volume", "vwap", "return"]:
+            if len(seeds) >= pop_size:
+                break
             seeds.append(self._make_agent(Var(var), generation=0))
 
         # A few classic expressions.
-        seeds.append(
-            self._make_agent(
-                UnaryOp("neg", UnaryOp("cs_rank", RollingOp("ts_mean", Var("return"), 5))),
-                generation=0,
+        if len(seeds) < pop_size:
+            seeds.append(
+                self._make_agent(
+                    UnaryOp("neg", UnaryOp("cs_rank", RollingOp("ts_mean", Var("return"), 5))),
+                    generation=0,
+                )
             )
-        )
-        seeds.append(
-            self._make_agent(
-                UnaryOp(
-                    "cs_rank",
-                    RollingOp("ts_mean", BinaryOp("div", BinaryOp("sub", Var("close"), Var("open")), Var("open")), 5),
-                ),
-                generation=0,
+        if len(seeds) < pop_size:
+            seeds.append(
+                self._make_agent(
+                    UnaryOp(
+                        "cs_rank",
+                        RollingOp("ts_mean", BinaryOp("div", BinaryOp("sub", Var("close"), Var("open")), Var("open")), 5),
+                    ),
+                    generation=0,
+                )
             )
-        )
 
         # Random grammar-based expressions.
         random.seed(self.config.get("seed", 42))

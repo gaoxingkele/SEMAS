@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 
+import pandas as pd
 import yaml
 
 from china_a_share_alpha.data.tushare_loader import load_tushare_data
@@ -20,6 +21,16 @@ from china_a_share_alpha.loop.enhanced_population import EnhancedFactorPopulatio
 from china_a_share_alpha.evaluator.metrics import combined_factor_score
 from semas.evaluator.evaluator import Evaluator
 from semas.genome.repository import GenomeRepository
+
+
+def _load_seed_library(path: Path | None) -> list[str]:
+    """Load expressions from a factor library CSV."""
+    if path is None:
+        return []
+    df = pd.read_csv(path)
+    if "expression" not in df.columns:
+        return []
+    return df["expression"].dropna().unique().tolist()
 
 
 def run_enhanced_config(cfg: dict) -> dict:
@@ -35,6 +46,8 @@ def run_enhanced_config(cfg: dict) -> dict:
     evaluator = Evaluator(threshold=cfg.get("threshold", 0.1))
     evaluator.register_metric("combined_factor_score", combined_factor_score)
 
+    seed_library = cfg.get("seed_library", [])
+
     population = EnhancedFactorPopulation(
         repo=repo,
         train_data=train,
@@ -42,6 +55,7 @@ def run_enhanced_config(cfg: dict) -> dict:
         evaluator=evaluator,
         mutator=mutator,
         config=cfg,
+        seed_library=seed_library,
     )
     population.seed_population()
 
@@ -79,6 +93,8 @@ def main() -> int:
     parser.add_argument("config", help="YAML config path")
     parser.add_argument("--output-dir", type=Path, default=None)
     parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--seed-library", type=Path, default=None,
+                        help="Optional factor library CSV to seed the initial population")
     args = parser.parse_args()
 
     with open(args.config, "r", encoding="utf-8") as f:
@@ -88,6 +104,8 @@ def main() -> int:
         cfg["output_dir"] = str(args.output_dir)
     if args.seed is not None:
         cfg["seed"] = args.seed
+    if args.seed_library:
+        cfg["seed_library"] = _load_seed_library(args.seed_library)
 
     result = run_enhanced_config(cfg)
     print("Enhanced evolution completed.")

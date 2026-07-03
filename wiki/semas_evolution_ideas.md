@@ -5,6 +5,55 @@
 
 ---
 
+## 2026-07-03 — China A-Share Alpha: Larger Evolution + Template Transfer via Seed Library
+
+Continued the next two directions: scale up in-market evolution and use
+cross-market expressions as initial seeds.
+
+### What changed
+
+- `FactorPopulation` now accepts a `seed_library` list of expressions to
+  initialise the population. `run_enhanced_factor_loop.py` exposes it as
+  `--seed-library <csv>`.
+  [source: `china_a_share_alpha/loop/population.py`]
+- Added `enhanced_loop_config_csi300_large.yaml` (pop 40, 20 generations).
+- Merged CSI500/CSI1000 libraries into a 52-expression seed library and ran
+  two large CSI300 evolutions seeded with it.
+- Ran two large CSI300 evolutions from scratch for comparison.
+
+### Results
+
+| Library | Cleaning | Selection | Test Sharpe | Test cost-adj return |
+|---|---|---|---|---|
+| fast2 (pop 25, 10 gen) | train/test | top 5 train-IC | 1.20 | 18.1% |
+| large local | coverage | top 10 train-IC | 1.31 | 12.0% |
+| large local | **validation** | top 10 val-IC | **1.41** | **18.3%** |
+| large seeded (cross-market) | coverage | top 10 train-IC | 1.02 | 12.4% |
+
+[source: `china_a_share_alpha_output/csi300_large/combination/`]
+
+### Key findings
+
+- **Larger evolution + validation selection is the best recipe so far.**
+  Population 40 / 20 generations plus a 2023 validation fold produced the
+  strongest out-of-sample ensemble (Sharpe 1.41, cost-adj 18.3%).
+- **Validation filtering is mandatory at this scale.** The larger search
+  produces more overfit / sparse factors; the 80% daily-coverage filter and
+  validation Sharpe threshold remove them.
+- **Template transfer by seeding did not beat local evolution.** It is a
+  practical way to warm-start the search, but the locally evolved library
+  remains superior on the target universe.
+
+### Next ideas
+
+- Population 60 / 30 generations with validation selection.
+- Weight estimation on validation fold (risk-parity, ridge) instead of equal
+  weight.
+- Investigate return-scaling anomalies where high Sharpe pairs with low
+  cost-adjusted return.
+
+---
+
 ## 2026-07-02 (further continued) — China A-Share Alpha: Rolling Combination + Cross-Market Transfer
 
 Implemented the remaining three directions from the previous note.

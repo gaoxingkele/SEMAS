@@ -11412,3 +11412,90 @@ CSI500/CSI1000 to CSI300.
 - Run a longer / larger-population in-market evolution on CSI300 to see if the
   1.20 Sharpe barrier can be raised.
 - Push these changes to GitHub.
+
+---
+
+## 2026-07-03 — China A-Share Alpha: Larger In-Market Evolution + Template Transfer
+
+### Motivation
+
+Pursue the next two directions: (1) longer / larger-population evolution on
+CSI300 to push the Sharpe ceiling, and (2) template transfer by seeding the
+initial population with cross-market (CSI500/CSI1000) evolved expressions.
+
+### Actions Taken
+
+1. **Seed-library support**
+   - Added `seed_library` parameter to `FactorPopulation.__init__` and
+     `seed_population()`. If provided, the initial population is filled with
+     parsed expressions from the library before falling back to variable
+     baselines and random trees.
+   - `run_enhanced_factor_loop.py` now accepts `--seed-library <csv>`.
+
+2. **Larger evolution config**
+   - New `enhanced_loop_config_csi300_large.yaml`: population 40,
+     max generations 20, patience 6, leaderboard 50.
+
+3. **Template transfer**
+   - Merged the CSI500 and CSI1000 libraries (52 unique expressions) into
+     `cross_market_seed_library.csv`.
+   - Ran two seeds (42, 10) of the large CSI300 evolution seeded with this
+     cross-market library.
+
+4. **Local large evolution**
+   - Ran two seeds (42, 10) of the large CSI300 evolution from scratch.
+
+5. **Cleaning with coverage guardrails**
+   - Added `min_daily_coverage` filter (≥ 80%) to keep only factors that are
+     dense enough to be combined.
+   - Also ran validation-aware cleaning on the local large library using
+     `enhanced_loop_config_val.yaml` (train 2021-06→2022-12, val 2023-01→2023-12,
+     test 2024-01→2026-06).
+
+### Files Changed
+
+- `china_a_share_alpha/loop/population.py`
+- `china_a_share_alpha/scripts/run_enhanced_factor_loop.py`
+- `china_a_share_alpha/examples/enhanced_loop_config_csi300_large.yaml` (new)
+- `china_a_share_alpha/scripts/clean_factor_library.py` (already had coverage support)
+- `OPERATION_LOG.md` — this entry
+- `wiki/semas_evolution_ideas.md`
+
+### Verification
+
+- `python -m py_compile` on changed modules — **passed**.
+- Local large evolution produced 74 unique expressions; seeded large produced
+  64 unique expressions.
+- Coverage cleaning kept 20 local factors and 11 seeded factors.
+
+### Results
+
+| Library | Cleaning | Selection | Weight | Smooth span | Test Sharpe | Test cost-adj return |
+|---|---|---|---|---|---|---|
+| CSI300 fast2 (previous) | train/test | top 5 train-IC | equal | 10 | 1.20 | **18.1%** |
+| CSI300 large local | coverage | top 10 train-IC | equal | 10 | 1.31 | 12.0% |
+| CSI300 large local | **validation** | top 10 val-IC | equal | 10 | **1.41** | **18.3%** |
+| CSI300 large seeded (cross-market) | coverage | top 10 train-IC | equal | 10 | 1.02 | 12.4% |
+| Rolling equal (previous) | — | top 10 | equal | 10 | 1.29 | 16.5% |
+
+### Interpretation
+
+- **Larger evolution helps when combined with validation-based selection.**
+  The raw large library contains many overfit / sparse factors; the validation
+  fold filters them out and yields the best result so far: Sharpe 1.41 and
+  cost-adjusted return 18.3%.
+- **Template transfer via seeding is viable but not additive.** Seeding with
+  CSI500/CSI1000 expressions produced reasonable factors, but the final
+  ensemble did not beat the locally-evolved library.
+- **Coverage matters.** Without the 80% daily-coverage filter, the selected
+  factors were too sparse to combine (intersection of non-NaN rows was empty).
+
+### Next Steps
+
+- Try even longer evolution (population 60, 30 generations) with validation
+  selection.
+- Experiment with ensemble methods beyond equal weight on the validation fold
+  (e.g., risk-parity or ridge with longer validation windows).
+- Investigate why some train-IC-selected factors have strong Sharpe but weak
+  cost-adjusted returns; possibly sign/return scaling issues.
+- Push these changes to GitHub.
