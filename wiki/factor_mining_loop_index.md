@@ -14,6 +14,9 @@ continuous factor-mining loop.
 - [Iteration 3](factor_mining_loop_iteration_3.md) — First run with promotion
   gates. Cleaned 6 expressions, positive train Sharpe, but failed max
   correlation gate due to semantic duplicates.
+- [Iteration 4](factor_mining_loop_iteration_4.md) — Added semantic
+  deduplication. All gates passed; promoted a 6-factor ensemble with test
+  Sharpe **2.11** and cost-adj return **30.25%**.
 
 ## Design & Infrastructure
 

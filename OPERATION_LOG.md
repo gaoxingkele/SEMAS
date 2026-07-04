@@ -11942,6 +11942,290 @@ wrapper documentation.
 
 ---
 
+## 2026-07-04 - Smart_SkillandAgent Evolution Space Assessment
+
+### Motivation
+
+Analyze whether the first two imported Smart_SkillandAgent projects have real
+evolution space and create a practical improvement plan before modifying code or
+prompts.
+
+### Actions Taken
+
+1. Read key files from `loop-engineering`:
+   - `LOOP.md`
+   - `STATE.md`
+   - `package.json`
+   - `patterns/registry.yaml`
+   - `tools/loop-audit/src/auditor.ts`
+   - `tools/loop-audit/test/auditor.test.mjs`
+2. Read key files from `patent-disclosure-skill`:
+   - `SKILL.md`
+   - `requirements.txt`
+   - `prompts/patent_points_analyzer.md`
+   - `prompts/prior_art_search.md`
+   - `prompts/disclosure_self_check.md`
+   - `tests/test_cnipa_epub_chain.py`
+   - `tests/test_math_render.py`
+3. Created a topic-level evolution plan:
+   - `Smart_SkillandAgent/evolution_plan.md`
+4. Created project-level evolution plans:
+   - `Smart_SkillandAgent/projects/cobusgreyling_loop-engineering/evolution/evolution_plan_0001.md`
+   - `Smart_SkillandAgent/projects/handsomestWei_patent-disclosure-skill/evolution/evolution_plan_0001.md`
+5. Appended reasoning to each subproject's local LLM wiki.
+6. Updated global Smart_SkillandAgent wiki and SEMAS evolution ideas.
+
+### Findings
+
+- `loop-engineering` has evolution space mainly in semantic readiness scoring,
+  run-evidence interpretation, pattern recommendation, and SEMAS loop-genome
+  adaptation. It should not be improved by broad prose edits first.
+- `patent-disclosure-skill` has larger user-facing evolution space, especially
+  around an offline disclosure-quality benchmark, prior-art traceability,
+  patent-point coverage, claim-support consistency, and iterative correction
+  integrity.
+- Both projects should use evaluator-first evolution: baseline and metrics
+  before prompt/tool mutation.
+
+### Verification
+
+- Read-only inspection completed for both upstream checkouts.
+- Planning files were added under the Smart_SkillandAgent topic and each
+  subproject.
+- Runtime tests were not run; no dependencies were installed and no upstream
+  code was modified.
+
+### Boundary
+
+This was an analysis and planning pass. It does not change the two upstream
+repository checkouts in `repo/`.
+
+---
+
+## 2026-07-04 - Smart_SkillandAgent Skill-MAS Import And Analysis
+
+### Motivation
+
+Add Skill-MAS as the third Smart_SkillandAgent subproject and assess whether it
+has evolution and optimization space for SEMAS.
+
+User-provided sources:
+
+- Paper: `https://arxiv.org/abs/2606.18837`
+- GitHub: `https://github.com/linhh29/Skill-MAS`
+- Project page: `https://linhh29.github.io/blog/Skill-MAS/index.html`
+- Demo: `https://skill-mas-demo.hehailin.life/`
+
+### Actions Taken
+
+1. Verified paper/project metadata:
+   - arXiv title: `Skill-MAS: Evolving Meta-Skill for Automatic Multi-Agent Systems`
+   - arXiv v2 date: 2026-06-24
+   - authors: Hehai Lin, Qi Yang, Chengwei Qin
+2. Verified GitHub redirect and HEAD:
+   - requested URL: `https://github.com/linhh29/Skill-MAS`
+   - canonical path after redirect: `https://github.com/linhh29/Skill_MAS`
+   - HEAD: `b55d47ee7a08b34afda420bb3c5f2ca53efa64a4`
+3. Cloned the repository into:
+   - `Smart_SkillandAgent/projects/linhh29_Skill_MAS/repo`
+4. Created Skill-MAS subproject records:
+   - source provenance
+   - baseline import iteration
+   - metrics and backlog
+   - evaluation receipt
+   - local LLM wiki
+   - evolution plan
+5. Updated Smart_SkillandAgent registry and project indexes.
+6. Updated global wiki references and SEMAS evolution notes.
+
+### Analysis
+
+Skill-MAS has strong evolution space, but not as a normal prompt library. It is
+itself a Meta-Skill evolution system. The useful SEMAS path is:
+
+1. Build a structural Meta-Skill adapter.
+2. Diff initial and optimized skills to extract reusable orchestration
+   principles.
+3. Create low-cost local mini benchmarks before running expensive official
+   multi-trajectory evolution.
+4. Add cost-aware rollout allocation, reflection quality gates, and generated
+   MAS code sandbox checks.
+
+### Files Changed
+
+- `Smart_SkillandAgent/registry.yaml`
+- `Smart_SkillandAgent/README.md`
+- `Smart_SkillandAgent/projects/README.md`
+- `Smart_SkillandAgent/projects/linhh29_Skill_MAS/`
+- `wiki/references.md`
+- `wiki/smart_skillandagent_topic.md`
+- `wiki/semas_evolution_ideas.md`
+- `OPERATION_LOG.md`
+
+### Verification
+
+- `git ls-remote` confirmed upstream HEAD.
+- `git -C Smart_SkillandAgent\projects\linhh29_Skill_MAS\repo rev-parse HEAD`
+  matched the registered revision.
+- `Test-Path` confirmed Skill-MAS source, wiki, baseline receipt, and evolution
+  plan files exist.
+- Runtime tests were not run because this step only imported and documented the
+  baseline; full Skill-MAS evolution requires dependencies and model/API
+  configuration.
+
+### Boundary
+
+No upstream Skill-MAS code was modified. This was a baseline import plus
+evolution-space analysis.
+
+---
+
+## 2026-07-04 - Smart_SkillandAgent First Two Subprojects Evolution Iteration 0001
+
+### Motivation
+
+Complete the first evolution step for the first two Smart_SkillandAgent
+subprojects:
+
+1. `cobusgreyling_loop-engineering`
+2. `handsomestWei_patent-disclosure-skill`
+
+The goal was evaluator-first evolution: add reproducible selection pressure
+before mutating upstream prompts or tools.
+
+### Actions Taken
+
+1. Added `Smart_SkillandAgent/projects/cobusgreyling_loop-engineering/adapters/semas_loop_readiness.py`.
+   - Checks semantic loop readiness across cadence, state policy, action
+     boundary, human gates, verifier reproducibility, rollback, budget, run-log
+     evidence, MCP scope safety, and worktree isolation.
+2. Added `Smart_SkillandAgent/projects/handsomestWei_patent-disclosure-skill/benchmark/evaluator.py`.
+   - Scores candidate patent disclosure drafts for evidence coverage, section
+     completeness, patent-point quality, prior-art traceability, internal
+     leakage, diagram/formula support, and revision integrity.
+3. Added batch-job-scheduler fixture expectations:
+   - `Smart_SkillandAgent/projects/handsomestWei_patent-disclosure-skill/benchmark/cases/batch_job_scheduler/expected_evidence.json`
+4. Generated evaluation receipts:
+   - `Smart_SkillandAgent/projects/cobusgreyling_loop-engineering/evaluations/iteration_0001_semantic_readiness.md`
+   - `Smart_SkillandAgent/projects/handsomestWei_patent-disclosure-skill/evaluations/iteration_0001_fixture_baseline.md`
+5. Added iteration records:
+   - `Smart_SkillandAgent/projects/cobusgreyling_loop-engineering/evolution/iteration_0001_semantic_readiness_evaluator.md`
+   - `Smart_SkillandAgent/projects/handsomestWei_patent-disclosure-skill/evolution/iteration_0001_offline_benchmark_evaluator.md`
+6. Updated each subproject backlog and local LLM wiki.
+
+### Verification
+
+- `python -m py_compile Smart_SkillandAgent\projects\cobusgreyling_loop-engineering\adapters\semas_loop_readiness.py` - passed.
+- `python -m py_compile Smart_SkillandAgent\projects\handsomestWei_patent-disclosure-skill\benchmark\evaluator.py` - passed.
+- `python Smart_SkillandAgent\projects\cobusgreyling_loop-engineering\adapters\semas_loop_readiness.py --format markdown --output Smart_SkillandAgent\projects\cobusgreyling_loop-engineering\evaluations\iteration_0001_semantic_readiness.md` - passed.
+- `python Smart_SkillandAgent\projects\handsomestWei_patent-disclosure-skill\benchmark\evaluator.py --format markdown --output Smart_SkillandAgent\projects\handsomestWei_patent-disclosure-skill\evaluations\iteration_0001_fixture_baseline.md` - passed.
+
+### Results
+
+- Loop Engineering semantic readiness:
+  - Score: `100/100`
+  - Level: `semantic-L3`
+  - Checks passed: `10/10`
+- Patent Disclosure Skill fixture baseline:
+  - Fixture anchor coverage: `9/10`
+  - Missing anchor: `batch job`
+  - Candidate disclosure score: not run because no candidate draft was supplied.
+
+### Files Changed
+
+- `Smart_SkillandAgent/projects/cobusgreyling_loop-engineering/adapters/semas_loop_readiness.py`
+- `Smart_SkillandAgent/projects/cobusgreyling_loop-engineering/evaluations/iteration_0001_semantic_readiness.md`
+- `Smart_SkillandAgent/projects/cobusgreyling_loop-engineering/evolution/iteration_0001_semantic_readiness_evaluator.md`
+- `Smart_SkillandAgent/projects/cobusgreyling_loop-engineering/evolution/backlog.md`
+- `Smart_SkillandAgent/projects/cobusgreyling_loop-engineering/wiki/evolution_chain.md`
+- `Smart_SkillandAgent/projects/handsomestWei_patent-disclosure-skill/benchmark/evaluator.py`
+- `Smart_SkillandAgent/projects/handsomestWei_patent-disclosure-skill/benchmark/cases/batch_job_scheduler/expected_evidence.json`
+- `Smart_SkillandAgent/projects/handsomestWei_patent-disclosure-skill/evaluations/iteration_0001_fixture_baseline.md`
+- `Smart_SkillandAgent/projects/handsomestWei_patent-disclosure-skill/evolution/iteration_0001_offline_benchmark_evaluator.md`
+- `Smart_SkillandAgent/projects/handsomestWei_patent-disclosure-skill/evolution/backlog.md`
+- `Smart_SkillandAgent/projects/handsomestWei_patent-disclosure-skill/wiki/evolution_chain.md`
+- `wiki/smart_skillandagent_topic.md`
+- `wiki/semas_evolution_ideas.md`
+- `OPERATION_LOG.md`
+
+### Boundary
+
+No files inside either upstream `repo/` checkout were modified. This iteration
+evolved the SEMAS wrapper/evaluation layer around each project.
+
+---
+
+## 2026-07-04 - Smart_SkillandAgent Skill-MAS Evolution Iteration 0001
+
+### Motivation
+
+Run the same evaluator-first evolution strategy on the third subproject,
+Skill-MAS, without modifying upstream code or running expensive benchmark
+rollouts.
+
+### Actions Taken
+
+1. Inspected Skill-MAS skill files:
+   - `repo/init_skill/SKILL.md`
+   - `repo/optimized_skill/bcp.md`
+   - `repo/optimized_skill/drb.md`
+   - `repo/optimized_skill/hlemath.md`
+   - `repo/optimized_skill/vitabench.md`
+2. Added `Smart_SkillandAgent/projects/linhh29_Skill_MAS/adapters/meta_skill_adapter.py`.
+   - Parses frontmatter metadata.
+   - Extracts Task Decomposition, Agent Engineering, and Workflow
+     Orchestration modules.
+   - Computes bullet-level additions relative to the initial skill.
+   - Tags strategy categories such as constraints, uncertainty, parallelism,
+     verification, replanning, merge authority, search protocol, format
+     control, and state management.
+3. Generated:
+   - `Smart_SkillandAgent/projects/linhh29_Skill_MAS/evaluations/iteration_0001_meta_skill_adapter.md`
+   - `Smart_SkillandAgent/projects/linhh29_Skill_MAS/evaluations/iteration_0001_core_compile.md`
+4. Added:
+   - `Smart_SkillandAgent/projects/linhh29_Skill_MAS/evolution/iteration_0001_meta_skill_adapter.md`
+5. Updated Skill-MAS backlog and local LLM wiki.
+
+### Verification
+
+- `python -m py_compile Smart_SkillandAgent\projects\linhh29_Skill_MAS\adapters\meta_skill_adapter.py` - passed.
+- `python Smart_SkillandAgent\projects\linhh29_Skill_MAS\adapters\meta_skill_adapter.py --format markdown --output Smart_SkillandAgent\projects\linhh29_Skill_MAS\evaluations\iteration_0001_meta_skill_adapter.md` - passed.
+- `python -m py_compile` on selected upstream core modules - passed.
+
+### Results
+
+- Parsed skill files: `5`.
+- Structurally valid skill files: `5/5`.
+- Highest generality diffs:
+  - `bcp.md`: `1.0`
+  - `drb.md`: `1.0`
+  - `vitabench.md`: `1.0`
+  - `hlemath.md`: `0.9`
+- Interpretation:
+  - BCP contributes constraint/retrieval/merge-node patterns.
+  - DRB contributes synthesis/report/memory patterns.
+  - HLEMath contributes verification/calibration/format-control patterns.
+  - VitaBench contributes action-gating/context-integrity patterns.
+
+### Files Changed
+
+- `Smart_SkillandAgent/projects/linhh29_Skill_MAS/adapters/meta_skill_adapter.py`
+- `Smart_SkillandAgent/projects/linhh29_Skill_MAS/evaluations/iteration_0001_meta_skill_adapter.md`
+- `Smart_SkillandAgent/projects/linhh29_Skill_MAS/evaluations/iteration_0001_core_compile.md`
+- `Smart_SkillandAgent/projects/linhh29_Skill_MAS/evolution/iteration_0001_meta_skill_adapter.md`
+- `Smart_SkillandAgent/projects/linhh29_Skill_MAS/evolution/backlog.md`
+- `Smart_SkillandAgent/projects/linhh29_Skill_MAS/wiki/evolution_chain.md`
+- `wiki/smart_skillandagent_topic.md`
+- `wiki/semas_evolution_ideas.md`
+- `OPERATION_LOG.md`
+
+### Boundary
+
+No files inside the upstream Skill-MAS `repo/` checkout were modified. No paid
+LLM calls or official benchmark evolution runs were executed.
+
+---
+
 ## 2026-07-04 (continued) — Factor Mining Loop Iteration 3 with Promotion Gates
 
 ### Motivation
@@ -12026,3 +12310,132 @@ behavior in a real iteration.
   `|rho| > 0.95` before combination.
 - Run iteration 4 and verify it can pass all gates.
 - Push the gate updates and wiki notes to GitHub.
+
+---
+
+## 2026-07-04 — Mingli Twelve-Hour Calibration Case Study
+
+### Motivation
+
+Add a separate case-study workflow for public figures whose birth date is known
+but birth hour is uncertain. The method expands one date into 12 traditional
+hour candidates, lets each candidate act as a sub-agent, and scores each chart
+against known public life events.
+
+### Actions Taken
+
+1. Added `examples/mingli_5agents/case_studies/hour_calibration/`.
+2. Added `hour_calibration.py` to generate 12 candidate BaZi charts and score
+   event-year matches.
+3. Added input/output directory conventions and README documentation.
+4. Added a synthetic sample case for smoke testing.
+5. Added a public-event Mao Zedong sample case with source URLs recorded in the
+   case JSON.
+6. Recorded the method evolution in `wiki/llm_agent_evolution_mingli.md`.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\case_studies\hour_calibration\hour_calibration.py`
+- `python examples\mingli_5agents\case_studies\hour_calibration\hour_calibration.py examples\mingli_5agents\case_studies\hour_calibration\cases\sample_public_figure.json`
+- `python examples\mingli_5agents\case_studies\hour_calibration\hour_calibration.py examples\mingli_5agents\case_studies\hour_calibration\cases\mao_zedong_public_events.json`
+
+### Results
+
+- Sample case produced 12 ranked hour candidates and a markdown report.
+- Mao Zedong sample produced 12 ranked candidates, but the result was
+  `ambiguous`; the top candidates tied, so the framework correctly avoided
+  forcing a birth-hour conclusion.
+
+### Boundary
+
+This is an event-fit calibration workflow, not proof of a true birth hour.
+Future cases need stronger source review, event granularity, negative years,
+and a richer debate layer before using rankings as serious historical claims.
+
+---
+
+## 2026-07-04 (continued) — Factor Mining Loop Iteration 4: Breakthrough
+
+### Motivation
+
+Run the first iteration with both semantic deduplication and promotion gates in
+place, aiming for a stable and diverse ensemble that improves on the previous
+best.
+
+### Actions Taken
+
+1. Added semantic deduplication to `run_factor_mining_loop.py` (see previous
+   commit).
+2. Ran iteration 4 with seed 1004.
+3. Updated `china_a_share_alpha_output/factor_mining_loop/STATE.md`.
+4. Wrote `wiki/factor_mining_loop_iteration_4.md` and updated the index.
+5. Updated `wiki/semas_evolution_ideas.md` with the iteration 4 result.
+
+### Files Changed
+
+- `wiki/factor_mining_loop_iteration_4.md` (new)
+- `wiki/factor_mining_loop_index.md`
+- `wiki/semas_evolution_ideas.md`
+- `china_a_share_alpha_output/factor_mining_loop/STATE.md`
+- `china_a_share_alpha_output/factor_mining_loop/live_library.csv` (promoted)
+- `OPERATION_LOG.md` — this entry
+
+### Results — Iteration 4
+
+| Metric | Value |
+|---|---|
+| Seed | 1004 |
+| Merged expressions | 30 |
+| Cleaned expressions | 8 |
+| Deduplicated expressions | 6 |
+| Train Sharpe | 0.1235 |
+| Train cost-adj return | -6.23% |
+| Test Sharpe | **2.1145** |
+| Test cost-adjusted return | **30.25%** |
+| Max selection correlation | 0.2108 |
+| Promoted | **YES** |
+
+### Gate Status
+
+| Gate | Status |
+|---|---|
+| train_sharpe_positive | ✅ PASS |
+| min_cleaned_count | ✅ PASS |
+| max_corr_ok | ✅ PASS |
+
+### Promoted live library
+
+Six distinct factors, including:
+
+- `cs_zscore(div(sub(greater(eps, -0.033), sub(ocfps, turnover_rate)), winsorize(total_mv)))`
+- `ts_sum(net_elg_amount, 3)`
+- `cs_rank(ts_zscore(high, 20))`
+- `cs_zscore(neg(ts_rank(if_else(-0.423, -0.806, volume), 10)))`
+- `div(0.745, cs_rank(debt_to_assets))`
+- `sign(ts_shift(ts_ema(ts_pct_change(grossprofit_margin, 20), 5), 60))`
+
+### Interpretation
+
+- Semantic deduplication solved the perfect-correlation problem from iteration 3
+  and allowed a healthy, low-correlation ensemble to be promoted.
+- The loop found a substantially better library than both the previous loop
+  best and the earlier large-population run (Sharpe 1.41).
+- Train cost-adjusted return is still negative despite positive train Sharpe,
+  so the strategy relies on low transaction costs and a favorable out-of-sample
+  regime.
+
+### New Knowledge
+
+1. **Semantic deduplication is essential** when expressions can be syntactically
+   different but semantically identical.
+2. **Gates work:** requiring positive train Sharpe, ≥ 5 distinct factors, and
+   low max correlation produced the best ensemble so far.
+3. **Self-improvement is possible:** the loop autonomously discovered a better
+   library than the hand-tuned baseline.
+
+### Next Steps
+
+- Continue running the loop to see if further improvement is possible.
+- Before using the live library in production, run a coverage/sector-neutrality
+  audit and a cost-sensitivity analysis.
+- Push the updated wiki and logs to GitHub.
