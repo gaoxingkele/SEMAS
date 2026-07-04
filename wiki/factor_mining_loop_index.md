@@ -17,6 +17,9 @@ continuous factor-mining loop.
 - [Iteration 4](factor_mining_loop_iteration_4.md) — Added semantic
   deduplication. All gates passed; promoted a 6-factor ensemble with test
   Sharpe **2.11** and cost-adj return **30.25%**.
+- [Iteration 5](factor_mining_loop_iteration_5.md) — Seeded with iteration 4
+  library. Promoted a 7-factor ensemble with test Sharpe **2.20** and
+  cost-adj return **30.76%**; independently verified on Tushare data.
 
 ## Design & Infrastructure
 

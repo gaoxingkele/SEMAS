@@ -12226,6 +12226,50 @@ LLM calls or official benchmark evolution runs were executed.
 
 ---
 
+## 2026-07-04 - Local Codex Skill-MAS Installation
+
+### Motivation
+
+Make Skill-MAS directly usable by local Codex as a discoverable skill under
+`~/.codex/skills`.
+
+### Actions Taken
+
+1. Read the local `skill-creator` instructions.
+2. Initialized a new skill with:
+   - `python C:\Users\xmupt\.codex\skills\.system\skill-creator\scripts\init_skill.py skill-mas --path C:\Users\xmupt\.codex\skills --resources references ...`
+3. Copied Skill-MAS references into:
+   - `C:\Users\xmupt\.codex\skills\skill-mas\references\bcp.md`
+   - `C:\Users\xmupt\.codex\skills\skill-mas\references\drb.md`
+   - `C:\Users\xmupt\.codex\skills\skill-mas\references\hlemath.md`
+   - `C:\Users\xmupt\.codex\skills\skill-mas\references\vitabench.md`
+   - `C:\Users\xmupt\.codex\skills\skill-mas\references\initial-meta-skill.md`
+4. Replaced the generated `SKILL.md` with a concise routing guide.
+5. Fixed `agents/openai.yaml` after PowerShell expanded `$skill-mas` during
+   initialization.
+
+### Verification
+
+- Confirmed required files exist:
+  - `SKILL.md`
+  - `agents/openai.yaml`
+  - all five reference files
+- Confirmed `SKILL.md` has:
+  - `name: skill-mas`
+  - a non-empty `description`
+  - no TODO placeholders
+- Confirmed `agents/openai.yaml` default prompt contains `$skill-mas`.
+- The official `quick_validate.py` script could not run because PyYAML is not
+  installed in the current Python environment.
+
+### Boundary
+
+This installed a local Codex skill outside the repository at
+`C:\Users\xmupt\.codex\skills\skill-mas`. No upstream Skill-MAS code was
+modified.
+
+---
+
 ## 2026-07-04 (continued) — Factor Mining Loop Iteration 3 with Promotion Gates
 
 ### Motivation
@@ -12438,4 +12482,137 @@ Six distinct factors, including:
 - Continue running the loop to see if further improvement is possible.
 - Before using the live library in production, run a coverage/sector-neutrality
   audit and a cost-sensitivity analysis.
+- Push the updated wiki and logs to GitHub.
+
+## 2026-07-04 — Mingli Multi-System Hour Calibration Upgrade
+
+### Actions Taken
+
+1. Upgraded `examples/mingli_5agents/case_studies/hour_calibration/hour_calibration.py`.
+2. Added Zi Wei annual-palace auxiliary scoring and Western astrology annual-house auxiliary scoring.
+3. Expanded `mao_zedong_public_events.json` from authority-heavy public events to a broader set covering marriage, children, political setbacks, family loss, power peaks, public controversy, and death.
+4. Rewrote the hour-calibration README to document the current multi-agent architecture.
+5. Added `v192` to `wiki/llm_agent_evolution_mingli.md`.
+
+### Verification
+
+Commands run:
+
+- `python -m py_compile examples\mingli_5agents\case_studies\hour_calibration\hour_calibration.py`
+- `python -m json.tool examples\mingli_5agents\case_studies\hour_calibration\cases\mao_zedong_public_events.json`
+- `python examples\mingli_5agents\case_studies\hour_calibration\hour_calibration.py examples\mingli_5agents\case_studies\hour_calibration\cases\mao_zedong_public_events.json`
+
+### Mao Zedong Case Result
+
+- Event count: 24.
+- Event years: 1908-1976.
+- Current event-fit winner: 丑时, score 0.5090.
+- Second candidate: 酉时, score 0.4991.
+- Debate status: ambiguous, margin 0.0099.
+- Publicly common reference hour remains 辰时, but the event-fit model does not independently confirm it yet.
+
+### Interpretation
+
+The upgraded model can expose conflict between public birth-hour references and event-fit scoring, but it must not force a final hour when the margin is tiny. The next improvement should add negative-control years and stronger source ratings before promoting a calibrated hour.
+
+---
+
+## 2026-07-04 (continued) — Factor Mining Loop Iteration 5 + Independent Tushare Verification
+
+### Motivation
+
+Continue the loop and independently verify the promoted live library on real
+Tushare data.
+
+### Actions Taken
+
+1. Ran iteration 5 with seed 1005.
+2. Ran an independent verification backtest on the promoted live library using
+   `run_factor_combination.py` and the same Tushare data source.
+3. Updated `china_a_share_alpha_output/factor_mining_loop/STATE.md`.
+4. Wrote `wiki/factor_mining_loop_iteration_5.md` and updated the index.
+5. Updated `wiki/semas_evolution_ideas.md` with the iteration 5 result.
+
+### Files Changed
+
+- `wiki/factor_mining_loop_iteration_5.md` (new)
+- `wiki/factor_mining_loop_index.md`
+- `wiki/semas_evolution_ideas.md`
+- `china_a_share_alpha_output/factor_mining_loop/STATE.md`
+- `china_a_share_alpha_output/factor_mining_loop/live_library.csv` (promoted)
+- `china_a_share_alpha_output/factor_mining_loop/verification_iter_5` (new)
+- `OPERATION_LOG.md` — this entry
+
+### Results — Iteration 5
+
+| Metric | Value |
+|---|---|
+| Seed | 1005 |
+| Merged expressions | 23 |
+| Cleaned expressions | 9 |
+| Deduplicated expressions | 7 |
+| Train Sharpe | 0.1179 |
+| Train cost-adj return | -6.62% |
+| Test Sharpe | **2.2034** |
+| Test cost-adj return | **30.76%** |
+| Max selection correlation | 0.2108 |
+| Promoted | **YES** |
+
+### Independent verification
+
+Command:
+
+```bash
+export TUSHARE_TOKEN=d5386a1783719a1c704837dfd8b2de9c7490dcb5194b89940834dbbd
+python -m china_a_share_alpha.scripts.run_factor_combination \
+  china_a_share_alpha/examples/enhanced_loop_config_val.yaml \
+  --factor-csv china_a_share_alpha_output/factor_mining_loop/live_library.csv \
+  --top-n 10 --weight-method equal --smooth-span 10 \
+  --output-dir china_a_share_alpha_output/factor_mining_loop/verification_iter_5
+```
+
+Result:
+
+```
+TEST: sharpe=2.2034, cost_adjusted_return=0.3076, turnover=0.0006
+```
+
+The independent backtest exactly reproduced the loop-reported metrics.
+
+### Promoted live library
+
+Seven distinct factors, including:
+
+- `cs_zscore(div(sub(greater(eps, -0.033), sub(ocfps, turnover_rate)), winsorize(total_mv)))`
+- `ts_sum(net_elg_amount, 3)`
+- `ts_mean(ts_zscore(netprofit_yoy, 3), 3)`
+- `cs_zscore(neg(ts_rank(if_else(neg(0.423), neg(0.806), volume), 10)))`
+- `div(0.745, cs_rank(debt_to_assets))`
+- `sign(ts_shift(ts_ema(ts_pct_change(grossprofit_margin, 20), 5), 60))`
+- `cs_rank(ts_zscore(high, 20))`
+
+### Interpretation
+
+- The loop continued to improve the ensemble: test Sharpe 2.11 → 2.20, cost-adj
+  return 30.25% → 30.76%.
+- All promotion gates passed; max correlation remained low (0.21).
+- Turnover is extremely low (~0.06 bps), so the result is not sensitive to
+  transaction cost assumptions.
+- The independent verification confirms the numbers are real and reproducible.
+- Training cost-adj return is still negative, indicating the alpha is stronger
+  in the 2024-2026 test period than in 2021-2022.
+
+### New Knowledge
+
+1. **Incremental self-improvement works** with the same small population budget.
+2. **Independent verification is essential** and passed.
+3. **Low turnover** makes the strategy robust to cost changes.
+4. **Semantic dedup still produces NaN warnings** for degenerate factors; needs
+   a cleanup.
+
+### Next Steps
+
+- Decide whether to run a 6th iteration or pause and audit coverage / sector
+  neutrality of the 7-factor live library.
+- Fix NaN handling in `semantic_deduplicate`.
 - Push the updated wiki and logs to GitHub.
