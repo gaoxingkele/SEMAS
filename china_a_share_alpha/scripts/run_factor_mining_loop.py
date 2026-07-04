@@ -29,6 +29,12 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
+from china_a_share_alpha.data.tushare_loader import (
+    load_tushare_data,
+    load_tushare_data_with_val,
+)
+from china_a_share_alpha.factor.parser import parse_expression
+
 
 DEFAULT_STATE = {
     "iteration": 0,
@@ -105,6 +111,71 @@ def add_high_zscore(library_path: Path, output_path: Path) -> None:
     merged = pd.concat([df, high], ignore_index=True)
     merged["rank"] = range(1, len(merged) + 1)
     merged.to_csv(output_path, index=False)
+
+
+def _zscore(s: pd.Series) -> pd.Series:
+    return s.groupby(level="date").transform(lambda x: (x - x.mean()) / (x.std() + 1e-8))
+
+
+def semantic_deduplicate(
+    library_path: Path,
+    data_config: dict,
+    output_path: Path,
+    corr_threshold: float = 0.95,
+) -> int:
+    """Drop semantically duplicate expressions based on train-set correlation.
+
+    Keeps the first expression in library order and removes any later
+    expression whose absolute Spearman correlation with an already-kept
+    expression exceeds ``corr_threshold``.
+    """
+    if isinstance(data_config, (str, Path)):
+        with open(data_config, "r", encoding="utf-8") as f:
+            data_config = yaml.safe_load(f)
+
+    df = pd.read_csv(library_path)
+    if "factor" not in df.columns:
+        df["factor"] = df["rank"].apply(lambda r: f"factor_{r}")
+
+    if "val_date" in data_config:
+        train, _, _ = load_tushare_data_with_val(data_config)
+    else:
+        train, _ = load_tushare_data(data_config)
+
+    frames = []
+    for _, row in df.iterrows():
+        try:
+            expr = parse_expression(row["expression"])
+            f = _zscore(expr.eval(train))
+            frames.append(f.rename(row["factor"]))
+        except Exception as exc:
+            print(f"  [dedup] skipping invalid expression {row.get('factor')}: {exc}")
+
+    if not frames:
+        df.to_csv(output_path, index=False)
+        return 0
+
+    mat = pd.concat(frames, axis=1).dropna()
+    kept_rows = []
+    kept_cols = []
+    for _, row in df.iterrows():
+        col = row["factor"]
+        if col not in mat.columns:
+            continue
+        if kept_cols:
+            corr_max = mat[kept_cols].corrwith(mat[col], method="spearman").abs().max()
+        else:
+            corr_max = 0.0
+        if corr_max < corr_threshold:
+            kept_rows.append(row)
+            kept_cols.append(col)
+        else:
+            print(f"  [dedup] dropping {col} (max |corr|={corr_max:.3f})")
+
+    out = pd.DataFrame(kept_rows)
+    out["rank"] = range(1, len(out) + 1)
+    out.to_csv(output_path, index=False)
+    return len(out)
 
 
 def parse_combination_result(output_dir: Path) -> dict:
@@ -216,9 +287,18 @@ def run_loop_iteration(cfg: dict, output_dir: Path, dry_run: bool = False) -> di
     n_cleaned = len(pd.read_csv(cleaned_library)) if cleaned_library.exists() else 0
     print(f"[iter {iteration}] Cleaned library: {n_cleaned} expressions")
 
-    # ---- 4. COMBINE ----
+    # ---- 4. ADD high_zscore + SEMANTIC DEDUP ----
+    combined_pre = iteration_dir / "combined_library_pre.csv"
+    add_high_zscore(cleaned_library, combined_pre)
+
     combined_library = iteration_dir / "combined_library.csv"
-    add_high_zscore(cleaned_library, combined_library)
+    n_deduped = semantic_deduplicate(
+        combined_pre,
+        cfg["data_config"],
+        combined_library,
+        corr_threshold=cfg.get("semantic_dedup_corr_threshold", 0.95),
+    )
+    print(f"[iter {iteration}] After semantic dedup: {n_deduped} expressions")
 
     combo_output = iteration_dir / "combination"
     combo_cmd = [
@@ -258,7 +338,7 @@ def run_loop_iteration(cfg: dict, output_dir: Path, dry_run: bool = False) -> di
     gates = {
         "train_sharpe_positive": metrics["train_sharpe"]
         > cfg.get("min_train_sharpe_gate", 0.0),
-        "min_cleaned_count": n_cleaned >= cfg.get("min_cleaned_gate", 1),
+        "min_cleaned_count": n_deduped >= cfg.get("min_cleaned_gate", 1),
         "max_corr_ok": metrics["selection_correlation_max"]
         <= cfg.get("max_selection_correlation_gate", 1.0),
     }
@@ -306,6 +386,7 @@ def run_loop_iteration(cfg: dict, output_dir: Path, dry_run: bool = False) -> di
         "evolution_dir": str(seed_output),
         "n_merged": n_merged,
         "n_cleaned": n_cleaned,
+        "n_deduped": n_deduped,
         "metrics": metrics,
         "gates": {k: bool(v) for k, v in gates.items()},
         "improved": improved,
@@ -341,6 +422,7 @@ def write_report(
         f"- **Evolution seed**: {entry['seed']}",
         f"- **Merged expressions**: {entry['n_merged']}",
         f"- **Cleaned expressions**: {entry['n_cleaned']}",
+        f"- **Deduplicated expressions**: {entry.get('n_deduped', entry['n_cleaned'])}",
         f"- **Promoted**: {'YES' if promoted else 'NO'}",
         "",
         "## Metrics",

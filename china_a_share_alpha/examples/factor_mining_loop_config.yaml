@@ -22,6 +22,10 @@ max_turnover: 0.6
 max_nan_frac: 0.5
 min_daily_coverage: 0.5
 
+# Semantic deduplication: drop expressions whose absolute Spearman correlation
+# on the training set exceeds this threshold.
+semantic_dedup_corr_threshold: 0.95
+
 # Combination
 top_n: 10
 weight_method: "equal"
