@@ -11,6 +11,9 @@ continuous factor-mining loop.
 - [Iteration 2](factor_mining_loop_iteration_2.md) — Seeded with iteration 1
   live library, cleaned 5 expressions, no improvement, retained existing
   library.
+- [Iteration 3](factor_mining_loop_iteration_3.md) — First run with promotion
+  gates. Cleaned 6 expressions, positive train Sharpe, but failed max
+  correlation gate due to semantic duplicates.
 
 ## Design & Infrastructure
 

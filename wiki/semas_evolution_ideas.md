@@ -21,10 +21,11 @@ continuous loop for alpha-factor discovery.
 
 ### Iteration results
 
-| Iter | Seed | Merged | Cleaned | Test Sharpe | Cost-adj | Train Sharpe | Promoted |
-|---|---|---|---|---|---|---|---|
-| 1 | 1001 | 21 | 2 | **1.63** | **24.8%** | -0.39 | YES |
-| 2 | 1002 | 23 | 5 | 1.63 | 24.8% | -0.39 | NO |
+| Iter | Seed | Merged | Cleaned | Test Sharpe | Cost-adj | Train Sharpe | Promoted | Gates |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 1001 | 21 | 2 | **1.63** | **24.8%** | -0.39 | YES | - |
+| 2 | 1002 | 23 | 5 | 1.63 | 24.8% | -0.39 | NO | - |
+| 3 | 1003 | 22 | 6 | 1.58 | 22.6% | 0.59 | NO | corr failed |
 
 ### Caution
 
@@ -38,6 +39,10 @@ Iteration 2 seeded from the live library and cleaned 5 expressions, but the
 ensemble metrics were identical to iteration 1, so the existing library was
 retained. Seeding a strong library accelerates convergence but also suppresses
 novelty.
+
+Iteration 3 introduced hard promotion gates. It produced positive train Sharpe
+for the first time, but failed the max-correlation gate because string-level
+deduplication missed semantic duplicates (`-0.033` vs `neg(0.033)`).
 
 [source: `china_a_share_alpha_output/factor_mining_loop/loop_report_20260704_011353.md`]
 [source: `china_a_share_alpha_output/factor_mining_loop/loop_report_20260704_064238.md`]
@@ -1217,3 +1222,11 @@ Why this matters:
   decisions explicit before promoting changes.
 - Per-subproject wikis allow each imported GitHub project to carry its own
   chain of reasoning instead of mixing all decisions in the global wiki.
+
+Initial imported projects:
+
+- Loop Engineering provides loop-readiness ideas for state, cadence, budget,
+  audit, and human gates. [source: https://github.com/cobusgreyling/loop-engineering]
+- Patent Disclosure Skill provides a staged patent-writing skill pipeline for
+  project scanning, patent-point analysis, prior-art search, disclosure
+  drafting, self-check, and iteration. [source: https://github.com/handsomestWei/patent-disclosure-skill]

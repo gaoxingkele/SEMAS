@@ -182,6 +182,14 @@ def main() -> int:
     weight_period = "val" if "val" in period_mats else "train"
     weight_mat = period_mats[weight_period]
 
+    # Diversity signal: max absolute pairwise correlation among selected factors.
+    corr_matrix = weight_mat.corr(method="spearman")
+    corr_values = corr_matrix.abs().values
+    np.fill_diagonal(corr_values, 0.0)
+    max_corr = float(corr_values.max()) if corr_values.size else 0.0
+    corr_matrix.to_csv(args.output_dir / "factor_correlation.csv")
+    print(f"\n  selection_max_abs_corr: {max_corr:.4f}")
+
     if args.weight_method == "equal":
         weights = np.ones(len(selected)) / max(len(selected), 1)
     elif args.weight_method == "ic":
@@ -273,6 +281,7 @@ def main() -> int:
         "config": {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
         "weights": {row["factor"]: float(row["weight"]) for _, row in selected.iterrows()},
         "selected_factors": selected.to_dict(orient="records"),
+        "selection_correlation_max": max_corr,
         "results": results,
     }
     with open(args.output_dir / "combination_result.json", "w", encoding="utf-8") as f:

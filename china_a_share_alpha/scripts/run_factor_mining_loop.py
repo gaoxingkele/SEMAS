@@ -122,6 +122,7 @@ def parse_combination_result(output_dir: Path) -> dict:
         "train_cost_adjusted_return": results.get("train", {}).get(
             "cost_adjusted_return", 0.0
         ),
+        "selection_correlation_max": data.get("selection_correlation_max", 1.0),
     }
 
 
@@ -246,15 +247,28 @@ def run_loop_iteration(cfg: dict, output_dir: Path, dry_run: bool = False) -> di
     run_cmd(combo_cmd)
     metrics = parse_combination_result(combo_output)
 
-    # ---- 5. DECIDE ----
+
+
+    # ---- 5. DECIDE with gates ----
     improvement_sharpe = metrics["test_sharpe"] - state["best_test_sharpe"]
     improvement_return = (
         metrics["test_cost_adjusted_return"] - state["best_cost_adjusted_return"]
     )
-    promote = (
+
+    gates = {
+        "train_sharpe_positive": metrics["train_sharpe"]
+        > cfg.get("min_train_sharpe_gate", 0.0),
+        "min_cleaned_count": n_cleaned >= cfg.get("min_cleaned_gate", 1),
+        "max_corr_ok": metrics["selection_correlation_max"]
+        <= cfg.get("max_selection_correlation_gate", 1.0),
+    }
+    gates_passed = all(gates.values())
+
+    improved = (
         improvement_sharpe >= cfg.get("promote_sharpe_threshold", 0.05)
         or improvement_return >= cfg.get("promote_return_threshold", 0.005)
     )
+    promote = improved and gates_passed
 
     if promote:
         new_live = output_dir / "live_library.csv"
@@ -268,9 +282,17 @@ def run_loop_iteration(cfg: dict, output_dir: Path, dry_run: bool = False) -> di
             f"cost_adj={metrics['test_cost_adjusted_return']:.3%})"
         )
     else:
+        reasons = []
+        if not improved:
+            reasons.append("not improved")
+        for name, ok in gates.items():
+            if not ok:
+                reasons.append(name)
+        reason_str = ", ".join(reasons) if reasons else "unknown"
         print(
             f"[iter {iteration}] KEPT existing live library "
-            f"(new sharpe={metrics['test_sharpe']:.3f}, "
+            f"(reason: {reason_str}; "
+            f"new sharpe={metrics['test_sharpe']:.3f}, "
             f"new cost_adj={metrics['test_cost_adjusted_return']:.3%}; "
             f"best sharpe={state['best_test_sharpe']:.3f}, "
             f"best cost_adj={state['best_cost_adjusted_return']:.3%})"
@@ -285,6 +307,8 @@ def run_loop_iteration(cfg: dict, output_dir: Path, dry_run: bool = False) -> di
         "n_merged": n_merged,
         "n_cleaned": n_cleaned,
         "metrics": metrics,
+        "gates": {k: bool(v) for k, v in gates.items()},
+        "improved": improved,
         "promoted": promote,
     }
     state["iteration"] = iteration
@@ -325,6 +349,12 @@ def write_report(
         "|---|---|---|---|",
         f"| Train | {metrics['train_sharpe']:.4f} | {metrics['train_cost_adjusted_return']:.4f} | - |",
         f"| Test | {metrics['test_sharpe']:.4f} | {metrics['test_cost_adjusted_return']:.4f} | {metrics['test_ic']:.4f} |",
+        "",
+        "## Gates",
+        "",
+        f"- train_sharpe_positive: {entry['gates']['train_sharpe_positive']}",
+        f"- min_cleaned_count: {entry['gates']['min_cleaned_count']}",
+        f"- max_corr_ok: {entry['gates']['max_corr_ok']} (max corr = {metrics.get('selection_correlation_max', 1.0):.4f})",
         "",
         "## Decision",
         "",

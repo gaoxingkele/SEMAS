@@ -11884,3 +11884,145 @@ new knowledge into the local LLM wiki.
 - If the next iteration still cannot improve, launch an exploration run with
   no seed library and a larger mutation radius.
 - Push the updated wiki and logs to GitHub.
+
+---
+
+## 2026-07-04 - Smart_SkillandAgent First GitHub Imports
+
+### Motivation
+
+Register the first two Smart_SkillandAgent subprojects requested by the user:
+
+1. `https://github.com/cobusgreyling/loop-engineering` for loop engineering.
+2. `https://github.com/handsomestWei/patent-disclosure-skill` for 中国专利写作.
+
+Each imported repository needs its own local source checkout, provenance record,
+evolution backlog, baseline receipt, and local LLM wiki.
+
+### Actions Taken
+
+1. Queried upstream HEAD revisions:
+   - `loop-engineering`: `015ad4a57f210bafac1497fd5305d67bf728a21f`
+   - `patent-disclosure-skill`: `c4b843e2037376ce65a63f8db09b0cf635002b8f`
+2. Cloned both repositories into independent subproject `repo/` directories:
+   - `Smart_SkillandAgent/projects/cobusgreyling_loop-engineering/repo`
+   - `Smart_SkillandAgent/projects/handsomestWei_patent-disclosure-skill/repo`
+3. Created source provenance files, baseline import iterations, metrics,
+   backlogs, evaluation receipts, patch/run placeholders, and local LLM wiki
+   files for both subprojects.
+4. Updated `Smart_SkillandAgent/registry.yaml` with both projects.
+5. Updated Smart_SkillandAgent topic README/project index and global wiki
+   references.
+
+### Files Changed
+
+- `Smart_SkillandAgent/registry.yaml`
+- `Smart_SkillandAgent/README.md`
+- `Smart_SkillandAgent/projects/README.md`
+- `Smart_SkillandAgent/projects/cobusgreyling_loop-engineering/`
+- `Smart_SkillandAgent/projects/handsomestWei_patent-disclosure-skill/`
+- `wiki/references.md`
+- `wiki/smart_skillandagent_topic.md`
+- `wiki/semas_evolution_ideas.md`
+- `OPERATION_LOG.md`
+
+### Verification
+
+- `git ls-remote` confirmed upstream HEADs for both repositories.
+- `git -C <subproject>\repo rev-parse HEAD` confirmed cloned revisions.
+- `Test-Path` confirmed both subproject wiki evolution-chain files exist.
+- Runtime tests were not run because this step only imported and documented the
+  baselines; dependency installation is deferred to the first improvement
+  iteration per subproject.
+
+### Boundary
+
+No upstream code was modified. These are baseline source imports plus SEMAS
+wrapper documentation.
+
+---
+
+## 2026-07-04 (continued) — Factor Mining Loop Iteration 3 with Promotion Gates
+
+### Motivation
+
+Add hard promotion gates to the continuous factor-mining loop and verify their
+behavior in a real iteration.
+
+### Actions Taken
+
+1. **Added gates to `run_factor_mining_loop.py`**:
+   - `min_train_sharpe_gate: 0.0` — require positive train Sharpe.
+   - `min_cleaned_gate: 5` — require at least 5 cleaned factors.
+   - `max_selection_correlation_gate: 0.7` — require max pairwise correlation
+     among selected factors ≤ 0.7.
+   - A new library must pass all gates AND improve Sharpe/return before being
+     promoted.
+2. **Added correlation reporting to `run_factor_combination.py`**:
+   - Computes Spearman correlation matrix of selected factor z-scores.
+   - Writes `factor_correlation.csv` and `selection_correlation_max` to
+     `combination_result.json`.
+3. **Updated `factor_mining_loop_config.yaml`** with the new gate thresholds.
+4. **Ran iteration 3** with seed 1003.
+5. **Updated wiki CoT notes**:
+   - `wiki/factor_mining_loop_iteration_3.md`
+   - `wiki/factor_mining_loop_index.md`
+   - `wiki/semas_evolution_ideas.md`
+6. Updated `china_a_share_alpha_output/factor_mining_loop/STATE.md`.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/run_factor_mining_loop.py`
+- `china_a_share_alpha/scripts/run_factor_combination.py`
+- `china_a_share_alpha/examples/factor_mining_loop_config.yaml`
+- `wiki/factor_mining_loop_iteration_3.md` (new)
+- `wiki/factor_mining_loop_index.md`
+- `wiki/semas_evolution_ideas.md`
+- `OPERATION_LOG.md` — this entry
+
+### Results — Iteration 3
+
+| Metric | Value |
+|---|---|
+| Seed | 1003 |
+| Merged expressions | 22 |
+| Cleaned expressions | 6 |
+| Train Sharpe | 0.5927 |
+| Train cost-adj return | 4.33% |
+| Test Sharpe | 1.5771 |
+| Test cost-adjusted return | 22.65% |
+| Max selection correlation | **1.0000** |
+| Promoted | **NO** |
+
+### Gate Status
+
+| Gate | Status |
+|---|---|
+| train_sharpe_positive | ✅ PASS |
+| min_cleaned_count | ✅ PASS |
+| max_corr_ok | ❌ FAIL |
+
+### Interpretation
+
+- The new gates are working as intended.
+- Iteration 3 achieved **positive train Sharpe for the first time**, confirming
+  that the negative train result was not universal.
+- However, the ensemble failed the correlation gate because the mutator
+  produced syntactically different but semantically identical expressions
+  (e.g., `-0.033` vs `neg(0.033)`). String-level deduplication is not enough.
+- The test Sharpe also did not improve over the current best (1.577 vs 1.628),
+  so the existing live library is retained.
+
+### New Knowledge
+
+1. **String-level deduplication misses semantic duplicates.** Need a
+   correlation-based deduplication step.
+2. **Positive train Sharpe is reachable** with more search.
+3. **Correlation gate prevents ensembles from overweighting redundant signals.**
+
+### Next Steps
+
+- Add semantic deduplication: drop factors with pairwise evaluated correlation
+  `|rho| > 0.95` before combination.
+- Run iteration 4 and verify it can pass all gates.
+- Push the gate updates and wiki notes to GitHub.
