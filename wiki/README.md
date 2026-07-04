@@ -23,4 +23,7 @@ their citation sources.
 
 - [`semas_evolution_ideas.md`](./semas_evolution_ideas.md) — Core SEMAS design
   and all external self-evolution methodologies we have considered or absorbed.
+- [`smart_skillandagent_topic.md`](./smart_skillandagent_topic.md) -
+  Topic-level design note for continuously improving GitHub-origin skills and
+  agents with per-subproject local LLM wikis.
 - [`references.md`](./references.md) — Centralized BibTeX-like reference list.

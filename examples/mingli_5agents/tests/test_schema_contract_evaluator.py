@@ -634,6 +634,12 @@ def test_schema_contract_score_gates_release_governance_contracts():
     assert benchmark_features["chinese_render_monthly_useful_state_anchor_ratio"]["type"] == "number"
     assert benchmark_features["chinese_render_annual_branch_interaction_anchor_ratio"]["type"] == "number"
     assert benchmark_features["chinese_render_monthly_branch_interaction_anchor_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_annual_element_anchor_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_monthly_element_anchor_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_annual_element_flow_anchor_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_monthly_element_flow_anchor_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_annual_hidden_stem_flow_anchor_ratio"]["type"] == "number"
+    assert benchmark_features["chinese_render_monthly_hidden_stem_flow_anchor_ratio"]["type"] == "number"
     assert benchmark_features["chinese_render_ascii_letter_count"]["type"] == "integer"
     assert benchmark_features["chinese_render_ascii_question_present"]["type"] == "boolean"
     assert benchmark_features["chinese_render_code_marker_present"]["type"] == "boolean"
@@ -764,6 +770,27 @@ def test_schema_contract_score_gates_release_governance_contracts():
     assert schema["schemas"]["TopicSynthesisTimingSignal"]["properties"]["ten_gods"]["$ref"] == (
         "#/schemas/AnnualLuckTenGodPair"
     )
+    assert "elements" in schema["schemas"]["TopicSynthesisTimingSignal"]["required"]
+    assert schema["schemas"]["TopicSynthesisTimingSignal"]["properties"]["elements"]["$ref"] == (
+        "#/schemas/AnnualLuckRowElements"
+    )
+    assert "element_flow" in schema["schemas"]["TopicSynthesisTimingSignal"]["required"]
+    assert schema["schemas"]["TopicSynthesisTimingSignal"]["properties"]["element_flow"]["type"] == "array"
+    assert "hidden_stem_flow" in schema["schemas"]["TopicSynthesisTimingSignal"]["required"]
+    assert schema["schemas"]["TopicSynthesisTimingSignal"]["properties"]["hidden_stem_flow"]["items"]["$ref"] == (
+        "#/schemas/AnnualLuckHiddenStemFlow"
+    )
+    assert "luck_pillar_interactions" in schema["schemas"]["TopicSynthesisTimingSignal"]["properties"]
+    assert "interaction_pressure_summary" in schema["schemas"]["TopicSynthesisTimingSignal"]["properties"]
+    assert "monthly_pillar_source" in schema["schemas"]["TopicSynthesisTimingSignal"]["properties"]
+    hidden_stem_flow_schema = schema["schemas"]["AnnualLuckHiddenStemFlow"]
+    assert "weight" in hidden_stem_flow_schema["required"]
+    assert hidden_stem_flow_schema["properties"]["weight"]["type"] == "number"
+    assert "seasonal_factor" in hidden_stem_flow_schema["required"]
+    assert hidden_stem_flow_schema["properties"]["seasonal_factor"]["type"] == "number"
+    assert "adjusted_weight" in hidden_stem_flow_schema["required"]
+    assert hidden_stem_flow_schema["properties"]["adjusted_weight"]["type"] == "number"
+    assert "seasonal_phase" in hidden_stem_flow_schema["required"]
     assert "branch_interactions" in schema["schemas"]["TopicSynthesisTimingSignal"]["required"]
     assert schema["schemas"]["TopicSynthesisTimingSignal"]["properties"]["branch_interactions"]["type"] == "array"
     assert "risk_notes" in schema["schemas"]["TopicSynthesisAnnualFocus"]["required"]
@@ -774,6 +801,7 @@ def test_schema_contract_score_gates_release_governance_contracts():
     assert "downgrade_reasons" in topic_confidence["required"]
     assert "fallback_provider_count" in topic_confidence["required"]
     benchmark_features = schema["schemas"]["BenchmarkCaseReportFeatures"]["properties"]
+    assert benchmark_features["chinese_render_monthly_pillar_source_anchor_ratio"]["type"] == "number"
     assert "topic_confidence_summary" in benchmark_features
     assert "topic_confidence_boundaries_ok" in benchmark_features
     assert "topic_confidence_missing_topics" in benchmark_features
@@ -924,9 +952,23 @@ def test_schema_contract_score_gates_release_governance_contracts():
         "mingli-famous-case-validation-v2"
     )
     assert "birth_source_quality" in schema["schemas"]["FamousCaseValidationReceiptSummary"]["required"]
-    assert schema["schemas"]["FamousCaseValidationReceiptSummary"]["properties"]["birth_source_quality"]["type"] == (
-        "object"
+    assert schema["schemas"]["FamousCaseValidationReceiptSummary"]["properties"]["birth_source_quality"]["$ref"] == (
+        "#/schemas/FamousCaseBirthSourceQualitySummary"
     )
+    birth_source_schema = schema["schemas"]["FamousCaseBirthSourceQualitySummary"]
+    assert "source_gate_schema_version" in birth_source_schema["required"]
+    assert "source_gate_decisions" in birth_source_schema["required"]
+    assert birth_source_schema["properties"]["source_gate_schema_version"]["const"] == (
+        "famous-case-source-quality-gate-v1"
+    )
+    assert birth_source_schema["properties"]["source_gate_decisions"]["items"]["$ref"] == (
+        "#/schemas/FamousCaseSourceGateDecision"
+    )
+    gate_schema = schema["schemas"]["FamousCaseSourceGateDecision"]
+    assert gate_schema["properties"]["decision"]["enum"] == [
+        "allow_hour_pillar_scoring",
+        "hold_for_source_review",
+    ]
     assert "famous_case_school_calibration" in schema["schemas"]["CapabilityAuditResponse"]["required"]
     assert schema["schemas"]["CapabilityAuditResponse"]["properties"]["famous_case_school_calibration"]["$ref"] == (
         "#/schemas/FamousCaseSchoolCalibrationReceiptSummary"
@@ -952,7 +994,24 @@ def test_schema_contract_score_gates_release_governance_contracts():
     ]["required"]
     assert schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["properties"][
         "birth_source_quality_summary"
-    ]["type"] == "object"
+    ]["$ref"] == "#/schemas/FamousCaseAnnualBirthSourceQualitySummary"
+    annual_birth_schema = schema["schemas"]["FamousCaseAnnualBirthSourceQualitySummary"]
+    assert "source_gate_blocked_event_count" in annual_birth_schema["required"]
+    assert annual_birth_schema["properties"]["source_gate_schema_version"]["const"] == (
+        "famous-case-source-quality-gate-v1"
+    )
+    assert "event_label_source_quality_summary" in schema["schemas"][
+        "FamousCaseAnnualEventCalibrationReceiptSummary"
+    ]["required"]
+    assert schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["properties"][
+        "event_label_source_quality_summary"
+    ]["$ref"] == "#/schemas/FamousCaseAnnualEventLabelSourceQualitySummary"
+    event_label_schema = schema["schemas"]["FamousCaseAnnualEventLabelSourceQualitySummary"]
+    assert event_label_schema["properties"]["event_label_source_gate_schema_version"]["const"] == (
+        "famous-case-event-label-source-gate-v1"
+    )
+    assert "event_label_source_review_count" in event_label_schema["required"]
+    assert "blocks_rule_tuning" in event_label_schema["required"]
     assert "source_review_routing_summary" in schema["schemas"][
         "FamousCaseAnnualEventCalibrationReceiptSummary"
     ]["required"]
@@ -976,6 +1035,15 @@ def test_schema_contract_score_gates_release_governance_contracts():
     assert "topic_summary" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
     assert "event_subtype_summary" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
     assert "rule_variant_sweep" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
+    assert schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["properties"][
+        "domain_topic_variant_sweep"
+    ]["items"]["$ref"] == "#/schemas/FamousCaseVariantSweepRow"
+    assert schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["properties"]["rule_variant_sweep"][
+        "items"
+    ]["$ref"] == "#/schemas/FamousCaseVariantSweepRow"
+    variant_schema = schema["schemas"]["FamousCaseVariantSweepRow"]
+    assert "event_label_scoring_eligible_count" in variant_schema["required"]
+    assert "event_label_eligible_strict_exact_precision" in variant_schema["required"]
     assert "rule_refinement_queue" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
     assert "evolution_task_plan" in schema["schemas"]["FamousCaseAnnualEventCalibrationReceiptSummary"]["required"]
     assert "provider_example_smoke" in schema["schemas"]["CapabilityAuditResponse"]["required"]
@@ -1825,6 +1893,32 @@ def test_schema_contract_score_gates_release_governance_contracts():
         "#/schemas/AnnualLuckTenGodPair"
     )
     assert "monthly_ten_gods" in schema["schemas"]["MonthlyLuckBaziEvidence"]["required"]
+    assert "elements" in schema["schemas"]["MonthlyLuckBaziEvidence"]["required"]
+    assert schema["schemas"]["MonthlyLuckBaziEvidence"]["properties"]["elements"]["$ref"] == (
+        "#/schemas/AnnualLuckRowElements"
+    )
+    assert "element_flow" in schema["schemas"]["MonthlyLuckBaziEvidence"]["required"]
+    assert schema["schemas"]["MonthlyLuckBaziEvidence"]["properties"]["element_flow"]["type"] == "array"
+    assert "hidden_stem_flow" in schema["schemas"]["MonthlyLuckBaziEvidence"]["required"]
+    assert schema["schemas"]["MonthlyLuckBaziEvidence"]["properties"]["hidden_stem_flow"]["items"]["$ref"] == (
+        "#/schemas/AnnualLuckHiddenStemFlow"
+    )
+    assert "luck_pillar_interactions" in schema["schemas"]["MonthlyLuckBaziEvidence"]["required"]
+    assert schema["schemas"]["MonthlyLuckBaziEvidence"]["properties"]["luck_pillar_interactions"]["type"] == "object"
+    assert "interaction_pressure_summary" in schema["schemas"]["MonthlyLuckBaziEvidence"]["required"]
+    assert schema["schemas"]["MonthlyLuckBaziEvidence"]["properties"]["interaction_pressure_summary"]["type"] == "object"
+    assert "classical_timing_trace" in schema["schemas"]["MonthlyLuckBaziEvidence"]["required"]
+    assert schema["schemas"]["MonthlyLuckBaziEvidence"]["properties"]["classical_timing_trace"]["type"] == "object"
+    assert "monthly_pillar_source" in schema["schemas"]["MonthlyLuckBaziEvidence"]["required"]
+    assert schema["schemas"]["MonthlyLuckBaziEvidence"]["properties"]["monthly_pillar_source"]["$ref"] == (
+        "#/schemas/MonthlyPillarSource"
+    )
+    assert "pillar_source" in schema["schemas"]["MonthlyLuckRow"]["required"]
+    assert schema["schemas"]["MonthlyLuckRow"]["properties"]["pillar_source"]["$ref"] == "#/schemas/MonthlyPillarSource"
+    assert schema["schemas"]["MonthlyPillarSource"]["properties"]["basis"]["enum"] == [
+        "approximate_symbolic_month_sequence",
+        "provider_monthly_pillar",
+    ]
     assert "branch_interactions" in schema["schemas"]["MonthlyLuckBaziEvidence"]["required"]
     assert "topics" in schema["schemas"]["MonthlyLuckRow"]["required"]
     assert schema["schemas"]["AnalyzeResponse"]["properties"]["result"]["properties"]["final_report"]["properties"][
@@ -1928,9 +2022,25 @@ def test_schema_contract_score_gates_release_governance_contracts():
     assert schema["schemas"]["AnnualLuckBaziEvidence"]["properties"]["annual_ten_gods"]["$ref"] == (
         "#/schemas/AnnualLuckTenGodPair"
     )
+    assert "elements" in schema["schemas"]["AnnualLuckBaziEvidence"]["required"]
+    assert schema["schemas"]["AnnualLuckBaziEvidence"]["properties"]["elements"]["$ref"] == (
+        "#/schemas/AnnualLuckRowElements"
+    )
+    assert "element_flow" in schema["schemas"]["AnnualLuckBaziEvidence"]["required"]
+    assert schema["schemas"]["AnnualLuckBaziEvidence"]["properties"]["element_flow"]["type"] == "array"
+    assert "hidden_stem_flow" in schema["schemas"]["AnnualLuckBaziEvidence"]["required"]
+    assert schema["schemas"]["AnnualLuckBaziEvidence"]["properties"]["hidden_stem_flow"]["items"]["$ref"] == (
+        "#/schemas/AnnualLuckHiddenStemFlow"
+    )
     assert schema["schemas"]["AnnualLuckBaziEvidence"]["properties"]["active_major_luck"]["$ref"] == (
         "#/schemas/AnnualLuckActiveMajorLuck"
     )
+    assert "luck_pillar_interactions" in schema["schemas"]["AnnualLuckBaziEvidence"]["required"]
+    assert schema["schemas"]["AnnualLuckBaziEvidence"]["properties"]["luck_pillar_interactions"]["type"] == "object"
+    assert "interaction_pressure_summary" in schema["schemas"]["AnnualLuckBaziEvidence"]["required"]
+    assert schema["schemas"]["AnnualLuckBaziEvidence"]["properties"]["interaction_pressure_summary"]["type"] == "object"
+    assert "classical_timing_trace" in schema["schemas"]["AnnualLuckBaziEvidence"]["required"]
+    assert schema["schemas"]["AnnualLuckBaziEvidence"]["properties"]["classical_timing_trace"]["type"] == "object"
     assert schema["schemas"]["AnnualLuckBaziEvidence"]["properties"]["natal_pillar_matches"]["items"]["$ref"] == (
         "#/schemas/AnnualLuckNatalPillarMatch"
     )
@@ -1953,10 +2063,16 @@ def test_schema_contract_score_gates_release_governance_contracts():
     bazi_profile = schema["schemas"]["BaziProfile"]
     assert "image_symbol_analysis" in bazi_profile["required"]
     assert "new_school_simplified_analysis" in bazi_profile["required"]
+    assert "hengmen_pattern_analysis" in bazi_profile["required"]
+    assert "classical_layered_methodology" in bazi_profile["required"]
+    assert "classical_book_agents" in bazi_profile["required"]
     assert "data_validation_analysis" in bazi_profile["required"]
     assert "school_debate" in bazi_profile["required"]
     assert bazi_profile["properties"]["image_symbol_analysis"]["type"] == "object"
     assert bazi_profile["properties"]["new_school_simplified_analysis"]["type"] == "object"
+    assert bazi_profile["properties"]["hengmen_pattern_analysis"]["type"] == "object"
+    assert bazi_profile["properties"]["classical_layered_methodology"]["type"] == "object"
+    assert bazi_profile["properties"]["classical_book_agents"]["type"] == "object"
     assert bazi_profile["properties"]["data_validation_analysis"]["type"] == "object"
     assert bazi_profile["properties"]["school_debate"]["type"] == "object"
     assert bazi_profile["properties"]["strength_analysis"]["$ref"] == "#/schemas/BaziStrengthAnalysis"

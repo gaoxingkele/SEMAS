@@ -184,7 +184,14 @@ def test_specialist_tools_share_context():
     assert len(ziwei["deep_analysis"]["palaces"]) == 12
     assert set(ziwei["deep_analysis"]["four_transformations"]) == {"lu", "quan", "ke", "ji"}
     assert ziwei["deep_analysis"]["major_limits"]
-    assert bazi["sources"] == ["bazi_ziping", "bazi_sanming", "bazi_shensha"]
+    assert bazi["sources"] == [
+        "bazi_ziping",
+        "bazi_sanming",
+        "bazi_shensha",
+        "bazi_sanming_tonghui",
+        "bazi_early_sanming",
+        "bazi_tianbu_zhenyuan",
+    ]
     assert set(bazi["deep_analysis"]["ten_gods"]) == {"year", "month", "day", "hour"}
     assert bazi["deep_analysis"]["major_luck"]
     assert len(qimen["deep_analysis"]["palaces"]) == 9
@@ -342,6 +349,9 @@ def test_professional_bazi_deep_analysis_uses_lunar_python_when_available():
         "tiaohou",
         "image_symbol_reading",
         "new_school_simplified",
+        "hengmen_pattern",
+        "classical_layered_bazi",
+        "classical_book_agents",
         "data_validation_boundary",
     }
     assert deep["image_symbol_analysis"]["boundary"]
@@ -372,7 +382,68 @@ def test_annual_luck_builds_structured_year_rows():
     assert [row["year"] for row in annual["rows"]] == [2024, 2025, 2026]
     assert annual["rows"][0]["bazi_evidence"]["annual_pillar"] == annual["rows"][0]["ganzhi"]
     assert set(annual["rows"][0]["bazi_evidence"]["annual_ten_gods"]) == {"stem", "branch"}
+    assert set(annual["rows"][0]["bazi_evidence"]["elements"]) == {"stem", "branch", "focus"}
+    assert {
+        (item["source_slot"], item["source_element"], item["target_role"], item["target_element"], item["relation"])
+        for item in annual["rows"][0]["bazi_evidence"]["element_flow"]
+    } == {
+        ("stem", "Wood", "useful_element", "Metal", "consume"),
+        ("stem", "Wood", "dominant_element", "Fire", "generate"),
+        ("branch", "Earth", "useful_element", "Metal", "generate"),
+        ("branch", "Earth", "dominant_element", "Fire", "drain"),
+        ("focus", "Wood", "useful_element", "Metal", "consume"),
+        ("focus", "Wood", "dominant_element", "Fire", "generate"),
+    }
+    assert {
+        (
+            item["branch"],
+            item["hidden_stem"],
+            item["hidden_stem_role"],
+            item["weight"],
+            item["season"],
+            item["seasonal_phase"],
+            item["seasonal_factor"],
+            item["adjusted_weight"],
+            item["source_element"],
+            item["target_role"],
+            item["target_element"],
+            item["relation"],
+        )
+        for item in annual["rows"][0]["bazi_evidence"]["hidden_stem_flow"]
+    } == {
+        ("Chen", "Wu", "principal", 1.0, "spring", "prosperous", 1.2, 1.2, "Earth", "useful_element", "Metal", "generate"),
+        ("Chen", "Wu", "principal", 1.0, "spring", "prosperous", 1.2, 1.2, "Earth", "dominant_element", "Fire", "drain"),
+        ("Chen", "Yi", "middle", 0.5, "spring", "prosperous", 1.2, 0.6, "Wood", "useful_element", "Metal", "consume"),
+        ("Chen", "Yi", "middle", 0.5, "spring", "prosperous", 1.2, 0.6, "Wood", "dominant_element", "Fire", "generate"),
+        ("Chen", "Gui", "residual", 0.25, "spring", "resting", 0.9, 0.225, "Water", "useful_element", "Metal", "drain"),
+        ("Chen", "Gui", "residual", 0.25, "spring", "resting", 0.9, 0.225, "Water", "dominant_element", "Fire", "control"),
+    }
     assert annual["rows"][0]["bazi_evidence"]["useful_state"]
+    annual_luck_interaction = annual["rows"][0]["bazi_evidence"]["luck_pillar_interactions"]
+    assert annual_luck_interaction["current_pillar"] == "JiaChen"
+    assert annual_luck_interaction["active"] is True
+    assert annual_luck_interaction["major_luck_pillar"]
+    assert set(annual_luck_interaction["stem_relation"]) == {
+        "current_stem",
+        "current_stem_element",
+        "major_luck_stem",
+        "major_luck_stem_element",
+        "relation_to_major_luck",
+        "relation_from_major_luck",
+    }
+    annual_pressure = annual["rows"][0]["bazi_evidence"]["interaction_pressure_summary"]
+    assert annual_pressure["schema_version"] == "interaction-pressure-summary-v1"
+    assert annual_pressure["max_severity"] >= 3
+    assert annual_pressure["pressure_level"] in {"moderate", "elevated", "high"}
+    assert annual_pressure["interaction_count"] == (
+        annual_pressure["major_luck_interaction_count"] + annual_pressure["natal_interaction_count"]
+    )
+    assert annual_pressure["top_interactions"]
+    annual_classical_trace = annual["rows"][0]["bazi_evidence"]["classical_timing_trace"]
+    assert annual_classical_trace["schema_version"] == "classical-timing-trace-v1"
+    assert annual_classical_trace["level"] == "annual"
+    assert annual_classical_trace["current_layer"] == "annual trigger"
+    assert "bazi_sanming_tonghui" in annual_classical_trace["source_ids"]
     assert {
         (item["annual_branch"], item["natal_branch"], item["relation"], item["pillar"])
         for item in annual["rows"][0]["bazi_evidence"]["branch_interactions"]
@@ -449,9 +520,87 @@ def test_monthly_luck_builds_selected_year_rows():
     assert monthly["basis"]["dominant_element"] == bazi["dominant_element"]
     assert monthly["rows"][0]["year"] == 2025
     assert monthly["rows"][0]["month"] == 1
+    assert monthly["rows"][0]["solar_term_window"] == {
+        "schema_version": "solar-month-window-v1",
+        "basis": "approximate_jieqi_month_boundaries",
+        "provider_quality": "offline_approximation",
+        "precision": "approximate_date",
+        "solar_month_index": 1,
+        "branch": "Yin",
+        "start_term": "Start of Spring",
+        "start_term_zh": "立春",
+        "next_term": "Awakening of Insects",
+        "next_term_zh": "惊蛰",
+        "next_branch": "Mao",
+        "start_date": "2025-02-04",
+        "end_date": "2025-03-05",
+        "next_start_date": "2025-03-06",
+        "boundary_note": "Approximate solar-term window; replace with professional ephemeris provider for exact local transition time.",
+    }
     assert monthly["rows"][0]["bazi_evidence"]["monthly_pillar"] == monthly["rows"][0]["ganzhi"]
+    assert monthly["rows"][0]["bazi_evidence"]["solar_term_window"] == monthly["rows"][0]["solar_term_window"]
+    assert monthly["rows"][0]["pillar_source"] == {
+        "schema_version": "monthly-pillar-source-v1",
+        "basis": "approximate_symbolic_month_sequence",
+        "provider_quality": "offline_approximation",
+        "precision": "symbolic_sequence",
+        "boundary": "Deterministic offline monthly pillar sequence; replace with provider monthly pillar for production precision.",
+    }
+    assert monthly["rows"][0]["bazi_evidence"]["monthly_pillar_source"] == monthly["rows"][0]["pillar_source"]
     assert set(monthly["rows"][0]["bazi_evidence"]["monthly_ten_gods"]) == {"stem", "branch"}
+    assert set(monthly["rows"][0]["bazi_evidence"]["elements"]) == {"stem", "branch", "focus"}
+    assert {
+        (item["source_slot"], item["source_element"], item["target_role"], item["target_element"], item["relation"])
+        for item in monthly["rows"][0]["bazi_evidence"]["element_flow"]
+    } == {
+        ("stem", "Wood", "useful_element", "Metal", "consume"),
+        ("stem", "Wood", "dominant_element", "Fire", "generate"),
+        ("branch", "Wood", "useful_element", "Metal", "consume"),
+        ("branch", "Wood", "dominant_element", "Fire", "generate"),
+        ("focus", "Wood", "useful_element", "Metal", "consume"),
+        ("focus", "Wood", "dominant_element", "Fire", "generate"),
+    }
+    assert {
+        (
+            item["branch"],
+            item["hidden_stem"],
+            item["hidden_stem_role"],
+            item["weight"],
+            item["season"],
+            item["seasonal_phase"],
+            item["seasonal_factor"],
+            item["adjusted_weight"],
+            item["source_element"],
+            item["target_role"],
+            item["target_element"],
+            item["relation"],
+        )
+        for item in monthly["rows"][0]["bazi_evidence"]["hidden_stem_flow"]
+    } == {
+        ("Yin", "Jia", "principal", 1.0, "spring", "prosperous", 1.2, 1.2, "Wood", "useful_element", "Metal", "consume"),
+        ("Yin", "Jia", "principal", 1.0, "spring", "prosperous", 1.2, 1.2, "Wood", "dominant_element", "Fire", "generate"),
+        ("Yin", "Bing", "middle", 0.5, "spring", "supporting", 1.1, 0.55, "Fire", "useful_element", "Metal", "control"),
+        ("Yin", "Bing", "middle", 0.5, "spring", "supporting", 1.1, 0.55, "Fire", "dominant_element", "Fire", "same"),
+        ("Yin", "Wu", "residual", 0.25, "spring", "weak", 0.7, 0.175, "Earth", "useful_element", "Metal", "generate"),
+        ("Yin", "Wu", "residual", 0.25, "spring", "weak", 0.7, 0.175, "Earth", "dominant_element", "Fire", "drain"),
+    }
     assert monthly["rows"][0]["bazi_evidence"]["active_major_luck"]
+    monthly_luck_interaction = monthly["rows"][0]["bazi_evidence"]["luck_pillar_interactions"]
+    assert monthly_luck_interaction["current_pillar"] == monthly["rows"][0]["ganzhi"]
+    assert monthly_luck_interaction["active"] is True
+    assert monthly_luck_interaction["major_luck_pillar"]
+    assert "relation_to_major_luck" in monthly_luck_interaction["stem_relation"]
+    monthly_pressure = monthly["rows"][0]["bazi_evidence"]["interaction_pressure_summary"]
+    assert monthly_pressure["schema_version"] == "interaction-pressure-summary-v1"
+    assert monthly_pressure["max_severity"] >= 4
+    assert monthly_pressure["pressure_level"] in {"elevated", "high"}
+    assert monthly_pressure["major_luck_interaction_count"] >= 1
+    assert monthly_pressure["top_interactions"][0]["severity"] == monthly_pressure["max_severity"]
+    monthly_classical_trace = monthly["rows"][0]["bazi_evidence"]["classical_timing_trace"]
+    assert monthly_classical_trace["schema_version"] == "classical-timing-trace-v1"
+    assert monthly_classical_trace["level"] == "monthly"
+    assert monthly_classical_trace["current_layer"] == "monthly implementation"
+    assert monthly_classical_trace["solar_term_boundary"] == monthly["rows"][0]["solar_term_window"]
     assert monthly["rows"][0]["bazi_evidence"]["useful_state"]
     assert monthly["rows"][0]["bazi_evidence"]["branch_interactions"] == []
     assert {
@@ -474,6 +623,83 @@ def test_monthly_luck_builds_selected_year_rows():
         "leadership",
         "children_family",
     }.issubset(monthly["rows"][0])
+
+
+def test_monthly_luck_uses_provider_solar_term_windows_when_available():
+    birth = normalize_birth_input(
+        {
+            "name": "Provider Monthly Case",
+            "birth_date": "2000-01-01",
+            "birth_time": "06:00",
+            "gender": "unspecified",
+            "birthplace": "Beijing",
+        }
+    )
+    provider = ExternalCalendarProvider(
+        contexts={
+            "2000-01-01 06": {
+                "date": "2000-01-01",
+                "hour": 6,
+                "season": "winter",
+                "solar_term": "External Term",
+                "hour_branch": "Mao",
+                "zodiac_animal": "Dragon",
+                "pillars": {"year": "GengChen", "month": "DingChou", "day": "WuWu", "hour": "YiMao"},
+                "element_counts": {"Wood": 2, "Fire": 2, "Earth": 3, "Metal": 1, "Water": 0},
+                "dominant_element": "Earth",
+                "useful_element": "Water",
+                "solar_month_windows": {
+                    "2025-01": {
+                        "basis": "provider_jieqi_month_boundaries",
+                        "provider_quality": "external_calendar",
+                        "precision": "exact_datetime",
+                        "branch": "Yin",
+                        "start_term": "Start of Spring",
+                        "start_term_zh": "立春",
+                        "next_term": "Awakening of Insects",
+                        "next_term_zh": "惊蛰",
+                        "start_date": "2025-02-03T22:10:00+08:00",
+                        "end_date": "2025-03-05T16:06:00+08:00",
+                        "next_start_date": "2025-03-05T16:07:00+08:00",
+                        "boundary_note": "External provider exact Jieqi timestamp.",
+                    }
+                },
+                "monthly_pillars": {
+                    "2025-01": {
+                        "pillar": "GengShen",
+                        "basis": "provider_monthly_pillar",
+                        "provider_quality": "external_calendar",
+                        "precision": "exact_jieqi_month",
+                        "boundary": "External provider month pillar from exact Jieqi transition.",
+                    }
+                },
+            }
+        },
+        name="test_month_window_external",
+    )
+    register_calendar_provider(provider)
+    bazi = build_bazi_chart({**birth, "calendar_provider": "test_month_window_external"})
+    monthly = build_monthly_luck(birth, bazi, years=[2025])
+    window = monthly["rows"][0]["solar_term_window"]
+
+    assert window["basis"] == "provider_jieqi_month_boundaries"
+    assert window["provider_quality"] == "external_calendar"
+    assert window["precision"] == "exact_datetime"
+    assert window["start_date"] == "2025-02-03T22:10:00+08:00"
+    assert window["boundary_note"] == "External provider exact Jieqi timestamp."
+    assert monthly["rows"][0]["bazi_evidence"]["solar_term_window"] == window
+    assert monthly["rows"][0]["ganzhi"] == "GengShen"
+    assert monthly["rows"][0]["elements"] == {"stem": "Metal", "branch": "Metal", "focus": "Metal"}
+    assert monthly["rows"][0]["pillar_source"] == {
+        "schema_version": "monthly-pillar-source-v1",
+        "basis": "provider_monthly_pillar",
+        "provider_quality": "external_calendar",
+        "precision": "exact_jieqi_month",
+        "boundary": "External provider month pillar from exact Jieqi transition.",
+    }
+    assert monthly["rows"][0]["bazi_evidence"]["monthly_pillar"] == "GengShen"
+    assert monthly["rows"][0]["bazi_evidence"]["monthly_pillar_source"] == monthly["rows"][0]["pillar_source"]
+    assert {item["branch"] for item in monthly["rows"][0]["bazi_evidence"]["hidden_stem_flow"]} == {"Shen"}
 
 
 def test_auspicious_calendar_builds_xuanze_window():

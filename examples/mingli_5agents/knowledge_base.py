@@ -43,6 +43,27 @@ SOURCE_REGISTRY: dict[str, SourceRecord] = {
         scope="Auxiliary symbolic stars and pattern labels.",
         caution="Do not over-weight auxiliary labels.",
     ),
+    "bazi_sanming_tonghui": SourceRecord(
+        source_id="bazi_sanming_tonghui",
+        title="San Ming Tong Hui classical corpus",
+        tradition="bazi",
+        scope="Classical Sanming/BaZi synthesis covering pillars, patterns, ten-gods, auxiliary markers, and luck timing.",
+        caution="Use as classical method evidence; edition and OCR review are required before promoting exact textual rules.",
+    ),
+    "bazi_early_sanming": SourceRecord(
+        source_id="bazi_early_sanming",
+        title="Li Xuzhong and Luoluzi early Sanming materials",
+        tradition="bazi",
+        scope="Early three-life lineage and staged fate framing before later Ziping pattern standardization.",
+        caution="Use for lineage comparison and high-level method framing, not direct modern BaZi rule replacement.",
+    ),
+    "bazi_tianbu_zhenyuan": SourceRecord(
+        source_id="bazi_tianbu_zhenyuan",
+        title="Tianbu Zhenyuan Renming materials",
+        tradition="bazi",
+        scope="Historical human-fate and star-fate related material for comparison with pillar-based methods.",
+        caution="Historical comparison only unless a reviewed edition and rule extraction pass source gates.",
+    ),
     "ziwei_palace": SourceRecord(
         source_id="ziwei_palace",
         title="Zi Wei Dou Shu palace tradition",
@@ -112,4 +133,3 @@ def format_source(source_id: str) -> dict[str, str]:
         "scope": record.scope,
         "caution": record.caution,
     }
-

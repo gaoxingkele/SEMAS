@@ -3286,9 +3286,11 @@ def test_cli_init_analyze_evolve_status(tmp_path: Path, capsys, monkeypatch):
     bazi_profile_schema = schema_result["schemas"]["BaziProfile"]
     assert "image_symbol_analysis" in bazi_profile_schema["required"]
     assert "new_school_simplified_analysis" in bazi_profile_schema["required"]
+    assert "classical_book_agents" in bazi_profile_schema["required"]
     assert "data_validation_analysis" in bazi_profile_schema["required"]
     assert bazi_profile_schema["properties"]["image_symbol_analysis"]["type"] == "object"
     assert bazi_profile_schema["properties"]["new_school_simplified_analysis"]["type"] == "object"
+    assert bazi_profile_schema["properties"]["classical_book_agents"]["type"] == "object"
     assert bazi_profile_schema["properties"]["data_validation_analysis"]["type"] == "object"
     assert bazi_profile_schema["properties"]["method_matrix"]["items"]["$ref"] == "#/schemas/BaziMethodMatrixItem"
     assert bazi_profile_schema["properties"]["major_luck"]["items"]["$ref"] == "#/schemas/BaziMajorLuckPeriod"

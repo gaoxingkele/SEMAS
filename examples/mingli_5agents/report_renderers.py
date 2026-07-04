@@ -442,6 +442,11 @@ _CHINESE_REPORT_REPLACEMENTS = {
     "Zhejiang": "浙江",
     "China": "中国",
     "auto": "自动",
+    "offline_approximation": "离线近似",
+    "symbolic_sequence": "符号月序",
+    "provider_supplied": "供应商提供",
+    "exact_jieqi_month": "精确节气月",
+    "external_calendar": "外部历法",
     "Jia": "甲",
     "Yi": "乙",
     "Bing": "丙",
@@ -921,6 +926,11 @@ def _clean_contextual_topic_line(label: str, message: Any, row: dict[str, Any], 
     branch_interactions = (
         evidence.get("branch_interactions") if isinstance(evidence.get("branch_interactions"), list) else []
     )
+    elements = evidence.get("elements") if isinstance(evidence.get("elements"), dict) else {}
+    element_flow = evidence.get("element_flow") if isinstance(evidence.get("element_flow"), list) else []
+    hidden_stem_flow = (
+        evidence.get("hidden_stem_flow") if isinstance(evidence.get("hidden_stem_flow"), list) else []
+    )
     title = f"{row.get('year', '')}-{int(row.get('month', 0)):02d}" if monthly else str(row.get("year", ""))
     pillar = _ganzhi_zh(str(row.get("ganzhi", "")))
     stem_ten = _ten_god_zh(ten_gods.get("stem", ""))
@@ -931,11 +941,21 @@ def _clean_contextual_topic_line(label: str, message: Any, row: dict[str, Any], 
         _pillar_name_zh(str(item.get("pillar", ""))) for item in matches if isinstance(item, dict) and item.get("pillar")
     ) or "无"
     branch_text = _branch_interaction_text(branch_interactions)
+    element_text = _element_evidence_text(elements)
+    flow_text = _element_flow_text(element_flow)
+    hidden_flow_text = _hidden_stem_flow_text(hidden_stem_flow)
+    luck_interaction_text = _luck_pillar_interaction_text(evidence.get("luck_pillar_interactions"))
+    pressure_text = _interaction_pressure_text(evidence.get("interaction_pressure_summary"))
+    solar_text = _solar_term_window_text(evidence.get("solar_term_window")) if monthly else ""
+    solar_clause = f"，节气月{solar_text}" if solar_text else ""
+    pillar_source_text = _monthly_pillar_source_text(evidence.get("monthly_pillar_source")) if monthly else ""
+    pillar_source_clause = f"，月柱来源{pillar_source_text}" if pillar_source_text else ""
     scope = "本月" if monthly else "本年"
     return (
         f"- {label}：判断：{_clean_message(message)}；"
         f"依据：{scope}{title}{pillar}，天干{stem_ten}、地支{branch_ten}，"
-        f"大运{luck_label}，用神{useful_state}，原局同柱{match_text}，地支关系{branch_text}。"
+        f"五行{element_text}，流通={flow_text}，藏干={hidden_flow_text}{solar_clause}{pillar_source_clause}，大运{luck_label}，运柱互动{luck_interaction_text}，压力摘要{pressure_text}，用神{useful_state}，"
+        f"原局同柱{match_text}，地支关系{branch_text}。"
     )
 
 
@@ -950,18 +970,33 @@ def _clean_bazi_evidence_lines(row: dict[str, Any], *, monthly: bool = False) ->
     branch_interactions = (
         evidence.get("branch_interactions") if isinstance(evidence.get("branch_interactions"), list) else []
     )
+    elements = evidence.get("elements") if isinstance(evidence.get("elements"), dict) else {}
+    element_flow = evidence.get("element_flow") if isinstance(evidence.get("element_flow"), list) else []
+    hidden_stem_flow = (
+        evidence.get("hidden_stem_flow") if isinstance(evidence.get("hidden_stem_flow"), list) else []
+    )
     luck_label = _ganzhi_zh(active_luck.get("ganzhi", "")) if active_luck.get("ganzhi") else "未匹配"
     match_text = "、".join(
         _pillar_name_zh(str(item.get("pillar", ""))) for item in matches if isinstance(item, dict) and item.get("pillar")
     ) or "无"
     branch_text = _branch_interaction_text(branch_interactions)
+    element_text = _element_evidence_text(elements)
+    flow_text = _element_flow_text(element_flow)
+    hidden_flow_text = _hidden_stem_flow_text(hidden_stem_flow)
+    luck_interaction_text = _luck_pillar_interaction_text(evidence.get("luck_pillar_interactions"))
+    pressure_text = _interaction_pressure_text(evidence.get("interaction_pressure_summary"))
+    solar_text = _solar_term_window_text(evidence.get("solar_term_window")) if monthly else ""
+    solar_clause = f"；节气月={solar_text}" if solar_text else ""
+    pillar_source_text = _monthly_pillar_source_text(evidence.get("monthly_pillar_source")) if monthly else ""
+    pillar_source_clause = f"；月柱来源={pillar_source_text}" if pillar_source_text else ""
     label = "流月依据" if monthly else "八字依据"
     title = f"{row.get('year', '')}-{int(row.get('month', 0)):02d}" if monthly else str(row.get("year", ""))
     pillar = _ganzhi_zh(str(row.get("ganzhi", "")))
     return [
         (
             f"- {label}：{title}{pillar}，十神 天干={_ten_god_zh(ten_gods.get('stem', ''))}、"
-            f"地支={_ten_god_zh(ten_gods.get('branch', ''))}；大运={luck_label}；"
+            f"地支={_ten_god_zh(ten_gods.get('branch', ''))}；五行={element_text}；流通={flow_text}；"
+            f"藏干={hidden_flow_text}{solar_clause}{pillar_source_clause}；大运={luck_label}；运柱互动={luck_interaction_text}；压力摘要={pressure_text}；"
             f"用神状态={_useful_state_zh(evidence.get('useful_state', ''))}；原局同柱={match_text}；地支关系={branch_text}。"
         )
     ]
@@ -1072,7 +1107,30 @@ def _bazi_summary_item_zh(text: str, label: str) -> str:
     parts = text.split()
     pillar = _ganzhi_zh(parts[2]) if len(parts) > 2 else ""
     useful_state = text.rsplit("useful-state ", 1)[-1] if "useful-state " in text else ""
-    return f"八字{label}{pillar}，用神状态{_useful_state_zh(useful_state)}"
+    source_text = ""
+    luck_text = ""
+    if "monthly-pillar-source " in text:
+        useful_state = useful_state.split(" monthly-pillar-source ", 1)[0]
+        source_parts = text.rsplit("monthly-pillar-source ", 1)[-1].split()
+        basis = {
+            "approximate_symbolic_month_sequence": "近似月序",
+            "provider_monthly_pillar": "供应商月柱",
+        }.get(source_parts[0] if source_parts else "", source_parts[0] if source_parts else "")
+        provider_quality = source_parts[1] if len(source_parts) > 1 else ""
+        precision = source_parts[2] if len(source_parts) > 2 else ""
+        source_text = f"，月柱来源{basis}，{provider_quality}，{precision}" if basis else ""
+    if " luck-pillar " in text:
+        useful_state = useful_state.split(" luck-pillar ", 1)[0]
+        luck_parts = text.rsplit(" luck-pillar ", 1)[-1].split()
+        current = _ganzhi_zh(luck_parts[0]) if len(luck_parts) > 0 else ""
+        major_luck = _ganzhi_zh(luck_parts[1]) if len(luck_parts) > 1 else ""
+        summary = {
+            "branch_interaction": "有地支牵动",
+            "stem_only_or_neutral": "天干同气或常规互动",
+            "no_active_major_luck": "未匹配",
+        }.get(luck_parts[2] if len(luck_parts) > 2 else "", luck_parts[2] if len(luck_parts) > 2 else "")
+        luck_text = f"，运柱互动{current}对大运{major_luck}，{summary}" if current and major_luck else ""
+    return f"八字{label}{pillar}，用神状态{_useful_state_zh(useful_state)}{source_text}{luck_text}"
 
 
 def _clean_list(value: Any) -> str:
@@ -1278,12 +1336,29 @@ def _bazi_evidence_lines_zh(row: dict[str, Any], *, monthly: bool = False) -> li
     branch_interactions = (
         evidence.get("branch_interactions") if isinstance(evidence.get("branch_interactions"), list) else []
     )
+    elements = evidence.get("elements") if isinstance(evidence.get("elements"), dict) else {}
+    element_flow = evidence.get("element_flow") if isinstance(evidence.get("element_flow"), list) else []
+    hidden_stem_flow = (
+        evidence.get("hidden_stem_flow") if isinstance(evidence.get("hidden_stem_flow"), list) else []
+    )
     luck_label = _ganzhi_zh(active_luck.get("ganzhi", "")) if active_luck.get("ganzhi") else "未匹配"
     match_text = "、".join(_pillar_name_zh(str(item.get("pillar", ""))) for item in matches if isinstance(item, dict)) or "无"
     branch_text = _branch_interaction_text(branch_interactions)
+    element_text = _element_evidence_text(elements)
+    flow_text = _element_flow_text(element_flow)
+    hidden_flow_text = _hidden_stem_flow_text(hidden_stem_flow)
+    luck_interaction_text = _luck_pillar_interaction_text(evidence.get("luck_pillar_interactions"))
+    pressure_text = _interaction_pressure_text(evidence.get("interaction_pressure_summary"))
+    solar_text = _solar_term_window_text(evidence.get("solar_term_window")) if monthly else ""
+    solar_clause = f"；节气月={solar_text}" if solar_text else ""
+    pillar_source_text = _monthly_pillar_source_text(evidence.get("monthly_pillar_source")) if monthly else ""
+    pillar_source_clause = f"；月柱来源={pillar_source_text}" if pillar_source_text else ""
     label = "流月依据" if monthly else "八字依据"
     return [
-        f"- {label}：十神 天干={_ten_god_zh(ten_gods.get('stem', ''))}、地支={_ten_god_zh(ten_gods.get('branch', ''))}；大运={luck_label}；用神状态={_useful_state_zh(evidence.get('useful_state', ''))}；原局同柱={match_text}；地支关系={branch_text}。"
+        f"- {label}：十神 天干={_ten_god_zh(ten_gods.get('stem', ''))}、地支={_ten_god_zh(ten_gods.get('branch', ''))}；"
+        f"五行={element_text}；流通={flow_text}；藏干={hidden_flow_text}{solar_clause}{pillar_source_clause}；大运={luck_label}；运柱互动={luck_interaction_text}；压力摘要={pressure_text}；"
+        f"用神状态={_useful_state_zh(evidence.get('useful_state', ''))}；"
+        f"原局同柱={match_text}；地支关系={branch_text}。"
     ]
 
 
@@ -1298,6 +1373,209 @@ def _useful_state_zh(value: Any) -> str:
         "useful_element_present": "用神出现",
         "neutral_or_indirect": "中性或间接",
     }.get(str(value), str(value or ""))
+
+
+def _element_evidence_text(elements: Any) -> str:
+    if not isinstance(elements, dict) or not elements:
+        return "无"
+    stem = ELEMENT_ZH.get(str(elements.get("stem", "")), str(elements.get("stem") or ""))
+    branch = ELEMENT_ZH.get(str(elements.get("branch", "")), str(elements.get("branch") or ""))
+    focus = ELEMENT_ZH.get(str(elements.get("focus", "")), str(elements.get("focus") or ""))
+    parts = []
+    if stem:
+        parts.append(f"天干{stem}")
+    if branch:
+        parts.append(f"地支{branch}")
+    if focus:
+        parts.append(f"主轴{focus}")
+    return "、".join(parts) if parts else "无"
+
+
+ELEMENT_FLOW_RELATION_ZH = {
+    "same": "助",
+    "generate": "生",
+    "drain": "泄",
+    "control": "克",
+    "consume": "耗",
+    "neutral": "平",
+}
+
+ELEMENT_SLOT_ZH = {
+    "stem": "天干",
+    "branch": "地支",
+    "focus": "主轴",
+}
+
+ELEMENT_TARGET_ZH = {
+    "useful_element": "用神",
+    "dominant_element": "主气",
+}
+
+HIDDEN_STEM_ROLE_ZH = {
+    "principal": "本气",
+    "middle": "中气",
+    "residual": "余气",
+}
+
+SEASON_ZH = {
+    "spring": "春",
+    "summer": "夏",
+    "autumn": "秋",
+    "winter": "冬",
+}
+
+SEASONAL_PHASE_ZH = {
+    "prosperous": "旺",
+    "supporting": "相",
+    "resting": "休",
+    "confined": "囚",
+    "weak": "死",
+    "neutral": "平",
+}
+
+
+def _element_flow_text(flows: Any) -> str:
+    if not isinstance(flows, list) or not flows:
+        return "无"
+    rendered = []
+    for item in flows:
+        if not isinstance(item, dict):
+            continue
+        slot = ELEMENT_SLOT_ZH.get(str(item.get("source_slot", "")), str(item.get("source_slot") or ""))
+        source = ELEMENT_ZH.get(str(item.get("source_element", "")), str(item.get("source_element") or ""))
+        relation = ELEMENT_FLOW_RELATION_ZH.get(str(item.get("relation", "")), str(item.get("relation") or ""))
+        target_role = ELEMENT_TARGET_ZH.get(str(item.get("target_role", "")), str(item.get("target_role") or ""))
+        target = ELEMENT_ZH.get(str(item.get("target_element", "")), str(item.get("target_element") or ""))
+        if slot and source and relation and target_role and target:
+            rendered.append(f"{slot}{source}{relation}{target_role}{target}")
+    return "、".join(rendered) if rendered else "无"
+
+
+def _hidden_stem_flow_text(flows: Any) -> str:
+    if not isinstance(flows, list) or not flows:
+        return "无"
+    rendered = []
+    for item in flows:
+        if not isinstance(item, dict):
+            continue
+        branch = BRANCH_ZH.get(str(item.get("branch", "")), str(item.get("branch") or ""))
+        stem = STEM_ZH.get(str(item.get("hidden_stem", "")), str(item.get("hidden_stem") or ""))
+        role = HIDDEN_STEM_ROLE_ZH.get(str(item.get("hidden_stem_role", "")), str(item.get("hidden_stem_role") or ""))
+        weight = _hidden_stem_weight_text(item.get("weight"))
+        season = SEASON_ZH.get(str(item.get("season", "")), str(item.get("season") or ""))
+        phase = SEASONAL_PHASE_ZH.get(str(item.get("seasonal_phase", "")), str(item.get("seasonal_phase") or ""))
+        factor = _hidden_stem_weight_text(item.get("seasonal_factor"))
+        adjusted = _hidden_stem_weight_text(item.get("adjusted_weight"))
+        relation = ELEMENT_FLOW_RELATION_ZH.get(str(item.get("relation", "")), str(item.get("relation") or ""))
+        target_role = ELEMENT_TARGET_ZH.get(str(item.get("target_role", "")), str(item.get("target_role") or ""))
+        target = ELEMENT_ZH.get(str(item.get("target_element", "")), str(item.get("target_element") or ""))
+        if branch and stem and relation and target_role and target:
+            rendered.append(
+                f"{branch}藏{stem}{role}权重{weight}{season}{phase}系数{factor}调权{adjusted}{relation}{target_role}{target}"
+            )
+    return "、".join(rendered) if rendered else "无"
+
+
+def _luck_pillar_interaction_text(value: Any) -> str:
+    if not isinstance(value, dict) or not value.get("active"):
+        return "无"
+    current = _ganzhi_zh(str(value.get("current_pillar", "")))
+    luck = _ganzhi_zh(str(value.get("major_luck_pillar", "")))
+    stem_relation = value.get("stem_relation") if isinstance(value.get("stem_relation"), dict) else {}
+    relation = ELEMENT_FLOW_RELATION_ZH.get(
+        str(stem_relation.get("relation_to_major_luck", "")),
+        str(stem_relation.get("relation_to_major_luck") or ""),
+    )
+    current_stem = STEM_ZH.get(str(stem_relation.get("current_stem", "")), str(stem_relation.get("current_stem") or ""))
+    luck_stem = STEM_ZH.get(
+        str(stem_relation.get("major_luck_stem", "")),
+        str(stem_relation.get("major_luck_stem") or ""),
+    )
+    parts = []
+    if current and luck:
+        parts.append(f"{current}对大运{luck}")
+    if current_stem and relation and luck_stem:
+        parts.append(f"天干{current_stem}{relation}{luck_stem}")
+    branch_relations = value.get("branch_relations") if isinstance(value.get("branch_relations"), list) else []
+    branch_text = _luck_branch_relation_text(branch_relations)
+    if branch_text:
+        parts.append(f"地支{branch_text}")
+    return "，".join(parts) if parts else "无"
+
+
+def _interaction_pressure_text(value: Any) -> str:
+    if not isinstance(value, dict) or not value:
+        return "无"
+    level = {
+        "high": "高",
+        "elevated": "偏高",
+        "moderate": "中等",
+        "low": "较低",
+        "none": "无",
+    }.get(str(value.get("pressure_level", "")), str(value.get("pressure_level") or ""))
+    max_severity = value.get("max_severity", 0)
+    interaction_count = value.get("interaction_count", 0)
+    major_count = value.get("major_luck_interaction_count", 0)
+    natal_count = value.get("natal_interaction_count", 0)
+    return f"{level}，最高{max_severity}，共{interaction_count}项，大运{major_count}项，原局{natal_count}项"
+
+
+def _luck_branch_relation_text(relations: Any) -> str:
+    if not isinstance(relations, list) or not relations:
+        return ""
+    rendered = []
+    for item in relations:
+        if not isinstance(item, dict):
+            continue
+        current = BRANCH_ZH.get(str(item.get("current_branch", "")), str(item.get("current_branch") or ""))
+        luck = BRANCH_ZH.get(str(item.get("major_luck_branch", "")), str(item.get("major_luck_branch") or ""))
+        relation = BRANCH_INTERACTION_ZH.get(str(item.get("relation", "")), str(item.get("relation") or ""))
+        if current and luck and relation:
+            rendered.append(f"{current}{relation}{luck}")
+    return "、".join(rendered)
+
+
+def _solar_term_window_text(window: Any) -> str:
+    if not isinstance(window, dict) or not window:
+        return ""
+    start_term = str(window.get("start_term_zh") or window.get("start_term") or "")
+    next_term = str(window.get("next_term_zh") or window.get("next_term") or "")
+    start_date = _solar_window_date_text(window.get("start_date"))
+    end_date = _solar_window_date_text(window.get("end_date"))
+    branch_value = str(window.get("branch") or "")
+    branch = BRANCH_ZH.get(branch_value, branch_value)
+    term_part = f"{start_term}至{next_term}" if start_term and next_term else start_term or next_term
+    date_part = f"{start_date}至{end_date}" if start_date and end_date else start_date or end_date
+    parts = [part for part in (branch, term_part, date_part) if part]
+    return "，".join(parts)
+
+
+def _monthly_pillar_source_text(source: Any) -> str:
+    if not isinstance(source, dict) or not source:
+        return ""
+    basis = str(source.get("basis") or "")
+    basis_text = {
+        "approximate_symbolic_month_sequence": "近似月序",
+        "provider_monthly_pillar": "供应商月柱",
+    }.get(basis, basis)
+    precision = str(source.get("precision") or "")
+    provider_quality = str(source.get("provider_quality") or "")
+    parts = [part for part in (basis_text, provider_quality, precision) if part]
+    return "，".join(parts)
+
+
+def _solar_window_date_text(value: Any) -> str:
+    text = str(value or "")
+    if not text:
+        return ""
+    return text.replace("T", " ")
+
+
+def _hidden_stem_weight_text(value: Any) -> str:
+    try:
+        return f"{float(value):.2f}"
+    except (TypeError, ValueError):
+        return str(value or "")
 
 
 BRANCH_INTERACTION_ZH = {

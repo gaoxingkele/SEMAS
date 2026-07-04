@@ -795,6 +795,14 @@ def test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors(
                         "chinese_render_monthly_useful_state_anchor_ratio": 0.0,
                         "chinese_render_annual_branch_interaction_anchor_ratio": 0.5,
                         "chinese_render_monthly_branch_interaction_anchor_ratio": 0.0,
+                        "chinese_render_annual_element_anchor_ratio": 0.5,
+                        "chinese_render_monthly_element_anchor_ratio": 0.0,
+                        "chinese_render_annual_element_flow_anchor_ratio": 0.5,
+                        "chinese_render_monthly_element_flow_anchor_ratio": 0.0,
+                        "chinese_render_annual_hidden_stem_flow_anchor_ratio": 0.5,
+                        "chinese_render_monthly_hidden_stem_flow_anchor_ratio": 0.0,
+                        "chinese_render_monthly_solar_term_window_anchor_ratio": 0.0,
+                        "chinese_render_monthly_pillar_source_anchor_ratio": 0.0,
                         "chinese_render_ascii_letter_count": 0,
                         "chinese_render_ascii_question_present": False,
                         "chinese_render_code_marker_present": False,
@@ -812,6 +820,14 @@ def test_chinese_render_quality_gate_requires_annual_and_monthly_pillar_anchors(
     assert "pillar_probe Chinese monthly useful-state anchor ratio=0.000" in failures
     assert "pillar_probe Chinese annual branch-interaction anchor ratio=0.500" in failures
     assert "pillar_probe Chinese monthly branch-interaction anchor ratio=0.000" in failures
+    assert "pillar_probe Chinese annual element anchor ratio=0.500" in failures
+    assert "pillar_probe Chinese monthly element anchor ratio=0.000" in failures
+    assert "pillar_probe Chinese annual element-flow anchor ratio=0.500" in failures
+    assert "pillar_probe Chinese monthly element-flow anchor ratio=0.000" in failures
+    assert "pillar_probe Chinese annual hidden-stem-flow anchor ratio=0.500" in failures
+    assert "pillar_probe Chinese monthly hidden-stem-flow anchor ratio=0.000" in failures
+    assert "pillar_probe Chinese monthly solar-term-window anchor ratio=0.000" in failures
+    assert "pillar_probe Chinese monthly pillar-source anchor ratio=0.000" in failures
 
 
 def test_capability_audit_reports_outcome_dataset_configuration(tmp_path, monkeypatch):
@@ -1099,6 +1115,18 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert birth_source_quality["birth_time_format_valid_count"] == result["famous_case_validation"]["case_count"]
     assert "chiang_kai_shek" in birth_source_quality["caution_case_ids"]
     assert "arthur_ashe" in birth_source_quality["hour_pillar_scoring_eligible_case_ids"]
+    assert birth_source_quality["source_gate_schema_version"] == "famous-case-source-quality-gate-v1"
+    assert birth_source_quality["source_gate_decision_counts"]["allow_hour_pillar_scoring"] >= 1
+    assert birth_source_quality["source_gate_decision_counts"]["hold_for_source_review"] >= 1
+    assert birth_source_quality["source_gate_blocked_case_ids"] == birth_source_quality["caution_case_ids"]
+    blocked_decisions = [
+        item
+        for item in birth_source_quality["source_gate_decisions"]
+        if item["decision"] == "hold_for_source_review"
+    ]
+    assert blocked_decisions
+    assert all(item["blocks_rule_tuning"] is True for item in blocked_decisions)
+    assert any("low_birth_source_rating" in item["reasons"] for item in blocked_decisions)
     assert (
         result["famous_case_validation"]["material"]["birth_source_quality"]
         == result["famous_case_validation"]["birth_source_quality"]
@@ -1148,6 +1176,22 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert annual_birth_quality["caution_event_count"] > 0
     assert annual_birth_quality["eligible_event_count"] > annual_birth_quality["caution_event_count"]
     assert 0 < annual_birth_quality["eligible_event_rate"] <= 1
+    assert annual_birth_quality["source_gate_schema_version"] == "famous-case-source-quality-gate-v1"
+    assert annual_birth_quality["source_gate_decision_counts"]["hold_for_source_review"] >= 1
+    assert annual_birth_quality["source_gate_blocked_case_ids"] == annual_birth_quality["caution_case_ids"]
+    assert annual_birth_quality["source_gate_blocked_event_count"] == annual_birth_quality["caution_event_count"]
+    event_label_quality = result["famous_case_annual_event_calibration"]["event_label_source_quality_summary"]
+    assert event_label_quality["schema_version"] == (
+        "famous-case-annual-event-label-source-quality-summary-v1"
+    )
+    assert event_label_quality["event_count"] == result["famous_case_annual_event_calibration"]["event_count"]
+    assert event_label_quality["event_label_source_gate_schema_version"] == (
+        "famous-case-event-label-source-gate-v1"
+    )
+    assert event_label_quality["event_label_scoring_eligible_count"] > 0
+    assert event_label_quality["event_label_source_review_count"] > 0
+    assert event_label_quality["blocks_rule_tuning"] is True
+    assert event_label_quality["event_label_source_review_case_ids"]
     source_routing = result["famous_case_annual_event_calibration"]["source_review_routing_summary"]
     assert source_routing["schema_version"] == "famous-case-source-review-routing-summary-v1"
     assert source_routing["routing_complete"] is True
@@ -1213,6 +1257,9 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert film_fame_task["task_type"] == "add_domain_specific_evidence"
     assert film_fame_task["event_count"] >= 3
     assert 0 <= film_fame_task["eligible_event_rate"] <= 1
+    assert film_fame_task["task_metric_basis"] == "event_label_gated_strict_metrics"
+    assert "event_label_eligible_strict_exact_hit_rate" in film_fame_task
+    assert "event_label_eligible_strict_exact_precision" in film_fame_task
     assert film_fame_task["eligible_event_count"] + film_fame_task["caution_event_count"] == film_fame_task[
         "event_count"
     ]
@@ -1221,6 +1268,13 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     domain_topic_variant_sweep = result["famous_case_annual_event_calibration"]["domain_topic_variant_sweep"]
     assert domain_topic_variant_sweep
     assert all(item["selected"] is False for item in domain_topic_variant_sweep)
+    assert all("event_label_scoring_eligible_count" in item for item in domain_topic_variant_sweep)
+    assert all("event_label_eligible_strict_exact_precision" in item for item in domain_topic_variant_sweep)
+    assert any(item["event_label_source_review_count"] > 0 for item in domain_topic_variant_sweep)
+    assert all(
+        item["event_label_scoring_eligible_count"] + item["event_label_source_review_count"] == item["event_count"]
+        for item in domain_topic_variant_sweep
+    )
     film_fame_variants = [
         item
         for item in domain_topic_variant_sweep
@@ -1239,9 +1293,15 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert industry_film_fame["strict_exact_hit_rate"] == 1.0
     assert industry_film_fame["strict_exact_precision"] == 1.0
     assert industry_film_fame["strict_false_positive_rate"] == 0.0
+    assert industry_film_fame["event_label_eligible_strict_exact_precision"] == 1.0
     assert industry_film_fame["selected"] is False
     assert all("predictive validity" not in item["selection_basis"] for item in domain_topic_variant_sweep)
     assert all("cannot be promoted to prediction rules" in item["selection_basis"] for item in domain_topic_variant_sweep)
+    rule_variant_sweep = result["famous_case_annual_event_calibration"]["rule_variant_sweep"]
+    assert rule_variant_sweep
+    assert all("event_label_scoring_eligible_count" in item for item in rule_variant_sweep)
+    assert all("event_label_eligible_strict_exact_hit_rate" in item for item in rule_variant_sweep)
+    assert any(item["event_label_source_review_count"] > 0 for item in rule_variant_sweep)
     annual_topics = {item["event_topic"] for item in result["famous_case_annual_event_calibration"]["topic_summary"]}
     assert {"sports_peak", "public_fame", "health_risk", "relationship"}.issubset(annual_topics)
     for item in result["famous_case_annual_event_calibration"]["topic_summary"]:
@@ -1256,8 +1316,23 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert first_case_score["hour_pillar_scoring_eligible"] == first_case_score["birth_source_quality"][
         "hour_pillar_scoring_eligible"
     ]
+    assert first_case_score["birth_source_quality"]["source_gate_decision"] in {
+        "allow_hour_pillar_scoring",
+        "hold_for_source_review",
+    }
+    assert first_case_score["birth_source_quality"]["blocks_rule_tuning"] is False
     assert "event_subtype" in first_case_score["events"][0]
     assert "industry_event_evidence" in first_case_score["events"][0]
+    assert first_case_score["event_label_source_quality_summary"]["schema_version"] == (
+        "famous-case-event-label-source-quality-summary-v1"
+    )
+    assert first_case_score["events"][0]["event_label_source_gate"]["schema_version"] == (
+        "famous-case-event-label-source-gate-v1"
+    )
+    assert first_case_score["events"][0]["event_label_gate_decision"] in {
+        "allow_event_label_scoring",
+        "hold_event_label_for_source_review",
+    }
     first_industry_evidence = first_case_score["events"][0]["industry_event_evidence"]
     assert first_industry_evidence["has_domain_specific_evidence"] is True
     assert first_industry_evidence["boundary"].endswith("calibration only.")
@@ -1279,6 +1354,8 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert any(item["priority"] in {"medium", "high"} for item in refinement_queue)
     assert all(item["recommended_evidence"] for item in refinement_queue)
     assert all("eligible_event_rate=" in item["reason"] for item in refinement_queue)
+    assert all("event_label_gated_precision=" in item["reason"] for item in refinement_queue)
+    assert all(item["priority_metric_basis"] == "event_label_gated_strict_metrics" for item in refinement_queue)
     assert all(item["eligible_event_count"] + item["caution_event_count"] == item["event_count"] for item in refinement_queue)
     source_review_items = [item for item in refinement_queue if item["priority"] == "source_review_first"]
     assert source_review_items
@@ -1334,10 +1411,13 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert all(item["acceptance_criteria"] for item in evolution_task_plan)
     public_fame_task = next(item for item in evolution_task_plan if item["event_topic"] == "public_fame")
     assert public_fame_task["task_type"] == "refine_precision"
+    assert public_fame_task["task_metric_basis"] == "event_label_gated_strict_metrics"
+    assert "event_label_eligible_strict_exact_precision" in public_fame_task
     assert public_fame_task["subtype_coverage_rate"] == 1.0
     assert public_fame_task["default_subtype_count"] == 0
     relationship_task = next(item for item in evolution_task_plan if item["event_topic"] == "relationship")
-    assert relationship_task["task_type"] == "refine_precision"
+    assert relationship_task["task_type"] == "add_specific_evidence"
+    assert relationship_task["task_metric_basis"] == "event_label_gated_strict_metrics"
     assert relationship_task["subtype_coverage_rate"] == 1.0
     assert relationship_task["default_subtype_count"] == 0
     public_controversy_task = next(
@@ -1351,7 +1431,10 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert sports_peak_task["subtype_coverage_rate"] == 1.0
     assert sports_peak_task["default_subtype_count"] == 0
     health_risk_task = next(item for item in evolution_task_plan if item["event_topic"] == "health_risk")
-    assert health_risk_task["task_type"] == "refine_precision"
+    assert health_risk_task["task_type"] == "add_specific_evidence"
+    assert health_risk_task["task_metric_basis"] == "event_label_gated_strict_metrics"
+    assert health_risk_task["event_label_eligible_strict_exact_hit_rate"] == 0.0
+    assert health_risk_task["event_label_eligible_strict_exact_precision"] == 0.0
     assert health_risk_task["subtype_coverage_rate"] == 1.0
     assert health_risk_task["default_subtype_count"] == 0
     if not any(item["task_type"] == "expand_subtypes" for item in evolution_task_plan):
@@ -2767,6 +2850,14 @@ def test_production_readiness_gates_birth_profile_import_preview(tmp_path):
             assert features["chinese_render_monthly_useful_state_anchor_ratio"] == 1.0
             assert features["chinese_render_annual_branch_interaction_anchor_ratio"] == 1.0
             assert features["chinese_render_monthly_branch_interaction_anchor_ratio"] == 1.0
+            assert features["chinese_render_annual_element_anchor_ratio"] == 1.0
+            assert features["chinese_render_monthly_element_anchor_ratio"] == 1.0
+            assert features["chinese_render_annual_element_flow_anchor_ratio"] == 1.0
+            assert features["chinese_render_monthly_element_flow_anchor_ratio"] == 1.0
+            assert features["chinese_render_annual_hidden_stem_flow_anchor_ratio"] == 1.0
+            assert features["chinese_render_monthly_hidden_stem_flow_anchor_ratio"] == 1.0
+            assert features["chinese_render_monthly_solar_term_window_anchor_ratio"] == 1.0
+            assert features["chinese_render_monthly_pillar_source_anchor_ratio"] == 1.0
     assert famous_routing_gate["passed"] is True
     assert famous_routing_gate["details"] == []
     assert famous_queue_gate["passed"] is True

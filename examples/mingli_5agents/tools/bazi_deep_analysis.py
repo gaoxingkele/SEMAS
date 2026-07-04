@@ -7,14 +7,17 @@ from typing import Any
 
 from examples.mingli_5agents.tools.calendar_core import (
     BRANCH_ELEMENTS,
+    BRANCH_HIDDEN_STEMS,
     CHINESE_STEM_TO_EN,
     ELEMENTS,
+    MONTH_BRANCHES,
     STEM_ELEMENTS,
     STEMS,
     ganzhi,
     normalize_ganzhi_label,
 )
 from examples.mingli_5agents.tools.bazi_school_debate import build_bazi_school_debate
+from examples.mingli_5agents.tools.classical_book_agents import build_classical_book_agent_debate
 
 
 PILLAR_KEYS = ["year", "month", "day", "hour"]
@@ -99,6 +102,14 @@ def ensure_bazi_method_layers(deep: dict[str, Any], context: dict[str, Any]) -> 
         _new_school_simplified_analysis(day_element, dominant_element, spread, useful_element),
     )
     enriched.setdefault(
+        "hengmen_pattern_analysis",
+        _hengmen_pattern_analysis(pillars, day_master),
+    )
+    enriched.setdefault(
+        "classical_layered_methodology",
+        _classical_layered_methodology(enriched, context),
+    )
+    enriched.setdefault(
         "data_validation_analysis",
         {
             "status": "governed_not_predictive",
@@ -115,6 +126,7 @@ def ensure_bazi_method_layers(deep: dict[str, Any], context: dict[str, Any]) -> 
             "predictive_optimization_enabled": False,
         },
     )
+    enriched.setdefault("classical_book_agents", build_classical_book_agent_debate(enriched, context))
     defaults = [
             {
                 "method": "ziping_pattern",
@@ -157,6 +169,24 @@ def ensure_bazi_method_layers(deep: dict[str, Any], context: dict[str, Any]) -> 
                 "status": "scaffolded",
                 "evidence_fields": ["new_school_simplified_analysis", "strength_analysis", "useful_god_analysis"],
                 "summary": enriched["new_school_simplified_analysis"]["summary"],
+            },
+            {
+                "method": "hengmen_pattern",
+                "status": "available",
+                "evidence_fields": ["hengmen_pattern_analysis", "pattern_analysis", "school_debate"],
+                "summary": enriched["hengmen_pattern_analysis"]["summary"],
+            },
+            {
+                "method": "classical_layered_bazi",
+                "status": "available",
+                "evidence_fields": ["classical_layered_methodology", "major_luck", "pattern_analysis"],
+                "summary": enriched["classical_layered_methodology"]["summary"],
+            },
+            {
+                "method": "classical_book_agents",
+                "status": "available",
+                "evidence_fields": ["classical_book_agents", "classical_layered_methodology", "school_debate"],
+                "summary": enriched["classical_book_agents"]["consensus"]["synthesis_rule"],
             },
             {
                 "method": "data_validation_boundary",
@@ -483,6 +513,287 @@ def _new_school_simplified_analysis(
         "decision_rule": decision_rule,
         "summary": f"{polarity}; useful-element hypothesis={useful_element}; rule={decision_rule}",
         "boundary": "Simplified polarity is a coarse audit layer, not a replacement for multi-method synthesis.",
+    }
+
+
+TRINE_GROUPS = {
+    "Water": {"Shen", "Zi", "Chen"},
+    "Fire": {"Yin", "Wu", "Xu"},
+    "Metal": {"Si", "You", "Chou"},
+    "Wood": {"Hai", "Mao", "Wei"},
+}
+
+MEETING_GROUPS = {
+    "Wood": {"Yin", "Mao", "Chen"},
+    "Fire": {"Si", "Wu", "Wei"},
+    "Metal": {"Shen", "You", "Xu"},
+    "Water": {"Hai", "Zi", "Chou"},
+}
+
+HENGMEN_BENIGN_TEN_GODS = {"wealth", "authority", "resource"}
+HENGMEN_ADVERSE_TEN_GODS = {"peer"}
+
+
+def _hengmen_pattern_analysis(pillars: object, day_master: str) -> dict[str, Any]:
+    """Model the Geju Hengmen pattern-school rules as auditable signals."""
+    if not isinstance(pillars, dict):
+        return {
+            "schema_version": "hengmen-pattern-analysis-v1",
+            "source": "examples/格局横门断.docx",
+            "status": "missing_pillars",
+            "summary": "格局横门断需要完整四柱后才能判断月令、透干和会支。",
+            "rules": [],
+        }
+
+    month_label = str(pillars.get("month", ""))
+    month_stem = _pillar_stem(month_label) if month_label else ""
+    month_branch = _pillar_branch(month_label) if month_label else ""
+    visible_stems = _visible_stems(pillars)
+    branch_set = _branch_set(pillars)
+    hidden_stems = list(BRANCH_HIDDEN_STEMS.get(month_branch, []))
+    exposed_hidden = [stem for stem in hidden_stems if stem in visible_stems]
+    commanding_stem = exposed_hidden[0] if exposed_hidden else (hidden_stems[0] if hidden_stems else month_stem)
+    commanding_ten_god = _approx_ten_god(day_master, commanding_stem) if commanding_stem else "unknown"
+    trine_changes = _group_changes(month_branch, branch_set, TRINE_GROUPS, "trine")
+    meeting_changes = _group_changes(month_branch, branch_set, MEETING_GROUPS, "meeting")
+    activation = "exposed" if exposed_hidden else "stored"
+    use_mode = _hengmen_use_mode(commanding_ten_god, month_branch)
+    purity = _hengmen_purity(commanding_ten_god, exposed_hidden, day_master)
+    transformation = _hengmen_transformation(commanding_ten_god, trine_changes, meeting_changes)
+    rules = [
+        "先以月令为提纲，不先按日主强弱下结论。",
+        "月令藏干如果透出，透出的藏干优先主事；未透则先按本气待用。",
+        "善用神顺用，重在生扶保护；不善用神逆用，重在制伏化泄。",
+        "会支能改变月令主气，但三会只加强力量，不解除刑冲合害破墓。",
+        "地支藏干静而待用，天干、大运、流年透出后才明显应事。",
+    ]
+    return {
+        "schema_version": "hengmen-pattern-analysis-v1",
+        "source": "examples/格局横门断.docx",
+        "month_pillar": month_label,
+        "month_branch": month_branch,
+        "month_hidden_stems": hidden_stems,
+        "visible_stems": visible_stems,
+        "exposed_month_hidden_stems": exposed_hidden,
+        "commanding_stem": commanding_stem,
+        "commanding_ten_god": commanding_ten_god,
+        "hidden_stem_activation": activation,
+        "use_mode": use_mode,
+        "purity": purity,
+        "branch_group_changes": trine_changes + meeting_changes,
+        "transformation": transformation,
+        "rules": rules,
+        "summary": (
+            f"以月令{month_branch or '未明'}为提纲，"
+            f"{'透出' + '、'.join(exposed_hidden) if exposed_hidden else '藏干未透，先按本气待用'}；"
+            f"主事十神为{commanding_ten_god}，取{use_mode['mode']}，格局{purity['state']}。"
+        ),
+        "boundary": "格局横门断用于事业、学业、项目和职位高度的结构判断；婚姻、健康和六亲仍需其它流派交叉验证。",
+    }
+
+
+def _visible_stems(pillars: dict[str, Any]) -> list[str]:
+    stems = []
+    for key in PILLAR_KEYS:
+        label = str(pillars.get(key, ""))
+        if label:
+            stems.append(_pillar_stem(label))
+    return [stem for stem in stems if stem]
+
+
+def _branch_set(pillars: dict[str, Any]) -> set[str]:
+    branches = set()
+    for key in PILLAR_KEYS:
+        label = str(pillars.get(key, ""))
+        if label:
+            branch = _pillar_branch(label)
+            if branch:
+                branches.add(branch)
+    return branches
+
+
+def _group_changes(
+    month_branch: str,
+    branches: set[str],
+    groups: dict[str, set[str]],
+    group_type: str,
+) -> list[dict[str, Any]]:
+    rows = []
+    for element, members in groups.items():
+        if month_branch not in members:
+            continue
+        present = sorted(branches & members, key=MONTH_BRANCHES.index)
+        if len(present) >= 2:
+            rows.append(
+                {
+                    "type": group_type,
+                    "element": element,
+                    "present_branches": present,
+                    "complete": len(present) == 3,
+                    "rule": "会合加强或改变月令主气；若同时有刑冲合害破，仍先论刑冲合害破。",
+                }
+            )
+    return rows
+
+
+def _hengmen_use_mode(ten_god: str, month_branch: str) -> dict[str, str]:
+    if ten_god in HENGMEN_BENIGN_TEN_GODS:
+        return {
+            "mode": "顺用",
+            "principle": "善用神要生扶保护，财喜食生官护，官喜财生印护，印喜官杀生扶。",
+        }
+    if ten_god in HENGMEN_ADVERSE_TEN_GODS or month_branch in {"Yin", "Mao", "Si", "Wu", "Hai", "Zi"}:
+        return {
+            "mode": "逆用或另取财官食杀",
+            "principle": "比劫、羊刃、七杀、伤官、枭印等不宜放任，须看财官食杀透干会支来制化。",
+        }
+    if ten_god == "expression":
+        return {
+            "mode": "顺逆待分",
+            "principle": "食神偏顺，伤官偏逆；当前粗粒度十神无法区分正偏，需专业十神或事实校准。",
+        }
+    return {
+        "mode": "待校准",
+        "principle": "月令主事不明时，不做高强度断语。",
+    }
+
+
+def _hengmen_purity(commanding_ten_god: str, exposed_hidden: list[str], day_master: str) -> dict[str, Any]:
+    exposed_roles = [_approx_ten_god(day_master, stem) for stem in exposed_hidden]
+    mixed_pairs = {frozenset({"authority", "expression"}), frozenset({"wealth", "resource"})}
+    mixed = any(frozenset({left, right}) in mixed_pairs for left in exposed_roles for right in exposed_roles)
+    if mixed:
+        state = "驳杂"
+        reason = "月令透出角色互相牵制，先按破格或杂格审查。"
+    elif exposed_roles and all(role == commanding_ten_god for role in exposed_roles):
+        state = "较清"
+        reason = "月令透出集中，主线较清。"
+    elif exposed_roles:
+        state = "有兼格"
+        reason = "月令透出不止一类，要分主格和兼格。"
+    else:
+        state = "待透"
+        reason = "月令藏干未明显透出，需看大运流年引动。"
+    return {"state": state, "exposed_roles": exposed_roles, "reason": reason}
+
+
+def _hengmen_transformation(
+    commanding_ten_god: str,
+    group_changes: list[dict[str, Any]],
+    meeting_changes: list[dict[str, Any]],
+) -> dict[str, Any]:
+    changes = group_changes + meeting_changes
+    if not changes:
+        return {
+            "state": "no_branch_group_change",
+            "rule": "未见会支改变月令主气，先以透干和本气判断。",
+        }
+    complete = [item for item in changes if item.get("complete")]
+    state = "complete_group_change" if complete else "partial_group_pressure"
+    return {
+        "state": state,
+        "commanding_ten_god_before_change": commanding_ten_god,
+        "changed_elements": [str(item.get("element", "")) for item in changes],
+        "rule": "会支可能使月令用神变化；变化后要再审善用神是否受生、恶用神是否受制。",
+    }
+
+
+def _classical_layered_methodology(deep: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
+    """Return a source-aware BaZi methodology stack from local classical scans."""
+    pattern = deep.get("pattern_analysis", {}) if isinstance(deep.get("pattern_analysis"), dict) else {}
+    hengmen = deep.get("hengmen_pattern_analysis", {}) if isinstance(deep.get("hengmen_pattern_analysis"), dict) else {}
+    strength = deep.get("strength_analysis", {}) if isinstance(deep.get("strength_analysis"), dict) else {}
+    useful = deep.get("useful_god_analysis", {}) if isinstance(deep.get("useful_god_analysis"), dict) else {}
+    return {
+        "schema_version": "classical-layered-bazi-methodology-v1",
+        "source_policy": "local scans are source evidence; exact textual rules require OCR and edition review before promotion",
+        "source_cards": [
+            {
+                "source_id": "bazi_sanming_tonghui",
+                "title": "三命通会",
+                "role": "classical synthesis layer for pillars, pattern, ten-god, luck-cycle, and auxiliary-marker debate",
+                "local_files": [
+                    "san_ming_tong_hui_juan_1_ia.pdf",
+                    "san_ming_tong_hui_juan_2_ia.pdf",
+                    "san_ming_tong_hui_juan_3_ia.pdf",
+                    "san_ming_tong_hui_juan_4_ia.pdf",
+                    "san_ming_tong_hui_juan_5_ia.pdf",
+                    "san_ming_tong_hui_juan_6_ia.pdf",
+                    "san_ming_tong_hui_juan_7_ia.pdf",
+                    "san_ming_tong_hui_juan_8_ia.pdf",
+                    "san_ming_tong_hui_juan_9_ia.pdf",
+                    "san_ming_tong_hui_juan_10_ia.pdf",
+                    "san_ming_tong_hui_juan_11_ia.pdf",
+                    "san_ming_tong_hui_juan_12_ia.pdf",
+                ],
+                "rule_status": "paraphrased_method_card",
+            },
+            {
+                "source_id": "bazi_early_sanming",
+                "title": "李虚中命书、珞琭子三命消息赋注",
+                "role": "early lineage layer for staged natal-luck framing and historical boundary setting",
+                "local_files": ["li_xu_zhong_ming_shu_luo_lu_zi_ia.pdf"],
+                "rule_status": "lineage_comparison_card",
+            },
+            {
+                "source_id": "bazi_tianbu_zhenyuan",
+                "title": "天步真原人命部",
+                "role": "historical comparison layer; keeps star-fate/cosmological framing separate from operational BaZi rules",
+                "local_files": ["tian_bu_zhen_yuan_ren_ming_bu_ia.pdf"],
+                "rule_status": "historical_comparison_card",
+            },
+        ],
+        "layers": [
+            {
+                "level": 1,
+                "name": "整体命盘",
+                "question": "先看四柱、月令、日主、五行偏向、格局主轴和可用保护链。",
+                "evidence_fields": ["pillars", "strength_analysis", "pattern_analysis", "hengmen_pattern_analysis"],
+                "current_signal": {
+                    "pattern": pattern.get("pattern"),
+                    "month_axis": hengmen.get("month_branch"),
+                    "commanding_ten_god": hengmen.get("commanding_ten_god"),
+                    "strength": strength.get("strength"),
+                    "useful_element": useful.get("useful_element"),
+                },
+            },
+            {
+                "level": 2,
+                "name": "大运阶段",
+                "question": "大运不重新造命，主要承接、放大、压制或改写原局主轴。",
+                "evidence_fields": ["major_luck", "classical_layered_methodology"],
+                "current_signal": "compare major-luck pillar with natal pattern, useful element, and branch interactions",
+            },
+            {
+                "level": 3,
+                "name": "流年触发",
+                "question": "流年判断具体年度主题：先看本年干支十神，再看五行流通、用神状态、原局和大运互动。",
+                "evidence_fields": ["annual_ten_gods", "element_flow", "luck_pillar_interactions", "interaction_pressure_summary"],
+                "current_signal": "annual rows must carry a classical timing trace",
+            },
+            {
+                "level": 4,
+                "name": "流月落事",
+                "question": "流月负责把年度主题落到具体月份，必须绑定节气边界、月柱来源和大运互动。",
+                "evidence_fields": ["monthly_ten_gods", "solar_term_window", "monthly_pillar_source", "interaction_pressure_summary"],
+                "current_signal": "monthly rows must not reuse annual text without recalculating month pillar evidence",
+            },
+            {
+                "level": 5,
+                "name": "事实校准",
+                "question": "古籍规则只能提出结构假设，必须用真实年份事件校准强弱和取象。",
+                "evidence_fields": ["school_debate", "case_validation_hooks", "known_life_events"],
+                "current_signal": "low-quality or unverified events cannot promote a rule",
+            },
+        ],
+        "annual_monthly_protocol": [
+            "整体命盘定主线，不让流年流月脱离原局。",
+            "大运定十年背景，判断资源、压力、财官、输出哪一类主题被长期放大。",
+            "流年定年度主题，必须独立计算干支、十神、五行、藏干、地支关系和压力排序。",
+            "流月定应期细节，必须按节气月和月柱重新计算，不能套用年度句子。",
+            "若流年或流月与原局、大运出现冲刑害破，先看压力排序，再看是否伤及格局主轴或保护机制。",
+        ],
+        "summary": "古籍层采用整体命盘、大运、流年、流月、事实校准五层法；三命通会主综合框架，早期三命材料主源流边界，天步真原只作历史比较。",
     }
 
 

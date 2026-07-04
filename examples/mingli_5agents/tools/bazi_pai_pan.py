@@ -24,7 +24,14 @@ def build_bazi_chart(birth: dict) -> dict:
         "structure": "balanced" if spread <= 2 else "element-skewed",
         "seasonal_adjustment": f"{context['season']} season near {context['solar_term']}",
         "deep_analysis": build_bazi_deep_analysis(birth, context),
-        "sources": ["bazi_ziping", "bazi_sanming", "bazi_shensha"],
+        "sources": [
+            "bazi_ziping",
+            "bazi_sanming",
+            "bazi_shensha",
+            "bazi_sanming_tonghui",
+            "bazi_early_sanming",
+            "bazi_tianbu_zhenyuan",
+        ],
     }
     return _apply_external_bazi_if_present(birth, chart)
 

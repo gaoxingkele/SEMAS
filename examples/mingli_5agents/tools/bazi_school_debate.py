@@ -1,4 +1,4 @@
-"""Deterministic BaZi school sub-agent debate rules.
+﻿"""Deterministic BaZi school sub-agent debate rules.
 
 The debate layer is intentionally rule-based. It does not claim predictive
 truth; it records how each BaZi school would frame the same structured chart.
@@ -15,42 +15,63 @@ from typing import Any
 SCHOOL_AGENTS: tuple[dict[str, Any], ...] = (
     {
         "id": "ziping_pattern_agent",
-        "name": "子平格局纸智能体",
+        "name": "子平格局子智能体",
         "school": "子平格局法",
         "primary_fields": ["pattern_analysis", "ten_god_distribution", "major_luck"],
         "supports": ["月令格局", "透干十神", "大运承接"],
     },
     {
+        "id": "hengmen_pattern_agent",
+        "name": "格局横门断子智能体",
+        "school": "格局横门断",
+        "primary_fields": ["hengmen_pattern_analysis", "pattern_analysis", "major_luck"],
+        "supports": ["月令提纲", "透干会支", "善顺恶逆", "藏干待用"],
+    },
+    {
+        "id": "sanming_tonghui_agent",
+        "name": "三命通会综合子智能体",
+        "school": "三命通会综合法",
+        "primary_fields": ["classical_layered_methodology", "pattern_analysis", "major_luck"],
+        "supports": ["四柱总参", "格局十神", "大运流年", "神煞辅助"],
+    },
+    {
+        "id": "early_sanming_lineage_agent",
+        "name": "早期三命源流子智能体",
+        "school": "李虚中珞琭子源流法",
+        "primary_fields": ["classical_layered_methodology", "nayin_growth_profile", "major_luck"],
+        "supports": ["源流边界", "阶段推命", "古法现代分离"],
+    },
+    {
         "id": "strength_support_agent",
-        "name": "旺衰扶抑纸智能体",
+        "name": "旺衰扶抑子智能体",
         "school": "旺衰扶抑法",
         "primary_fields": ["strength_analysis", "useful_god_analysis"],
         "supports": ["日主状态", "扶抑取用", "五行平衡"],
     },
     {
         "id": "tiaohou_agent",
-        "name": "调候纸智能体",
+        "name": "调候子智能体",
         "school": "调候法",
         "primary_fields": ["tiaohou_analysis", "useful_god_analysis"],
         "supports": ["月令季节", "寒暖燥湿", "环境调节"],
     },
     {
         "id": "tiyong_circulation_agent",
-        "name": "体用流通纸智能体",
+        "name": "体用流通子智能体",
         "school": "体用气势法",
         "primary_fields": ["image_symbol_analysis", "useful_god_analysis", "strength_analysis"],
         "supports": ["体用保护", "用神保护链", "五行流通断点"],
     },
     {
         "id": "blind_symbol_agent",
-        "name": "盲派象法纸智能体",
+        "name": "盲派象法子智能体",
         "school": "盲派象法",
         "primary_fields": ["image_symbol_analysis", "hidden_stem_profile", "ten_god_distribution"],
         "supports": ["柱位宫位", "显象落事", "刑冲合害"],
     },
     {
         "id": "shensha_nayin_agent",
-        "name": "神煞纳音纸智能体",
+        "name": "神煞纳音子智能体",
         "school": "神煞纳音辅助法",
         "primary_fields": ["nayin_growth_profile", "hidden_stem_profile"],
         "supports": ["纳音", "长生十二运", "辅助符号"],
@@ -129,6 +150,12 @@ def _confidence(
 def _school_signals(agent_id: str, deep: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
     if agent_id == "ziping_pattern_agent":
         return _ziping_signals(deep)
+    if agent_id == "hengmen_pattern_agent":
+        return _hengmen_signals(deep)
+    if agent_id == "sanming_tonghui_agent":
+        return _sanming_tonghui_signals(deep)
+    if agent_id == "early_sanming_lineage_agent":
+        return _early_sanming_signals(deep)
     if agent_id == "strength_support_agent":
         return _strength_signals(deep, context)
     if agent_id == "tiaohou_agent":
@@ -159,6 +186,90 @@ def _ziping_signals(deep: dict[str, Any]) -> dict[str, Any]:
         ],
         calibration_questions=["最高学历和专业方向是什么", "第一次明显转轨发生在哪一年"],
         count=3 if distribution else 2,
+    )
+
+
+def _hengmen_signals(deep: dict[str, Any]) -> dict[str, Any]:
+    analysis = deep.get("hengmen_pattern_analysis", {})
+    if not isinstance(analysis, dict):
+        analysis = {}
+    month_branch = analysis.get("month_branch") or "月令未明"
+    commanding = analysis.get("commanding_ten_god") or "主事十神未明"
+    activation = analysis.get("hidden_stem_activation") or "藏干状态未明"
+    use_mode = analysis.get("use_mode", {})
+    purity = analysis.get("purity", {})
+    mode = use_mode.get("mode") if isinstance(use_mode, dict) else "待校准"
+    purity_state = purity.get("state") if isinstance(purity, dict) else "纯杂未明"
+    return _signal(
+        claim=(
+            f"按格局横门断，先抓月令{month_branch}，再看藏干是否透出；"
+            f"当前主事十神为{commanding}，藏干状态为{activation}，取法为{mode}，格局纯杂为{purity_state}。"
+        ),
+        challenge="若扶抑、象法或神煞结论与月令提纲冲突，先回到月令藏干、透干、会支和顺逆用重新定主线。",
+        rules=[
+            "八字用神专求月令，不能先用平衡日主替代格局提纲。",
+            "月令藏干静而待用，透干或被大运流年引出后才明显应事。",
+            "财官印等善用神重在顺用保护，杀伤枭刃劫等不善用神重在制伏化泄。",
+            "会支能改变月令主气；三会只加强力量，不解除刑冲合害破墓。",
+        ],
+        event_hypotheses=[
+            "格局清而顺逆得法，事业、学业、考试、职位或项目更容易出现可见高度。",
+            "格局驳杂或善用神受伤，常表现为上级关系、考试资格、项目资源或钱财承接受阻。",
+            "藏干逢大运流年透出时，容易从潜伏主题变成具体事件。",
+        ],
+        calibration_questions=["最高学历、关键考试和职位晋升分别发生在哪些年份", "哪几年项目、钱财或上级关系明显转好或转差"],
+        count=4 if analysis else 1,
+    )
+
+
+def _sanming_tonghui_signals(deep: dict[str, Any]) -> dict[str, Any]:
+    methodology = deep.get("classical_layered_methodology", {})
+    if not isinstance(methodology, dict):
+        methodology = {}
+    layers = methodology.get("layers", []) if isinstance(methodology.get("layers"), list) else []
+    layer_names = [str(item.get("name")) for item in layers if isinstance(item, dict) and item.get("name")]
+    return _signal(
+        claim=(
+            "按三命通会综合法，本盘不能只取单一强弱或单一格局；应把四柱、月令、十神、格局、"
+            f"大运、流年、流月逐层合看。当前分层为{'、'.join(layer_names) or '分层未明'}。"
+        ),
+        challenge="若某一流派只给单点断语而没有说明它处在本盘、大运、流年还是流月层，应降低权重。",
+        rules=[
+            "先立整体命盘，再看大运承接，再看流年触发，最后看流月落事。",
+            "格局、十神、五行、神煞可以同场讨论，但神煞只能辅助，不能压过四柱主线。",
+            "年度和月度必须各自独立计算干支、十神、五行流通和刑冲合害。",
+            "古籍扫描未完成 OCR 审核前，只用摘要规则卡，不作逐字引文。",
+        ],
+        event_hypotheses=[
+            "若大运承接原局主轴，年度触发时更容易出现事业、职位、财务或学业的可见事件。",
+            "若流年流月同时冲动原局和大运，应优先判断变动、压力和关系断裂，再谈机会。",
+        ],
+        calibration_questions=["哪些年份有明显事业层级变化", "哪些年份只是忙乱但没有实际成果"],
+        count=4 if layers else 2,
+    )
+
+
+def _early_sanming_signals(deep: dict[str, Any]) -> dict[str, Any]:
+    profile = deep.get("nayin_growth_profile", {})
+    methodology = deep.get("classical_layered_methodology", {})
+    complete = isinstance(profile, dict) and bool(profile.get("complete"))
+    return _signal(
+        claim=(
+            "按早期三命源流法，古法材料主要用于提醒阶段性和源流边界：先分清原局、阶段运、"
+            "年度触发的层次，再决定是否采用后世子平格局术语。"
+        ),
+        challenge="早期三命材料不能未经转换就替代现代子平格局；若与子平、扶抑相冲突，应保留为源流旁证。",
+        rules=[
+            "早期三命材料用于源流比较和阶段划分，不直接覆盖现有格局派、扶抑派和体用派。",
+            "纳音、长生阶段和早期命书语言只在与四柱主线同向时提高提示权重。",
+            "历史星命或宇宙论框架必须与可执行八字规则分离。",
+        ],
+        event_hypotheses=[
+            "当大运换阶段时，早期三命源流派更关注人生阶段身份变化，而非单一年份吉凶。",
+            "当纳音或阶段标记与流年压力同向时，可作为风险或机会的低权重旁证。",
+        ],
+        calibration_questions=["换大运前后是否有身份、居住、行业或家庭责任变化", "纳音阶段提示是否能被真实事件支持"],
+        count=3 if complete and methodology else 2,
     )
 
 

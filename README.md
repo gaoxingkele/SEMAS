@@ -117,6 +117,17 @@ python -m china_a_share_alpha.demo
 
 See `china_a_share_alpha/README.md`.
 
+## Smart Skill And Agent Topic
+
+`Smart_SkillandAgent/` is a topic workspace for continuously improving
+GitHub-origin skills and agents. Each subproject under
+`Smart_SkillandAgent/projects/` maps to one upstream repository and keeps its
+own source provenance, evolution records, evaluation receipts, patches, run
+artifacts, and local LLM wiki.
+
+Use `Smart_SkillandAgent/projects/_template_skill_or_agent/` when starting a
+new skill or agent evolution project.
+
 ## Mingli Five-Agent Example
 
 The `examples/mingli_5agents` demo now includes a governed BaZi school-debate

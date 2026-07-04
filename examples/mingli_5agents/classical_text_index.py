@@ -73,6 +73,64 @@ SEED_PASSAGES: tuple[ClassicalPassage, ...] = (
         caution="Do not over-weight auxiliary star labels.",
     ),
     ClassicalPassage(
+        source_id="bazi_sanming_tonghui",
+        passage_id="seed_sanming_tonghui_layered_synthesis",
+        title="San Ming Tong Hui layered synthesis",
+        tradition="bazi",
+        keywords=("sanming", "pillar", "pattern", "ten-god", "luck", "annual", "monthly"),
+        summary=(
+            "San Ming Tong Hui style evidence should be read as a synthesis layer: establish natal pillars and "
+            "monthly command, examine ten-god/pattern structure, then test how major luck and annual timing "
+            "activate or disturb the natal structure."
+        ),
+        provenance={
+            "corpus": "local_download_manifest",
+            "source_type": "public_archive_scan_summary",
+            "manifest": "examples/mingli_5agents/classical_sources/manifest.json",
+            "source_files": "san_ming_tong_hui_juan_1_ia.pdf;san_ming_tong_hui_juan_9_ia.pdf",
+            "citation_policy": "paraphrase_only_until_ocr_review",
+        },
+        caution="Scans are local research sources; exact quotations require edition/OCR review.",
+    ),
+    ClassicalPassage(
+        source_id="bazi_early_sanming",
+        passage_id="seed_early_sanming_lineage_boundary",
+        title="Early Sanming lineage boundary",
+        tradition="bazi",
+        keywords=("early", "sanming", "lineage", "year", "month", "day", "luck", "stage"),
+        summary=(
+            "Early Sanming materials are useful for lineage and staged-life framing: they support reading natal "
+            "structure, inherited conditions, and life-stage movement before applying later Ziping pattern rules."
+        ),
+        provenance={
+            "corpus": "local_download_manifest",
+            "source_type": "public_archive_scan_summary",
+            "manifest": "examples/mingli_5agents/classical_sources/manifest.json",
+            "source_files": "li_xu_zhong_ming_shu_luo_lu_zi_ia.pdf",
+            "citation_policy": "paraphrase_only_until_ocr_review",
+        },
+        caution="Use for lineage comparison; do not merge directly into modern Ziping rules without review.",
+    ),
+    ClassicalPassage(
+        source_id="bazi_tianbu_zhenyuan",
+        passage_id="seed_tianbu_historical_comparison",
+        title="Tianbu Zhenyuan historical comparison",
+        tradition="bazi",
+        keywords=("historical", "star-fate", "fate", "comparison", "timing", "boundary"),
+        summary=(
+            "Tianbu Zhenyuan human-fate material is best used as a historical comparison layer that reminds the "
+            "agent to separate older star-fate or cosmological framing from operational pillar-based BaZi rules."
+        ),
+        provenance={
+            "corpus": "local_download_manifest",
+            "source_type": "public_archive_scan_summary",
+            "manifest": "examples/mingli_5agents/classical_sources/manifest.json",
+            "source_files": "tian_bu_zhen_yuan_ren_ming_bu_ia.pdf",
+            "citation_policy": "paraphrase_only_until_ocr_review",
+        },
+        caution="Historical comparison only until a reviewed textual rule card exists.",
+    ),
+    ClassicalPassage(
         source_id="ziwei_palace",
         passage_id="seed_ziwei_twelve_palaces",
         title="Zi Wei twelve-palace frame",

@@ -15,6 +15,9 @@ REQUIRED_METHODS = {
         "tiaohou",
         "image_symbol_reading",
         "new_school_simplified",
+        "hengmen_pattern",
+        "classical_layered_bazi",
+        "classical_book_agents",
         "data_validation_boundary",
     },
     "ziwei": {

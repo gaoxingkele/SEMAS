@@ -1,0 +1,184 @@
+{
+  "schema_version": "mingli-classical-method-cards-v1",
+  "created_date": "2026-06-30",
+  "source_manifest": "examples/mingli_5agents/classical_sources/manifest.json",
+  "ocr_status": "downloaded scans have poor embedded text; exact quotation and page-level rules require later OCR or manual transcription review",
+  "agent_integration": {
+    "bazi_profile_field": "classical_layered_methodology",
+    "book_agent_profile_field": "classical_book_agents",
+    "annual_monthly_field": "classical_timing_trace",
+    "new_school_agents": [
+      "sanming_tonghui_agent",
+      "early_sanming_lineage_agent"
+    ],
+    "book_agents": [
+      {
+        "agent_id": "book_sanming_tonghui_juan_1_agent",
+        "source_id": "bazi_sanming_tonghui",
+        "method_role": "San Ming Tong Hui full-corpus overall chart, pattern, ten-god, and major-luck synthesis",
+        "sub_agent_pattern": {
+          "agent_id_template": "subagent_sanming_tonghui_juan_{volume}",
+          "volume_range": [
+            1,
+            12
+          ],
+          "source_id_template": "san_ming_tong_hui_juan_{volume}_ia",
+          "role": "卷级资料子智能体，负责本卷来源覆盖、后续OCR校勘承接和条文规则升级入口。"
+        }
+      },
+      {
+        "agent_id": "book_sanming_tonghui_juan_9_agent",
+        "source_id": "bazi_sanming_tonghui",
+        "method_role": "San Ming Tong Hui full-corpus annual and monthly triggering with auxiliary marker boundaries",
+        "sub_agent_pattern": {
+          "agent_id_template": "subagent_sanming_tonghui_juan_{volume}",
+          "volume_range": [
+            1,
+            12
+          ],
+          "source_id_template": "san_ming_tong_hui_juan_{volume}_ia",
+          "role": "卷级资料子智能体，负责本卷来源覆盖、后续OCR校勘承接和条文规则升级入口。"
+        }
+      },
+      {
+        "agent_id": "book_li_xuzhong_luoluzi_agent",
+        "source_id": "li_xu_zhong_ming_shu_luo_lu_zi_ia",
+        "method_role": "early Sanming lineage and staged-life boundary"
+      },
+      {
+        "agent_id": "book_tianbu_zhenyuan_agent",
+        "source_id": "tian_bu_zhen_yuan_ren_ming_bu_ia",
+        "method_role": "historical star-fate comparison and boundary control"
+      },
+      {
+        "agent_id": "book_ziping_zhenquan_agent",
+        "source_id": "zi_ping_zhen_quan_nlc",
+        "method_role": "month-command pattern and useful-god protection"
+      },
+      {
+        "agent_id": "book_yuanhai_ziping_agent",
+        "source_id": "yuan_hai_zi_ping_zi_ping_zhen_quan_v1_ntl",
+        "method_role": "pillar palace, ten-god imagery, and triggered hidden-stem themes"
+      },
+      {
+        "agent_id": "book_shenfeng_tongkao_agent",
+        "source_id": "shen_feng_tong_kao_nlc",
+        "method_role": "disease-medicine, passage, and transformation checks"
+      },
+      {
+        "agent_id": "book_ditiansui_agent",
+        "source_id": "di_tian_sui_ji_yao_nlc",
+        "method_role": "qi-flow, clarity, mixedness, and circulation breakpoints"
+      },
+      {
+        "agent_id": "book_qiongtong_baojian_agent",
+        "source_id": "qiong_tong_bao_jian_ping_zhu_nlc",
+        "method_role": "month-command climate adjustment and state stability"
+      },
+      {
+        "agent_id": "book_mingli_yueyan_agent",
+        "source_id": "jing_xuan_ming_li_yue_yan_nlc",
+        "method_role": "concise experience-rule review and anti-template audit"
+      },
+      {
+        "agent_id": "book_weiqianli_agent",
+        "source_id": "wei_qian_li_ming_xue_jiang_yi_nlc",
+        "method_role": "modern teaching decomposition and readable Chinese report style"
+      }
+    ],
+    "layered_architecture_contract": {
+      "schema_version": "book-layered-analysis-architecture-v1",
+      "rule": "每本书必须先形成自己的层次分析架构，再按功能模块映射为子智能体，最后进入群体辩论。",
+      "required_vote_fields": [
+        "analysis_architecture",
+        "layer_sub_agents",
+        "primary_layers",
+        "method_rules",
+        "calibration_questions"
+      ],
+      "required_layer_fields": [
+        "layer_index",
+        "layer_name",
+        "functional_module",
+        "evidence_fields",
+        "method_rule",
+        "output_contract",
+        "calibration_role"
+      ],
+      "sub_agent_rule": "每个 primary_layer 都必须生成一个 active_method_layer_sub_agent。"
+    }
+  },
+  "cards": [
+    {
+      "id": "sanming_tonghui_layered_synthesis",
+      "source_ids": [
+        "bazi_sanming_tonghui"
+      ],
+      "source_files": [
+        "san_ming_tong_hui_juan_1_ia.pdf",
+        "san_ming_tong_hui_juan_2_ia.pdf",
+        "san_ming_tong_hui_juan_3_ia.pdf",
+        "san_ming_tong_hui_juan_4_ia.pdf",
+        "san_ming_tong_hui_juan_5_ia.pdf",
+        "san_ming_tong_hui_juan_6_ia.pdf",
+        "san_ming_tong_hui_juan_7_ia.pdf",
+        "san_ming_tong_hui_juan_8_ia.pdf",
+        "san_ming_tong_hui_juan_9_ia.pdf",
+        "san_ming_tong_hui_juan_10_ia.pdf",
+        "san_ming_tong_hui_juan_11_ia.pdf",
+        "san_ming_tong_hui_juan_12_ia.pdf"
+      ],
+      "method_layer": "overall_to_timing",
+      "absorbed_logic": [
+        "整体命盘先立四柱、月令、十神和格局主轴",
+        "大运用于承接或扰动原局主线",
+        "流年用于触发年度主题",
+        "流月用于落实应期和具体节奏",
+        "神煞和纳音只能辅助，不压过四柱、月令和十神主线"
+      ],
+      "agent_rule": "三命通会综合子智能体在辩论中要求所有年度、月度判断说明自己处于本盘、大运、流年、流月哪一层。",
+      "promotion_status": "implemented_as_structured_method_card"
+    },
+    {
+      "id": "early_sanming_lineage_boundary",
+      "source_ids": [
+        "bazi_early_sanming"
+      ],
+      "source_files": [
+        "li_xu_zhong_ming_shu_luo_lu_zi_ia.pdf"
+      ],
+      "method_layer": "lineage_boundary",
+      "absorbed_logic": [
+        "早期三命材料用于源流比较和阶段性推命提醒",
+        "不能未经转换就替代后世子平格局术语",
+        "大运换阶段时优先关注身份、环境、家庭责任和行业阶段变化"
+      ],
+      "agent_rule": "早期三命源流子智能体只作为低到中权重旁证，负责提醒源流边界和阶段转换。",
+      "promotion_status": "implemented_as_lineage_boundary_agent"
+    },
+    {
+      "id": "tianbu_zhenyuan_historical_boundary",
+      "source_ids": [
+        "bazi_tianbu_zhenyuan"
+      ],
+      "source_files": [
+        "tian_bu_zhen_yuan_ren_ming_bu_ia.pdf"
+      ],
+      "method_layer": "historical_comparison",
+      "absorbed_logic": [
+        "星命或宇宙论材料与可执行八字规则分开",
+        "只在与四柱、月令、大运、流年证据同向时作为历史旁证",
+        "不得单独决定财官、婚姻、健康等结论"
+      ],
+      "agent_rule": "天步真原材料进入 classical_layered_methodology 的来源卡，但暂不新增独立高权重断法。",
+      "promotion_status": "historical_boundary_only"
+    }
+  ],
+  "layered_analysis_protocol": [
+    "第一层：整体命盘。定四柱、日主、月令、格局、五行偏向、用神和保护链。",
+    "第二层：大运。判断十年背景如何承接、放大、压制或破坏原局主线。",
+    "第三层：流年。独立计算年度干支、十神、五行、藏干、地支关系、压力排序。",
+    "第四层：流月。按节气月和月柱来源重新计算，不套年度句子。",
+    "第五层：事实校准。用真实年份事件校准，不让低质量事件推动规则进化。"
+  ]
+}

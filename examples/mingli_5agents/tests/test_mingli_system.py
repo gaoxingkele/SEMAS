@@ -216,14 +216,59 @@ def test_five_agent_executor_returns_required_artifacts(tmp_path: Path):
     assert result["final_report"]["bazi_profile"]["tiaohou_analysis"]
     assert result["final_report"]["bazi_profile"]["image_symbol_analysis"]
     assert result["final_report"]["bazi_profile"]["new_school_simplified_analysis"]
+    assert result["final_report"]["bazi_profile"]["hengmen_pattern_analysis"]
+    assert result["final_report"]["bazi_profile"]["classical_layered_methodology"]
+    classical_book_agents = result["final_report"]["bazi_profile"]["classical_book_agents"]
+    assert classical_book_agents["schema_version"] == "classical-book-agent-debate-v1"
+    assert len(classical_book_agents["sha256"]) == 64
+    assert classical_book_agents["agent_count"] == 11
+    assert classical_book_agents["sub_agent_count"] == 12
+    assert classical_book_agents["layer_sub_agent_count"] == 33
+    assert len(classical_book_agents["votes"]) == 11
+    assert len(classical_book_agents["sub_agent_votes"]) == 12
+    assert all(
+        item["analysis_architecture"]["schema_version"] == "book-layered-analysis-architecture-v1"
+        and item["analysis_architecture"]["layer_count"] == 3
+        and len(item["layer_sub_agents"]) == 3
+        for item in classical_book_agents["votes"]
+    )
+    assert all(
+        sub_agent["current_status"] == "active_method_layer_sub_agent"
+        for item in classical_book_agents["votes"]
+        for sub_agent in item["layer_sub_agents"]
+    )
+    assert {
+        item["agent_id"] for item in classical_book_agents["sub_agent_votes"]
+    } == {f"subagent_sanming_tonghui_juan_{volume}" for volume in range(1, 13)}
+    assert all(
+        set(item["parent_agent_ids"])
+        == {"book_sanming_tonghui_juan_1_agent", "book_sanming_tonghui_juan_9_agent"}
+        for item in classical_book_agents["sub_agent_votes"]
+    )
+    assert {item["agent_id"] for item in classical_book_agents["votes"]} == {
+        "book_sanming_tonghui_juan_1_agent",
+        "book_sanming_tonghui_juan_9_agent",
+        "book_li_xuzhong_luoluzi_agent",
+        "book_tianbu_zhenyuan_agent",
+        "book_ziping_zhenquan_agent",
+        "book_yuanhai_ziping_agent",
+        "book_shenfeng_tongkao_agent",
+        "book_ditiansui_agent",
+        "book_qiongtong_baojian_agent",
+        "book_mingli_yueyan_agent",
+        "book_weiqianli_agent",
+    }
     assert result["final_report"]["bazi_profile"]["data_validation_analysis"]
     school_debate = result["final_report"]["bazi_profile"]["school_debate"]
     assert school_debate["schema_version"] == "bazi-school-debate-v1"
     assert len(school_debate["sha256"]) == 64
-    assert school_debate["agent_count"] == 6
-    assert len(school_debate["votes"]) == 6
+    assert school_debate["agent_count"] == 9
+    assert len(school_debate["votes"]) == 9
     assert {item["agent_id"] for item in school_debate["votes"]} == {
         "ziping_pattern_agent",
+        "hengmen_pattern_agent",
+        "sanming_tonghui_agent",
+        "early_sanming_lineage_agent",
         "strength_support_agent",
         "tiaohou_agent",
         "tiyong_circulation_agent",
@@ -240,6 +285,9 @@ def test_five_agent_executor_returns_required_artifacts(tmp_path: Path):
         "tiaohou",
         "image_symbol_reading",
         "new_school_simplified",
+        "hengmen_pattern",
+        "classical_layered_bazi",
+        "classical_book_agents",
         "data_validation_boundary",
     }
     assert result["final_report"]["bazi_profile"]["major_luck"]
@@ -331,6 +379,12 @@ def test_five_agent_executor_returns_required_artifacts(tmp_path: Path):
     assert finance_topic["annual_focus"]["bazi_evidence"]["annual_pillar"]
     assert finance_topic["monthly_focus"]["bazi_evidence"]["monthly_pillar"]
     assert set(finance_topic["timing_evidence"]["annual"]["ten_gods"]) == {"stem", "branch"}
+    assert set(finance_topic["timing_evidence"]["annual"]["elements"]) == {"stem", "branch", "focus"}
+    assert set(finance_topic["timing_evidence"]["monthly"]["elements"]) == {"stem", "branch", "focus"}
+    assert finance_topic["timing_evidence"]["annual"]["element_flow"]
+    assert finance_topic["timing_evidence"]["monthly"]["element_flow"]
+    assert finance_topic["timing_evidence"]["annual"]["hidden_stem_flow"]
+    assert finance_topic["timing_evidence"]["monthly"]["hidden_stem_flow"]
     assert isinstance(finance_topic["timing_evidence"]["monthly"]["natal_match_count"], int)
     assert len(finance_topic["evidence_summary"]) >= 6
     confidence = finance_topic["synthesis_confidence"]
@@ -348,6 +402,12 @@ def test_five_agent_executor_returns_required_artifacts(tmp_path: Path):
     assert "zh" in result["final_report"]["rendered_reports"]
     assert "## 主题综合" in result["final_report"]["rendered_reports"]["zh"]
     assert "交叉证据" in result["final_report"]["rendered_reports"]["zh"]
+    assert "五行=" in result["final_report"]["rendered_reports"]["zh"]
+    assert "流通=" in result["final_report"]["rendered_reports"]["zh"]
+    assert "藏干=" in result["final_report"]["rendered_reports"]["zh"]
+    assert "权重" in result["final_report"]["rendered_reports"]["zh"]
+    assert "系数" in result["final_report"]["rendered_reports"]["zh"]
+    assert "调权" in result["final_report"]["rendered_reports"]["zh"]
     assert "地支关系" in result["final_report"]["rendered_reports"]["zh"]
     assert result["final_report"]["llm_synthesis"]["enabled"] is False
     assert result["final_report"]["llm_synthesis"]["generated"] is False

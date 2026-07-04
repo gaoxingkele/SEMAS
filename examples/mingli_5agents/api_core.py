@@ -3509,6 +3509,26 @@ def _benchmark_chinese_render_quality_failures(benchmark_result: dict[str, Any])
         monthly_branch_interaction_ratio = float(
             features.get("chinese_render_monthly_branch_interaction_anchor_ratio", 1.0) or 0.0
         )
+        annual_element_ratio = float(features.get("chinese_render_annual_element_anchor_ratio", 0.0) or 0.0)
+        monthly_element_ratio = float(features.get("chinese_render_monthly_element_anchor_ratio", 0.0) or 0.0)
+        annual_element_flow_ratio = float(
+            features.get("chinese_render_annual_element_flow_anchor_ratio", 0.0) or 0.0
+        )
+        monthly_element_flow_ratio = float(
+            features.get("chinese_render_monthly_element_flow_anchor_ratio", 0.0) or 0.0
+        )
+        annual_hidden_stem_flow_ratio = float(
+            features.get("chinese_render_annual_hidden_stem_flow_anchor_ratio", 0.0) or 0.0
+        )
+        monthly_hidden_stem_flow_ratio = float(
+            features.get("chinese_render_monthly_hidden_stem_flow_anchor_ratio", 0.0) or 0.0
+        )
+        monthly_solar_term_window_ratio = float(
+            features.get("chinese_render_monthly_solar_term_window_anchor_ratio", 0.0) or 0.0
+        )
+        monthly_pillar_source_ratio = float(
+            features.get("chinese_render_monthly_pillar_source_anchor_ratio", 0.0) or 0.0
+        )
         ascii_count = int(features.get("chinese_render_ascii_letter_count", 0) or 0)
         if duplicate_ratio > 0.02:
             failures.append(f"{case.get('name')} Chinese annual/monthly duplicate ratio={duplicate_ratio:.3f}")
@@ -3535,6 +3555,34 @@ def _benchmark_chinese_render_quality_failures(benchmark_result: dict[str, Any])
         if monthly_branch_interaction_ratio < 1.0:
             failures.append(
                 f"{case.get('name')} Chinese monthly branch-interaction anchor ratio={monthly_branch_interaction_ratio:.3f}"
+            )
+        if annual_element_ratio < 1.0:
+            failures.append(f"{case.get('name')} Chinese annual element anchor ratio={annual_element_ratio:.3f}")
+        if monthly_element_ratio < 1.0:
+            failures.append(f"{case.get('name')} Chinese monthly element anchor ratio={monthly_element_ratio:.3f}")
+        if annual_element_flow_ratio < 1.0:
+            failures.append(
+                f"{case.get('name')} Chinese annual element-flow anchor ratio={annual_element_flow_ratio:.3f}"
+            )
+        if monthly_element_flow_ratio < 1.0:
+            failures.append(
+                f"{case.get('name')} Chinese monthly element-flow anchor ratio={monthly_element_flow_ratio:.3f}"
+            )
+        if annual_hidden_stem_flow_ratio < 1.0:
+            failures.append(
+                f"{case.get('name')} Chinese annual hidden-stem-flow anchor ratio={annual_hidden_stem_flow_ratio:.3f}"
+            )
+        if monthly_hidden_stem_flow_ratio < 1.0:
+            failures.append(
+                f"{case.get('name')} Chinese monthly hidden-stem-flow anchor ratio={monthly_hidden_stem_flow_ratio:.3f}"
+            )
+        if monthly_solar_term_window_ratio < 1.0:
+            failures.append(
+                f"{case.get('name')} Chinese monthly solar-term-window anchor ratio={monthly_solar_term_window_ratio:.3f}"
+            )
+        if monthly_pillar_source_ratio < 1.0:
+            failures.append(
+                f"{case.get('name')} Chinese monthly pillar-source anchor ratio={monthly_pillar_source_ratio:.3f}"
             )
         if ascii_count != 0:
             failures.append(f"{case.get('name')} Chinese render ASCII letter count={ascii_count}")
@@ -7494,6 +7542,9 @@ def schema_document() -> dict[str, Any]:
                     "tiaohou_analysis",
                     "image_symbol_analysis",
                     "new_school_simplified_analysis",
+                    "hengmen_pattern_analysis",
+                    "classical_layered_methodology",
+                    "classical_book_agents",
                     "data_validation_analysis",
                     "school_debate",
                 ],
@@ -7523,6 +7574,9 @@ def schema_document() -> dict[str, Any]:
                     "tiaohou_analysis": {"type": "object"},
                     "image_symbol_analysis": {"type": "object"},
                     "new_school_simplified_analysis": {"type": "object"},
+                    "hengmen_pattern_analysis": {"type": "object"},
+                    "classical_layered_methodology": {"type": "object"},
+                    "classical_book_agents": {"type": "object"},
                     "data_validation_analysis": {"type": "object"},
                     "school_debate": {"type": "object"},
                     "method_matrix": {
@@ -13085,7 +13139,7 @@ def schema_document() -> dict[str, Any]:
                     "record_count": {"type": "integer"},
                     "traditions": {"type": "array", "items": {"type": "string"}},
                     "implemented_statuses": {"type": "array", "items": {"type": "string"}},
-                    "material": {"type": "object"},
+                    "material": {"type": "object", "additionalProperties": True},
                 },
             },
             "FamousCaseValidationReceiptSummary": {
@@ -13109,8 +13163,87 @@ def schema_document() -> dict[str, Any]:
                     "sources": {"type": "array", "items": {"type": "string"}},
                     "ratings": {"type": "array", "items": {"type": "string"}},
                     "domain_coverage": {"type": "array", "items": {"type": "object"}},
-                    "birth_source_quality": {"type": "object"},
-                    "material": {"type": "object"},
+                    "birth_source_quality": {"$ref": "#/schemas/FamousCaseBirthSourceQualitySummary"},
+                    "material": {"type": "object", "additionalProperties": True},
+                },
+            },
+            "FamousCaseSourceGateDecision": {
+                "type": "object",
+                "required": [
+                    "case_id",
+                    "source_rating",
+                    "source_present",
+                    "birth_time_format_valid",
+                    "decision",
+                    "blocks_rule_tuning",
+                    "reasons",
+                    "boundary",
+                ],
+                "properties": {
+                    "case_id": {"type": "string"},
+                    "source_rating": {"type": "string"},
+                    "source_present": {"type": "boolean"},
+                    "birth_time_format_valid": {"type": "boolean"},
+                    "decision": {
+                        "type": "string",
+                        "enum": ["allow_hour_pillar_scoring", "hold_for_source_review"],
+                    },
+                    "blocks_rule_tuning": {"type": "boolean"},
+                    "reasons": {"type": "array", "items": {"type": "string"}},
+                    "boundary": {"type": "string"},
+                },
+            },
+            "FamousCaseBirthSourceQualitySummary": {
+                "type": "object",
+                "required": [
+                    "schema_version",
+                    "case_count",
+                    "source_counts",
+                    "rating_counts",
+                    "high_confidence_ratings",
+                    "high_confidence_case_count",
+                    "high_confidence_case_ids",
+                    "caution_case_count",
+                    "caution_case_ids",
+                    "birth_time_format_valid_count",
+                    "birth_time_format_invalid_case_ids",
+                    "missing_birth_source_case_ids",
+                    "hour_pillar_scoring_eligible_case_count",
+                    "hour_pillar_scoring_eligible_case_ids",
+                    "source_gate_schema_version",
+                    "source_gate_decision_counts",
+                    "source_gate_decisions",
+                    "source_gate_blocked_case_count",
+                    "source_gate_blocked_case_ids",
+                    "boundary",
+                ],
+                "properties": {
+                    "schema_version": {"type": "string", "const": "famous-case-birth-source-quality-v1"},
+                    "case_count": {"type": "integer"},
+                    "source_counts": {"type": "object", "additionalProperties": {"type": "integer"}},
+                    "rating_counts": {"type": "object", "additionalProperties": {"type": "integer"}},
+                    "high_confidence_ratings": {"type": "array", "items": {"type": "string"}},
+                    "high_confidence_case_count": {"type": "integer"},
+                    "high_confidence_case_ids": {"type": "array", "items": {"type": "string"}},
+                    "caution_case_count": {"type": "integer"},
+                    "caution_case_ids": {"type": "array", "items": {"type": "string"}},
+                    "birth_time_format_valid_count": {"type": "integer"},
+                    "birth_time_format_invalid_case_ids": {"type": "array", "items": {"type": "string"}},
+                    "missing_birth_source_case_ids": {"type": "array", "items": {"type": "string"}},
+                    "hour_pillar_scoring_eligible_case_count": {"type": "integer"},
+                    "hour_pillar_scoring_eligible_case_ids": {"type": "array", "items": {"type": "string"}},
+                    "source_gate_schema_version": {"type": "string", "const": "famous-case-source-quality-gate-v1"},
+                    "source_gate_decision_counts": {
+                        "type": "object",
+                        "additionalProperties": {"type": "integer"},
+                    },
+                    "source_gate_decisions": {
+                        "type": "array",
+                        "items": {"$ref": "#/schemas/FamousCaseSourceGateDecision"},
+                    },
+                    "source_gate_blocked_case_count": {"type": "integer"},
+                    "source_gate_blocked_case_ids": {"type": "array", "items": {"type": "string"}},
+                    "boundary": {"type": "string"},
                 },
             },
             "FamousCaseSchoolCalibrationReceiptSummary": {
@@ -13159,6 +13292,7 @@ def schema_document() -> dict[str, Any]:
                     "strict_false_positive_rate",
                     "low_coverage_cases",
                     "birth_source_quality_summary",
+                    "event_label_source_quality_summary",
                     "source_review_routing_summary",
                     "domain_summary",
                     "domain_topic_summary",
@@ -13194,19 +13328,150 @@ def schema_document() -> dict[str, Any]:
                     "strict_exact_precision": {"type": "number"},
                     "strict_false_positive_rate": {"type": "number"},
                     "low_coverage_cases": {"type": "array", "items": {"type": "object"}},
-                    "birth_source_quality_summary": {"type": "object"},
-                    "source_review_routing_summary": {"type": "object"},
+                    "birth_source_quality_summary": {"$ref": "#/schemas/FamousCaseAnnualBirthSourceQualitySummary"},
+                    "event_label_source_quality_summary": {
+                        "$ref": "#/schemas/FamousCaseAnnualEventLabelSourceQualitySummary"
+                    },
+                    "source_review_routing_summary": {"type": "object", "additionalProperties": True},
                     "domain_summary": {"type": "array", "items": {"type": "object"}},
                     "domain_topic_summary": {"type": "array", "items": {"type": "object"}},
                     "domain_topic_refinement_queue": {"type": "array", "items": {"type": "object"}},
-                    "domain_topic_variant_sweep": {"type": "array", "items": {"type": "object"}},
+                    "domain_topic_variant_sweep": {
+                        "type": "array",
+                        "items": {"$ref": "#/schemas/FamousCaseVariantSweepRow"},
+                    },
                     "topic_summary": {"type": "array", "items": {"type": "object"}},
                     "industry_event_evidence_summary": {"type": "array", "items": {"type": "object"}},
-                    "industry_event_source_coverage": {"type": "object"},
+                    "industry_event_source_coverage": {"type": "object", "additionalProperties": True},
                     "event_subtype_summary": {"type": "array", "items": {"type": "object"}},
-                    "rule_variant_sweep": {"type": "array", "items": {"type": "object"}},
+                    "rule_variant_sweep": {
+                        "type": "array",
+                        "items": {"$ref": "#/schemas/FamousCaseVariantSweepRow"},
+                    },
                     "rule_refinement_queue": {"type": "array", "items": {"type": "object"}},
                     "evolution_task_plan": {"type": "array", "items": {"type": "object"}},
+                    "boundary": {"type": "string"},
+                },
+            },
+            "FamousCaseVariantSweepRow": {
+                "type": "object",
+                "required": [
+                    "event_topic",
+                    "variant",
+                    "selected",
+                    "event_count",
+                    "event_label_scoring_eligible_count",
+                    "event_label_source_review_count",
+                    "negative_year_count",
+                    "strict_exact_hit_count",
+                    "event_label_eligible_strict_exact_hit_count",
+                    "strict_false_positive_count",
+                    "strict_exact_hit_rate",
+                    "strict_exact_precision",
+                    "strict_false_positive_rate",
+                    "event_label_eligible_strict_exact_hit_rate",
+                    "event_label_eligible_strict_exact_precision",
+                    "selection_basis",
+                ],
+                "properties": {
+                    "domain": {"type": "string"},
+                    "event_topic": {"type": "string"},
+                    "variant": {"type": "string"},
+                    "selected": {"type": "boolean"},
+                    "event_count": {"type": "integer"},
+                    "event_label_scoring_eligible_count": {"type": "integer"},
+                    "event_label_source_review_count": {"type": "integer"},
+                    "negative_year_count": {"type": "integer"},
+                    "strict_exact_hit_count": {"type": "integer"},
+                    "event_label_eligible_strict_exact_hit_count": {"type": "integer"},
+                    "strict_false_positive_count": {"type": "integer"},
+                    "strict_exact_hit_rate": {"type": "number"},
+                    "strict_exact_precision": {"type": "number"},
+                    "strict_false_positive_rate": {"type": "number"},
+                    "event_label_eligible_strict_exact_hit_rate": {"type": "number"},
+                    "event_label_eligible_strict_exact_precision": {"type": "number"},
+                    "case_ids": {"type": "array", "items": {"type": "string"}},
+                    "selection_basis": {"type": "string"},
+                    "boundary": {"type": "string"},
+                },
+            },
+            "FamousCaseAnnualBirthSourceQualitySummary": {
+                "type": "object",
+                "required": [
+                    "schema_version",
+                    "case_count",
+                    "hour_pillar_scoring_eligible_case_count",
+                    "hour_pillar_scoring_eligible_case_ids",
+                    "caution_case_count",
+                    "caution_case_ids",
+                    "eligible_event_count",
+                    "caution_event_count",
+                    "eligible_event_rate",
+                    "source_gate_schema_version",
+                    "source_gate_decision_counts",
+                    "source_gate_blocked_case_ids",
+                    "source_gate_blocked_event_count",
+                    "boundary",
+                ],
+                "properties": {
+                    "schema_version": {
+                        "type": "string",
+                        "const": "famous-case-annual-birth-source-quality-summary-v1",
+                    },
+                    "case_count": {"type": "integer"},
+                    "hour_pillar_scoring_eligible_case_count": {"type": "integer"},
+                    "hour_pillar_scoring_eligible_case_ids": {"type": "array", "items": {"type": "string"}},
+                    "caution_case_count": {"type": "integer"},
+                    "caution_case_ids": {"type": "array", "items": {"type": "string"}},
+                    "eligible_event_count": {"type": "integer"},
+                    "caution_event_count": {"type": "integer"},
+                    "eligible_event_rate": {"type": "number"},
+                    "source_gate_schema_version": {"type": "string", "const": "famous-case-source-quality-gate-v1"},
+                    "source_gate_decision_counts": {
+                        "type": "object",
+                        "additionalProperties": {"type": "integer"},
+                    },
+                    "source_gate_blocked_case_ids": {"type": "array", "items": {"type": "string"}},
+                    "source_gate_blocked_event_count": {"type": "integer"},
+                    "boundary": {"type": "string"},
+                },
+            },
+            "FamousCaseAnnualEventLabelSourceQualitySummary": {
+                "type": "object",
+                "required": [
+                    "schema_version",
+                    "event_count",
+                    "event_label_source_gate_schema_version",
+                    "event_label_gate_decision_counts",
+                    "event_label_scoring_eligible_count",
+                    "event_label_source_review_count",
+                    "event_label_source_review_case_ids",
+                    "event_label_source_review_domain_topics",
+                    "blocks_rule_tuning",
+                    "boundary",
+                ],
+                "properties": {
+                    "schema_version": {
+                        "type": "string",
+                        "const": "famous-case-annual-event-label-source-quality-summary-v1",
+                    },
+                    "event_count": {"type": "integer"},
+                    "event_label_source_gate_schema_version": {
+                        "type": "string",
+                        "const": "famous-case-event-label-source-gate-v1",
+                    },
+                    "event_label_gate_decision_counts": {
+                        "type": "object",
+                        "additionalProperties": {"type": "integer"},
+                    },
+                    "event_label_scoring_eligible_count": {"type": "integer"},
+                    "event_label_source_review_count": {"type": "integer"},
+                    "event_label_source_review_case_ids": {"type": "array", "items": {"type": "string"}},
+                    "event_label_source_review_domain_topics": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "blocks_rule_tuning": {"type": "boolean"},
                     "boundary": {"type": "string"},
                 },
             },
@@ -13688,12 +13953,49 @@ def schema_document() -> dict[str, Any]:
                     "note": {"type": "string"},
                 },
             },
+            "AnnualLuckHiddenStemFlow": {
+                "type": "object",
+                "required": [
+                    "branch",
+                    "hidden_stem",
+                    "hidden_stem_role",
+                    "weight",
+                    "season",
+                    "seasonal_phase",
+                    "seasonal_factor",
+                    "adjusted_weight",
+                    "source_element",
+                    "target_role",
+                    "target_element",
+                    "relation",
+                ],
+                "properties": {
+                    "branch": {"type": "string"},
+                    "hidden_stem": {"type": "string"},
+                    "hidden_stem_role": {"type": "string"},
+                    "weight": {"type": "number"},
+                    "season": {"type": "string"},
+                    "seasonal_phase": {"type": "string"},
+                    "seasonal_factor": {"type": "number"},
+                    "adjusted_weight": {"type": "number"},
+                    "source_element": {"type": "string"},
+                    "target_role": {"type": "string"},
+                    "target_element": {"type": "string"},
+                    "relation": {"type": "string"},
+                },
+            },
             "AnnualLuckBaziEvidence": {
                 "type": "object",
                 "required": [
                     "annual_pillar",
                     "annual_ten_gods",
+                    "elements",
+                    "element_flow",
+                    "hidden_stem_flow",
                     "active_major_luck",
+                    "luck_pillar_interactions",
+                    "interaction_pressure_summary",
+                    "classical_timing_trace",
                     "useful_state",
                     "natal_pillar_matches",
                     "branch_interactions",
@@ -13702,7 +14004,16 @@ def schema_document() -> dict[str, Any]:
                 "properties": {
                     "annual_pillar": {"type": "string"},
                     "annual_ten_gods": {"$ref": "#/schemas/AnnualLuckTenGodPair"},
+                    "elements": {"$ref": "#/schemas/AnnualLuckRowElements"},
+                    "element_flow": {"type": "array", "items": {"type": "object"}},
+                    "hidden_stem_flow": {
+                        "type": "array",
+                        "items": {"$ref": "#/schemas/AnnualLuckHiddenStemFlow"},
+                    },
                     "active_major_luck": {"$ref": "#/schemas/AnnualLuckActiveMajorLuck"},
+                    "luck_pillar_interactions": {"type": "object"},
+                    "interaction_pressure_summary": {"type": "object"},
+                    "classical_timing_trace": {"type": "object"},
                     "useful_state": {"type": "string"},
                     "natal_pillar_matches": {
                         "type": "array",
@@ -13845,17 +14156,34 @@ def schema_document() -> dict[str, Any]:
                 "required": [
                     "monthly_pillar",
                     "monthly_ten_gods",
+                    "elements",
+                    "element_flow",
+                    "hidden_stem_flow",
                     "active_major_luck",
+                    "luck_pillar_interactions",
+                    "interaction_pressure_summary",
+                    "classical_timing_trace",
                     "useful_state",
                     "natal_pillar_matches",
                     "branch_interactions",
                     "month",
+                    "solar_term_window",
+                    "monthly_pillar_source",
                     "interpretation_basis",
                 ],
                 "properties": {
                     "monthly_pillar": {"type": "string"},
                     "monthly_ten_gods": {"$ref": "#/schemas/AnnualLuckTenGodPair"},
+                    "elements": {"$ref": "#/schemas/AnnualLuckRowElements"},
+                    "element_flow": {"type": "array", "items": {"type": "object"}},
+                    "hidden_stem_flow": {
+                        "type": "array",
+                        "items": {"$ref": "#/schemas/AnnualLuckHiddenStemFlow"},
+                    },
                     "active_major_luck": {"$ref": "#/schemas/AnnualLuckActiveMajorLuck"},
+                    "luck_pillar_interactions": {"type": "object"},
+                    "interaction_pressure_summary": {"type": "object"},
+                    "classical_timing_trace": {"type": "object"},
                     "useful_state": {"type": "string"},
                     "natal_pillar_matches": {
                         "type": "array",
@@ -13863,7 +14191,62 @@ def schema_document() -> dict[str, Any]:
                     },
                     "branch_interactions": {"type": "array", "items": {"type": "object"}},
                     "month": {"type": "integer"},
+                    "solar_term_window": {"$ref": "#/schemas/SolarMonthWindow"},
+                    "monthly_pillar_source": {"$ref": "#/schemas/MonthlyPillarSource"},
                     "interpretation_basis": {"type": "array", "items": {"type": "string"}},
+                },
+            },
+            "MonthlyPillarSource": {
+                "type": "object",
+                "required": ["schema_version", "basis", "provider_quality", "precision", "boundary"],
+                "properties": {
+                    "schema_version": {"type": "string", "const": "monthly-pillar-source-v1"},
+                    "basis": {
+                        "type": "string",
+                        "enum": ["approximate_symbolic_month_sequence", "provider_monthly_pillar"],
+                    },
+                    "provider_quality": {"type": "string"},
+                    "precision": {"type": "string"},
+                    "boundary": {"type": "string"},
+                },
+            },
+            "SolarMonthWindow": {
+                "type": "object",
+                "required": [
+                    "schema_version",
+                    "basis",
+                    "provider_quality",
+                    "precision",
+                    "solar_month_index",
+                    "branch",
+                    "start_term",
+                    "start_term_zh",
+                    "next_term",
+                    "next_term_zh",
+                    "start_date",
+                    "end_date",
+                    "next_start_date",
+                    "boundary_note",
+                ],
+                "properties": {
+                    "schema_version": {"type": "string", "const": "solar-month-window-v1"},
+                    "basis": {
+                        "type": "string",
+                        "enum": ["approximate_jieqi_month_boundaries", "provider_jieqi_month_boundaries"],
+                    },
+                    "provider_quality": {"type": "string"},
+                    "precision": {"type": "string"},
+                    "solar_month_index": {"type": "integer"},
+                    "branch": {"type": "string"},
+                    "start_term": {"type": "string"},
+                    "start_term_zh": {"type": "string"},
+                    "next_term": {"type": "string"},
+                    "next_term_zh": {"type": "string"},
+                    "next_branch": {"type": "string"},
+                    "start_date": {"type": "string"},
+                    "end_date": {"type": "string"},
+                    "next_start_date": {"type": "string"},
+                    "boundary_note": {"type": "string"},
                 },
             },
             "MonthlyLuckRow": {
@@ -13872,7 +14255,9 @@ def schema_document() -> dict[str, Any]:
                     "year",
                     "month",
                     "month_name",
+                    "solar_term_window",
                     "ganzhi",
+                    "pillar_source",
                     "elements",
                     "bazi_evidence",
                     "category",
@@ -13893,7 +14278,9 @@ def schema_document() -> dict[str, Any]:
                     "year": {"type": "integer"},
                     "month": {"type": "integer"},
                     "month_name": {"type": "string"},
+                    "solar_term_window": {"$ref": "#/schemas/SolarMonthWindow"},
                     "ganzhi": {"type": "string"},
+                    "pillar_source": {"$ref": "#/schemas/MonthlyPillarSource"},
                     "elements": {"$ref": "#/schemas/AnnualLuckRowElements"},
                     "bazi_evidence": {"$ref": "#/schemas/MonthlyLuckBaziEvidence"},
                     "category": {"type": "string"},
@@ -14411,6 +14798,9 @@ def schema_document() -> dict[str, Any]:
                     "level",
                     "pillar",
                     "ten_gods",
+                    "elements",
+                    "element_flow",
+                    "hidden_stem_flow",
                     "active_major_luck",
                     "useful_state",
                     "natal_match_count",
@@ -14420,6 +14810,16 @@ def schema_document() -> dict[str, Any]:
                     "level": {"type": "string", "enum": ["annual", "monthly"]},
                     "pillar": {"type": "string"},
                     "ten_gods": {"$ref": "#/schemas/AnnualLuckTenGodPair"},
+                    "elements": {"$ref": "#/schemas/AnnualLuckRowElements"},
+                    "element_flow": {"type": "array", "items": {"type": "object"}},
+                    "hidden_stem_flow": {
+                        "type": "array",
+                        "items": {"$ref": "#/schemas/AnnualLuckHiddenStemFlow"},
+                    },
+                    "luck_pillar_interactions": {"type": "object"},
+                    "interaction_pressure_summary": {"type": "object"},
+                    "solar_term_window": {"type": "object"},
+                    "monthly_pillar_source": {"type": "object"},
                     "active_major_luck": {"type": ["string", "null"]},
                     "useful_state": {"type": "string"},
                     "natal_match_count": {"type": "integer"},
@@ -15225,6 +15625,14 @@ def schema_document() -> dict[str, Any]:
                     "chinese_render_monthly_useful_state_anchor_ratio": {"type": "number"},
                     "chinese_render_annual_branch_interaction_anchor_ratio": {"type": "number"},
                     "chinese_render_monthly_branch_interaction_anchor_ratio": {"type": "number"},
+                    "chinese_render_annual_element_anchor_ratio": {"type": "number"},
+                    "chinese_render_monthly_element_anchor_ratio": {"type": "number"},
+                    "chinese_render_annual_element_flow_anchor_ratio": {"type": "number"},
+                    "chinese_render_monthly_element_flow_anchor_ratio": {"type": "number"},
+                    "chinese_render_annual_hidden_stem_flow_anchor_ratio": {"type": "number"},
+                    "chinese_render_monthly_hidden_stem_flow_anchor_ratio": {"type": "number"},
+                    "chinese_render_monthly_solar_term_window_anchor_ratio": {"type": "number"},
+                    "chinese_render_monthly_pillar_source_anchor_ratio": {"type": "number"},
                     "chinese_render_ascii_letter_count": {"type": "integer"},
                     "chinese_render_ascii_question_present": {"type": "boolean"},
                     "chinese_render_code_marker_present": {"type": "boolean"},

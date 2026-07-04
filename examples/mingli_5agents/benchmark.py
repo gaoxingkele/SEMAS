@@ -272,6 +272,48 @@ def run_benchmark(repo: GenomeRepository, version: int | None = None) -> Benchma
                         rendered_zh,
                         level="monthly",
                     ),
+                    "chinese_render_annual_element_anchor_ratio": _topic_element_anchor_ratio(
+                        final_report.get("topic_synthesis", {}),
+                        rendered_zh,
+                        level="annual",
+                    ),
+                    "chinese_render_monthly_element_anchor_ratio": _topic_element_anchor_ratio(
+                        final_report.get("topic_synthesis", {}),
+                        rendered_zh,
+                        level="monthly",
+                    ),
+                    "chinese_render_annual_element_flow_anchor_ratio": _topic_element_flow_anchor_ratio(
+                        final_report.get("topic_synthesis", {}),
+                        rendered_zh,
+                        level="annual",
+                    ),
+                    "chinese_render_monthly_element_flow_anchor_ratio": _topic_element_flow_anchor_ratio(
+                        final_report.get("topic_synthesis", {}),
+                        rendered_zh,
+                        level="monthly",
+                    ),
+                    "chinese_render_annual_hidden_stem_flow_anchor_ratio": _topic_hidden_stem_flow_anchor_ratio(
+                        final_report.get("topic_synthesis", {}),
+                        rendered_zh,
+                        level="annual",
+                    ),
+                    "chinese_render_monthly_hidden_stem_flow_anchor_ratio": _topic_hidden_stem_flow_anchor_ratio(
+                        final_report.get("topic_synthesis", {}),
+                        rendered_zh,
+                        level="monthly",
+                    ),
+                    "chinese_render_monthly_solar_term_window_anchor_ratio": (
+                        _topic_solar_term_window_anchor_ratio(
+                            final_report.get("topic_synthesis", {}),
+                            rendered_zh,
+                        )
+                    ),
+                    "chinese_render_monthly_pillar_source_anchor_ratio": (
+                        _topic_monthly_pillar_source_anchor_ratio(
+                            final_report.get("topic_synthesis", {}),
+                            rendered_zh,
+                        )
+                    ),
                     "chinese_render_ascii_letter_count": sum(
                         1 for char in rendered_zh if char.isascii() and char.isalpha()
                     ),
@@ -853,6 +895,245 @@ def _topic_branch_interaction_anchor_ratio(topic_synthesis: Any, rendered_zh: st
     for label in sorted(set(required)):
         matched += min(required.count(label), rendered_zh.count(label))
     return round(matched / len(required), 3)
+
+
+_ELEMENT_TO_ZH = {
+    "Wood": "木",
+    "Fire": "火",
+    "Earth": "土",
+    "Metal": "金",
+    "Water": "水",
+}
+
+
+def _topic_element_anchor_ratio(topic_synthesis: Any, rendered_zh: str, *, level: str) -> float:
+    if not isinstance(topic_synthesis, dict) or not rendered_zh:
+        return 0.0
+    required: list[str] = []
+    for topic in topic_synthesis.values():
+        if not isinstance(topic, dict):
+            continue
+        timing = topic.get("timing_evidence", {})
+        timing_level = timing.get(level, {}) if isinstance(timing, dict) else {}
+        elements = timing_level.get("elements") if isinstance(timing_level, dict) else None
+        if not isinstance(elements, dict):
+            focus = topic.get(f"{level}_focus", {})
+            evidence = focus.get("bazi_evidence", {}) if isinstance(focus, dict) else {}
+            elements = evidence.get("elements") if isinstance(evidence, dict) else None
+        if not isinstance(elements, dict):
+            continue
+        for key, prefix in (("stem", "天干"), ("branch", "地支"), ("focus", "主轴")):
+            value = elements.get(key)
+            if isinstance(value, str) and value:
+                required.append(f"{prefix}{_ELEMENT_TO_ZH.get(value, value)}")
+    if not required:
+        return 0.0
+    matched = 0
+    for label in sorted(set(required)):
+        matched += min(required.count(label), rendered_zh.count(label))
+    return round(matched / len(required), 3)
+
+
+_ELEMENT_FLOW_RELATION_TO_ZH = {
+    "same": "助",
+    "generate": "生",
+    "drain": "泄",
+    "control": "克",
+    "consume": "耗",
+    "neutral": "平",
+}
+
+_ELEMENT_SLOT_TO_ZH = {
+    "stem": "天干",
+    "branch": "地支",
+    "focus": "主轴",
+}
+
+_ELEMENT_TARGET_TO_ZH = {
+    "useful_element": "用神",
+    "dominant_element": "主气",
+}
+
+_HIDDEN_STEM_ROLE_TO_ZH = {
+    "principal": "本气",
+    "middle": "中气",
+    "residual": "余气",
+}
+
+_SEASON_TO_ZH = {
+    "spring": "春",
+    "summer": "夏",
+    "autumn": "秋",
+    "winter": "冬",
+}
+
+_SEASONAL_PHASE_TO_ZH = {
+    "prosperous": "旺",
+    "supporting": "相",
+    "resting": "休",
+    "confined": "囚",
+    "weak": "死",
+    "neutral": "平",
+}
+
+
+def _topic_element_flow_anchor_ratio(topic_synthesis: Any, rendered_zh: str, *, level: str) -> float:
+    if not isinstance(topic_synthesis, dict) or not rendered_zh:
+        return 0.0
+    required: list[str] = []
+    for topic in topic_synthesis.values():
+        if not isinstance(topic, dict):
+            continue
+        timing = topic.get("timing_evidence", {})
+        timing_level = timing.get(level, {}) if isinstance(timing, dict) else {}
+        flows = timing_level.get("element_flow") if isinstance(timing_level, dict) else None
+        if not isinstance(flows, list):
+            focus = topic.get(f"{level}_focus", {})
+            evidence = focus.get("bazi_evidence", {}) if isinstance(focus, dict) else {}
+            flows = evidence.get("element_flow") if isinstance(evidence, dict) else None
+        if not isinstance(flows, list):
+            continue
+        for item in flows:
+            if not isinstance(item, dict):
+                continue
+            slot = _ELEMENT_SLOT_TO_ZH.get(str(item.get("source_slot", "")), "")
+            source = _ELEMENT_TO_ZH.get(str(item.get("source_element", "")), "")
+            relation = _ELEMENT_FLOW_RELATION_TO_ZH.get(str(item.get("relation", "")), "")
+            target_role = _ELEMENT_TARGET_TO_ZH.get(str(item.get("target_role", "")), "")
+            target = _ELEMENT_TO_ZH.get(str(item.get("target_element", "")), "")
+            if slot and source and relation and target_role and target:
+                required.append(f"{slot}{source}{relation}{target_role}{target}")
+    if not required:
+        return 0.0
+    matched = 0
+    for label in sorted(set(required)):
+        matched += min(required.count(label), rendered_zh.count(label))
+    return round(matched / len(required), 3)
+
+
+def _topic_hidden_stem_flow_anchor_ratio(topic_synthesis: Any, rendered_zh: str, *, level: str) -> float:
+    if not isinstance(topic_synthesis, dict) or not rendered_zh:
+        return 0.0
+    required: list[str] = []
+    for topic in topic_synthesis.values():
+        if not isinstance(topic, dict):
+            continue
+        timing = topic.get("timing_evidence", {})
+        timing_level = timing.get(level, {}) if isinstance(timing, dict) else {}
+        flows = timing_level.get("hidden_stem_flow") if isinstance(timing_level, dict) else None
+        if not isinstance(flows, list):
+            focus = topic.get(f"{level}_focus", {})
+            evidence = focus.get("bazi_evidence", {}) if isinstance(focus, dict) else {}
+            flows = evidence.get("hidden_stem_flow") if isinstance(evidence, dict) else None
+        if not isinstance(flows, list):
+            continue
+        for item in flows:
+            if not isinstance(item, dict):
+                continue
+            branch = _BRANCH_PINYIN_TO_ZH.get(str(item.get("branch", "")), "")
+            stem = _STEM_PINYIN_TO_ZH.get(str(item.get("hidden_stem", "")), "")
+            role = _HIDDEN_STEM_ROLE_TO_ZH.get(str(item.get("hidden_stem_role", "")), "")
+            weight = _hidden_stem_weight_text(item.get("weight"))
+            season = _SEASON_TO_ZH.get(str(item.get("season", "")), "")
+            phase = _SEASONAL_PHASE_TO_ZH.get(str(item.get("seasonal_phase", "")), "")
+            factor = _hidden_stem_weight_text(item.get("seasonal_factor"))
+            adjusted = _hidden_stem_weight_text(item.get("adjusted_weight"))
+            relation = _ELEMENT_FLOW_RELATION_TO_ZH.get(str(item.get("relation", "")), "")
+            target_role = _ELEMENT_TARGET_TO_ZH.get(str(item.get("target_role", "")), "")
+            target = _ELEMENT_TO_ZH.get(str(item.get("target_element", "")), "")
+            if branch and stem and role and weight and season and phase and factor and adjusted and relation and target_role and target:
+                required.append(
+                    f"{branch}藏{stem}{role}权重{weight}{season}{phase}系数{factor}调权{adjusted}{relation}{target_role}{target}"
+                )
+    if not required:
+        return 0.0
+    matched = 0
+    for label in sorted(set(required)):
+        matched += min(required.count(label), rendered_zh.count(label))
+    return round(matched / len(required), 3)
+
+
+def _topic_solar_term_window_anchor_ratio(topic_synthesis: Any, rendered_zh: str) -> float:
+    if not isinstance(topic_synthesis, dict) or not rendered_zh:
+        return 0.0
+    required: list[str] = []
+    for topic in topic_synthesis.values():
+        if not isinstance(topic, dict):
+            continue
+        timing = topic.get("timing_evidence", {})
+        monthly = timing.get("monthly", {}) if isinstance(timing, dict) else {}
+        window = monthly.get("solar_term_window") if isinstance(monthly, dict) else None
+        if not isinstance(window, dict) or not window:
+            focus = topic.get("monthly_focus", {})
+            evidence = focus.get("bazi_evidence", {}) if isinstance(focus, dict) else {}
+            window = evidence.get("solar_term_window") if isinstance(evidence, dict) else None
+        if not isinstance(window, dict) or not window:
+            continue
+        branch = _BRANCH_PINYIN_TO_ZH.get(str(window.get("branch", "")), "")
+        start_term = str(window.get("start_term_zh") or "")
+        next_term = str(window.get("next_term_zh") or "")
+        start_date = _solar_window_date_text(window.get("start_date"))
+        end_date = _solar_window_date_text(window.get("end_date"))
+        if branch and start_term and next_term and start_date and end_date:
+            required.append(f"{branch}\uff0c{start_term}\u81f3{next_term}\uff0c{start_date}\u81f3{end_date}")
+    if not required:
+        return 0.0
+    matched = 0
+    for label in sorted(set(required)):
+        matched += min(required.count(label), rendered_zh.count(label))
+    return round(matched / len(required), 3)
+
+
+def _topic_monthly_pillar_source_anchor_ratio(topic_synthesis: Any, rendered_zh: str) -> float:
+    if not isinstance(topic_synthesis, dict) or not rendered_zh:
+        return 0.0
+    required: list[str] = []
+    for topic in topic_synthesis.values():
+        if not isinstance(topic, dict):
+            continue
+        timing = topic.get("timing_evidence", {})
+        monthly = timing.get("monthly", {}) if isinstance(timing, dict) else {}
+        source = monthly.get("monthly_pillar_source") if isinstance(monthly, dict) else None
+        if not isinstance(source, dict) or not source:
+            focus = topic.get("monthly_focus", {})
+            evidence = focus.get("bazi_evidence", {}) if isinstance(focus, dict) else {}
+            source = evidence.get("monthly_pillar_source") if isinstance(evidence, dict) else None
+        if not isinstance(source, dict) or not source:
+            continue
+        basis = {
+            "approximate_symbolic_month_sequence": "近似月序",
+            "provider_monthly_pillar": "供应商月柱",
+        }.get(str(source.get("basis", "")), str(source.get("basis", "")))
+        provider_quality = str(source.get("provider_quality") or "")
+        precision = str(source.get("precision") or "")
+        provider_quality = {
+            "offline_approximation": "离线近似",
+            "external_calendar": "外部历法",
+        }.get(provider_quality, provider_quality)
+        precision = {
+            "symbolic_sequence": "符号月序",
+            "provider_supplied": "供应商提供",
+            "exact_jieqi_month": "精确节气月",
+        }.get(precision, precision)
+        if basis and provider_quality and precision:
+            required.append(f"{basis}，{provider_quality}，{precision}")
+    if not required:
+        return 0.0
+    matched = 0
+    for label in sorted(set(required)):
+        matched += min(required.count(label), rendered_zh.count(label))
+    return round(matched / len(required), 3)
+
+
+def _solar_window_date_text(value: Any) -> str:
+    return str(value or "").replace("T", " ")
+
+
+def _hidden_stem_weight_text(value: Any) -> str:
+    try:
+        return f"{float(value):.2f}"
+    except (TypeError, ValueError):
+        return str(value or "")
 
 
 def _benchmark_receipt(result: dict[str, Any]) -> dict[str, Any]:

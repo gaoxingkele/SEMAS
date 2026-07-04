@@ -11770,3 +11770,53 @@ principles to continuously mine new alpha factors.
 - Consider scheduling the loop via GitHub Actions cron (weekly) with a token
   budget and a human gate.
 - Push the loop infrastructure to GitHub.
+
+---
+
+## 2026-07-04 - Smart_SkillandAgent Topic Skeleton
+
+### Motivation
+
+Create an independent topic for continuously improving GitHub-origin skills and
+agents. Each subproject should correspond to one upstream repository and keep
+its own evolution chain, local changes, evaluation receipts, and local LLM wiki.
+
+### Actions Taken
+
+1. Created `Smart_SkillandAgent/` as the topic workspace.
+2. Added `Smart_SkillandAgent/registry.yaml` for project indexing.
+3. Added `Smart_SkillandAgent/projects/_template_skill_or_agent/` with:
+   - source provenance file
+   - upstream `repo/` placeholder
+   - evolution backlog, metrics, and iteration template
+   - evaluation, patch, and run-log directories
+   - subproject-local LLM wiki with references
+4. Updated top-level `README.md` with the new topic entry.
+5. Added global wiki note `wiki/smart_skillandagent_topic.md`.
+6. Updated `wiki/README.md`, `wiki/references.md`, and
+   `wiki/semas_evolution_ideas.md`.
+
+### Files Changed
+
+- `Smart_SkillandAgent/README.md`
+- `Smart_SkillandAgent/registry.yaml`
+- `Smart_SkillandAgent/projects/README.md`
+- `Smart_SkillandAgent/projects/_template_skill_or_agent/`
+- `README.md`
+- `wiki/README.md`
+- `wiki/references.md`
+- `wiki/smart_skillandagent_topic.md`
+- `wiki/semas_evolution_ideas.md`
+- `OPERATION_LOG.md`
+
+### Verification
+
+- `rg --files Smart_SkillandAgent` - confirmed the template tree exists.
+- `Test-Path Smart_SkillandAgent\README.md` - expected true.
+- No runtime tests were required because this change is a documentation and
+  directory-framework addition.
+
+### Boundary
+
+This creates the reusable framework only. It does not clone or modify any real
+GitHub skill/agent repository yet.

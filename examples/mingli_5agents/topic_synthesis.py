@@ -209,6 +209,13 @@ def _compact_bazi_timing(evidence: object, level: str) -> dict[str, Any]:
         "level": level,
         "pillar": evidence.get(pillar_key),
         "ten_gods": evidence.get(ten_gods_key, {}),
+        "elements": evidence.get("elements", {}),
+        "element_flow": evidence.get("element_flow", []),
+        "hidden_stem_flow": evidence.get("hidden_stem_flow", []),
+        "luck_pillar_interactions": evidence.get("luck_pillar_interactions", {}),
+        "interaction_pressure_summary": evidence.get("interaction_pressure_summary", {}),
+        "solar_term_window": evidence.get("solar_term_window", {}) if level == "monthly" else {},
+        "monthly_pillar_source": evidence.get("monthly_pillar_source", {}) if level == "monthly" else {},
         "active_major_luck": active_luck.get("ganzhi"),
         "useful_state": evidence.get("useful_state"),
         "natal_match_count": len(matches),
@@ -221,12 +228,37 @@ def _evidence_summary(timing_evidence: dict[str, Any], cross_agent_evidence: lis
     annual = timing_evidence.get("annual", {})
     monthly = timing_evidence.get("monthly", {})
     if isinstance(annual, dict) and annual:
+        annual_luck_interaction = annual.get("luck_pillar_interactions", {})
+        annual_luck_summary = ""
+        if isinstance(annual_luck_interaction, dict) and annual_luck_interaction.get("active"):
+            annual_luck_summary = (
+                f" luck-pillar {annual_luck_interaction.get('current_pillar')} "
+                f"{annual_luck_interaction.get('major_luck_pillar')} "
+                f"{annual_luck_interaction.get('summary')}"
+            )
         summary.append(
-            f"BaZi annual {annual.get('pillar')} ten-gods {annual.get('ten_gods')} useful-state {annual.get('useful_state')}"
+            f"BaZi annual {annual.get('pillar')} ten-gods {annual.get('ten_gods')} "
+            f"elements {annual.get('elements')} useful-state {annual.get('useful_state')}{annual_luck_summary}"
         )
     if isinstance(monthly, dict) and monthly:
+        monthly_source = monthly.get("monthly_pillar_source", {})
+        monthly_luck_interaction = monthly.get("luck_pillar_interactions", {})
+        source_summary = ""
+        if isinstance(monthly_source, dict) and monthly_source:
+            source_summary = (
+                f" monthly-pillar-source {monthly_source.get('basis')} "
+                f"{monthly_source.get('provider_quality')} {monthly_source.get('precision')}"
+            )
+        luck_summary = ""
+        if isinstance(monthly_luck_interaction, dict) and monthly_luck_interaction.get("active"):
+            luck_summary = (
+                f" luck-pillar {monthly_luck_interaction.get('current_pillar')} "
+                f"{monthly_luck_interaction.get('major_luck_pillar')} "
+                f"{monthly_luck_interaction.get('summary')}"
+            )
         summary.append(
-            f"BaZi monthly {monthly.get('pillar')} ten-gods {monthly.get('ten_gods')} useful-state {monthly.get('useful_state')}"
+            f"BaZi monthly {monthly.get('pillar')} ten-gods {monthly.get('ten_gods')} "
+            f"elements {monthly.get('elements')} useful-state {monthly.get('useful_state')}{source_summary}{luck_summary}"
         )
     for item in cross_agent_evidence:
         if not isinstance(item, dict):

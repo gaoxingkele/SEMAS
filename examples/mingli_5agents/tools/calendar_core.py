@@ -8,7 +8,7 @@ interfaces.
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 import importlib
 from typing import Any
 
@@ -76,6 +76,33 @@ BRANCH_ELEMENTS = {
     "Hai": "Water",
 }
 
+BRANCH_HIDDEN_STEMS = {
+    "Zi": ["Gui"],
+    "Chou": ["Ji", "Gui", "Xin"],
+    "Yin": ["Jia", "Bing", "Wu"],
+    "Mao": ["Yi"],
+    "Chen": ["Wu", "Yi", "Gui"],
+    "Si": ["Bing", "Wu", "Geng"],
+    "Wu": ["Ding", "Ji"],
+    "Wei": ["Ji", "Ding", "Yi"],
+    "Shen": ["Geng", "Ren", "Wu"],
+    "You": ["Xin"],
+    "Xu": ["Wu", "Xin", "Ding"],
+    "Hai": ["Ren", "Jia"],
+}
+
+BRANCH_HIDDEN_STEM_WEIGHTS = {
+    branch: [
+        {
+            "stem": stem,
+            "role": ("principal" if index == 0 else "middle" if index == 1 else "residual"),
+            "weight": (1.0 if index == 0 else 0.5 if index == 1 else 0.25),
+        }
+        for index, stem in enumerate(stems)
+    ]
+    for branch, stems in BRANCH_HIDDEN_STEMS.items()
+}
+
 MONTH_BRANCHES = ["Yin", "Mao", "Chen", "Si", "Wu", "Wei", "Shen", "You", "Xu", "Hai", "Zi", "Chou"]
 SEASONS = {
     12: "winter",
@@ -106,6 +133,21 @@ SOLAR_TERMS_APPROX = [
     ("Start of Winter", (11, 7)),
     ("Major Snow", (12, 7)),
 ]
+
+SOLAR_MONTH_STARTS_APPROX = {
+    1: ("Start of Spring", "\u7acb\u6625", 2, 4, "Yin"),
+    2: ("Awakening of Insects", "\u60ca\u86f0", 3, 6, "Mao"),
+    3: ("Clear and Bright", "\u6e05\u660e", 4, 5, "Chen"),
+    4: ("Start of Summer", "\u7acb\u590f", 5, 6, "Si"),
+    5: ("Grain in Ear", "\u8292\u79cd", 6, 6, "Wu"),
+    6: ("Minor Heat", "\u5c0f\u6691", 7, 7, "Wei"),
+    7: ("Start of Autumn", "\u7acb\u79cb", 8, 8, "Shen"),
+    8: ("White Dew", "\u767d\u9732", 9, 8, "You"),
+    9: ("Cold Dew", "\u5bd2\u9732", 10, 8, "Xu"),
+    10: ("Start of Winter", "\u7acb\u51ac", 11, 7, "Hai"),
+    11: ("Major Snow", "\u5927\u96ea", 12, 7, "Zi"),
+    12: ("Minor Cold", "\u5c0f\u5bd2", 1, 6, "Chou"),
+}
 
 
 class ApproximateCalendarProvider:
@@ -387,6 +429,66 @@ def nearest_solar_term(month: int, day: int) -> str:
         if (month, day) >= (term_month, term_day):
             current = name
     return current
+
+
+def solar_month_window(year: int, solar_month_index: int) -> dict[str, Any]:
+    """Return the approximate Jieqi month window for a symbolic flow month.
+
+    `solar_month_index` follows the BaZi month order from Yin: month 1 starts
+    near Start of Spring, month 12 starts near Minor Cold in the following
+    civil year. Dates are approximate anchors and intentionally explicit so
+    downstream reports can show the boundary they used.
+    """
+    index = int(solar_month_index)
+    if index < 1 or index > 12:
+        raise ValueError("solar_month_index must be between 1 and 12")
+    start_name, start_name_zh, start_month, start_day, branch = SOLAR_MONTH_STARTS_APPROX[index]
+    next_index = 1 if index == 12 else index + 1
+    next_name, next_name_zh, next_month, next_day, next_branch = SOLAR_MONTH_STARTS_APPROX[next_index]
+    start_year = int(year) + (1 if index == 12 else 0)
+    next_year = int(year) + (1 if index >= 11 else 0)
+    start = date(start_year, start_month, start_day)
+    next_start = date(next_year, next_month, next_day)
+    end = next_start - timedelta(days=1)
+    return {
+        "schema_version": "solar-month-window-v1",
+        "basis": "approximate_jieqi_month_boundaries",
+        "provider_quality": "offline_approximation",
+        "precision": "approximate_date",
+        "solar_month_index": index,
+        "branch": branch,
+        "start_term": start_name,
+        "start_term_zh": start_name_zh,
+        "next_term": next_name,
+        "next_term_zh": next_name_zh,
+        "next_branch": next_branch,
+        "start_date": start.isoformat(),
+        "end_date": end.isoformat(),
+        "next_start_date": next_start.isoformat(),
+        "boundary_note": "Approximate solar-term window; replace with professional ephemeris provider for exact local transition time.",
+    }
+
+
+def normalize_solar_month_window(
+    window: dict[str, Any],
+    *,
+    year: int,
+    solar_month_index: int,
+    fallback_provider_quality: str = "unknown",
+) -> dict[str, Any]:
+    """Normalize provider-supplied Jieqi month windows to the public schema."""
+    approximate = solar_month_window(year, solar_month_index)
+    normalized = {**approximate, **dict(window)}
+    normalized["schema_version"] = "solar-month-window-v1"
+    normalized["basis"] = str(normalized.get("basis") or "provider_jieqi_month_boundaries")
+    normalized["solar_month_index"] = int(normalized.get("solar_month_index") or solar_month_index)
+    normalized["provider_quality"] = str(normalized.get("provider_quality") or fallback_provider_quality)
+    normalized["precision"] = str(normalized.get("precision") or "provider_supplied")
+    normalized["boundary_note"] = str(
+        normalized.get("boundary_note")
+        or "Provider-supplied solar-term window; verify provider provenance for production use."
+    )
+    return normalized
 
 
 def register_calendar_provider(provider: CalendarProvider, default: bool = False) -> None:

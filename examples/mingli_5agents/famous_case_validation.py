@@ -1,4 +1,4 @@
-"""Famous-person BaZi validation fixtures and scoring helpers.
+﻿"""Famous-person BaZi validation fixtures and scoring helpers.
 
 The fixtures are not used as proof that BaZi is predictive. They are an audit
 tool: compare school-agent claims against public, sourced life-event tags and
@@ -112,7 +112,7 @@ FAMOUS_CASES: tuple[dict[str, Any], ...] = (
             "migration": [1895, 1933],
             "public_fame": [1919, 1921],
         },
-        "validation_use": "学术、迁移和名声节点清楚；适合检验印星、食伤和迁移象。",
+        "validation_use": "学术、迁移和名声节点清晰；适合检验印星、食伤和迁移象。",
     },
     {
         "id": "arthur_ashe",
@@ -136,7 +136,7 @@ FAMOUS_CASES: tuple[dict[str, Any], ...] = (
             "public_fame": [1968, 1975],
             "health_risk": [1979, 1983, 1992],
         },
-        "validation_use": "网球冠军、公众影响和健康风险节点清楚；适合检验体育峰值和健康风险。",
+        "validation_use": "网球冠军、公众影响和健康风险节点清晰；适合检验体育峰值和健康风险。",
     },
     {
         "id": "mark_spitz",
@@ -184,7 +184,7 @@ FAMOUS_CASES: tuple[dict[str, Any], ...] = (
             "health_risk": [2016, 2020, 2021],
             "transition": [2022],
         },
-        "validation_use": "职业高峰、伤病和退役节点清楚；适合检验长期大运承接。",
+        "validation_use": "职业高峰、伤病和退役节点清晰；适合检验长期大运承接。",
     },
     {
         "id": "lucille_ball",
@@ -208,7 +208,7 @@ FAMOUS_CASES: tuple[dict[str, Any], ...] = (
             "relationship": [1940, 1960],
             "business_power": [1962],
         },
-        "validation_use": "演员、制片与商业权力节点清楚；适合检验食伤、财星和官杀承接。",
+        "validation_use": "演员、制片与商业权力节点清晰；适合检验食伤、财星和官杀承接。",
     },
     {
         "id": "sean_penn",
@@ -256,7 +256,7 @@ FAMOUS_CASES: tuple[dict[str, Any], ...] = (
             "relationship": [1961, 1969, 1978],
             "health_risk": [2010, 2018],
         },
-        "validation_use": "声音输出、公众名声、关系和健康节点清楚；适合检验食伤、印星和调候。",
+        "validation_use": "声音输出、公众名声、关系和健康节点清晰；适合检验食伤、印星和调候。",
     },
     {
         "id": "michael_jackson",
@@ -280,7 +280,7 @@ FAMOUS_CASES: tuple[dict[str, Any], ...] = (
             "public_controversy": [1993, 2005],
             "health_risk": [2009],
         },
-        "validation_use": "成名、作品、争议和健康风险节点清楚；适合检验食伤、名声和危机年份。",
+        "validation_use": "成名、作品、争议和健康风险节点清晰；适合检验食伤、名声和危机年份。",
     },
     {
         "id": "madonna",
@@ -311,6 +311,9 @@ FAMOUS_CASES: tuple[dict[str, Any], ...] = (
 
 SCHOOL_TOPIC_HINTS: dict[str, set[str]] = {
     "子平格局法": {"career_power", "career_project", "public_fame", "study_exam", "sports_peak"},
+    "格局横门断": {"career_power", "career_project", "public_fame", "study_exam", "sports_peak"},
+    "三命通会综合法": {"career_power", "career_project", "public_fame", "study_exam", "transition", "sports_peak"},
+    "李虚中珞琭子源流法": {"transition", "migration", "career_project", "family_relation", "public_fame"},
     "旺衰扶抑法": {"health_risk", "study_exam", "career_project", "sports_peak"},
     "调候法": {"health_risk", "study_exam", "sports_peak"},
     "体用气势法": {"career_project", "study_exam", "migration", "transition", "sports_peak"},
@@ -644,34 +647,51 @@ def _fixture_domain_coverage(cases: tuple[dict[str, Any], ...]) -> list[dict[str
 
 def _fixture_birth_source_quality(cases: tuple[dict[str, Any], ...]) -> dict[str, Any]:
     """Summarize whether fixture birth data is suitable for hour-sensitive calibration."""
-    high_confidence_ratings = {"甲甲", "甲"}
+    high_confidence_ratings = _high_confidence_birth_source_ratings()
     rating_counts: dict[str, int] = {}
     source_counts: dict[str, int] = {}
     high_confidence_case_ids: list[str] = []
     caution_case_ids: list[str] = []
     invalid_birth_time_case_ids: list[str] = []
     missing_birth_source_case_ids: list[str] = []
+    source_gate_decisions: list[dict[str, Any]] = []
     for case in cases:
         case_id = str(case.get("id", ""))
         birth = case.get("birth", {}) if isinstance(case.get("birth"), dict) else {}
         source = case.get("source", {}) if isinstance(case.get("source"), dict) else {}
         rating = str(source.get("rating", ""))
         source_name = str(source.get("name", ""))
+        birth_time_valid = _birth_time_format_valid(str(birth.get("birth_time", "")))
+        source_present = bool(source_name and rating)
         rating_counts[rating] = rating_counts.get(rating, 0) + 1
         source_counts[source_name] = source_counts.get(source_name, 0) + 1
-        if not source_name or not rating:
+        if not source_present:
             missing_birth_source_case_ids.append(case_id)
-        if not _birth_time_format_valid(str(birth.get("birth_time", ""))):
+        if not birth_time_valid:
             invalid_birth_time_case_ids.append(case_id)
         if rating in high_confidence_ratings:
             high_confidence_case_ids.append(case_id)
         else:
             caution_case_ids.append(case_id)
+        source_gate_decisions.append(
+            _birth_source_gate_decision(
+                case_id=case_id,
+                rating=rating,
+                source_present=source_present,
+                birth_time_valid=birth_time_valid,
+            )
+        )
     hour_pillar_eligible_case_ids = [
         case_id
         for case_id in high_confidence_case_ids
         if case_id not in invalid_birth_time_case_ids and case_id not in missing_birth_source_case_ids
     ]
+    decision_counts = _counts(item["decision"] for item in source_gate_decisions)
+    blocked_case_ids = sorted(
+        str(item["case_id"])
+        for item in source_gate_decisions
+        if item["decision"] != "allow_hour_pillar_scoring"
+    )
     return {
         "schema_version": "famous-case-birth-source-quality-v1",
         "case_count": len(cases),
@@ -687,10 +707,47 @@ def _fixture_birth_source_quality(cases: tuple[dict[str, Any], ...]) -> dict[str
         "missing_birth_source_case_ids": sorted(missing_birth_source_case_ids),
         "hour_pillar_scoring_eligible_case_count": len(hour_pillar_eligible_case_ids),
         "hour_pillar_scoring_eligible_case_ids": sorted(hour_pillar_eligible_case_ids),
+        "source_gate_schema_version": "famous-case-source-quality-gate-v1",
+        "source_gate_decision_counts": decision_counts,
+        "source_gate_decisions": sorted(source_gate_decisions, key=lambda item: str(item["case_id"])),
+        "source_gate_blocked_case_count": len(blocked_case_ids),
+        "source_gate_blocked_case_ids": blocked_case_ids,
         "boundary": (
             "High source quality permits hour-sensitive symbolic calibration only. It does not prove predictive "
-            "validity or replace external review of event labels."
+            "validity or replace external review of event labels. The source gate blocks lower-quality birth-time "
+            "records from rule tuning and routes them to source review."
         ),
+    }
+
+
+def _high_confidence_birth_source_ratings() -> set[str]:
+    return {"甲甲", "甲"}
+
+
+def _birth_source_gate_decision(
+    *,
+    case_id: str,
+    rating: str,
+    source_present: bool,
+    birth_time_valid: bool,
+) -> dict[str, Any]:
+    reasons = []
+    if not source_present:
+        reasons.append("missing_birth_source")
+    if not birth_time_valid:
+        reasons.append("invalid_birth_time")
+    if rating not in _high_confidence_birth_source_ratings():
+        reasons.append("low_birth_source_rating")
+    decision = "allow_hour_pillar_scoring" if not reasons else "hold_for_source_review"
+    return {
+        "case_id": case_id,
+        "source_rating": rating,
+        "source_present": source_present,
+        "birth_time_format_valid": birth_time_valid,
+        "decision": decision,
+        "blocks_rule_tuning": decision != "allow_hour_pillar_scoring",
+        "reasons": reasons,
+        "boundary": "This gate controls source hygiene only; it does not validate event labels or predictions.",
     }
 
 
@@ -765,6 +822,7 @@ def famous_case_annual_event_calibration_receipt() -> dict[str, Any]:
     fixture_receipt = famous_case_receipt()
     case_scores = [_score_case_annual_events(case) for case in FAMOUS_CASES]
     birth_source_quality_summary = _annual_birth_source_quality_summary(case_scores)
+    event_label_source_quality_summary = _annual_event_label_source_quality_summary(case_scores)
     topic_summary = _annual_topic_summary(case_scores)
     domain_topic_summary = _annual_domain_topic_summary(case_scores)
     domain_topic_variant_sweep = _domain_topic_variant_sweep(case_scores)
@@ -818,6 +876,7 @@ def famous_case_annual_event_calibration_receipt() -> dict[str, Any]:
         ),
         "case_scores": case_scores,
         "birth_source_quality_summary": birth_source_quality_summary,
+        "event_label_source_quality_summary": event_label_source_quality_summary,
         "source_review_routing_summary": source_review_routing_summary,
         "domain_summary": _annual_domain_summary(case_scores),
         "domain_topic_summary": domain_topic_summary,
@@ -923,19 +982,27 @@ def _score_case_annual_events(case: dict[str, Any]) -> dict[str, Any]:
         "strict_exact_hit_rate": _rate(strict_exact_hit_count, len(events)),
         "strict_exact_precision": _rate(strict_exact_hit_count, strict_exact_hit_count + strict_false_positive_count),
         "strict_false_positive_rate": _rate(strict_false_positive_count, len(negative_samples)),
+        "event_label_source_quality_summary": _event_label_source_quality_summary(events),
         "events": events,
         "negative_samples": negative_samples,
     }
 
 
 def _case_birth_source_quality(case: dict[str, Any]) -> dict[str, Any]:
+    case_id = str(case.get("id", ""))
     birth = case.get("birth", {}) if isinstance(case.get("birth"), dict) else {}
     source = case.get("source", {}) if isinstance(case.get("source"), dict) else {}
     rating = str(source.get("rating", ""))
     source_name = str(source.get("name", ""))
     birth_time_valid = _birth_time_format_valid(str(birth.get("birth_time", "")))
-    high_confidence = rating in {"甲甲", "甲"}
+    high_confidence = rating in _high_confidence_birth_source_ratings()
     source_present = bool(source_name and rating)
+    gate = _birth_source_gate_decision(
+        case_id=case_id,
+        rating=rating,
+        source_present=source_present,
+        birth_time_valid=birth_time_valid,
+    )
     return {
         "schema_version": "famous-case-birth-source-quality-case-v1",
         "source_name": source_name,
@@ -943,10 +1010,13 @@ def _case_birth_source_quality(case: dict[str, Any]) -> dict[str, Any]:
         "birth_time_format_valid": birth_time_valid,
         "high_confidence_birth_source": high_confidence,
         "hour_pillar_scoring_eligible": high_confidence and source_present and birth_time_valid,
+        "source_gate_decision": gate["decision"],
+        "source_gate_reasons": gate["reasons"],
+        "blocks_rule_tuning": gate["blocks_rule_tuning"],
         "caution": not high_confidence or not source_present or not birth_time_valid,
         "boundary": (
             "This case-level quality flag controls calibration hygiene. It does not certify event labels "
-            "or predictive validity."
+            "or predictive validity. Cases held for source review must not tune prediction rules."
         ),
     }
 
@@ -972,6 +1042,18 @@ def _annual_birth_source_quality_summary(case_scores: list[dict[str, Any]]) -> d
         for case in case_scores
         if case.get("hour_pillar_scoring_eligible") is not True
     )
+    gate_decisions = [
+        {
+            "case_id": str(case.get("case_id")),
+            "decision": str(case.get("birth_source_quality", {}).get("source_gate_decision", "")),
+            "blocks_rule_tuning": bool(case.get("birth_source_quality", {}).get("blocks_rule_tuning")),
+            "event_count": int(case.get("event_count", 0)),
+        }
+        for case in case_scores
+    ]
+    blocked_event_count = sum(
+        int(item["event_count"]) for item in gate_decisions if item["blocks_rule_tuning"]
+    )
     return {
         "schema_version": "famous-case-annual-birth-source-quality-summary-v1",
         "case_count": len(case_scores),
@@ -982,9 +1064,16 @@ def _annual_birth_source_quality_summary(case_scores: list[dict[str, Any]]) -> d
         "eligible_event_count": eligible_event_count,
         "caution_event_count": caution_event_count,
         "eligible_event_rate": _rate(eligible_event_count, eligible_event_count + caution_event_count),
+        "source_gate_schema_version": "famous-case-source-quality-gate-v1",
+        "source_gate_decision_counts": _counts(item["decision"] for item in gate_decisions),
+        "source_gate_blocked_case_ids": sorted(
+            str(item["case_id"]) for item in gate_decisions if item["blocks_rule_tuning"]
+        ),
+        "source_gate_blocked_event_count": blocked_event_count,
         "boundary": (
             "Hour-pillar-sensitive calibration should use eligible cases. Caution cases can remain in broad "
-            "annual diagnostics only with source-quality caveats."
+            "annual diagnostics only with source-quality caveats. Blocked cases must route to source review "
+            "before any rule-tuning use."
         ),
     }
 
@@ -1064,10 +1153,15 @@ def _score_event_year(
     window_match = any(_row_matches_event(item, expected) for item in neighbor_rows)
     strict_exact_match = _row_strictly_matches_event(topic, row, expected, evidence)
     event_subtype = _event_subtype(case, topic, year)
+    industry_evidence = _industry_event_evidence(str(case.get("domain", "")), topic, event_subtype)
+    event_label_gate = _event_label_source_gate_decision(industry_evidence)
     return {
         "event_topic": topic,
         "event_subtype": event_subtype,
-        "industry_event_evidence": _industry_event_evidence(str(case.get("domain", "")), topic, event_subtype),
+        "industry_event_evidence": industry_evidence,
+        "event_label_source_gate": event_label_gate,
+        "event_label_gate_decision": event_label_gate["decision"],
+        "event_label_blocks_rule_tuning": event_label_gate["blocks_rule_tuning"],
         "event_year": year,
         "expected_categories": sorted(expected.get("categories", set())),
         "expected_intensities": sorted(expected.get("intensities", set())),
@@ -1241,6 +1335,133 @@ def _industry_event_evidence(domain: str, topic: str, event_subtype: str) -> dic
             evidence["has_competition_marker"] or evidence["has_award_or_recognition_marker"]
         )
     return evidence
+
+
+def _event_label_source_gate_decision(industry_evidence: dict[str, Any]) -> dict[str, Any]:
+    domain = str(industry_evidence.get("domain", ""))
+    topic = str(industry_evidence.get("event_topic", ""))
+    accepted = False
+    reasons: list[str] = []
+
+    if domain in {"影视", "影视武术"} and topic == "public_fame":
+        accepted = bool(industry_evidence.get("has_film_fame_evidence"))
+        if not accepted:
+            reasons.append("missing_film_fame_source_marker")
+    elif domain in {"影视", "影视武术"} and topic == "career_project":
+        accepted = bool(industry_evidence.get("has_film_project_evidence"))
+        if not accepted:
+            reasons.append("missing_film_project_source_marker")
+    elif domain == "歌手" and topic == "public_fame":
+        accepted = bool(industry_evidence.get("has_music_fame_evidence"))
+        if not accepted:
+            reasons.append("missing_music_fame_source_marker")
+    elif domain == "歌手" and topic == "career_project":
+        accepted = bool(industry_evidence.get("has_music_project_evidence"))
+        if not accepted:
+            reasons.append("missing_music_project_source_marker")
+    elif domain == "体育" and topic == "sports_peak":
+        accepted = bool(industry_evidence.get("has_sports_peak_evidence"))
+        if not accepted:
+            reasons.append("missing_sports_peak_source_marker")
+    else:
+        accepted = bool(industry_evidence.get("has_domain_specific_evidence"))
+        if not accepted:
+            reasons.append("missing_domain_specific_event_source_marker")
+
+    decision = "allow_event_label_scoring" if accepted else "hold_event_label_for_source_review"
+    return {
+        "schema_version": "famous-case-event-label-source-gate-v1",
+        "domain": domain,
+        "event_topic": topic,
+        "event_subtype": str(industry_evidence.get("event_subtype", "")),
+        "decision": decision,
+        "blocks_rule_tuning": decision != "allow_event_label_scoring",
+        "reasons": reasons,
+        "evidence_flags": {
+            key: bool(value)
+            for key, value in industry_evidence.items()
+            if key.startswith("has_")
+        },
+        "boundary": "This gate checks whether the event label has enough domain-specific source markers for calibration use.",
+    }
+
+
+def _event_label_source_quality_summary(events: list[dict[str, Any]]) -> dict[str, Any]:
+    gate_rows = [
+        event.get("event_label_source_gate", {})
+        for event in events
+        if isinstance(event.get("event_label_source_gate"), dict)
+    ]
+    blocked = [item for item in gate_rows if item.get("blocks_rule_tuning")]
+    return {
+        "schema_version": "famous-case-event-label-source-quality-summary-v1",
+        "event_count": len(events),
+        "event_label_source_gate_schema_version": "famous-case-event-label-source-gate-v1",
+        "event_label_gate_decision_counts": _counts(item.get("decision") for item in gate_rows),
+        "event_label_scoring_eligible_count": sum(
+            1 for item in gate_rows if item.get("decision") == "allow_event_label_scoring"
+        ),
+        "event_label_source_review_count": len(blocked),
+        "event_label_source_review_subtypes": sorted(
+            {
+                str(item.get("event_subtype"))
+                for item in blocked
+                if item.get("event_subtype")
+            }
+        ),
+        "blocks_rule_tuning": bool(blocked),
+        "boundary": (
+            "Event labels with insufficient domain-specific markers may remain as diagnostics, "
+            "but cannot tune rules until source review supplies stronger event evidence."
+        ),
+    }
+
+
+def _annual_event_label_source_quality_summary(case_scores: list[dict[str, Any]]) -> dict[str, Any]:
+    events = [
+        event
+        for case in case_scores
+        for event in case.get("events", [])
+        if isinstance(event, dict)
+    ]
+    gate_rows = [
+        event.get("event_label_source_gate", {})
+        for event in events
+        if isinstance(event.get("event_label_source_gate"), dict)
+    ]
+    blocked_events = [
+        event
+        for event in events
+        if event.get("event_label_blocks_rule_tuning") is True
+    ]
+    return {
+        "schema_version": "famous-case-annual-event-label-source-quality-summary-v1",
+        "event_count": len(events),
+        "event_label_source_gate_schema_version": "famous-case-event-label-source-gate-v1",
+        "event_label_gate_decision_counts": _counts(item.get("decision") for item in gate_rows),
+        "event_label_scoring_eligible_count": sum(
+            1 for item in gate_rows if item.get("decision") == "allow_event_label_scoring"
+        ),
+        "event_label_source_review_count": len(blocked_events),
+        "event_label_source_review_case_ids": sorted(
+            {
+                str(case.get("case_id"))
+                for case in case_scores
+                if any(event.get("event_label_blocks_rule_tuning") is True for event in case.get("events", []))
+            }
+        ),
+        "event_label_source_review_domain_topics": sorted(
+            {
+                f"{event.get('event_label_source_gate', {}).get('domain')}/{event.get('event_topic')}"
+                for event in blocked_events
+            }
+        ),
+        "blocks_rule_tuning": bool(blocked_events),
+        "boundary": (
+            "This is an event-label source gate. It controls whether known event labels can tune rules; "
+            "it does not validate predictive accuracy."
+        ),
+    }
 
 
 def _row_matches_event(row: dict[str, Any], expected: dict[str, set[str]]) -> bool:
@@ -1557,10 +1778,14 @@ def _annual_topic_summary(case_scores: list[dict[str, Any]]) -> list[dict[str, A
         false_positive_count = sum(1 for item in negative_rows if item.get("false_positive"))
         strict_hit_count = sum(1 for item in event_rows if item.get("strict_exact_match"))
         strict_false_positive_count = sum(1 for item in negative_rows if item.get("strict_false_positive"))
+        label_eligible_rows = _event_label_scoring_eligible_items(event_rows)
+        label_eligible_strict_hit_count = sum(1 for item in label_eligible_rows if item.get("strict_exact_match"))
         rows.append(
             {
                 "event_topic": topic,
                 "event_count": len(event_rows),
+                "event_label_scoring_eligible_count": len(label_eligible_rows),
+                "event_label_source_review_count": len(event_rows) - len(label_eligible_rows),
                 "eligible_event_count": eligible_event_count,
                 "caution_event_count": caution_event_count,
                 "eligible_event_rate": _rate(eligible_event_count, len(event_rows)),
@@ -1572,6 +1797,15 @@ def _annual_topic_summary(case_scores: list[dict[str, Any]]) -> list[dict[str, A
                 "strict_exact_hit_rate": _rate(strict_hit_count, len(event_rows)),
                 "strict_false_positive_rate": _rate(strict_false_positive_count, len(negative_rows)),
                 "strict_exact_precision": _rate(strict_hit_count, strict_hit_count + strict_false_positive_count),
+                "event_label_eligible_strict_exact_hit_count": label_eligible_strict_hit_count,
+                "event_label_eligible_strict_exact_hit_rate": _rate(
+                    label_eligible_strict_hit_count,
+                    len(label_eligible_rows),
+                ),
+                "event_label_eligible_strict_exact_precision": _rate(
+                    label_eligible_strict_hit_count,
+                    label_eligible_strict_hit_count + strict_false_positive_count,
+                ),
                 "precision_gap": round(
                     _rate(strict_hit_count, strict_hit_count + strict_false_positive_count)
                     - _rate(exact_hit_count, exact_hit_count + false_positive_count),
@@ -1630,12 +1864,16 @@ def _annual_domain_topic_summary(case_scores: list[dict[str, Any]]) -> list[dict
         false_positive_count = sum(1 for item in negative_rows if item.get("false_positive"))
         strict_hit_count = sum(1 for item in event_rows if item.get("strict_exact_match"))
         strict_false_positive_count = sum(1 for item in negative_rows if item.get("strict_false_positive"))
+        label_eligible_rows = _event_label_scoring_eligible_items(event_rows)
+        label_eligible_strict_hit_count = sum(1 for item in label_eligible_rows if item.get("strict_exact_match"))
         rows.append(
             {
                 "domain": domain,
                 "event_topic": topic,
                 "case_count": len(case_ids_by_key.get(key, set())),
                 "event_count": len(event_rows),
+                "event_label_scoring_eligible_count": len(label_eligible_rows),
+                "event_label_source_review_count": len(event_rows) - len(label_eligible_rows),
                 "eligible_event_count": eligible_event_count,
                 "caution_event_count": caution_event_count,
                 "eligible_event_rate": _rate(eligible_event_count, len(event_rows)),
@@ -1647,6 +1885,15 @@ def _annual_domain_topic_summary(case_scores: list[dict[str, Any]]) -> list[dict
                 "strict_exact_hit_rate": _rate(strict_hit_count, len(event_rows)),
                 "strict_exact_precision": _rate(strict_hit_count, strict_hit_count + strict_false_positive_count),
                 "strict_false_positive_rate": _rate(strict_false_positive_count, len(negative_rows)),
+                "event_label_eligible_strict_exact_hit_count": label_eligible_strict_hit_count,
+                "event_label_eligible_strict_exact_hit_rate": _rate(
+                    label_eligible_strict_hit_count,
+                    len(label_eligible_rows),
+                ),
+                "event_label_eligible_strict_exact_precision": _rate(
+                    label_eligible_strict_hit_count,
+                    label_eligible_strict_hit_count + strict_false_positive_count,
+                ),
                 "case_ids": sorted(case_ids_by_key.get(key, set())),
                 "boundary": "Domain-topic metrics are diagnostic slices; small slices are not statistical proof.",
             }
@@ -1662,15 +1909,17 @@ def _domain_topic_refinement_queue(domain_topic_summary: list[dict[str, Any]]) -
             continue
         strict_hit_rate = float(item.get("strict_exact_hit_rate", 0.0))
         strict_precision = float(item.get("strict_exact_precision", 0.0))
+        gated_strict_hit_rate = float(item.get("event_label_eligible_strict_exact_hit_rate", strict_hit_rate))
+        gated_strict_precision = float(item.get("event_label_eligible_strict_exact_precision", strict_precision))
         strict_false_positive_rate = float(item.get("strict_false_positive_rate", 0.0))
         eligible_event_rate = float(item.get("eligible_event_rate", 0.0))
         if eligible_event_rate < 0.5:
             task_type = "review_birth_sources"
-        elif strict_hit_rate < 0.1:
+        elif gated_strict_hit_rate < 0.1:
             task_type = "add_domain_specific_evidence"
         elif strict_false_positive_rate >= 0.1:
             task_type = "reduce_domain_false_positive"
-        elif strict_precision < 0.2:
+        elif gated_strict_precision < 0.2:
             task_type = "refine_domain_precision"
         else:
             continue
@@ -1690,6 +1939,9 @@ def _domain_topic_refinement_queue(domain_topic_summary: list[dict[str, Any]]) -
                 "negative_year_count": int(item.get("negative_year_count", 0)),
                 "strict_exact_hit_rate": strict_hit_rate,
                 "strict_exact_precision": strict_precision,
+                "event_label_eligible_strict_exact_hit_rate": gated_strict_hit_rate,
+                "event_label_eligible_strict_exact_precision": gated_strict_precision,
+                "task_metric_basis": "event_label_gated_strict_metrics",
                 "strict_false_positive_rate": strict_false_positive_rate,
                 "case_ids": item.get("case_ids", []),
                 "next_evidence_to_add": _domain_topic_evidence(domain, topic, task_type),
@@ -1843,8 +2095,10 @@ def _domain_topic_variant_sweep(case_scores: list[dict[str, Any]]) -> list[dict[
     for (domain, topic), config in variants.items():
         event_rows = _domain_topic_items(case_scores, domain, topic, "events")
         negative_rows = _domain_topic_items(case_scores, domain, topic, "negative_samples")
+        label_eligible_rows = _event_label_scoring_eligible_items(event_rows)
         for name, predicate in config["rules"].items():
             exact_hits = sum(1 for item in event_rows if predicate(item))
+            label_eligible_hits = sum(1 for item in label_eligible_rows if predicate(item))
             false_positives = sum(1 for item in negative_rows if predicate(item))
             rows.append(
                 {
@@ -1853,12 +2107,20 @@ def _domain_topic_variant_sweep(case_scores: list[dict[str, Any]]) -> list[dict[
                     "variant": name,
                     "selected": False,
                     "event_count": len(event_rows),
+                    "event_label_scoring_eligible_count": len(label_eligible_rows),
+                    "event_label_source_review_count": len(event_rows) - len(label_eligible_rows),
                     "negative_year_count": len(negative_rows),
                     "strict_exact_hit_count": exact_hits,
+                    "event_label_eligible_strict_exact_hit_count": label_eligible_hits,
                     "strict_false_positive_count": false_positives,
                     "strict_exact_hit_rate": _rate(exact_hits, len(event_rows)),
                     "strict_exact_precision": _rate(exact_hits, exact_hits + false_positives),
                     "strict_false_positive_rate": _rate(false_positives, len(negative_rows)),
+                    "event_label_eligible_strict_exact_hit_rate": _rate(label_eligible_hits, len(label_eligible_rows)),
+                    "event_label_eligible_strict_exact_precision": _rate(
+                        label_eligible_hits,
+                        label_eligible_hits + false_positives,
+                    ),
                     "case_ids": sorted(
                         {
                             str(case["case_id"])
@@ -1870,7 +2132,8 @@ def _domain_topic_variant_sweep(case_scores: list[dict[str, Any]]) -> list[dict[
                     "selection_basis": (
                         "No domain-topic variant is selected here. Fixture-industry variants use sourced known-event "
                         "labels as an upper-bound diagnostic and cannot be promoted to prediction rules without a "
-                        "separate reviewed event-source provider and false-positive checks."
+                        "separate reviewed event-source provider and false-positive checks. Event-label-gated "
+                        "metrics exclude labels held for source review."
                     ),
                     "boundary": config["boundary"],
                 }
@@ -2015,14 +2278,16 @@ def _annual_rule_refinement_queue(topic_summary: list[dict[str, Any]]) -> list[d
         event_count = int(row.get("event_count", 0))
         eligible_event_rate = float(row.get("eligible_event_rate", 0.0))
         strict_precision = float(row.get("strict_exact_precision", 0.0))
+        gated_strict_precision = float(row.get("event_label_eligible_strict_exact_precision", strict_precision))
+        gated_strict_hit_rate = float(row.get("event_label_eligible_strict_exact_hit_rate", row.get("strict_exact_hit_rate", 0.0)))
         strict_false_positive_rate = float(row.get("strict_false_positive_rate", 0.0))
         if event_count >= 3 and eligible_event_rate < 0.5:
             priority = "source_review_first"
         elif event_count < 3:
             priority = "watch"
-        elif strict_precision < 0.1 and strict_false_positive_rate >= 0.1:
+        elif gated_strict_precision < 0.1 and strict_false_positive_rate >= 0.1:
             priority = "high"
-        elif strict_precision < 0.2 or strict_false_positive_rate >= 0.2:
+        elif gated_strict_precision < 0.2 or strict_false_positive_rate >= 0.2:
             priority = "medium"
         else:
             priority = "low"
@@ -2035,6 +2300,9 @@ def _annual_rule_refinement_queue(topic_summary: list[dict[str, Any]]) -> list[d
                 "caution_event_count": int(row.get("caution_event_count", 0)),
                 "eligible_event_rate": float(row.get("eligible_event_rate", 0.0)),
                 "strict_exact_precision": strict_precision,
+                "event_label_eligible_strict_exact_hit_rate": gated_strict_hit_rate,
+                "event_label_eligible_strict_exact_precision": gated_strict_precision,
+                "priority_metric_basis": "event_label_gated_strict_metrics",
                 "strict_false_positive_rate": strict_false_positive_rate,
                 "recommended_evidence": _recommended_refinement_evidence(str(row["event_topic"]), priority),
                 "reason": _refinement_reason(row, priority),
@@ -2046,7 +2314,7 @@ def _annual_rule_refinement_queue(topic_summary: list[dict[str, Any]]) -> list[d
         key=lambda item: (
             priority_rank.get(str(item["priority"]), 9),
             -float(item["strict_false_positive_rate"]),
-            float(item["strict_exact_precision"]),
+            float(item["event_label_eligible_strict_exact_precision"]),
             str(item["event_topic"]),
         ),
     )
@@ -2092,8 +2360,10 @@ def _annual_rule_variant_sweep(case_scores: list[dict[str, Any]]) -> list[dict[s
     for topic, config in variants.items():
         event_rows = _topic_items(case_scores, topic, "events")
         negative_rows = _topic_items(case_scores, topic, "negative_samples")
+        label_eligible_rows = _event_label_scoring_eligible_items(event_rows)
         for name, predicate in config["rules"].items():
             exact_hits = sum(1 for item in event_rows if predicate(item))
+            label_eligible_hits = sum(1 for item in label_eligible_rows if predicate(item))
             false_positives = sum(1 for item in negative_rows if predicate(item))
             rows.append(
                 {
@@ -2101,15 +2371,24 @@ def _annual_rule_variant_sweep(case_scores: list[dict[str, Any]]) -> list[dict[s
                     "variant": name,
                     "selected": name == config["selected"],
                     "event_count": len(event_rows),
+                    "event_label_scoring_eligible_count": len(label_eligible_rows),
+                    "event_label_source_review_count": len(event_rows) - len(label_eligible_rows),
                     "negative_year_count": len(negative_rows),
                     "strict_exact_hit_count": exact_hits,
+                    "event_label_eligible_strict_exact_hit_count": label_eligible_hits,
                     "strict_false_positive_count": false_positives,
                     "strict_exact_hit_rate": _rate(exact_hits, len(event_rows)),
                     "strict_exact_precision": _rate(exact_hits, exact_hits + false_positives),
                     "strict_false_positive_rate": _rate(false_positives, len(negative_rows)),
+                    "event_label_eligible_strict_exact_hit_rate": _rate(label_eligible_hits, len(label_eligible_rows)),
+                    "event_label_eligible_strict_exact_precision": _rate(
+                        label_eligible_hits,
+                        label_eligible_hits + false_positives,
+                    ),
                     "selection_basis": (
                         "Selected variants prioritize precision and lower false positives for strict exact-year claims; "
-                        "loose matching remains available for recall diagnostics."
+                        "loose matching remains available for recall diagnostics. Event-label-gated metrics exclude "
+                        "labels held for source review."
                     ),
                 }
             )
@@ -2137,6 +2416,8 @@ def _annual_evolution_task_plan(
         rejected = [row for row in variants if not row.get("selected")]
         strict_precision = float(summary.get("strict_exact_precision", 0.0))
         strict_hit_rate = float(summary.get("strict_exact_hit_rate", 0.0))
+        gated_strict_precision = float(summary.get("event_label_eligible_strict_exact_precision", strict_precision))
+        gated_strict_hit_rate = float(summary.get("event_label_eligible_strict_exact_hit_rate", strict_hit_rate))
         strict_false_positive_rate = float(summary.get("strict_false_positive_rate", 0.0))
         eligible_event_rate = float(summary.get("eligible_event_rate", 0.0))
         subtype_coverage_rate = float(subtype_summary.get("subtype_coverage_rate", 0.0))
@@ -2148,7 +2429,7 @@ def _annual_evolution_task_plan(
             task_type = "monitor"
         elif strict_false_positive_rate >= 0.1:
             task_type = "reduce_false_positive"
-        elif strict_hit_rate < 0.1:
+        elif gated_strict_hit_rate < 0.1:
             task_type = "add_specific_evidence"
         else:
             task_type = "refine_precision"
@@ -2164,6 +2445,9 @@ def _annual_evolution_task_plan(
                 "eligible_event_rate": eligible_event_rate,
                 "strict_exact_hit_rate": strict_hit_rate,
                 "strict_exact_precision": strict_precision,
+                "event_label_eligible_strict_exact_hit_rate": gated_strict_hit_rate,
+                "event_label_eligible_strict_exact_precision": gated_strict_precision,
+                "task_metric_basis": "event_label_gated_strict_metrics",
                 "strict_false_positive_rate": strict_false_positive_rate,
                 "subtype_coverage_rate": subtype_coverage_rate,
                 "default_subtype_count": int(subtype_summary.get("default_subtype_count", 0)),
@@ -2203,6 +2487,10 @@ def _variant_metric_summary(row: dict[str, Any] | None) -> dict[str, Any]:
         "strict_exact_hit_rate": row.get("strict_exact_hit_rate"),
         "strict_exact_precision": row.get("strict_exact_precision"),
         "strict_false_positive_rate": row.get("strict_false_positive_rate"),
+        "event_label_scoring_eligible_count": row.get("event_label_scoring_eligible_count"),
+        "event_label_source_review_count": row.get("event_label_source_review_count"),
+        "event_label_eligible_strict_exact_hit_rate": row.get("event_label_eligible_strict_exact_hit_rate"),
+        "event_label_eligible_strict_exact_precision": row.get("event_label_eligible_strict_exact_precision"),
     }
 
 
@@ -2313,6 +2601,14 @@ def _domain_topic_items(case_scores: list[dict[str, Any]], domain: str, topic: s
         if str(case.get("case_domain")) == domain
         for item in case.get(key, [])
         if item.get("event_topic") == topic
+    ]
+
+
+def _event_label_scoring_eligible_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        item
+        for item in items
+        if item.get("event_label_gate_decision") == "allow_event_label_scoring"
     ]
 
 
@@ -2639,6 +2935,7 @@ def _refinement_reason(row: dict[str, Any], priority: str) -> str:
         f"events={row['event_count']}, "
         f"eligible_event_rate={row.get('eligible_event_rate', 0.0)}, "
         f"strict_precision={row['strict_exact_precision']}, "
+        f"event_label_gated_precision={row.get('event_label_eligible_strict_exact_precision', 0.0)}, "
         f"strict_false_positive_rate={row['strict_false_positive_rate']}."
     )
 
