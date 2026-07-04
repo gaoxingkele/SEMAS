@@ -11770,3 +11770,117 @@ principles to continuously mine new alpha factors.
 - Consider scheduling the loop via GitHub Actions cron (weekly) with a token
   budget and a human gate.
 - Push the loop infrastructure to GitHub.
+
+---
+
+## 2026-07-04 - Smart_SkillandAgent Topic Skeleton
+
+### Motivation
+
+Create an independent topic for continuously improving GitHub-origin skills and
+agents. Each subproject should correspond to one upstream repository and keep
+its own evolution chain, local changes, evaluation receipts, and local LLM wiki.
+
+### Actions Taken
+
+1. Created `Smart_SkillandAgent/` as the topic workspace.
+2. Added `Smart_SkillandAgent/registry.yaml` for project indexing.
+3. Added `Smart_SkillandAgent/projects/_template_skill_or_agent/` with:
+   - source provenance file
+   - upstream `repo/` placeholder
+   - evolution backlog, metrics, and iteration template
+   - evaluation, patch, and run-log directories
+   - subproject-local LLM wiki with references
+4. Updated top-level `README.md` with the new topic entry.
+5. Added global wiki note `wiki/smart_skillandagent_topic.md`.
+6. Updated `wiki/README.md`, `wiki/references.md`, and
+   `wiki/semas_evolution_ideas.md`.
+
+### Files Changed
+
+- `Smart_SkillandAgent/README.md`
+- `Smart_SkillandAgent/registry.yaml`
+- `Smart_SkillandAgent/projects/README.md`
+- `Smart_SkillandAgent/projects/_template_skill_or_agent/`
+- `README.md`
+- `wiki/README.md`
+- `wiki/references.md`
+- `wiki/smart_skillandagent_topic.md`
+- `wiki/semas_evolution_ideas.md`
+- `OPERATION_LOG.md`
+
+### Verification
+
+- `rg --files Smart_SkillandAgent` - confirmed the template tree exists.
+- `Test-Path Smart_SkillandAgent\README.md` - expected true.
+- No runtime tests were required because this change is a documentation and
+  directory-framework addition.
+
+### Boundary
+
+This creates the reusable framework only. It does not clone or modify any real
+GitHub skill/agent repository yet.
+
+---
+
+## 2026-07-04 (continued) — Factor Mining Loop Iteration 2
+
+### Motivation
+
+Continue the continuous factor-mining loop and record the chain-of-thought and
+new knowledge into the local LLM wiki.
+
+### Actions Taken
+
+1. Ran iteration 2 of `run_factor_mining_loop.py` with seed 1002.
+   - The live library from iteration 1 was used as the seed library.
+2. Updated `china_a_share_alpha_output/factor_mining_loop/STATE.md` with the
+   iteration history.
+3. Wrote dedicated CoT wiki notes:
+   - `wiki/factor_mining_loop_iteration_1.md`
+   - `wiki/factor_mining_loop_iteration_2.md`
+   - `wiki/factor_mining_loop_index.md`
+4. Updated `wiki/semas_evolution_ideas.md` with the combined iteration table.
+
+### Results
+
+| Iter | Seed | Merged | Cleaned | Test Sharpe | Cost-adj | Train Sharpe | Promoted |
+|---|---|---|---|---|---|---|---|
+| 1 | 1001 | 21 | 2 | 1.6283 | 24.75% | -0.389 | YES |
+| 2 | 1002 | 23 | 5 | 1.6283 | 24.75% | -0.389 | NO |
+
+### Interpretation
+
+- Iteration 2 cleaned 5 expressions (better diversity) but produced the same
+  ensemble metrics as iteration 1. The loop retained the existing live library.
+- Seeding with a strong live library caused rapid convergence; the search did
+  not find better out-of-sample structures.
+- The persistent negative train Sharpe confirms the current best ensemble is
+  regime-dependent (works 2023-2026, fails 2021-2022).
+
+### New Knowledge (recorded in wiki)
+
+- Strong live-library seeding reduces novelty; future iterations need forced
+  diversification or a separate exploration loop.
+- Promotion gates should require positive train Sharpe and ≥ 5 cleaned factors.
+- The 1.628 Sharpe appears to be a local optimum for the current config and
+  data window.
+
+### Files Changed
+
+- `wiki/factor_mining_loop_iteration_1.md` (new)
+- `wiki/factor_mining_loop_iteration_2.md` (new)
+- `wiki/factor_mining_loop_index.md` (new)
+- `wiki/semas_evolution_ideas.md`
+- `china_a_share_alpha_output/factor_mining_loop/STATE.md`
+- `OPERATION_LOG.md` — this entry
+
+### Next Steps
+
+- Add promotion gates in the loop runner:
+  1. `train_sharpe > 0`
+  2. `n_cleaned >= 5`
+  3. low pairwise correlation to existing live-library factors
+- If the next iteration still cannot improve, launch an exploration run with
+  no seed library and a larger mutation radius.
+- Push the updated wiki and logs to GitHub.

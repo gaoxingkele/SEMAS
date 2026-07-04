@@ -19,15 +19,12 @@ continuous loop for alpha-factor discovery.
 - Added `factor_mining_loop_config.yaml` and
   `factor_mining_loop_evolution_config.yaml`.
 
-### First iteration result
+### Iteration results
 
-| Metric | Value |
-|---|---|
-| Merged expressions | 21 |
-| Cleaned expressions | 2 |
-| Test Sharpe | **1.63** |
-| Test cost-adjusted return | **24.8%** |
-| Train Sharpe | -0.39 |
+| Iter | Seed | Merged | Cleaned | Test Sharpe | Cost-adj | Train Sharpe | Promoted |
+|---|---|---|---|---|---|---|---|
+| 1 | 1001 | 21 | 2 | **1.63** | **24.8%** | -0.39 | YES |
+| 2 | 1002 | 23 | 5 | 1.63 | 24.8% | -0.39 | NO |
 
 ### Caution
 
@@ -37,7 +34,14 @@ is a regime-dependent result, not a stable cross-sectional alpha. The loop
 infrastructure is sound, but future iterations need a positive train-Sharpe
 gate and a diversity requirement before promotion.
 
+Iteration 2 seeded from the live library and cleaned 5 expressions, but the
+ensemble metrics were identical to iteration 1, so the existing library was
+retained. Seeding a strong library accelerates convergence but also suppresses
+novelty.
+
 [source: `china_a_share_alpha_output/factor_mining_loop/loop_report_20260704_011353.md`]
+[source: `china_a_share_alpha_output/factor_mining_loop/loop_report_20260704_064238.md`]
+[source: `wiki/factor_mining_loop_index.md`]
 
 ---
 
@@ -1187,3 +1191,29 @@ No dedicated plugin yet, but the concepts map cleanly.
 4. Should we add a "skill lifecycle" plugin inspired by MUSE-Autoskill
    (skill creation, memory, management, evaluation)? [source:
    arXiv:2605.27366] Worth monitoring.
+
+---
+
+## 2026-07-04 - Smart Skill And Agent Topic Workspace
+
+Smart_SkillandAgent extends SEMAS from framework-internal genomes to
+GitHub-origin skills and agents. The key boundary is one upstream repository per
+subproject. [source: SEMAS Smart_SkillandAgent Topic]
+
+Design choice:
+
+- Keep source provenance, upstream checkout, patches, evaluations, run logs,
+  and local LLM wiki inside the same subproject.
+- Use `registry.yaml` only as an index; the durable evolution chain lives in
+  each subproject wiki.
+- Treat prompts, tools, topology, examples, memory, evaluators, and safety gates
+  as selectable evolution surfaces, consistent with the SEMAS framework model.
+  [source: SEMAS Framework]
+
+Why this matters:
+
+- External skills and agents are often useful but under-evaluated. A local
+  subproject contract makes baseline capture, regression gates, and iteration
+  decisions explicit before promoting changes.
+- Per-subproject wikis allow each imported GitHub project to carry its own
+  chain of reasoning instead of mixing all decisions in the global wiki.
