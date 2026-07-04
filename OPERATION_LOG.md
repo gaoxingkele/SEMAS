@@ -10877,13 +10877,13 @@ candidates.
 ### Request
 
 Build a layered Mingli analysis framework where each downloaded classical book
-has its own corresponding paper agent, and where those book agents cooperate and
+has its own corresponding sub-agent, and where those book agents cooperate and
 debate with the existing BaZi agent system.
 
 ### Actions
 
 - Added `examples/mingli_5agents/tools/classical_book_agents.py`.
-- Created 11 per-book paper agents, one for each downloaded PDF source.
+- Created 11 per-book sub-agents, one for each downloaded PDF source.
 - Integrated the new `classical_book_agents` debate into BaZi deep analysis.
 - Exposed `classical_book_agents` in the final BaZi profile.
 - Added `classical_book_agents` to the BaZi method surface and API schema.
@@ -11635,3 +11635,138 @@ used: seed a second pop40 gen10 run with the best pop40 gen20 library.
   factors (e.g. `high_zscore_20`, short-term reversal) rather than purely
   evolved factors.
 - Push current changes to GitHub.
+
+---
+
+## 2026-07-04 — Mingli Book Sub-Agent Architecture Fix
+
+### Motivation
+
+The user clarified that the earlier mistyped term must be "子智能体". The intended
+architecture is not just one label per book: every classical book must first be
+structured as its own layered analysis framework, then mapped into functional
+sub-agents before joining the BaZi debate layer.
+
+### Actions Taken
+
+1. Normalized wording away from the earlier mistyped term to "子智能体" /
+   "sub-agent".
+2. Rebuilt `classical_book_agents.py` after detecting real mojibake in the
+   previous generated file.
+3. Added per-book `analysis_architecture` with
+   `book-layered-analysis-architecture-v1`.
+4. Added per-layer `layer_sub_agents`, each with functional module, evidence
+   fields, method rule, output contract, and calibration role.
+5. Repaired `method_cards.json` Chinese fields and removed malformed trailing
+   text.
+6. Updated classical-source README and mingli evolution wiki.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\classical_book_agents.py`
+- `python -m json.tool examples\mingli_5agents\classical_sources\method_cards.json`
+- `pytest examples\mingli_5agents\tests\test_mingli_system.py::test_five_agent_executor_returns_required_artifacts -q`
+- Smoke run confirmed:
+  - 11 book-level sub-agents
+  - 12 San Ming Tong Hui volume-level source sub-agents
+  - 33 book-internal layer sub-agents
+  - 0 malformed book architectures
+
+### Boundary
+
+This upgrade structures every book at method-card level. It does not claim
+page-level quotation or exact classical-text rule extraction until OCR or manual
+collation is completed.
+
+---
+
+## 2026-07-04 — China A-Share Alpha: Continuous Factor-Mining Loop
+
+### Motivation
+
+Download the `loop-engineering` reference repository and adapt its loop
+principles to continuously mine new alpha factors.
+
+### Actions Taken
+
+1. **Downloaded loop-engineering**
+   - Cloned `https://github.com/cobusgreyling/loop-engineering` into
+     `external/loop-engineering`.
+   - Reviewed `LOOP.md`, `STATE.md`, `README.md`, and the `daily-triage`
+     pattern.
+
+2. **Defined a factor-mining loop**
+   - Created project `LOOP.md` mapping loop-engineering primitives to our
+     factor pipeline.
+   - Created `china_a_share_alpha_output/factor_mining_loop/STATE.md` as the
+     durable loop memory.
+   - Implemented `china_a_share_alpha/scripts/run_factor_mining_loop.py`:
+     - Seed enhanced evolution with the current live library.
+     - Merge new leaderboard with live library.
+     - Validation-aware cleaning with density coverage filter.
+     - Equal-weight + EMA combination of top-N + `high_zscore_20`.
+     - Promote to live library only if test Sharpe or cost-adj return improves.
+     - Write a structured loop report and update `state.json`.
+   - Added configs:
+     - `factor_mining_loop_config.yaml`
+     - `factor_mining_loop_evolution_config.yaml`
+
+3. **Ran the first iteration**
+   - Config: pop 25, gen 8, one seed (1001), val 2023, test 2024-2026.
+   - Started from an empty live library.
+
+### Files Changed
+
+- `LOOP.md` (new)
+- `china_a_share_alpha_output/factor_mining_loop/STATE.md` (new)
+- `china_a_share_alpha/scripts/run_factor_mining_loop.py` (new)
+- `china_a_share_alpha/examples/factor_mining_loop_config.yaml` (new)
+- `china_a_share_alpha/examples/factor_mining_loop_evolution_config.yaml` (new)
+- `china_a_share_alpha/scripts/run_factor_combination.py` (ridge weight added)
+- `OPERATION_LOG.md` — this entry
+- `wiki/semas_evolution_ideas.md`
+
+### Verification
+
+- `python -m py_compile` on `run_factor_mining_loop.py` — **passed**.
+- First loop iteration completed successfully and promoted a new live library.
+
+### Results — Iteration 1
+
+| Metric | Value |
+|---|---|
+| Merged expressions | 21 |
+| Cleaned expressions | 2 |
+| Test Sharpe | **1.6283** |
+| Test cost-adjusted return | **24.75%** |
+| Train Sharpe | -0.389 |
+| Train cost-adjusted return | -1.37% |
+
+### Promoted live library
+
+- `cs_zscore(div(sub(greater(eps, -0.033), sub(ocfps, turnover_rate)), winsorize(total_mv)))`
+- `cs_zscore(neg(ts_rank(if_else(-0.423, -0.806, volume), 10)))`
+- `cs_rank(ts_zscore(high, 20))`
+
+### Interpretation
+
+- The loop found a 3-factor ensemble with an exceptionally high test Sharpe.
+- However, **train Sharpe is negative**: the signals work in 2023 (validation)
+  and 2024-2026 (test) but not in 2021-2022. This is a **regime-dependent**
+  result, not a stable cross-sectional alpha.
+- Only 2 evolved factors survived cleaning, so the ensemble is fragile and may
+  be overfit to the recent market regime.
+- The loop mechanics (seed, evolve, merge, clean, combine, promote, report)
+  function correctly and are ready for scheduled runs.
+
+### Safety / Next Steps
+
+- **Do not commit the live library without human review.** The current result
+  is regime-dependent.
+- Run 3-5 more iterations and require a positive train Sharpe gate before
+  promotion to avoid regime-only factors.
+- Add a "diversity" requirement: promote only if at least 5 distinct factors
+  survive cleaning.
+- Consider scheduling the loop via GitHub Actions cron (weekly) with a token
+  budget and a human gate.
+- Push the loop infrastructure to GitHub.

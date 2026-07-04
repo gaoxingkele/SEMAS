@@ -5,6 +5,42 @@
 
 ---
 
+## 2026-07-04 — China A-Share Alpha: Continuous Factor-Mining Loop
+
+Downloaded the `loop-engineering` reference repository and implemented a
+continuous loop for alpha-factor discovery.
+
+### What changed
+
+- Cloned `loop-engineering` into `external/loop-engineering`.
+- Wrote project-level `LOOP.md` and `china_a_share_alpha_output/factor_mining_loop/STATE.md`.
+- Implemented `run_factor_mining_loop.py`: seed evolution with live library,
+  merge, clean, combine, promote if improved, report.
+- Added `factor_mining_loop_config.yaml` and
+  `factor_mining_loop_evolution_config.yaml`.
+
+### First iteration result
+
+| Metric | Value |
+|---|---|
+| Merged expressions | 21 |
+| Cleaned expressions | 2 |
+| Test Sharpe | **1.63** |
+| Test cost-adjusted return | **24.8%** |
+| Train Sharpe | -0.39 |
+
+### Caution
+
+The high test Sharpe comes with a **negative train-period Sharpe**, meaning the
+signals only work in 2023-2026 (validation + test) and not in 2021-2022. This
+is a regime-dependent result, not a stable cross-sectional alpha. The loop
+infrastructure is sound, but future iterations need a positive train-Sharpe
+gate and a diversity requirement before promotion.
+
+[source: `china_a_share_alpha_output/factor_mining_loop/loop_report_20260704_011353.md`]
+
+---
+
 ## 2026-07-03 (continued) — China A-Share Alpha: Validation-Based Weighted Combination
 
 Tested IC / Sharpe / ridge weights estimated on the validation fold.

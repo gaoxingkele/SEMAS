@@ -1,0 +1,33 @@
+# Continuous factor-mining loop configuration.
+#
+# One iteration:
+# 1. Seed enhanced evolution with the current live library (if any).
+# 2. Merge the new leaderboard with the live library.
+# 3. Clean on train/val/test; keep dense, sign-consistent factors.
+# 4. Combine top-N + high_zscore_20 with equal weight and EMA smoothing.
+# 5. Promote to live library only if test Sharpe or cost-adj return improves.
+
+evolution_config: "china_a_share_alpha/examples/factor_mining_loop_evolution_config.yaml"
+data_config: "china_a_share_alpha/examples/enhanced_loop_config_val.yaml"
+
+seed_base: 1000
+
+# Cleaning thresholds (loose so a small first library survives)
+min_train_ic: 0.001
+min_val_ic: 0.0
+min_val_sharpe: 0.0
+min_test_ic: 0.001
+min_test_sharpe: 0.0
+max_turnover: 0.6
+max_nan_frac: 0.5
+min_daily_coverage: 0.5
+
+# Combination
+top_n: 10
+weight_method: "equal"
+smooth_span: 10
+sort_by: "val_ic"
+
+# Promotion gates
+promote_sharpe_threshold: 0.03
+promote_return_threshold: 0.005
