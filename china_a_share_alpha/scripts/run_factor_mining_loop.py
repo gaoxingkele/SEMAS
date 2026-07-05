@@ -215,7 +215,12 @@ def parse_combination_result(output_dir: Path) -> dict:
     }
 
 
-def run_loop_iteration(cfg: dict, output_dir: Path, dry_run: bool = False) -> dict:
+def run_loop_iteration(
+    cfg: dict,
+    output_dir: Path,
+    dry_run: bool = False,
+    use_live_seed: bool = True,
+) -> dict:
     """Execute one factor-mining loop iteration."""
     output_dir.mkdir(parents=True, exist_ok=True)
     state_path = output_dir / "state.json"
@@ -227,7 +232,7 @@ def run_loop_iteration(cfg: dict, output_dir: Path, dry_run: bool = False) -> di
 
     live_library_path = (
         Path(state["live_library_path"])
-        if state.get("live_library_path")
+        if state.get("live_library_path") and use_live_seed
         else None
     )
 
@@ -503,12 +508,22 @@ def main() -> int:
         default=Path("china_a_share_alpha_output/factor_mining_loop"),
     )
     parser.add_argument("--dry-run", action="store_true", help="Skip evolution")
+    parser.add_argument(
+        "--no-live-seed",
+        action="store_true",
+        help="Start evolution from scratch instead of seeding with the live library",
+    )
     args = parser.parse_args()
 
     with open(args.config, "r", encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
 
-    run_loop_iteration(cfg, args.output_dir, dry_run=args.dry_run)
+    run_loop_iteration(
+        cfg,
+        args.output_dir,
+        dry_run=args.dry_run,
+        use_live_seed=not args.no_live_seed,
+    )
     return 0
 
 
