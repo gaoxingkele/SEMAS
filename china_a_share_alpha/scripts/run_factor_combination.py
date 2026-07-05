@@ -55,7 +55,7 @@ def _icir(factor: pd.Series, forward: pd.Series) -> float:
     return float(per_day.mean() / (per_day.std() + 1e-8))
 
 
-def _compute_factor_metrics(row, train, val, test):
+def _compute_factor_metrics(row, train, val, test, transaction_cost: float = 0.001):
     """Return dict of train/val/test metrics for a single factor."""
     expr = parse_expression(row["expression"])
     f_train = expr.eval(train)
@@ -65,7 +65,7 @@ def _compute_factor_metrics(row, train, val, test):
     if val is not None:
         f_val = expr.eval(val)
         val_ic = ic_score(f_val, val["forward_return"])
-        val_bt = run_long_short_backtest(f_val, val["forward_return"], transaction_cost=0.001)
+        val_bt = run_long_short_backtest(f_val, val["forward_return"], transaction_cost=transaction_cost)
         out.update(
             {
                 "val_ic": val_ic,
@@ -76,7 +76,7 @@ def _compute_factor_metrics(row, train, val, test):
 
     f_test = expr.eval(test)
     test_ic = ic_score(f_test, test["forward_return"])
-    test_bt = run_long_short_backtest(f_test, test["forward_return"], transaction_cost=0.001)
+    test_bt = run_long_short_backtest(f_test, test["forward_return"], transaction_cost=transaction_cost)
     out.update(
         {
             "test_ic": test_ic,
@@ -164,6 +164,12 @@ def main() -> int:
     )
     parser.add_argument("--smooth-span", type=int, default=10, help="EMA span for smoothing (1 = none)")
     parser.add_argument("--output-dir", type=Path, default=Path("china_a_share_alpha_output/factor_combination"))
+    parser.add_argument(
+        "--transaction-cost",
+        type=float,
+        default=0.001,
+        help="One-way transaction cost for long-short backtests (default 0.001 = 10 bps)",
+    )
     args = parser.parse_args()
 
     with open(args.config, "r", encoding="utf-8") as f:
@@ -185,7 +191,7 @@ def main() -> int:
     metrics = []
     for _, row in lib.iterrows():
         try:
-            metrics.append(_compute_factor_metrics(row, train, val, test))
+            metrics.append(_compute_factor_metrics(row, train, val, test, transaction_cost=args.transaction_cost))
         except Exception as exc:
             print(f"Skipping {row.get('factor')}: {exc}")
     metrics = pd.DataFrame(metrics)
@@ -266,7 +272,7 @@ def main() -> int:
                 f = parse_expression(row["expression"]).eval(
                     val if val is not None else train
                 )
-                bt = run_long_short_backtest(f, (val if val is not None else train)["forward_return"], transaction_cost=0.001)
+                bt = run_long_short_backtest(f, (val if val is not None else train)["forward_return"], transaction_cost=args.transaction_cost)
                 daily = bt.get("daily_long_short", pd.Series(dtype=float))
                 vol = float(daily.std()) + 1e-12
                 inv_vols.append(1.0 / vol)
@@ -307,7 +313,7 @@ def main() -> int:
         combined = _smooth(_compute_weights(mat, weights), args.smooth_span)
         combined = combined.clip(-5, 5)
 
-        bt = run_long_short_backtest(combined, fwd, transaction_cost=0.001)
+        bt = run_long_short_backtest(combined, fwd, transaction_cost=args.transaction_cost)
         result = {
             "period": label,
             "n_factors": len(selected),
