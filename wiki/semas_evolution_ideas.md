@@ -39,6 +39,7 @@ continuous loop for alpha-factor discovery.
 | 8 | 1008 | 58 | 21 | 17 | 2.40 | 28.4% | 1.35 | NO | corr failed |
 | 9 | 1009 | 48 | 16 | 14 | 0.50 | -4.6% | 1.29 | NO | corr failed |
 | 10 | 1010 | 56 | 15 | 12 | **2.70** | **31.5%** | 1.69 | YES | all passed |
+| 11 | - | - | - | - | 2.70 (20 bps) | 23.2% | 1.69 | N/A | stress test |
 
 ### Caution
 

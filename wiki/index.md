@@ -35,6 +35,7 @@ chronological log.
 | [Iteration 8](factor_mining_loop_iteration_8.md) | 2026-07-05 | 2.40 | NO | Live-seed with larger budget; high Sharpe but failed correlation gate. |
 | [Iteration 9](factor_mining_loop_iteration_9.md) | 2026-07-05 | 0.50 | NO | Tightened dedup + risk-parity weights; negative test cost-adj return. |
 | [Iteration 10](factor_mining_loop_iteration_10.md) | 2026-07-05 | **2.70** | **YES** | Greedy correlation-aware selection; new best, all gates passed, verified. |
+| [Iteration 11](factor_mining_loop_iteration_11.md) | 2026-07-05 | 2.70 (20 bps) | N/A | Stress-test validation; cost-adj 23.17% at 20 bps. |
 
 ## Key Entities
 

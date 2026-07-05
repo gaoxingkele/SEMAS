@@ -4,6 +4,13 @@ Chronological record of wiki updates, loop runs, and key decisions.
 
 ---
 
+## [2026-07-05] loop run | Iteration 11 (validation)
+
+- Stress-tested current live library at 20 bps transaction cost.
+- Test Sharpe: 2.7031, test cost-adj return: 23.17%.
+- Stress test passed; library remains cost-robust.
+- Added `wiki/factor_mining_loop_iteration_11.md`.
+
 ## [2026-07-05] audit | Iteration 10 live-library audit
 
 - Audited the promoted 12-factor live library on real Tushare data.

@@ -43,6 +43,9 @@ continuous factor-mining loop.
   correlation-aware selection (`max_pairwise_corr=0.40`). Promoted a 12-factor
   ensemble with test Sharpe **2.70** and cost-adj **31.46%**; independently
   verified on Tushare data.
+- [Iteration 11](factor_mining_loop_iteration_11.md) — Validation iteration:
+  stress-tested the promoted live library at 20 bps transaction cost. Test
+  Sharpe 2.70, cost-adj 23.17%; passed.
 
 ## Audits
 
