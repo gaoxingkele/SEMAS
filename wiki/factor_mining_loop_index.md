@@ -33,6 +33,9 @@ continuous factor-mining loop.
   with strict coverage (0.90) and correlation (0.50) gates. Over-cleaned to
   2 factors; failed train-Sharpe and min-count gates. Recommended returning
   to live-library seeding for iteration 8.
+- [Iteration 8](factor_mining_loop_iteration_8.md) — Live-seed with larger
+  budget (pop 50/gen 12). Test Sharpe 2.40 but max-correlation gate failed
+  (0.92); retained iteration 5 library.
 
 ## Design & Infrastructure
 

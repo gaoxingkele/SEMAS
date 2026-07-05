@@ -29,12 +29,14 @@ continuous loop for alpha-factor discovery.
 
 | Iter | Seed | Merged | Cleaned | Deduped | Test Sharpe | Cost-adj | Train Sharpe | Promoted | Gates |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | 1001 | 21 | 2 | - | **1.63** | **24.8%** | -0.39 | YES | - |
+| 1 | 1001 | 21 | 2 | - | 1.63 | 24.8% | -0.39 | YES | - |
 | 2 | 1002 | 23 | 5 | - | 1.63 | 24.8% | -0.39 | NO | - |
 | 3 | 1003 | 22 | 6 | - | 1.58 | 22.6% | 0.59 | NO | corr failed |
 | 4 | 1004 | 30 | 8 | 6 | 2.11 | 30.3% | 0.12 | YES | all passed |
-| 5 | 1005 | 23 | 9 | 7 | 2.20 | 30.8% | 0.12 | YES | all passed |
+| 5 | 1005 | 23 | 9 | 7 | **2.20** | **30.8%** | 0.12 | YES | all passed |
 | 6 | 1006 | 25 | 16 | 14 | 1.10 | 9.5% | 1.66 | NO | corr failed |
+| 7 | 1007 | 37 | 2 | 3 | 1.24 | 10.9% | -0.07 | NO | train/count |
+| 8 | 1008 | 58 | 21 | 17 | 2.40 | 28.4% | 1.35 | NO | corr failed |
 
 ### Caution
 

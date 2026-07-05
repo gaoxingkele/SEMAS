@@ -11885,6 +11885,58 @@ new knowledge into the local LLM wiki.
   no seed library and a larger mutation radius.
 - Push the updated wiki and logs to GitHub.
 
+## 2026-07-05 - Mingli Layered Chart Strategy Update
+
+### Goal
+
+Adjust the overall BaZi chart strategy so case judgment does not rely on a single flattened score. The user specifically asked that the whole chart strategy be changed after the Mao Zedong hour-calibration discussion.
+
+### Changes
+
+- Added `examples/mingli_5agents/tools/bazi_layered_strategy.py`.
+- Integrated `layered_strategy` into `bazi_deep_analysis.ensure_bazi_method_layers`.
+- Exposed `layered_strategy` in demo output and API schema.
+- Updated hour calibration to separate:
+  - event-fit score,
+  - layered BaZi event votes,
+  - original chart strategy score.
+- Added tests for layered strategy output and hour-calibration score fields.
+- Rebuilt `mao_zedong_public_events.json` as valid UTF-8 Chinese JSON because the untracked case file had broken mojibake and invalid quotes.
+
+### Method Update
+
+The new chart strategy uses six independent layers:
+
+1. Pattern vote.
+2. Climate adjustment vote.
+3. Disease-medicine vote.
+4. Body-use-flow vote.
+5. Palace/event vote.
+6. Fact-calibration vote.
+
+Annual and monthly readings must cite which layer is activated. A branch clash or combination alone is no longer enough to make a strong claim.
+
+### Mao Case Result After Update
+
+The regenerated public-event calibration still ranks `丑时` first, but the result is ambiguous:
+
+| Rank | Hour | Strategy | Event Fit | Layered Event | Chart Strategy |
+|---:|---|---:|---:|---:|---:|
+| 1 | 丑时 | 0.5089 | 0.4870 | 0.5246 | 0.558 |
+| 2 | 酉时 | 0.5064 | 0.4845 | 0.5206 | 0.558 |
+| 3 | 未时 | 0.5055 | 0.4739 | 0.5221 | 0.588 |
+| 9 | 辰时 | 0.4817 | 0.4384 | 0.5230 | 0.558 |
+
+The lead over the second candidate is only `0.0025`, so the system marks the decision as `ambiguous`. This is not strong enough to overturn the public-reference `辰时` line. The important new result is that `辰时` has weak event-fit under the current heuristic but strong layered-event support, exposing the scoring conflict instead of hiding it.
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\tools\bazi_layered_strategy.py examples\mingli_5agents\tools\bazi_deep_analysis.py examples\mingli_5agents\case_studies\hour_calibration\hour_calibration.py examples\mingli_5agents\run_demo.py examples\mingli_5agents\api_core.py`
+- `pytest -q examples\mingli_5agents\tests\test_mingli_system.py::test_five_agent_executor_returns_required_artifacts examples\mingli_5agents\tests\test_mingli_system.py::test_hour_calibration_exposes_layered_strategy_scores`
+- `pytest -q examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_accepts_current_schema examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_required_governance_fields examples\mingli_5agents\tests\test_schema_contract_evaluator.py::test_schema_contract_score_gates_release_governance_contracts`
+
+All selected checks passed.
+
 ---
 
 ## 2026-07-04 - Smart_SkillandAgent First GitHub Imports
@@ -12820,3 +12872,86 @@ Run iteration 6 after fixing NaN handling in semantic deduplication, and audit
 - Review whether to keep fundamental factors with low coverage in the live
   library.
 - Push the updated wiki and logs to GitHub.
+
+---
+
+## 2026-07-05 (continued) — Factor Mining Loop Iteration 8
+
+### Motivation
+
+Implement the iteration-7 post-audit recommendation: re-seed with the live
+library, relax coverage to 0.50, keep the strict 0.50 correlation gate, and
+increase the evolution budget.
+
+### Actions Taken
+
+1. Created `factor_mining_loop_evolution_config_iter8.yaml` (pop 50, gen 12,
+   leaderboard 75).
+2. Created `factor_mining_loop_config_iter8.yaml` with live seed, coverage 0.50,
+   correlation gate 0.50.
+3. Ran iteration 8 with seed 1008.
+4. Updated `china_a_share_alpha_output/factor_mining_loop/STATE.md`.
+5. Wrote `wiki/factor_mining_loop_iteration_8.md` and updated the wiki index,
+   log, and synthesis table.
+
+### Files Changed
+
+- `china_a_share_alpha/examples/factor_mining_loop_config_iter8.yaml` (new)
+- `china_a_share_alpha/examples/factor_mining_loop_evolution_config_iter8.yaml` (new)
+- `wiki/factor_mining_loop_iteration_8.md` (new)
+- `wiki/factor_mining_loop_index.md`
+- `wiki/index.md`
+- `wiki/log.md`
+- `wiki/semas_evolution_ideas.md`
+- `china_a_share_alpha_output/factor_mining_loop/STATE.md`
+- `OPERATION_LOG.md` — this entry
+
+### Results — Iteration 8
+
+| Metric | Value |
+|---|---|
+| Seed | 1008 |
+| Merged expressions | 58 |
+| Cleaned expressions | 21 |
+| Deduplicated expressions | 17 |
+| Train Sharpe | 1.3452 |
+| Train cost-adj return | 17.89% |
+| Test Sharpe | 2.3964 |
+| Test cost-adj return | 28.42% |
+| Max selection correlation | 0.9204 |
+| Promoted | **NO** |
+
+### Gate Status
+
+| Gate | Status |
+|---|---|
+| train_sharpe_positive | ✅ PASS |
+| min_cleaned_count | ✅ PASS |
+| max_corr_ok | ❌ FAIL |
+
+### Interpretation
+
+- The larger evolution budget with live seeding produced the highest raw test
+  Sharpe yet (2.40).
+- However, the selected ensemble was too correlated (max 0.92), failing the
+  diversity gate.
+- Cost-adjusted return did not beat the iteration 5 best (28.42% vs 30.76%).
+- Training stability improved: train cost-adj return was positive for the first
+  time in a candidate library.
+
+### New Knowledge
+
+1. **Live seeding + large budget finds stronger signals** than empty seeding.
+2. **The 0.50 correlation gate is the active constraint.** Future iterations
+   should either tighten deduplication or use a decorrelated combination method.
+3. **Sharpe and cost-adjusted return can diverge**, so promotion on both
+   metrics remains important.
+
+### Next Steps
+
+- Spawn a Codex-style post-iteration audit to plan iteration 9.
+- Candidate strategies:
+  - Lower semantic dedup threshold to 0.80.
+  - Lower max-correlation gate to 0.40.
+  - Use a risk-parity / minimum-variance combination weighting.
+- Push the updated wiki and logs.

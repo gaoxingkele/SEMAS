@@ -4,6 +4,14 @@ Chronological record of wiki updates, loop runs, and key decisions.
 
 ---
 
+## [2026-07-05] loop run | Iteration 8
+
+- Seed 1008, pop 50, gen 12, live seed.
+- Did not promote; existing library retained.
+- Train Sharpe: 1.3452, test Sharpe: 2.3964, cost-adj: 28.42%.
+- Failed max-correlation gate (max corr 0.9204).
+- Added `wiki/factor_mining_loop_iteration_8.md`.
+
 ## [2026-07-05] loop run | Iteration 7
 
 - Seed 1007, pop 40, gen 10, empty seed.
