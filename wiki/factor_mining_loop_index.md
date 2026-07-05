@@ -39,6 +39,10 @@ continuous factor-mining loop.
 - [Iteration 9](factor_mining_loop_iteration_9.md) — Tightened dedup (0.80),
   top-7 selection, risk-parity weights. Test Sharpe 0.50, cost-adj -4.6%,
   max-corr gate failed (0.74); retained iteration 5 library.
+- [Iteration 10](factor_mining_loop_iteration_10.md) — Added greedy
+  correlation-aware selection (`max_pairwise_corr=0.40`). Promoted a 12-factor
+  ensemble with test Sharpe **2.70** and cost-adj **31.46%**; independently
+  verified on Tushare data.
 
 ## Design & Infrastructure
 

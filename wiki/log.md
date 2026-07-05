@@ -4,6 +4,16 @@ Chronological record of wiki updates, loop runs, and key decisions.
 
 ---
 
+## [2026-07-05] loop run | Iteration 10
+
+- Seed 1010, pop 50, gen 12, live seed.
+- Added greedy correlation-aware selection (`--max-pairwise-corr 0.40`).
+- Promoted new live library.
+- Train Sharpe: 1.6861, test Sharpe: 2.7031, cost-adj: 31.46%.
+- Max selection correlation: 0.3744 (passed gate).
+- Independently verified on real Tushare data.
+- Added `wiki/factor_mining_loop_iteration_10.md`.
+
 ## [2026-07-05] loop run | Iteration 9
 
 - Seed 1009, pop 50, gen 12, live seed.

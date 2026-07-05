@@ -13039,3 +13039,103 @@ if a smaller, less-correlated ensemble can improve cost-adjusted return.
   - Accept the iteration-5 library as the current best and run a final
     production-readiness audit.
 - Push the updated wiki and logs.
+
+---
+
+## 2026-07-05 (continued) — Factor Mining Loop Iteration 10: Breakthrough with Greedy Correlation Selection
+
+### Motivation
+
+Implement greedy correlation-aware selection in the combination script and run
+an iteration to see if it can finally pass the max-correlation gate and beat
+the previous best.
+
+### Actions Taken
+
+1. Added `--max-pairwise-corr` argument to `run_factor_combination.py`.
+2. Implemented `_greedy_select()` which, after ranking candidates by `val_ic`,
+   skips any candidate whose absolute Spearman correlation with an already
+   selected factor exceeds the threshold.
+3. Updated `run_factor_mining_loop.py` to pass `max_pairwise_corr` from config
+   to the combination command.
+4. Created `factor_mining_loop_config_iter10.yaml` with live seed, pop 50/gen 12,
+   dedup 0.80, and `max_pairwise_corr: 0.40`.
+5. Ran iteration 10 with seed 1010.
+6. Ran an independent verification on the promoted live library.
+7. Updated `china_a_share_alpha_output/factor_mining_loop/STATE.md`.
+8. Wrote `wiki/factor_mining_loop_iteration_10.md` and updated the wiki index,
+   log, and synthesis table.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/run_factor_combination.py`
+- `china_a_share_alpha/scripts/run_factor_mining_loop.py`
+- `china_a_share_alpha/examples/factor_mining_loop_config_iter10.yaml` (new)
+- `wiki/factor_mining_loop_iteration_10.md` (new)
+- `wiki/factor_mining_loop_index.md`
+- `wiki/index.md`
+- `wiki/log.md`
+- `wiki/semas_evolution_ideas.md`
+- `china_a_share_alpha_output/factor_mining_loop/STATE.md`
+- `china_a_share_alpha_output/factor_mining_loop/live_library.csv` (promoted)
+- `china_a_share_alpha_output/factor_mining_loop/verification_iter_10` (new)
+- `OPERATION_LOG.md` — this entry
+
+### Results — Iteration 10
+
+| Metric | Value |
+|---|---|
+| Seed | 1010 |
+| Merged expressions | 56 |
+| Cleaned expressions | 15 |
+| Deduplicated expressions | 12 |
+| Train Sharpe | 1.6861 |
+| Train cost-adj return | 14.56% |
+| Test Sharpe | **2.7031** |
+| Test cost-adj return | **31.46%** |
+| Max selection correlation | 0.3744 |
+| Promoted | **YES** |
+
+### Independent verification
+
+```text
+TEST: sharpe=2.7031, cost_adjusted_return=0.3146, turnover=0.0007
+```
+
+The independent backtest on real Tushare data exactly reproduced the
+loop-reported metrics.
+
+### Gate Status
+
+| Gate | Status |
+|---|---|
+| train_sharpe_positive | ✅ PASS |
+| min_cleaned_count | ✅ PASS |
+| max_corr_ok | ✅ PASS |
+
+### Interpretation
+
+- Greedy correlation-aware selection solved the repeated correlation-gate
+  failure (iterations 6, 8, 9).
+- The new 12-factor live library is the best ensemble found so far by both
+  test Sharpe and cost-adjusted return.
+- Training metrics are also positive, indicating better in-sample stability
+  than earlier candidates.
+- Equal weight remains the most robust combination method when paired with
+  correlation filtering.
+
+### New Knowledge
+
+1. **Selection logic matters more than weighting.** Adding a greedy correlation
+   filter was more effective than switching to risk-parity or validation-based
+   weights.
+2. **The loop can self-improve its own infrastructure.** Failures in earlier
+   iterations led to a code change that enabled a breakthrough.
+3. **Independent verification is essential and passed.**
+
+### Next Steps
+
+- Run a fresh coverage/sector-neutrality audit on the new 12-factor live library.
+- Consider whether to continue iterating or freeze this library as the current
+  production candidate.
+- Push the updated wiki and logs to GitHub.
