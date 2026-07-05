@@ -29,6 +29,10 @@ continuous factor-mining loop.
 - [Iteration 6](factor_mining_loop_iteration_6.md) — Seeded with iteration 5
   library. Did not promote; strong train Sharpe (1.65) but test Sharpe fell to
   1.10 and max-correlation gate failed. Includes live-library audit.
+- [Iteration 7](factor_mining_loop_iteration_7.md) — Empty-seed exploration
+  with strict coverage (0.90) and correlation (0.50) gates. Over-cleaned to
+  2 factors; failed train-Sharpe and min-count gates. Recommended returning
+  to live-library seeding for iteration 8.
 
 ## Design & Infrastructure
 

@@ -4,6 +4,15 @@ Chronological record of wiki updates, loop runs, and key decisions.
 
 ---
 
+## [2026-07-05] loop run | Iteration 7
+
+- Seed 1007, pop 40, gen 10, empty seed.
+- Did not promote; existing library retained.
+- Train Sharpe: -0.0696, test Sharpe: 1.2424, cost-adj: 10.91%.
+- Failed train-Sharpe and min-cleaned-count gates.
+- Added `wiki/factor_mining_loop_iteration_7.md`.
+- Recommended iteration 8: live-seed, pop 50/gen 12, coverage 0.50, corr gate 0.50.
+
 ## [2026-07-05] audit | Live-library coverage and sector neutrality
 
 - Audited the 7-factor live library on real Tushare data.

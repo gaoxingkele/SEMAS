@@ -30,6 +30,7 @@ chronological log.
 | [Iteration 4](factor_mining_loop_iteration_4.md) | 2026-07-04 | 2.11 | YES | Added semantic dedup; all gates passed. |
 | [Iteration 5](factor_mining_loop_iteration_5.md) | 2026-07-04 | 2.20 | YES | Incremental improvement; independently verified on Tushare data. |
 | [Iteration 6](factor_mining_loop_iteration_6.md) | 2026-07-05 | 1.10 | NO | Strong train Sharpe but lower test Sharpe; includes live-library audit. |
+| [Iteration 7](factor_mining_loop_iteration_7.md) | 2026-07-05 | 1.24 | NO | Empty-seed exploration over-cleaned; recommended live-seed for iter 8. |
 
 ## Key Entities
 
