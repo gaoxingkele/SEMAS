@@ -1,3 +1,8 @@
+---
+date: 2026-07-04
+tags: ['factor-mining-loop', 'run-note', 'iteration-5']
+sources: ['../china_a_share_alpha_output/factor_mining_loop/loop_report_20260704_162158.md']
+---
 # Factor Mining Loop — Iteration 5 Chain-of-Thought
 
 > Date: 2026-07-04
@@ -86,3 +91,9 @@ runner's bookkeeping.
 - [source: `china_a_share_alpha_output/factor_mining_loop/state.json`]
 - [source: `china_a_share_alpha_output/factor_mining_loop/verification_iter_5`]
 - [source: `wiki/factor_mining_loop_iteration_4.md`]
+
+## Related pages
+
+- [factor_mining_loop_iteration_4](factor_mining_loop_iteration_4.md)
+- [factor_mining_loop_index](factor_mining_loop_index.md)
+- [index](index.md)

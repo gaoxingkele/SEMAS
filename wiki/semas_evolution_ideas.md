@@ -1,3 +1,9 @@
+---
+date: 2026-07-04
+tags: [semas, evolution, alpha, research-synthesis]
+related: [index.md, factor_mining_loop_index.md]
+---
+
 # SEMAS Evolution Ideas
 
 > Living notes on the design of SEMAS and the external ideas we have absorbed
@@ -1232,3 +1238,9 @@ Initial imported projects:
 - Patent Disclosure Skill provides a staged patent-writing skill pipeline for
   project scanning, patent-point analysis, prior-art search, disclosure
   drafting, self-check, and iteration. [source: https://github.com/handsomestWei/patent-disclosure-skill]
+
+## Related pages
+
+- [Wiki index](index.md)
+- [Factor mining loop index](factor_mining_loop_index.md)
+

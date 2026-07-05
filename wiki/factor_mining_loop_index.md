@@ -1,3 +1,9 @@
+---
+date: 2026-07-04
+tags: [factor-mining-loop, index]
+related: [index.md, log.md]
+---
+
 # Factor Mining Loop — Wiki Index
 
 This index collects the chain-of-thought and knowledge notes produced by the
@@ -34,3 +40,8 @@ continuous factor-mining loop.
 - [SEMAS Evolution Ideas](semas_evolution_ideas.md) — Broader evolution
   experiments including validation weighting, iterative evolution, and the
   factor-mining loop.
+
+## Related pages
+
+- [Wiki index](index.md)
+- [Wiki log](log.md)

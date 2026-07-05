@@ -1,3 +1,8 @@
+---
+date: 2026-07-04
+tags: ['factor-mining-loop', 'run-note', 'iteration-3']
+sources: ['../china_a_share_alpha_output/factor_mining_loop/loop_report_20260704_071040.md']
+---
 # Factor Mining Loop — Iteration 3 Chain-of-Thought
 
 > Date: 2026-07-04
@@ -71,3 +76,10 @@ evolved clone. The correlation matrix therefore contained 1.0 entries.
 - [source: `china_a_share_alpha/scripts/run_factor_mining_loop.py`]
 - [source: `china_a_share_alpha_output/factor_mining_loop/state.json`]
 - [source: `wiki/factor_mining_loop_iteration_2.md`]
+
+## Related pages
+
+- [factor_mining_loop_iteration_2](factor_mining_loop_iteration_2.md)
+- [factor_mining_loop_iteration_4](factor_mining_loop_iteration_4.md)
+- [factor_mining_loop_index](factor_mining_loop_index.md)
+- [index](index.md)

@@ -1,3 +1,8 @@
+---
+date: 2026-07-04
+tags: ['factor-mining-loop', 'run-note', 'iteration-4']
+sources: ['../china_a_share_alpha_output/factor_mining_loop/loop_report_20260704_102313.md']
+---
 # Factor Mining Loop — Iteration 4 Chain-of-Thought
 
 > Date: 2026-07-04
@@ -90,3 +95,10 @@ The 6 promoted factors are:
 - [source: `china_a_share_alpha/scripts/run_factor_mining_loop.py`]
 - [source: `china_a_share_alpha_output/factor_mining_loop/state.json`]
 - [source: `wiki/factor_mining_loop_iteration_3.md`]
+
+## Related pages
+
+- [factor_mining_loop_iteration_3](factor_mining_loop_iteration_3.md)
+- [factor_mining_loop_iteration_5](factor_mining_loop_iteration_5.md)
+- [factor_mining_loop_index](factor_mining_loop_index.md)
+- [index](index.md)

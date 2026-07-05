@@ -29,6 +29,24 @@ plugin addition), the agent MUST maintain two separate records:
      `[source: ...]`.
    - Keep `wiki/references.md` up to date with a BibTeX-like entry.
 
+## Wiki Schema (Karpathy-style)
+
+The `wiki/` directory is a persistent, compounding knowledge base following
+[Karpathy's LLM Wiki gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f).
+
+- **Raw sources** are immutable and live in `external/`, papers, or URLs.
+- **Wiki pages** are LLM-maintained markdown files with YAML frontmatter
+  (`date`, `tags`, `sources`, `related`).
+- **Special files**:
+  - `wiki/index.md` — content-oriented catalog, updated after each ingest/run.
+  - `wiki/log.md` — chronological append-only record of ingests and runs.
+- **Conventions**:
+  - One atomic note per run/ingest/idea.
+  - Cross-link related pages.
+  - Update `index.md` and `log.md` whenever a new wiki page is added or a
+    major result changes.
+  - Use `## Related pages` sections at the bottom of atomic notes.
+
 This split keeps **doing** (logs/readme) separate from **thinking** (wiki),
 making the project portable and auditable.
 
