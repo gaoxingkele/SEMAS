@@ -12270,6 +12270,49 @@ modified.
 
 ---
 
+## 2026-07-05 - Local Codex Skill-MAS Warning Fix
+
+### Motivation
+
+Fix the remaining warnings from the local Skill-MAS Codex skill setup:
+
+1. `quick_validate.py` could not run because the active Python environment
+   lacked `PyYAML`.
+2. `codex doctor` showed an update note because the active `codex` command still
+   resolved to version `0.140.0`.
+
+### Actions Taken
+
+1. Created a dedicated validation virtual environment:
+   - `C:\Users\xmupt\.codex\skill-venv`
+2. Installed validation dependency inside that venv only:
+   - `PyYAML==6.0.3`
+3. Ran official skill validation:
+   - `C:\Users\xmupt\.codex\skill-venv\Scripts\python.exe C:\Users\xmupt\.codex\skills\.system\skill-creator\scripts\quick_validate.py C:\Users\xmupt\.codex\skills\skill-mas`
+4. Updated Codex through WinGet:
+   - `winget upgrade --id OpenAI.Codex --accept-source-agreements --accept-package-agreements --silent`
+5. Detected that WinGet installed the new binary as
+   `codex-x86_64-pc-windows-msvc.exe` while the old `codex.exe` still reported
+   `0.140.0`.
+6. Added a user-path shim:
+   - `C:\Users\xmupt\.local\bin\codex.cmd`
+   - points to the new `codex-x86_64-pc-windows-msvc.exe`
+
+### Verification
+
+- `quick_validate.py` result: `Skill is valid!`
+- `codex --version`: `codex-cli 0.142.5`
+- `codex doctor`: `17 ok · 1 idle · 0 warn · 0 fail`
+- `Get-Command codex -All` now resolves `C:\Users\xmupt\.local\bin\codex.cmd`
+  before the old WinGet package `codex.exe`.
+
+### Boundary
+
+No system-wide Python packages were installed. The `PyYAML` dependency is scoped
+to `C:\Users\xmupt\.codex\skill-venv`. No upstream Skill-MAS code was modified.
+
+---
+
 ## 2026-07-04 (continued) — Factor Mining Loop Iteration 3 with Promotion Gates
 
 ### Motivation
@@ -12515,6 +12558,68 @@ Commands run:
 
 The upgraded model can expose conflict between public birth-hour references and event-fit scoring, but it must not force a final hour when the margin is tiny. The next improvement should add negative-control years and stronger source ratings before promoting a calibrated hour.
 
+## 2026-07-05 — Mingli Book-to-Skill Stream
+
+### Actions Taken
+
+1. Cloned `https://github.com/virgiliojr94/book-to-skill` into `external/book-to-skill`.
+2. Downloaded or attempted to download public-source books into `external/mingli_books`.
+3. Added `examples/mingli_5agents/tools/build_mingli_book_skills.py`.
+4. Generated 10 local Codex skills under `C:\Users\xmupt\.codex\skills`:
+   - `mingli-bazi-yuanhai-ziping`
+   - `mingli-bazi-ziping-zhenquan`
+   - `mingli-bazi-sanming-tonghui`
+   - `mingli-bazi-ditiansui`
+   - `mingli-bazi-qiongtong-baojian`
+   - `mingli-bazi-shenfeng-tongkao`
+   - `mingli-bazi-hengmen`
+   - `mingli-bazi-all`
+   - `mingli-ziwei`
+   - `mingli-xingzuo`
+5. Added `external/mingli_books/SOURCES.md`.
+6. Added `v193` to `wiki/llm_agent_evolution_mingli.md`.
+
+### Verification
+
+- Ran `python external\book-to-skill\scripts\extract.py --check`.
+- Ran `python external\book-to-skill\scripts\extract.py external\mingli_books\bazi\yuanhai_ziping_ziping_zhenquan.pdf --mode text --install-missing no`.
+- Result: BaZi PDF is image-based; text extraction returned only a few tokens, so it cannot be treated as full-text converted.
+- Ran `python examples\mingli_5agents\tools\build_mingli_book_skills.py`.
+- Ran UTF-8 skill structure self-check for all generated `mingli-*` skills.
+- Ran `python -m py_compile examples\mingli_5agents\tools\build_mingli_book_skills.py`.
+
+### Source Status
+
+| Source | Status |
+|---|---|
+| Yuanhai Ziping / Ziping Zhenquan PDF | complete PDF, image-based, OCR still needed |
+| Zi Wei Dou Shu Quan Shu PDF | partial download, requires integrity re-download |
+| William Lilly Christian Astrology PDF | downloaded, EOF check failed, requires integrity check |
+
+### Boundary
+
+The generated skills are structured method skills, not full-text conversions. They should be used as school-specific reasoning agents and updated later after OCR/full-text extraction and source-license review.
+
+## 2026-07-05 — Mingli Skill Validation on Lin Fan and Mao Zedong
+
+### Actions Taken
+
+1. Read the generated `mingli-bazi-all` orchestration rules and the seven BaZi school method notes.
+2. Re-ran local chart extraction for:
+   - Lin Fan: male, 1978-04-14 06:50, Sanming, Fujian.
+   - Mao Zedong: male, 1893-12-26 08:00, Shaoshan, Hunan, using the common Chen-hour reference.
+3. Compared the cases through the generated school-skill framework.
+4. Wrote `examples/mingli_5agents/reports/skill_validation_linfan_mao_20260705.md`.
+
+### Result
+
+- Lin Fan: the new school skills support the previous structural line of strong Fire, weak/isolated Metal use, missing Water, and the need for rules/contracts/processes. The report remains structurally plausible but not fact-calibrated because no verified life-event table exists.
+- Mao Zedong: the school skills support the Chen-hour chart's classical logic more strongly than the current event-fit score suggests. The existing scorer likely underweights pattern continuity, seasonal adjustment, disease-medicine logic, and major-luck carrying structure.
+
+### Method Lesson
+
+The current event-fit model is useful for surfacing conflict, but it should not overrule school-level reasoning when the lead margin is tiny. Future scoring must split votes by school and evidence type instead of collapsing everything into one total score.
+
 ---
 
 ## 2026-07-04 (continued) — Factor Mining Loop Iteration 5 + Independent Tushare Verification
@@ -12615,4 +12720,103 @@ Seven distinct factors, including:
 - Decide whether to run a 6th iteration or pause and audit coverage / sector
   neutrality of the 7-factor live library.
 - Fix NaN handling in `semantic_deduplicate`.
+- Push the updated wiki and logs to GitHub.
+
+---
+
+## 2026-07-05 — Factor Mining Loop Iteration 6 + Live-Library Audit
+
+### Motivation
+
+Run iteration 6 after fixing NaN handling in semantic deduplication, and audit
+ the promoted live library for coverage and sector neutrality on real Tushare data.
+
+### Actions Taken
+
+1. Fixed `semantic_deduplicate` to handle duplicate column names and degenerate
+   (constant/zero-variance) factor series.
+2. Ran iteration 6 with seed 1006.
+3. Performed a coverage / sector-neutrality audit of the current live library
+   using real Tushare data.
+4. Updated `china_a_share_alpha_output/factor_mining_loop/STATE.md`.
+5. Wrote `wiki/factor_mining_loop_iteration_6.md` and updated the wiki index,
+   log, and synthesis table.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/run_factor_mining_loop.py`
+- `wiki/factor_mining_loop_iteration_6.md` (new)
+- `wiki/factor_mining_loop_index.md`
+- `wiki/index.md`
+- `wiki/log.md`
+- `wiki/semas_evolution_ideas.md`
+- `china_a_share_alpha_output/factor_mining_loop/STATE.md`
+- `china_a_share_alpha_output/factor_mining_loop/live_library_audit.md` (new)
+- `china_a_share_alpha_output/factor_mining_loop/live_library_audit.json` (new)
+- `OPERATION_LOG.md` — this entry
+
+### Results — Iteration 6
+
+| Metric | Value |
+|---|---|
+| Seed | 1006 |
+| Merged expressions | 25 |
+| Cleaned expressions | 16 |
+| Deduplicated expressions | 14 |
+| Train Sharpe | 1.6546 |
+| Train cost-adj return | 29.09% |
+| Test Sharpe | 1.0963 |
+| Test cost-adj return | 9.50% |
+| Max selection correlation | 0.9376 |
+| Promoted | **NO** |
+
+### Gate Status
+
+| Gate | Status |
+|---|---|
+| train_sharpe_positive | ✅ PASS |
+| min_cleaned_count | ✅ PASS |
+| max_corr_ok | ❌ FAIL |
+
+### Live-Library Audit Findings
+
+| Metric | Value |
+|---|---|
+| Factors | 7 |
+| Combined mean daily coverage | 1.000 |
+| Combined min daily coverage | 1.000 |
+| Mean pre-neutralization sector spread | 0.373 |
+| Max pre-neutralization sector spread | 1.148 |
+| Dates with sector spread > 0.5 | 121 |
+
+- `factor_12` (`grossprofit_margin` based) has mean coverage 0.74 and min 0.00.
+- Other fundamental factors have mean coverage ~0.95 but occasional zero-coverage days.
+- Combined coverage is 1.00 because different factors fill gaps.
+
+### Interpretation
+
+- Iteration 6 produced strong in-sample metrics (train Sharpe 1.65) but weaker
+  out-of-sample metrics (test Sharpe 1.10). The max-correlation gate caught the
+  overfit.
+- The live library retained from iteration 5 remains the best.
+- The audit shows the live library is usable from a coverage standpoint but has
+  meaningful sector exposure before neutralization. The combination script
+  handles neutralization, but the risk remains if sector labels are synthetic.
+
+### New Knowledge
+
+1. **The correlation gate acts as an overfit early-warning.** Iteration 6 would
+   have promoted a worse library without it.
+2. **Seeding with a very strong library may cause over-optimization.** An
+   occasional exploration seed may be needed.
+3. **Fundamental factors have intermittent coverage.** This is acceptable when
+   combined with dense price/volume signals but needs monitoring.
+
+### Next Steps
+
+- Decide whether to run iteration 7 with an empty exploration seed or continue
+  seeding with the live library.
+- Consider tightening the max-correlation gate to 0.60.
+- Review whether to keep fundamental factors with low coverage in the live
+  library.
 - Push the updated wiki and logs to GitHub.

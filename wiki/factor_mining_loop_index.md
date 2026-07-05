@@ -26,6 +26,9 @@ continuous factor-mining loop.
 - [Iteration 5](factor_mining_loop_iteration_5.md) — Seeded with iteration 4
   library. Promoted a 7-factor ensemble with test Sharpe **2.20** and
   cost-adj return **30.76%**; independently verified on Tushare data.
+- [Iteration 6](factor_mining_loop_iteration_6.md) — Seeded with iteration 5
+  library. Did not promote; strong train Sharpe (1.65) but test Sharpe fell to
+  1.10 and max-correlation gate failed. Includes live-library audit.
 
 ## Design & Infrastructure
 

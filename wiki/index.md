@@ -29,6 +29,7 @@ chronological log.
 | [Iteration 3](factor_mining_loop_iteration_3.md) | 2026-07-04 | 1.58 | NO | First gated run; positive train Sharpe but correlation gate failed. |
 | [Iteration 4](factor_mining_loop_iteration_4.md) | 2026-07-04 | 2.11 | YES | Added semantic dedup; all gates passed. |
 | [Iteration 5](factor_mining_loop_iteration_5.md) | 2026-07-04 | 2.20 | YES | Incremental improvement; independently verified on Tushare data. |
+| [Iteration 6](factor_mining_loop_iteration_6.md) | 2026-07-05 | 1.10 | NO | Strong train Sharpe but lower test Sharpe; includes live-library audit. |
 
 ## Key Entities
 

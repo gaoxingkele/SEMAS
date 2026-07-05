@@ -143,11 +143,16 @@ def semantic_deduplicate(
         train, _ = load_tushare_data(data_config)
 
     frames = []
-    for _, row in df.iterrows():
+    frame_meta = []  # (unique_col_name, original_factor_name, row)
+    for idx, row in df.iterrows():
         try:
             expr = parse_expression(row["expression"])
             f = _zscore(expr.eval(train))
-            frames.append(f.rename(row["factor"]))
+            base = row["factor"]
+            # Ensure unique column names in case of duplicate factor labels.
+            col_name = f"{base}_dup{idx}" if base in [m[0] for m in frame_meta] else base
+            frames.append(f.rename(col_name))
+            frame_meta.append((col_name, base, row))
         except Exception as exc:
             print(f"  [dedup] skipping invalid expression {row.get('factor')}: {exc}")
 
@@ -158,33 +163,32 @@ def semantic_deduplicate(
     mat = pd.concat(frames, axis=1).dropna()
 
     # Drop degenerate columns (constant or zero variance) before correlation checks.
-    valid_cols = []
-    for col in mat.columns:
-        std = mat[col].std()
-        if pd.isna(std) or std < 1e-12:
-            print(f"  [dedup] dropping {col}: constant/degenerate series")
+    valid_meta = []
+    for col_name, base, row in frame_meta:
+        if col_name not in mat.columns:
+            continue
+        std = mat[col_name].std()
+        if pd.isna(std) or float(std) < 1e-12:
+            print(f"  [dedup] dropping {base}: constant/degenerate series")
         else:
-            valid_cols.append(col)
-    mat = mat[valid_cols]
+            valid_meta.append((col_name, base, row))
+    mat = mat[[m[0] for m in valid_meta]]
 
     kept_rows = []
     kept_cols = []
-    for _, row in df.iterrows():
-        col = row["factor"]
-        if col not in mat.columns:
-            continue
+    for col_name, base, row in valid_meta:
         if kept_cols:
-            corr_values = mat[kept_cols].corrwith(mat[col], method="spearman").abs()
-            corr_max = corr_values.max() if not corr_values.empty else 0.0
+            corr_values = mat[kept_cols].corrwith(mat[col_name], method="spearman").abs()
+            corr_max = float(corr_values.max()) if not corr_values.empty else 0.0
             if pd.isna(corr_max):
                 corr_max = 0.0
         else:
             corr_max = 0.0
         if corr_max < corr_threshold:
             kept_rows.append(row)
-            kept_cols.append(col)
+            kept_cols.append(col_name)
         else:
-            print(f"  [dedup] dropping {col} (max |corr|={corr_max:.3f})")
+            print(f"  [dedup] dropping {base} (max |corr|={corr_max:.3f})")
 
     out = pd.DataFrame(kept_rows)
     out["rank"] = range(1, len(out) + 1)

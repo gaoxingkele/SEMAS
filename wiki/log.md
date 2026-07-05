@@ -4,6 +4,21 @@ Chronological record of wiki updates, loop runs, and key decisions.
 
 ---
 
+## [2026-07-05] audit | Live-library coverage and sector neutrality
+
+- Audited the 7-factor live library on real Tushare data.
+- Combined signal coverage is 1.00, but several fundamental factors have
+  intermittent coverage.
+- Pre-neutralization sector spread is meaningful on 121 days.
+- See `china_a_share_alpha_output/factor_mining_loop/live_library_audit.md`.
+
+## [2026-07-05] loop run | Iteration 6
+
+- Seed 1006, pop 25, gen 8.
+- Did not promote; existing library retained.
+- Train Sharpe: 1.6546, test Sharpe: 1.0963, max corr: 0.9376.
+- Added `wiki/factor_mining_loop_iteration_6.md`.
+
 ## [2026-07-04] ingest | Karpathy LLM Wiki gist
 
 - Source: https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
