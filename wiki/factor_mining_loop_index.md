@@ -36,6 +36,9 @@ continuous factor-mining loop.
 - [Iteration 8](factor_mining_loop_iteration_8.md) — Live-seed with larger
   budget (pop 50/gen 12). Test Sharpe 2.40 but max-correlation gate failed
   (0.92); retained iteration 5 library.
+- [Iteration 9](factor_mining_loop_iteration_9.md) — Tightened dedup (0.80),
+  top-7 selection, risk-parity weights. Test Sharpe 0.50, cost-adj -4.6%,
+  max-corr gate failed (0.74); retained iteration 5 library.
 
 ## Design & Infrastructure
 

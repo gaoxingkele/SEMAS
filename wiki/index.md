@@ -32,6 +32,7 @@ chronological log.
 | [Iteration 6](factor_mining_loop_iteration_6.md) | 2026-07-05 | 1.10 | NO | Strong train Sharpe but lower test Sharpe; includes live-library audit. |
 | [Iteration 7](factor_mining_loop_iteration_7.md) | 2026-07-05 | 1.24 | NO | Empty-seed exploration over-cleaned; recommended live-seed for iter 8. |
 | [Iteration 8](factor_mining_loop_iteration_8.md) | 2026-07-05 | 2.40 | NO | Live-seed with larger budget; high Sharpe but failed correlation gate. |
+| [Iteration 9](factor_mining_loop_iteration_9.md) | 2026-07-05 | 0.50 | NO | Tightened dedup + risk-parity weights; negative test cost-adj return. |
 
 ## Key Entities
 

@@ -4,6 +4,15 @@ Chronological record of wiki updates, loop runs, and key decisions.
 
 ---
 
+## [2026-07-05] loop run | Iteration 9
+
+- Seed 1009, pop 50, gen 12, live seed.
+- Tightened semantic dedup to 0.80, top_n=7, risk-parity weights.
+- Did not promote; existing library retained.
+- Train Sharpe: 1.2923, test Sharpe: 0.4955, cost-adj: -4.60%.
+- Failed max-correlation gate (max corr 0.7427).
+- Added `wiki/factor_mining_loop_iteration_9.md`.
+
 ## [2026-07-05] loop run | Iteration 8
 
 - Seed 1008, pop 50, gen 12, live seed.

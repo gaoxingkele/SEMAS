@@ -37,6 +37,7 @@ continuous loop for alpha-factor discovery.
 | 6 | 1006 | 25 | 16 | 14 | 1.10 | 9.5% | 1.66 | NO | corr failed |
 | 7 | 1007 | 37 | 2 | 3 | 1.24 | 10.9% | -0.07 | NO | train/count |
 | 8 | 1008 | 58 | 21 | 17 | 2.40 | 28.4% | 1.35 | NO | corr failed |
+| 9 | 1009 | 48 | 16 | 14 | 0.50 | -4.6% | 1.29 | NO | corr failed |
 
 ### Caution
 

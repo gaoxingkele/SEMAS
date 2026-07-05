@@ -12955,3 +12955,87 @@ increase the evolution budget.
   - Lower max-correlation gate to 0.40.
   - Use a risk-parity / minimum-variance combination weighting.
 - Push the updated wiki and logs.
+
+---
+
+## 2026-07-05 (continued) — Factor Mining Loop Iteration 9
+
+### Motivation
+
+Implement the iteration-8 post-audit recommendation: tighten semantic
+deduplication to 0.80, reduce top-N to 7, and try risk-parity weighting to see
+if a smaller, less-correlated ensemble can improve cost-adjusted return.
+
+### Actions Taken
+
+1. Created `factor_mining_loop_config_iter9.yaml` and
+   `factor_mining_loop_evolution_config_iter9.yaml`.
+2. Ran iteration 9 with seed 1009.
+3. Updated `china_a_share_alpha_output/factor_mining_loop/STATE.md`.
+4. Wrote `wiki/factor_mining_loop_iteration_9.md` and updated the wiki index,
+   log, and synthesis table.
+
+### Files Changed
+
+- `china_a_share_alpha/examples/factor_mining_loop_config_iter9.yaml` (new)
+- `china_a_share_alpha/examples/factor_mining_loop_evolution_config_iter9.yaml` (new)
+- `wiki/factor_mining_loop_iteration_9.md` (new)
+- `wiki/factor_mining_loop_index.md`
+- `wiki/index.md`
+- `wiki/log.md`
+- `wiki/semas_evolution_ideas.md`
+- `china_a_share_alpha_output/factor_mining_loop/STATE.md`
+- `OPERATION_LOG.md` — this entry
+
+### Results — Iteration 9
+
+| Metric | Value |
+|---|---|
+| Seed | 1009 |
+| Merged expressions | 48 |
+| Cleaned expressions | 16 |
+| Deduplicated expressions | 14 |
+| Train Sharpe | 1.2923 |
+| Train cost-adj return | 17.45% |
+| Test Sharpe | 0.4955 |
+| Test cost-adj return | -4.60% |
+| Max selection correlation | 0.7427 |
+| Promoted | **NO** |
+
+### Gate Status
+
+| Gate | Status |
+|---|---|
+| train_sharpe_positive | ✅ PASS |
+| min_cleaned_count | ✅ PASS |
+| max_corr_ok | ❌ FAIL |
+
+### Interpretation
+
+- Tightening semantic dedup to 0.80 removed more near-duplicates, but the
+  selected top-7 still contained a pair correlated at 0.74.
+- Risk-parity weighting performed poorly: it amplified weaker factors and
+  produced negative test cost-adjusted return.
+- Equal weight remains the most robust combination method observed across all
+  iterations.
+
+### New Knowledge
+
+1. **Validation-weighted and risk-parity combinations overfit the validation
+   fold** and degrade out-of-sample performance relative to equal weight.
+2. **The max-correlation gate is hard to satisfy with the current selection
+   process.** The gate is checked after selection; a correlation-aware greedy
+   selection inside `run_factor_combination.py` may be needed.
+3. **Iteration 5's 7-factor equal-weight live library is still the best
+   promoted ensemble.**
+
+### Next Steps
+
+- Spawn a Codex-style post-iteration audit to plan iteration 10.
+- Candidate strategies:
+  - Revert to equal weight and implement greedy correlation filtering during
+    selection.
+  - Tighten `semantic_dedup_corr_threshold` further (0.70).
+  - Accept the iteration-5 library as the current best and run a final
+    production-readiness audit.
+- Push the updated wiki and logs.
