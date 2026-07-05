@@ -87,6 +87,52 @@ def _compute_factor_metrics(row, train, val, test):
     return out
 
 
+def _greedy_select(
+    metrics: pd.DataFrame,
+    train: pd.DataFrame,
+    val: pd.DataFrame | None,
+    top_n: int,
+    max_corr: float,
+) -> pd.DataFrame:
+    """Greedily select top factors while keeping pairwise correlation low.
+
+    Sort order is preserved; a candidate is kept only if its absolute
+    Spearman correlation with every already-selected factor is below
+    ``max_corr``. Iteration stops when ``top_n`` factors are selected or the
+    ranked list is exhausted.
+    """
+    if max_corr >= 1.0 or metrics.empty:
+        return metrics.head(top_n).copy()
+
+    weight_data = val if val is not None else train
+    selected_rows = []
+    selected_frames = []
+    for _, row in metrics.iterrows():
+        try:
+            f = _zscore(parse_expression(row["expression"]).eval(weight_data)).rename(
+                row["factor"]
+            )
+        except Exception:
+            continue
+        if not selected_frames:
+            keep = True
+        else:
+            combined = pd.concat(selected_frames + [f], axis=1).dropna()
+            if combined.shape[1] <= 1:
+                keep = True
+            else:
+                corr_vals = combined.iloc[:, :-1].corrwith(
+                    combined.iloc[:, -1], method="spearman"
+                ).abs()
+                keep = float(corr_vals.max()) < max_corr
+        if keep:
+            selected_rows.append(row)
+            selected_frames.append(f)
+        if len(selected_rows) >= top_n:
+            break
+    return pd.DataFrame(selected_rows).head(top_n).copy()
+
+
 def _compute_weights(mat: pd.DataFrame, weights: np.ndarray) -> pd.Series:
     """Combine columns of `mat` using ``weights``."""
     return pd.Series(mat.values @ weights, index=mat.index)
@@ -97,6 +143,12 @@ def main() -> int:
     parser.add_argument("config", help="YAML config with Tushare data settings")
     parser.add_argument("--factor-csv", type=Path, required=True, help="Input factor library CSV")
     parser.add_argument("--top-n", type=int, default=5, help="Number of factors to combine")
+    parser.add_argument(
+        "--max-pairwise-corr",
+        type=float,
+        default=1.0,
+        help="Greedy correlation filter: skip candidate if max abs Spearman corr with already-selected factors exceeds this (default 1.0 = off)",
+    )
     parser.add_argument(
         "--sort-by",
         type=str,
@@ -155,7 +207,7 @@ def main() -> int:
         sort_by = "val_ic" if val is not None else "train_ic"
 
     metrics = metrics.sort_values(sort_by, ascending=False, key=abs if sort_by.endswith("_ic") else lambda x: x)
-    selected = metrics.head(args.top_n).copy()
+    selected = _greedy_select(metrics, train, val, args.top_n, args.max_pairwise_corr)
 
     # Evaluate selected factors on each period and build a z-scored matrix.
     period_results = {}

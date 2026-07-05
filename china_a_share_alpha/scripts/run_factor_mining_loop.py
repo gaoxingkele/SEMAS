@@ -345,6 +345,11 @@ def run_loop_iteration(
     ]
     if cfg.get("sort_by"):
         combo_cmd += ["--sort-by", cfg["sort_by"]]
+    if cfg.get("max_pairwise_corr") is not None:
+        combo_cmd += [
+            "--max-pairwise-corr",
+            str(cfg["max_pairwise_corr"]),
+        ]
 
     print(f"[iter {iteration}] Running combination ...")
     run_cmd(combo_cmd)
