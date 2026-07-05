@@ -49,6 +49,8 @@ continuous factor-mining loop.
 - [Iteration 12](factor_mining_loop_iteration_12.md) — Multi-horizon evolution
   (5d + 10d forward returns). Promoted 10-factor ensemble with test Sharpe
   **2.76** and cost-adj **32.47%**.
+- [Iteration 13](factor_mining_loop_iteration_13.md) — Cross-market transfer
+  (CSI500/CSI1000 → CSI300). Did not improve; retained iteration 12 library.
 
 ## Audits
 

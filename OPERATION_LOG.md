@@ -13425,3 +13425,65 @@ TEST: sharpe=2.7629, cost_adjusted_return=0.3247, turnover=0.0007
 
 - Continue iteration 13: cross-market transfer (evolve on CSI500/CSI1000,
   clean/validate on CSI300).
+
+---
+
+## 2026-07-05 (continued) — Factor Mining Loop Iteration 13: Cross-Market Transfer
+
+### Motivation
+
+Test whether factors evolved on CSI500 and CSI1000 can improve the CSI300 live
+library after target-market cleaning.
+
+### Actions Taken
+
+1. Created evolution configs for CSI500 and CSI1000.
+2. Ran two parallel evolutions seeded with the iteration-12 live library.
+3. Merged both leaderboards with the live library (48 unique expressions).
+4. Cleaned and evaluated the merged library on CSI300.
+5. Combined top 10 with greedy correlation filter 0.40 and equal weight.
+6. Did not promote; retained iteration-12 live library.
+7. Wrote `wiki/factor_mining_loop_iteration_13.md` and updated wiki index, log,
+   and synthesis table.
+
+### Files Changed
+
+- `china_a_share_alpha/examples/factor_mining_loop_evolution_config_iter13_csi500.yaml` (new)
+- `china_a_share_alpha/examples/factor_mining_loop_evolution_config_iter13_csi1000.yaml` (new)
+- `wiki/factor_mining_loop_iteration_13.md` (new)
+- `china_a_share_alpha_output/factor_mining_loop/STATE.md`
+- `wiki/factor_mining_loop_index.md`
+- `wiki/index.md`
+- `wiki/log.md`
+- `wiki/semas_evolution_ideas.md`
+- `OPERATION_LOG.md` — this entry
+
+### Results — Iteration 13
+
+| Metric | Value |
+|---|---|
+| Seeds | 1301 (CSI500), 1302 (CSI1000) |
+| Merged expressions | 48 |
+| Cleaned on CSI300 | 17 |
+| Selected | 10 |
+| Train Sharpe | 2.5234 |
+| Test Sharpe | 1.8354 |
+| Test cost-adj return | 14.73% |
+| Promoted | **NO** |
+
+### Interpretation
+
+- Cross-market transfer did not improve the current best.
+- Factors that work in CSI500/CSI1000 appear to have different alpha
+  structures and do not add value to the CSI300 ensemble after cleaning.
+- The iteration-12 live library remains the best.
+
+### New Knowledge
+
+1. **Cross-market transfer is not automatically additive** for this setup.
+2. **Target-market cleaning discards most transferred candidates.**
+3. **In-market CSI300 evolution remains the most reliable source of alpha.**
+
+### Next Steps
+
+- Iteration 14: operator expansion (high-order time-series operators).

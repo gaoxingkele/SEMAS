@@ -4,6 +4,13 @@ Chronological record of wiki updates, loop runs, and key decisions.
 
 ---
 
+## [2026-07-05] loop run | Iteration 13
+
+- Cross-market transfer: evolved on CSI500 and CSI1000, evaluated on CSI300.
+- Did not promote; current library retained.
+- CSI300 test Sharpe: 1.8354, cost-adj: 14.73%.
+- Added `wiki/factor_mining_loop_iteration_13.md`.
+
 ## [2026-07-05] loop run | Iteration 12
 
 - Multi-horizon evolution: parallel 5d and 10d forward-return runs.
