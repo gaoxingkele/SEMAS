@@ -11958,6 +11958,51 @@ All selected checks passed.
 
 The first run used a PowerShell here-string with raw Chinese text and the shell converted Chinese fields to question marks before Python received them. The chart was rerun with Unicode escapes so the generated JSON and Markdown preserve the Chinese name and birthplace.
 
+## 2026-07-06 - Film Star Hour-Calibration Validation
+
+### Goal
+
+Use the latest layered BaZi strategy and multi-system hour-calibration agent on several film-star cases, then compare the event-fit result with a public reference birth hour.
+
+### Cases Added
+
+- `bruce_lee_public_events.json`
+- `jackie_chan_public_events.json`
+- `marilyn_monroe_public_events.json`
+- `audrey_hepburn_public_events.json`
+
+### Code Update
+
+`hour_calibration.py` now carries `public_reference_hours` into output and adds `reference_evaluation`:
+
+- reference hour rank,
+- strategy score,
+- margin from winner,
+- whether the reference hour is in the top 3.
+
+### Validation Result
+
+| Case | Reference | Winner | Reference Rank | Decision |
+|---|---|---|---:|---|
+| Bruce Lee | 辰时 07:12 | 丑时 | 5 | ambiguous |
+| Jackie Chan | 巳时 09:45 | 申时 | 2 | ambiguous |
+| Marilyn Monroe | 巳时 09:30 | 辰时 | 8 | ambiguous |
+| Audrey Hepburn | 寅时 03:00 | 子时 | 9 | ambiguous |
+
+### Interpretation
+
+The new strategy properly refuses hard conclusions because all cases remain `ambiguous`. However, only Jackie Chan came close to the public reference hour. The current event model is not strong enough for robust celebrity birth-hour recovery.
+
+### Output
+
+- `examples/mingli_5agents/case_studies/hour_calibration/film_star_validation_2026-07-06.md`
+- Four JSON and Markdown calibration outputs under `examples/mingli_5agents/case_studies/hour_calibration/outputs/`
+
+### Verification
+
+- `python -m py_compile examples\mingli_5agents\case_studies\hour_calibration\hour_calibration.py`
+- `pytest -q examples\mingli_5agents\tests\test_mingli_system.py::test_hour_calibration_exposes_layered_strategy_scores`
+
 ---
 
 ## 2026-07-04 - Smart_SkillandAgent First GitHub Imports
@@ -13303,3 +13348,80 @@ run a stress test at 20 bps transaction cost.
   freeze the current library.
 - If continuing evolution, consider setting the loop's default transaction cost
   to 20 bps to promote only cost-robust ensembles.
+
+---
+
+## 2026-07-05 (continued) — Factor Mining Loop Iteration 12: Multi-Horizon Evolution
+
+### Motivation
+
+Diversify factor mining ideas by evolving factors for multiple forward-return
+horizons (5-day and 10-day) and combining them with the existing live library.
+
+### Actions Taken
+
+1. Created evolution configs for 5-day and 10-day forward returns.
+2. Ran two parallel evolutions seeded with the iteration-10 live library.
+3. Merged both leaderboards with the live library (46 unique expressions).
+4. Cleaned the merged library (21 factors survived).
+5. Combined top 10 with greedy correlation filter 0.40 and equal weight.
+6. Promoted the new live library and updated state.
+7. Ran independent verification.
+8. Wrote `wiki/factor_mining_loop_iteration_12.md` and updated wiki index, log,
+   and synthesis table.
+
+### Files Changed
+
+- `china_a_share_alpha/examples/factor_mining_loop_evolution_config_iter12_5d.yaml` (new)
+- `china_a_share_alpha/examples/factor_mining_loop_evolution_config_iter12_10d.yaml` (new)
+- `wiki/factor_mining_loop_iteration_12.md` (new)
+- `china_a_share_alpha_output/factor_mining_loop/live_library.csv` (promoted)
+- `china_a_share_alpha_output/factor_mining_loop/state.json`
+- `china_a_share_alpha_output/factor_mining_loop/STATE.md`
+- `wiki/factor_mining_loop_index.md`
+- `wiki/index.md`
+- `wiki/log.md`
+- `wiki/semas_evolution_ideas.md`
+- `OPERATION_LOG.md` — this entry
+
+### Results — Iteration 12
+
+| Metric | Value |
+|---|---|
+| Seeds | 1201 (5d), 1202 (10d) |
+| Merged expressions | 46 |
+| Cleaned expressions | 21 |
+| Deduplicated/selected | 10 |
+| Train Sharpe | 1.3620 |
+| Train cost-adj return | 15.91% |
+| Test Sharpe | **2.7629** |
+| Test cost-adj return | **32.47%** |
+| Max selection correlation | 0.3744 |
+| Promoted | **YES** |
+
+### Independent verification
+
+```text
+TEST: sharpe=2.7629, cost_adjusted_return=0.3247, turnover=0.0007
+```
+
+### Interpretation
+
+- Multi-horizon evolution added orthogonal signals and improved both test
+  Sharpe and cost-adjusted return over the previous best.
+- The 5-day and 10-day objectives produced different expressions that
+  complemented the existing 1-day-focused live library.
+- Greedy correlation filtering kept the selected ensemble well-diversified.
+
+### New Knowledge
+
+1. **Different forward-return horizons yield different alpha structures.**
+2. **Parallel multi-objective evolution + merge is efficient** for exploring
+   diverse signals without abandoning the current best.
+3. **Live-library seeding preserves good structures** while allowing new
+   time-scale signals to enter.
+
+### Next Steps
+
+- Continue iteration 13: cross-market transfer (evolve on CSI500/CSI1000,
+  clean/validate on CSI300).

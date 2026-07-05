@@ -36,6 +36,7 @@ chronological log.
 | [Iteration 9](factor_mining_loop_iteration_9.md) | 2026-07-05 | 0.50 | NO | Tightened dedup + risk-parity weights; negative test cost-adj return. |
 | [Iteration 10](factor_mining_loop_iteration_10.md) | 2026-07-05 | **2.70** | **YES** | Greedy correlation-aware selection; new best, all gates passed, verified. |
 | [Iteration 11](factor_mining_loop_iteration_11.md) | 2026-07-05 | 2.70 (20 bps) | N/A | Stress-test validation; cost-adj 23.17% at 20 bps. |
+| [Iteration 12](factor_mining_loop_iteration_12.md) | 2026-07-05 | **2.76** | **YES** | Multi-horizon 5d/10d evolution; new best. |
 
 ## Key Entities
 

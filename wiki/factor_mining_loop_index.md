@@ -46,6 +46,9 @@ continuous factor-mining loop.
 - [Iteration 11](factor_mining_loop_iteration_11.md) — Validation iteration:
   stress-tested the promoted live library at 20 bps transaction cost. Test
   Sharpe 2.70, cost-adj 23.17%; passed.
+- [Iteration 12](factor_mining_loop_iteration_12.md) — Multi-horizon evolution
+  (5d + 10d forward returns). Promoted 10-factor ensemble with test Sharpe
+  **2.76** and cost-adj **32.47%**.
 
 ## Audits
 

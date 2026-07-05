@@ -4,6 +4,14 @@ Chronological record of wiki updates, loop runs, and key decisions.
 
 ---
 
+## [2026-07-05] loop run | Iteration 12
+
+- Multi-horizon evolution: parallel 5d and 10d forward-return runs.
+- Merged 46 unique expressions, cleaned to 21, selected 10 with greedy corr filter.
+- Promoted new live library.
+- Train Sharpe: 1.3620, test Sharpe: 2.7629, cost-adj: 32.47%.
+- Added `wiki/factor_mining_loop_iteration_12.md`.
+
 ## [2026-07-05] loop run | Iteration 11 (validation)
 
 - Stress-tested current live library at 20 bps transaction cost.
