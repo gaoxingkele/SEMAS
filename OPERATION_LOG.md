@@ -11937,6 +11937,27 @@ The lead over the second candidate is only `0.0025`, so the system marks the dec
 
 All selected checks passed.
 
+## 2026-07-06 - Lin Fan Child Chart Run
+
+### Input
+
+- Name: 林凡之子
+- Gender: male
+- Birth: 2010-06-18 19:30
+- Place: 厦门市思明区, 福建省, 中国
+- Annual range: 2010-2040
+- Monthly range: 2026-2028
+
+### Output Files
+
+- `examples/mingli_5agents/reports/lin_fan_child_2010_input.json`
+- `examples/mingli_5agents/reports/lin_fan_child_2010_report.json`
+- `examples/mingli_5agents/reports/lin_fan_child_2010_report.md`
+
+### Notes
+
+The first run used a PowerShell here-string with raw Chinese text and the shell converted Chinese fields to question marks before Python received them. The chart was rerun with Unicode escapes so the generated JSON and Markdown preserve the Chinese name and birthplace.
+
 ---
 
 ## 2026-07-04 - Smart_SkillandAgent First GitHub Imports
@@ -13139,3 +13160,78 @@ loop-reported metrics.
 - Consider whether to continue iterating or freeze this library as the current
   production candidate.
 - Push the updated wiki and logs to GitHub.
+
+---
+
+## 2026-07-05 (continued) — Live-Library Audit After Iteration 10
+
+### Motivation
+
+Before running iteration 11, audit the 12-factor live library promoted in
+iteration 10 for coverage and sector neutrality on real Tushare data.
+
+### Actions Taken
+
+1. Loaded train/val/test CSI300 data via Tushare Pro.
+2. Evaluated each of the 12 factor expressions.
+3. Computed per-factor daily coverage, combined-signal coverage, top-decile
+   long turnover, and pre-neutralization sector spread.
+4. Wrote `wiki/factor_mining_loop_audit_iter10.md` and updated the wiki index
+   and log.
+5. Updated `china_a_share_alpha_output/factor_mining_loop/STATE.md`.
+
+### Files Changed
+
+- `wiki/factor_mining_loop_audit_iter10.md` (new)
+- `china_a_share_alpha_output/factor_mining_loop/live_library_audit_iter10.md` (new)
+- `china_a_share_alpha_output/factor_mining_loop/live_library_audit_iter10.json` (new)
+- `wiki/factor_mining_loop_index.md`
+- `wiki/index.md`
+- `wiki/log.md`
+- `china_a_share_alpha_output/factor_mining_loop/STATE.md`
+- `OPERATION_LOG.md` — this entry
+
+### Audit Results
+
+| Metric | Value |
+|---|---|
+| Factors | 12 |
+| Combined mean daily coverage | 1.000 |
+| Combined min daily coverage | 1.000 |
+| Mean pre-neutralization sector spread | 0.296 |
+| Max pre-neutralization sector spread | 0.584 |
+| Days with sector spread > 0.5 | 9 |
+| Estimated top-decile long turnover | 0.5552 |
+
+### Coverage Findings
+
+- 11 of 12 factors have mean daily coverage ≥ 0.90.
+- `factor_27` has mean coverage 0.737 and min coverage 0.000.
+- Several fundamental-based factors have min coverage 0.000 on certain dates,
+  but the combined signal never drops below 1.000 because other factors fill
+  gaps.
+
+### Sector-Neutrality Findings
+
+- Pre-neutralization sector spread is moderate; only 9 out of ~720 days exceed
+  0.5.
+- The combination script sector-neutralizes the signal, but the raw ensemble is
+  not fully sector-agnostic.
+- Sector labels are synthetic (deterministic per symbol), so neutralization is
+  an approximation of real industry risk.
+
+### Risks Identified
+
+1. Fundamental data gaps on individual factors.
+2. High top-decile long turnover (0.56) compared with the loop's full-weight
+   turnover (~0.07 bps).
+3. Synthetic sector labels add model risk.
+
+### Next Steps
+
+- Spawn a Codex-style audit to plan iteration 11 based on these findings.
+- Candidate iteration-11 strategies:
+  - Continue with current config and live seed.
+  - Add an individual-factor coverage gate (min_daily_coverage ≥ 0.90) before
+    promotion.
+  - Run a transaction-cost stress test at 20 bps.

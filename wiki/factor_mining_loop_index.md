@@ -44,6 +44,11 @@ continuous factor-mining loop.
   ensemble with test Sharpe **2.70** and cost-adj **31.46%**; independently
   verified on Tushare data.
 
+## Audits
+
+- [Iteration 10 live-library audit](factor_mining_loop_audit_iter10.md) —
+  Coverage and sector-neutrality analysis of the promoted 12-factor ensemble.
+
 ## Design & Infrastructure
 
 - [Project LOOP.md](../LOOP.md) — Loop design, stages, triggers, safety gates.

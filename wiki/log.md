@@ -4,6 +4,14 @@ Chronological record of wiki updates, loop runs, and key decisions.
 
 ---
 
+## [2026-07-05] audit | Iteration 10 live-library audit
+
+- Audited the promoted 12-factor live library on real Tushare data.
+- Combined coverage: 1.00; most factors have mean coverage > 0.90.
+- Pre-neutralization sector spread > 0.5 on only 9 days.
+- Top-decile long turnover estimate: 0.56.
+- Added `wiki/factor_mining_loop_audit_iter10.md`.
+
 ## [2026-07-05] loop run | Iteration 10
 
 - Seed 1010, pop 50, gen 12, live seed.
