@@ -156,6 +156,17 @@ def semantic_deduplicate(
         return 0
 
     mat = pd.concat(frames, axis=1).dropna()
+
+    # Drop degenerate columns (constant or zero variance) before correlation checks.
+    valid_cols = []
+    for col in mat.columns:
+        std = mat[col].std()
+        if pd.isna(std) or std < 1e-12:
+            print(f"  [dedup] dropping {col}: constant/degenerate series")
+        else:
+            valid_cols.append(col)
+    mat = mat[valid_cols]
+
     kept_rows = []
     kept_cols = []
     for _, row in df.iterrows():
@@ -163,7 +174,10 @@ def semantic_deduplicate(
         if col not in mat.columns:
             continue
         if kept_cols:
-            corr_max = mat[kept_cols].corrwith(mat[col], method="spearman").abs().max()
+            corr_values = mat[kept_cols].corrwith(mat[col], method="spearman").abs()
+            corr_max = corr_values.max() if not corr_values.empty else 0.0
+            if pd.isna(corr_max):
+                corr_max = 0.0
         else:
             corr_max = 0.0
         if corr_max < corr_threshold:
