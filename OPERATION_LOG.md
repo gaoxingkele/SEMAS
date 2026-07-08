@@ -14480,3 +14480,46 @@ affecting the local SEMAS project.
 - `wiki/think/index.md`
 - `wiki/think/log.md`
 - `OPERATION_LOG.md` — this entry
+." \"$a
+## 2026-07-07 — Pushed Entire SEMAS Project to Remote
+
+### Summary
+
+Committed and pushed all recent changes to the SEMAS remote repository.
+
+- Commit: `2ac47d4`
+- Remote: `https://github.com/gaoxingkele/SEMAS.git`
+- Branch: `main`
+- Files changed: 91
+- Insertions: ~8061 lines
+
+### What was included
+
+- Core code changes (`tushare_loader.py`, factor DSL, mutators, loop runner).
+- New scripts for horizon audit, final audit, regime combination, LLM/anti-corr
+  search, latest picks, and factor export.
+- Iteration configs for 5d/10d/20d horizons and cost-aware evolution.
+- Wiki updates including new `wiki/think/` thinking-process wiki.
+- `AGENTS.md` updated with automatic thinking/paper extraction rules.
+- Force-added key artifacts:
+  - `china_a_share_alpha_output/factor_mining_loop/live_library.csv`
+  - `china_a_share_alpha_output/factor_mining_loop/live_library_20d.csv`
+  - `china_a_share_alpha_output/factor_mining_loop/state.json`
+  - `china_a_share_alpha_output/factor_mining_loop/STATE.md`
+
+### What was excluded
+
+Per `.gitignore`:
+
+- Virtual environments (`.venv_py311/`, `.qlib_py311/`).
+- Editor metadata (`.kimi/`, `.kimi-code/`, `.vscode/`, `.idea/`).
+- External/standalone subprojects (`external/`, `Smart_SkillandAgent/`, `tools/`).
+- Generated outputs under `china_a_share_alpha_output/` (except the four key
+  artifacts force-added above).
+- Generated case-study outputs
+  (`examples/mingli_5agents/case_studies/**/outputs/`).
+
+### Push note
+
+Initial push returned HTTP 408 due to large pack size. Resolved by increasing
+`http.postBuffer` to 500 MB and retrying.
