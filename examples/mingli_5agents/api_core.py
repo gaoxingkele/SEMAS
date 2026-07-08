@@ -7496,6 +7496,7 @@ def schema_document() -> dict[str, Any]:
                     "new_school_simplified_analysis",
                     "data_validation_analysis",
                     "school_debate",
+                    "layered_strategy",
                 ],
                 "properties": {
                     "provider": {"type": ["string", "null"]},
@@ -7525,6 +7526,7 @@ def schema_document() -> dict[str, Any]:
                     "new_school_simplified_analysis": {"type": "object"},
                     "data_validation_analysis": {"type": "object"},
                     "school_debate": {"type": "object"},
+                    "layered_strategy": {"type": "object"},
                     "method_matrix": {
                         "type": "array",
                         "items": {"$ref": "#/schemas/BaziMethodMatrixItem"},

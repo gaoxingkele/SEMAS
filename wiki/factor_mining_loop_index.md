@@ -1,5 +1,5 @@
 ---
-date: 2026-07-04
+date: 2026-07-07
 tags: [factor-mining-loop, index]
 related: [index.md, log.md]
 ---
@@ -51,11 +51,36 @@ continuous factor-mining loop.
   **2.76** and cost-adj **32.47%**.
 - [Iteration 13](factor_mining_loop_iteration_13.md) — Cross-market transfer
   (CSI500/CSI1000 → CSI300). Did not improve; retained iteration 12 library.
+- [Iteration 14](factor_mining_loop_iteration_14.md) — Added high-order
+  time-series operators (`ts_skew`, `ts_kurt`, `ts_autocorr`, `ts_entropy`).
+  Did not improve; retained iteration 12 library.
+- [Iteration 15](factor_mining_loop_iteration_15.md) — Added money-flow
+  buy/sell amount fields and seed library. Did not improve; retained iteration
+  12 library.
+- [Iteration 16](factor_mining_loop_iteration_16.md) — Compared ensemble
+  weight methods (equal, IC, Sharpe, risk-parity, ridge). Equal weight remained
+  best.
+- [Iteration 17](factor_mining_loop_iteration_17.md) — Added volatility-regime
+  switching combination. Did not improve; retained iteration 12 library.
+- [Iteration 18](factor_mining_loop_iteration_18.md) — LLM critic guided factor
+  generation. Did not improve; retained iteration 12 library.
+- [Iteration 19](factor_mining_loop_iteration_19.md) — Anti-correlation factor
+  search. Did not improve; retained iteration 12 library.
+- [Iteration 20](factor_mining_loop_iteration_20.md) — Cost-aware evolution at
+  20 bps. Did not improve; retained iteration 12 library.
+- [Iteration 21](factor_mining_loop_iteration_21.md) — Final production audit
+  of the iteration-12 live library.
+- [Iteration 22](factor_mining_loop_iteration_22.md) — 20-day forward horizon
+  evolution. Promoted `live_library_20d.csv` with 20d hold Sharpe **1.98** and
+  cost-adj **60.78%**.
 
 ## Audits
 
 - [Iteration 10 live-library audit](factor_mining_loop_audit_iter10.md) —
   Coverage and sector-neutrality analysis of the promoted 12-factor ensemble.
+- [Iteration 21 final audit](factor_mining_loop_iteration_21.md) —
+  Cost robustness, per-year performance, coverage, and sector neutrality of the
+  final live library.
 
 ## Design & Infrastructure
 

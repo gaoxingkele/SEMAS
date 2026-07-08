@@ -4,6 +4,94 @@ Chronological record of wiki updates, loop runs, and key decisions.
 
 ---
 
+## [2026-07-07] loop run | Iteration 22
+
+- Added configurable `forward_period` to Tushare loader.
+- Ran 5 iterations of 20d forward evolution.
+- Iteration 3 promoted to `live_library_20d.csv`.
+- 20d hold Sharpe: 1.98, cost-adj: 60.78%.
+- Added `wiki/factor_mining_loop_iteration_22.md`.
+
+## [2026-07-06] multi-horizon audit
+
+- Ran 5d / 10d / 20d horizon audit on the live library.
+- Ensemble test IC improved with horizon: 0.038 → 0.045 → 0.053.
+- Realistic hold backtest Sharpe: 1.79 (5d), 1.58 (10d), 1.63 (20d).
+- Added `wiki/factor_mining_loop_multihizon_audit.md`.
+
+## [2026-07-06] loop run | Iteration 21 (final audit)
+
+- Ran final production audit on the iteration-12 live library.
+- Cost robustness confirmed at 10/20/30 bps.
+- Per-year test Sharpe: 2.13 (2024), 2.83 (2025), 3.75 (2026).
+- Sector neutrality and coverage confirmed.
+- Added `wiki/factor_mining_loop_iteration_21.md`.
+
+## [2026-07-06] loop run | Iteration 20
+
+- Ran cost-aware evolution with 20 bps transaction cost.
+- Seeded with iteration-12 live library.
+- Merged 28 expressions, cleaned to 13, deduped to 12.
+- Did not promote; live library retained.
+- Test Sharpe: 2.2126, cost-adj: 25.76%.
+- Added `wiki/factor_mining_loop_iteration_20.md`.
+
+## [2026-07-06] loop run | Iteration 19
+
+- Added anti-correlation factor search.
+- Generated 50 candidates scored by IC minus correlation penalty.
+- Top 10 merged with live library produced high turnover and poor train Sharpe.
+- Did not promote.
+- Test Sharpe: 1.1437, cost-adj: 10.19%.
+- Added `wiki/factor_mining_loop_iteration_19.md`.
+
+## [2026-07-06] loop run | Iteration 18
+
+- Updated LLM mutator prompt with full DSL and money-flow variables.
+- Generated 20 LLM-proposed factors seeded from the live library.
+- Merged with live library and combined; failed hard gates.
+- Did not promote.
+- Test Sharpe: 2.3081, cost-adj: 22.61%.
+- Added `wiki/factor_mining_loop_iteration_18.md`.
+
+## [2026-07-06] loop run | Iteration 17
+
+- Added `run_regime_combination.py` for volatility-regime switching.
+- Tested high/low volatility factor selection on the live library.
+- Did not improve over equal weight.
+- Test Sharpe: 2.7629, cost-adj: 32.47%.
+- Added `wiki/factor_mining_loop_iteration_17.md`.
+
+## [2026-07-06] loop run | Iteration 16
+
+- Compared five ensemble weight methods on the live library.
+- Equal weight and risk parity tied for best; ridge overfit badly.
+- Did not promote; equal-weight iteration-12 library retained.
+- Test Sharpe: 2.7629, cost-adj: 32.47%.
+- Added `wiki/factor_mining_loop_iteration_16.md`.
+
+## [2026-07-06] loop run | Iteration 15
+
+- Added money-flow buy/sell amount fields to the Tushare loader.
+- Added `extra_seed_libraries` support to the loop runner.
+- Seeded evolution with iteration-12 live library + 8 money-flow expressions
+  (seed 1030).
+- Merged 25 expressions, cleaned to 15, deduped to 15.
+- Did not promote; current library retained.
+- Test Sharpe: 2.0207, cost-adj: 16.99%.
+- Added `wiki/factor_mining_loop_iteration_15.md`.
+
+## [2026-07-06] loop run | Iteration 14
+
+- Added high-order time-series operators: `ts_skew`, `ts_kurt`, `ts_autocorr`,
+  `ts_entropy`.
+- Seeded evolution with iteration-12 live library (forward_period=5, pop 30,
+  gen 8, seed 1028).
+- Merged 26 expressions, cleaned to 15, deduped to 12.
+- Did not promote; current library retained.
+- Test Sharpe: 2.4074, cost-adj: 28.48%.
+- Added `wiki/factor_mining_loop_iteration_14.md`.
+
 ## [2026-07-05] loop run | Iteration 13
 
 - Cross-market transfer: evolved on CSI500 and CSI1000, evaluated on CSI300.

@@ -14,6 +14,7 @@ from examples.mingli_5agents.tools.calendar_core import (
     ganzhi,
     normalize_ganzhi_label,
 )
+from examples.mingli_5agents.tools.bazi_layered_strategy import build_bazi_layered_strategy
 from examples.mingli_5agents.tools.bazi_school_debate import build_bazi_school_debate
 
 
@@ -167,6 +168,7 @@ def ensure_bazi_method_layers(deep: dict[str, Any], context: dict[str, Any]) -> 
     ]
     enriched["method_matrix"] = _merged_method_matrix(enriched.get("method_matrix"), defaults)
     enriched.setdefault("school_debate", build_bazi_school_debate(enriched, context))
+    enriched.setdefault("layered_strategy", build_bazi_layered_strategy(enriched, context))
     return enriched
 
 

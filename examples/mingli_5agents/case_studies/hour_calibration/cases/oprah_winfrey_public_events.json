@@ -1,0 +1,61 @@
+{
+  "case_id": "oprah_winfrey_public_events",
+  "name": "Oprah Winfrey",
+  "gender": "female",
+  "birth_date": "1954-01-29",
+  "birthplace": "Kosciusko, Mississippi, United States",
+  "birth_time_policy": "unknown_hour_generate_12_candidates",
+  "source_policy": "Birth time reference is kept separate from event-fit scoring.",
+  "public_reference_hours": [
+    {
+      "label": "寅时",
+      "hour_window": "03:00-04:59",
+      "reference_time": "04:30",
+      "source": "https://www.astro.com/adbvip/adbvip_01_29.htm"
+    }
+  ],
+  "events": [
+    {
+      "year": 1976,
+      "type": "career_launch",
+      "label": "Moved into television news work in Baltimore.",
+      "weight": 0.8,
+      "source": "https://en.wikipedia.org/wiki/Oprah_Winfrey"
+    },
+    {
+      "year": 1984,
+      "type": "career_reinvention",
+      "label": "Moved to Chicago and began hosting AM Chicago.",
+      "weight": 1.1,
+      "source": "https://en.wikipedia.org/wiki/Oprah_Winfrey"
+    },
+    {
+      "year": 1986,
+      "type": "public_visibility",
+      "label": "The Oprah Winfrey Show launched nationally.",
+      "weight": 1.3,
+      "source": "https://en.wikipedia.org/wiki/The_Oprah_Winfrey_Show"
+    },
+    {
+      "year": 1998,
+      "type": "award_peak",
+      "label": "Received a Lifetime Achievement Award from the Daytime Emmys.",
+      "weight": 1.0,
+      "source": "https://en.wikipedia.org/wiki/Oprah_Winfrey"
+    },
+    {
+      "year": 2003,
+      "type": "business_power",
+      "label": "Recognized as a billionaire by Forbes.",
+      "weight": 1.1,
+      "source": "https://en.wikipedia.org/wiki/Oprah_Winfrey"
+    },
+    {
+      "year": 2011,
+      "type": "career_reinvention",
+      "label": "Launched OWN and ended the long-running daily talk show.",
+      "weight": 1.2,
+      "source": "https://en.wikipedia.org/wiki/Oprah_Winfrey_Network"
+    }
+  ]
+}

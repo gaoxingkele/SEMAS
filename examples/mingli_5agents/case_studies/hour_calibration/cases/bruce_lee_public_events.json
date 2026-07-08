@@ -1,0 +1,68 @@
+{
+  "case_id": "bruce_lee_public_events",
+  "name": "Bruce Lee",
+  "gender": "male",
+  "birth_date": "1940-11-27",
+  "birthplace": "San Francisco, California, United States",
+  "birth_time_policy": "unknown_hour_generate_12_candidates",
+  "source_policy": "Birth time reference is kept separate from event-fit scoring.",
+  "public_reference_hours": [
+    {
+      "label": "辰时",
+      "hour_window": "07:00-08:59",
+      "reference_time": "07:12",
+      "source": "https://astro-charts.com/persons/chart/bruce-lee/"
+    }
+  ],
+  "events": [
+    {
+      "year": 1959,
+      "type": "movement",
+      "label": "Moved to Seattle and entered a new education and career environment.",
+      "weight": 0.9,
+      "source": "https://en.wikipedia.org/wiki/Bruce_Lee"
+    },
+    {
+      "year": 1961,
+      "type": "study_exam",
+      "label": "Enrolled at the University of Washington.",
+      "weight": 0.8,
+      "source": "https://en.wikipedia.org/wiki/Bruce_Lee"
+    },
+    {
+      "year": 1964,
+      "type": "public_visibility",
+      "label": "Long Beach demonstration brought public attention in American martial arts circles.",
+      "weight": 1.0,
+      "source": "https://en.wikipedia.org/wiki/Bruce_Lee"
+    },
+    {
+      "year": 1966,
+      "type": "career_launch",
+      "label": "Played Kato in The Green Hornet, a major television breakthrough.",
+      "weight": 1.1,
+      "source": "https://en.wikipedia.org/wiki/Bruce_Lee"
+    },
+    {
+      "year": 1971,
+      "type": "public_visibility",
+      "label": "Hong Kong film breakthrough period with The Big Boss and Longstreet exposure.",
+      "weight": 1.2,
+      "source": "https://en.wikipedia.org/wiki/Bruce_Lee"
+    },
+    {
+      "year": 1972,
+      "type": "public_visibility",
+      "label": "Fist of Fury and The Way of the Dragon expanded his star status.",
+      "weight": 1.2,
+      "source": "https://en.wikipedia.org/wiki/Bruce_Lee"
+    },
+    {
+      "year": 1973,
+      "type": "death",
+      "label": "Died shortly before Enter the Dragon release.",
+      "weight": 1.7,
+      "source": "https://en.wikipedia.org/wiki/Bruce_Lee"
+    }
+  ]
+}

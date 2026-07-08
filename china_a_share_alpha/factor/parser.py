@@ -15,7 +15,7 @@ Supported functions:
 - Rolling (time-series): ts_mean, ts_std, ts_sum, ts_min, ts_max, ts_delta, ts_delay, ts_shift, ts_ema, ts_pct_change, ts_zscore, ts_rank, ts_argmax, ts_argmin
 - Rolling binary: ts_corr, ts_cov
 
-Variables: open, high, low, close, volume, vwap, return, turnover_rate, pb, total_mv, circ_mv, roe, roe_dt, netprofit_yoy, dt_netprofit_yoy, grossprofit_margin, debt_to_assets, ocfps, eps, net_elg_amount, net_mf_amount, hk_vol, hk_ratio
+Variables: open, high, low, close, volume, vwap, return, turnover_rate, pb, total_mv, circ_mv, roe, roe_dt, netprofit_yoy, dt_netprofit_yoy, grossprofit_margin, debt_to_assets, ocfps, eps, net_elg_amount, net_mf_amount, buy_elg_amount, sell_elg_amount, buy_lg_amount, sell_lg_amount, buy_md_amount, sell_md_amount, buy_sm_amount, sell_sm_amount, hk_vol, hk_ratio
 """
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ from china_a_share_alpha.factor.expression import (
 UNARY_FUNCS = {"abs", "log", "sign", "neg", "cs_rank", "cs_zscore", "signed_power", "winsorize"}
 BINARY_FUNCS = {"add", "sub", "mul", "div", "greater", "less", "if_positive"}
 TERNARY_FUNCS = {"if_else"}
-ROLLING_FUNCS = {"ts_mean", "ts_std", "ts_sum", "ts_min", "ts_max", "ts_delta", "ts_delay", "ts_shift", "ts_ema", "ts_pct_change", "ts_zscore", "ts_rank", "ts_argmax", "ts_argmin"}
+ROLLING_FUNCS = {"ts_mean", "ts_std", "ts_sum", "ts_min", "ts_max", "ts_delta", "ts_delay", "ts_shift", "ts_ema", "ts_pct_change", "ts_zscore", "ts_rank", "ts_skew", "ts_kurt", "ts_autocorr", "ts_entropy", "ts_argmax", "ts_argmin"}
 ROLLING_BINARY_FUNCS = {"ts_corr", "ts_cov"}
 ALL_FUNCS = UNARY_FUNCS | BINARY_FUNCS | TERNARY_FUNCS | ROLLING_FUNCS | ROLLING_BINARY_FUNCS
 

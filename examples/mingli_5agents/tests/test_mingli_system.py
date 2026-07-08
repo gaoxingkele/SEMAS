@@ -32,6 +32,8 @@ from examples.mingli_5agents.run_demo import (
     demo_task,
     population_training_tasks,
 )
+from examples.mingli_5agents.case_studies.hour_calibration.hour_calibration import calibrate_case
+from examples.mingli_5agents.tools.bazi_school_ahp import extended_bazi_method_catalog
 
 
 def test_bootstrap_loads_five_agents(tmp_path: Path):
@@ -217,6 +219,17 @@ def test_five_agent_executor_returns_required_artifacts(tmp_path: Path):
     assert result["final_report"]["bazi_profile"]["image_symbol_analysis"]
     assert result["final_report"]["bazi_profile"]["new_school_simplified_analysis"]
     assert result["final_report"]["bazi_profile"]["data_validation_analysis"]
+    layered_strategy = result["final_report"]["bazi_profile"]["layered_strategy"]
+    assert layered_strategy["schema_version"] == "bazi-layered-strategy-v1"
+    assert {item["id"] for item in layered_strategy["layers"]} == {
+        "pattern_vote",
+        "tiaohou_vote",
+        "disease_medicine_vote",
+        "tiyong_flow_vote",
+        "palace_event_vote",
+        "fact_calibration_vote",
+    }
+    assert layered_strategy["primary_strategy"]["minimum_report_requirements"]
     school_debate = result["final_report"]["bazi_profile"]["school_debate"]
     assert school_debate["schema_version"] == "bazi-school-debate-v1"
     assert len(school_debate["sha256"]) == 64
@@ -818,6 +831,100 @@ def test_status_detects_current_genome_content_mismatch(tmp_path: Path):
     assert result["lineage_integrity"]["archive_hash_matches_latest"] is True
     assert result["lineage_integrity"]["genome_fingerprint_matches"] is False
     assert any("genome_fingerprint" in failure for failure in result["lineage_integrity"]["failures"])
+
+
+def test_hour_calibration_exposes_layered_strategy_scores():
+    result = calibrate_case(
+        {
+            "case_id": "layered_strategy_test",
+            "name": "Layered Strategy Test",
+            "gender": "male",
+            "birth_date": "1893-12-26",
+            "birthplace": "湖南省韶山市",
+            "events": [
+                {
+                    "year": 1934,
+                    "type": "movement",
+                    "label": "forced relocation and strategic turn",
+                    "weight": 1.0,
+                    "source": "test-fixture",
+                },
+                {
+                    "year": 1949,
+                    "type": "role_power",
+                    "label": "authority peak",
+                    "weight": 1.0,
+                    "source": "test-fixture",
+                },
+            ],
+        }
+    )
+
+    winner_score = result["winner"]["score"]
+    assert winner_score["strategy_total"] == winner_score["total"]
+    assert 0 <= winner_score["event_fit_total"] <= 1
+    assert 0 <= winner_score["layered_event_total"] <= 1
+    assert 0 <= winner_score["chart_strategy_total"] <= 1
+    assert 0 <= winner_score["hengmen_ahp_total"] <= 1
+    assert 0 <= winner_score["ziwei_side_total"] <= 1
+    assert 0 <= winner_score["astrology_side_total"] <= 1
+    assert winner_score["method_weights"]["hengmen_ahp"] == 0.3
+    assert winner_score["method_weights"]["ziwei_side_validation"] == 0.05
+    assert winner_score["method_weights"]["astrology_side_validation"] == 0.05
+    assert result["winner"]["hengmen_chart_strategy"]["schema_version"] == "hengmen-ahp-v1"
+    first_event = result["winner"]["event_scores"][0]
+    assert first_event["layered_score"] >= 0
+    assert first_event["hengmen_score"] >= 0
+    assert first_event["ziwei_score"] >= 0
+    assert first_event["astrology_score"] >= 0
+    assert set(result["winner"]["bazi_school_ahp_totals"]) == {
+        "yuanhai_ziping",
+        "ziping_zhenquan",
+        "sanming_tonghui",
+        "ditiansui",
+        "qiongtong_baojian",
+        "shenfeng_tongkao",
+        "hengmen",
+    }
+    assert "bazi_school_ahp" in first_event
+    assert set(first_event["bazi_school_ahp"]) == set(result["winner"]["bazi_school_ahp_totals"])
+    assert {item["id"] for item in first_event["hengmen_ahp"]["votes"]} == {
+        "month_pattern",
+        "stem_root",
+        "success_rescue",
+        "event_ten_god",
+        "palace_trigger",
+        "luck_support",
+        "annual_interaction",
+        "fact_calibration",
+    }
+    assert {item["id"] for item in first_event["layered_votes"]} == {
+        "pattern_vote",
+        "tiaohou_vote",
+        "disease_medicine_vote",
+        "tiyong_flow_vote",
+        "palace_event_vote",
+        "fact_calibration_vote",
+    }
+
+
+def test_extended_bazi_method_catalog_contains_second_batch_schools():
+    catalog = extended_bazi_method_catalog()
+
+    assert set(catalog) == {
+        "early_luming_nayin",
+        "shensha",
+        "blind_symbol",
+        "palace_kinship",
+        "branch_relation",
+        "strength_support",
+        "follow_special",
+        "transformation_qi",
+        "luck_timing",
+        "modern_quant",
+    }
+    assert all(item["weights"] for item in catalog.values())
+    assert all(item["sources"] for item in catalog.values())
 
 
 def test_version_history_integrity_detects_historical_tampering(tmp_path: Path):

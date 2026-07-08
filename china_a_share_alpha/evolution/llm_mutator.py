@@ -30,13 +30,15 @@ class LLMFactorMutator(Mutator):
 Generate a factor expression using ONLY the following DSL.
 
 Functions:
-- Unary: abs(x), log(x), sign(x), neg(x), cs_rank(x), cs_zscore(x)
-- Binary: add(x,y), sub(x,y), mul(x,y), div(x,y), greater(x,y), less(x,y)
-- Time-series: ts_mean(x,n), ts_std(x,n), ts_sum(x,n), ts_min(x,n), ts_max(x,n), ts_delta(x,n), ts_delay(x,n)
+- Unary: abs(x), log(x), sign(x), neg(x), cs_rank(x), cs_zscore(x), signed_power(x), winsorize(x)
+- Binary: add(x,y), sub(x,y), mul(x,y), div(x,y), greater(x,y), less(x,y), if_positive(x,y)
+- Ternary: if_else(p,x,y)
+- Time-series: ts_mean(x,n), ts_std(x,n), ts_sum(x,n), ts_min(x,n), ts_max(x,n), ts_delta(x,n), ts_delay(x,n), ts_shift(x,n), ts_ema(x,n), ts_pct_change(x,n), ts_zscore(x,n), ts_rank(x,n), ts_skew(x,n), ts_kurt(x,n), ts_autocorr(x,n), ts_entropy(x,n), ts_argmax(x,n), ts_argmin(x,n)
 - Cross-series: ts_corr(x,y,n), ts_cov(x,y,n)
 
-Variables: open, high, low, close, volume, vwap, return
+Variables: open, high, low, close, volume, vwap, return, turnover_rate, pb, total_mv, circ_mv, roe, roe_dt, netprofit_yoy, dt_netprofit_yoy, grossprofit_margin, debt_to_assets, ocfps, eps, net_elg_amount, net_mf_amount, buy_elg_amount, sell_elg_amount, buy_lg_amount, sell_lg_amount, buy_md_amount, sell_md_amount, buy_sm_amount, sell_sm_amount, hk_vol, hk_ratio
 
+Window n should be one of 3, 5, 10, 20, 60.
 Respond with ONLY the expression, no explanation, no markdown.
 Example: neg(cs_rank(ts_mean(return, 5)))
 """

@@ -236,6 +236,19 @@ def run_loop_iteration(
         else None
     )
 
+    # Build the seed library by merging the live library with any extra seed
+    # libraries configured for this iteration (e.g., domain-specific priors).
+    seed_library_path = iteration_dir / "seed_library.csv"
+    extra_seed_paths = [
+        Path(p) for p in cfg.get("extra_seed_libraries", []) if Path(p).exists()
+    ]
+    seed_sources = []
+    if live_library_path and live_library_path.exists():
+        seed_sources.append(live_library_path)
+    seed_sources.extend(extra_seed_paths)
+    if seed_sources:
+        merge_libraries(seed_sources, seed_library_path)
+
     # ---- 1. EVOLVE ----
     seed = cfg.get("seed_base", 42) + iteration
     seed_output = iteration_dir / "evolution"
@@ -254,8 +267,8 @@ def run_loop_iteration(
         "--seed",
         str(seed),
     ]
-    if live_library_path and live_library_path.exists() and not dry_run:
-        evolve_cmd += ["--seed-library", str(live_library_path)]
+    if seed_library_path.exists() and not dry_run:
+        evolve_cmd += ["--seed-library", str(seed_library_path)]
 
     print(f"[iter {iteration}] Running evolution seed={seed} ...")
     if not dry_run:

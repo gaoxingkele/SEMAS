@@ -1,0 +1,68 @@
+{
+  "case_id": "marilyn_monroe_public_events",
+  "name": "Marilyn Monroe",
+  "gender": "female",
+  "birth_date": "1926-06-01",
+  "birthplace": "Los Angeles, California, United States",
+  "birth_time_policy": "unknown_hour_generate_12_candidates",
+  "source_policy": "Birth time reference is kept separate from event-fit scoring.",
+  "public_reference_hours": [
+    {
+      "label": "巳时",
+      "hour_window": "09:00-10:59",
+      "reference_time": "09:30",
+      "source": "https://astro-charts.com/persons/chart/marilyn-monroe/"
+    }
+  ],
+  "events": [
+    {
+      "year": 1945,
+      "type": "career_launch",
+      "label": "Modeling and entertainment career began.",
+      "weight": 0.8,
+      "source": "https://en.wikipedia.org/wiki/Marilyn_Monroe"
+    },
+    {
+      "year": 1952,
+      "type": "public_visibility",
+      "label": "Received major Hollywood attention and box-office personality recognition.",
+      "weight": 1.0,
+      "source": "https://time.com/3878578/golden-globes-marilyn-monroe-rare-photos-of-the-star-in-1952/"
+    },
+    {
+      "year": 1953,
+      "type": "public_visibility",
+      "label": "Major breakthrough year with Niagara, Gentlemen Prefer Blondes, and How to Marry a Millionaire.",
+      "weight": 1.5,
+      "source": "https://en.wikipedia.org/wiki/List_of_performances_and_awards_of_Marilyn_Monroe"
+    },
+    {
+      "year": 1954,
+      "type": "relationship",
+      "label": "Married Joe DiMaggio and became one of the most visible celebrities in America.",
+      "weight": 1.0,
+      "source": "https://en.wikipedia.org/wiki/Marilyn_Monroe"
+    },
+    {
+      "year": 1956,
+      "type": "relationship",
+      "label": "Married Arthur Miller and shifted career control through Marilyn Monroe Productions.",
+      "weight": 1.0,
+      "source": "https://en.wikipedia.org/wiki/Marilyn_Monroe"
+    },
+    {
+      "year": 1961,
+      "type": "health_pressure",
+      "label": "Divorce from Arthur Miller and psychiatric clinic episode marked a major personal low.",
+      "weight": 1.2,
+      "source": "https://www.americanheritage.com/marilyn-monroe-chronology"
+    },
+    {
+      "year": 1962,
+      "type": "death",
+      "label": "Died in Los Angeles.",
+      "weight": 1.7,
+      "source": "https://en.wikipedia.org/wiki/Marilyn_Monroe"
+    }
+  ]
+}

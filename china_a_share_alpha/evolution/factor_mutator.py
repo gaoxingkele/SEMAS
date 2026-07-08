@@ -30,9 +30,14 @@ VARIABLES = [
     "turnover_rate", "pb", "total_mv", "circ_mv",
     "roe", "roe_dt", "netprofit_yoy", "dt_netprofit_yoy",
     "grossprofit_margin", "debt_to_assets", "ocfps", "eps",
-    "net_elg_amount", "net_mf_amount", "hk_vol", "hk_ratio",
+    "net_elg_amount", "net_mf_amount",
+    "buy_elg_amount", "sell_elg_amount",
+    "buy_lg_amount", "sell_lg_amount",
+    "buy_md_amount", "sell_md_amount",
+    "buy_sm_amount", "sell_sm_amount",
+    "hk_vol", "hk_ratio",
 ]
-ROLLING_OPS = ["ts_mean", "ts_std", "ts_sum", "ts_min", "ts_max", "ts_delta", "ts_rank", "ts_argmax", "ts_argmin"]
+ROLLING_OPS = ["ts_mean", "ts_std", "ts_sum", "ts_min", "ts_max", "ts_delta", "ts_rank", "ts_skew", "ts_kurt", "ts_autocorr", "ts_entropy", "ts_argmax", "ts_argmin"]
 UNARY_OPS = ["abs", "log", "sign", "neg", "cs_rank", "cs_zscore"]
 BINARY_OPS = ["add", "sub", "mul", "div", "greater", "less", "if_positive"]
 TERNARY_OPS = ["if_else"]

@@ -1,0 +1,68 @@
+{
+  "case_id": "angelina_jolie_public_events",
+  "name": "Angelina Jolie",
+  "gender": "female",
+  "birth_date": "1975-06-04",
+  "birthplace": "Los Angeles, California, United States",
+  "birth_time_policy": "unknown_hour_generate_12_candidates",
+  "source_policy": "Birth time reference is kept separate from event-fit scoring.",
+  "public_reference_hours": [
+    {
+      "label": "巳时",
+      "hour_window": "09:00-10:59",
+      "reference_time": "09:09",
+      "source": "https://www.astro.com/astro-databank/Jolie%2C_Angelina"
+    }
+  ],
+  "events": [
+    {
+      "year": 1998,
+      "type": "career_launch",
+      "label": "Gia brought major critical attention.",
+      "weight": 0.9,
+      "source": "https://en.wikipedia.org/wiki/Angelina_Jolie"
+    },
+    {
+      "year": 1999,
+      "type": "award_peak",
+      "label": "Girl, Interrupted led to major awards recognition.",
+      "weight": 1.1,
+      "source": "https://en.wikipedia.org/wiki/Girl,_Interrupted_(film)"
+    },
+    {
+      "year": 2001,
+      "type": "iconic_role",
+      "label": "Lara Croft: Tomb Raider made her an international action star.",
+      "weight": 1.3,
+      "source": "https://en.wikipedia.org/wiki/Lara_Croft:_Tomb_Raider"
+    },
+    {
+      "year": 2005,
+      "type": "public_visibility",
+      "label": "Mr. & Mrs. Smith and public relationship attention greatly raised visibility.",
+      "weight": 1.2,
+      "source": "https://en.wikipedia.org/wiki/Mr._%26_Mrs._Smith_(2005_film)"
+    },
+    {
+      "year": 2013,
+      "type": "health_crisis",
+      "label": "Publicly disclosed preventive double mastectomy.",
+      "weight": 1.2,
+      "source": "https://en.wikipedia.org/wiki/Angelina_Jolie"
+    },
+    {
+      "year": 2014,
+      "type": "career_reinvention",
+      "label": "Directed Unbroken, strengthening her filmmaker identity.",
+      "weight": 0.9,
+      "source": "https://en.wikipedia.org/wiki/Unbroken_(film)"
+    },
+    {
+      "year": 2016,
+      "type": "relationship",
+      "label": "Filed for divorce from Brad Pitt.",
+      "weight": 1.1,
+      "source": "https://en.wikipedia.org/wiki/Angelina_Jolie"
+    }
+  ]
+}

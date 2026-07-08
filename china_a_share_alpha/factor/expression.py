@@ -62,6 +62,25 @@ def _winsorize(s: pd.Series, lower: float = 0.01, upper: float = 0.99) -> pd.Ser
     return s.clip(lower=q_low, upper=q_high)
 
 
+def _ts_entropy(s: np.ndarray) -> float:
+    """Shannon entropy (log2) of equal-width binned values in a rolling window.
+
+    Returns NaN when the window has fewer than 5 finite observations or is
+    effectively constant, preventing degenerate entropy signals.
+    """
+    s = s[np.isfinite(s)]
+    if s.size < 5 or np.ptp(s) < 1e-12:
+        return float(np.nan)
+    bins = np.linspace(np.nanmin(s), np.nanmax(s), 6)
+    counts, _ = np.histogram(s, bins=bins)
+    total = counts.sum()
+    if total == 0:
+        return float(np.nan)
+    probs = counts / total
+    probs = probs[probs > 0]
+    return float(-np.sum(probs * np.log2(probs)))
+
+
 @dataclass
 class UnaryOp(FactorExpr):
     op: str  # abs, log, sign, neg, cs_rank, cs_zscore, signed_power, winsorize
@@ -178,6 +197,17 @@ class RollingOp(FactorExpr):
                 return (group - ma) / (std + 1e-8)
             if self.op == "ts_rank":
                 return group.rolling(self.window, min_periods=1).rank(pct=True)
+            if self.op == "ts_skew":
+                return group.rolling(self.window, min_periods=self.window).skew()
+            if self.op == "ts_kurt":
+                return group.rolling(self.window, min_periods=self.window).kurt()
+            if self.op == "ts_autocorr":
+                shifted = group.shift(1)
+                return group.rolling(self.window, min_periods=self.window).corr(shifted)
+            if self.op == "ts_entropy":
+                return group.rolling(self.window, min_periods=self.window).apply(
+                    _ts_entropy, raw=True
+                )
             if self.op == "ts_argmax":
                 return group.rolling(self.window, min_periods=1).apply(
                     lambda s: float(s.argmax()) / max(1, len(s) - 1), raw=True

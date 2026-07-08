@@ -1,0 +1,68 @@
+{
+  "case_id": "michael_jackson_public_events",
+  "name": "Michael Jackson",
+  "gender": "male",
+  "birth_date": "1958-08-29",
+  "birthplace": "Gary, Indiana, United States",
+  "birth_time_policy": "unknown_hour_generate_12_candidates",
+  "source_policy": "Birth time reference is kept separate from event-fit scoring.",
+  "public_reference_hours": [
+    {
+      "label": "戌时",
+      "hour_window": "19:00-20:59",
+      "reference_time": "19:33",
+      "source": "https://www.astro.com/astro-databank/Jackson%2C_Michael_%281958%29"
+    }
+  ],
+  "events": [
+    {
+      "year": 1969,
+      "type": "career_launch",
+      "label": "The Jackson 5 released major Motown hits and entered national fame.",
+      "weight": 1.0,
+      "source": "https://en.wikipedia.org/wiki/The_Jackson_5"
+    },
+    {
+      "year": 1979,
+      "type": "career_reinvention",
+      "label": "Off the Wall established his adult solo career.",
+      "weight": 1.1,
+      "source": "https://en.wikipedia.org/wiki/Off_the_Wall"
+    },
+    {
+      "year": 1982,
+      "type": "box_office_breakthrough",
+      "label": "Thriller became a historic commercial breakthrough.",
+      "weight": 1.4,
+      "source": "https://en.wikipedia.org/wiki/Thriller_(album)"
+    },
+    {
+      "year": 1984,
+      "type": "award_peak",
+      "label": "Won a record number of Grammy Awards after Thriller.",
+      "weight": 1.2,
+      "source": "https://en.wikipedia.org/wiki/26th_Annual_Grammy_Awards"
+    },
+    {
+      "year": 1993,
+      "type": "public_scandal",
+      "label": "First major child sexual abuse allegation became a public crisis.",
+      "weight": 1.3,
+      "source": "https://en.wikipedia.org/wiki/1993_child_sexual_abuse_accusations_against_Michael_Jackson"
+    },
+    {
+      "year": 2005,
+      "type": "public_scandal",
+      "label": "Criminal trial and acquittal after a major public scandal.",
+      "weight": 1.2,
+      "source": "https://en.wikipedia.org/wiki/Trial_of_Michael_Jackson"
+    },
+    {
+      "year": 2009,
+      "type": "death",
+      "label": "Died in Los Angeles.",
+      "weight": 1.6,
+      "source": "https://en.wikipedia.org/wiki/Death_of_Michael_Jackson"
+    }
+  ]
+}

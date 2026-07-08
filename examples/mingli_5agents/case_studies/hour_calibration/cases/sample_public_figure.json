@@ -1,0 +1,38 @@
+{
+  "case_id": "sample_public_figure",
+  "name": "样例公众人物",
+  "gender": "男",
+  "birth_date": "1978-04-14",
+  "birthplace": "福建省三明市",
+  "birth_time_policy": "unknown_hour_generate_12_candidates",
+  "events": [
+    {
+      "year": 1996,
+      "type": "study_exam",
+      "label": "升学、考试或离家环境变化",
+      "weight": 1.0,
+      "source": "样例事件，非真实人物来源"
+    },
+    {
+      "year": 2005,
+      "type": "relationship",
+      "label": "关系、合作或居住环境出现明显变化",
+      "weight": 0.8,
+      "source": "样例事件，非真实人物来源"
+    },
+    {
+      "year": 2016,
+      "type": "business_power",
+      "label": "事业资源或财务机会明显增强",
+      "weight": 1.2,
+      "source": "样例事件，非真实人物来源"
+    },
+    {
+      "year": 2020,
+      "type": "movement",
+      "label": "外部冲击带来工作或生活节奏变化",
+      "weight": 1.0,
+      "source": "样例事件，非真实人物来源"
+    }
+  ]
+}

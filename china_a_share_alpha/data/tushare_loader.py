@@ -46,6 +46,14 @@ ENRICHED_COLUMNS = {
     "eps",
     "net_elg_amount",
     "net_mf_amount",
+    "buy_elg_amount",
+    "sell_elg_amount",
+    "buy_lg_amount",
+    "sell_lg_amount",
+    "buy_md_amount",
+    "sell_md_amount",
+    "buy_sm_amount",
+    "sell_sm_amount",
     "hk_vol",
     "hk_ratio",
 }
@@ -122,18 +130,28 @@ def _fetch_fina_indicator(pro, ts_code: str, start_date: str, end_date: str) -> 
 
 def _fetch_moneyflow(pro, ts_code: str, start_date: str, end_date: str) -> pd.DataFrame:
     """Fetch daily money-flow data and compute net elite / net mainforce amounts."""
+    cols = [
+        "ts_code", "trade_date",
+        "buy_elg_amount", "sell_elg_amount",
+        "buy_lg_amount", "sell_lg_amount",
+        "buy_md_amount", "sell_md_amount",
+        "buy_sm_amount", "sell_sm_amount",
+        "net_mf_amount",
+    ]
     try:
         df = pro.moneyflow(ts_code=ts_code, start_date=start_date, end_date=end_date)
     except Exception as exc:
         print(f"  moneyflow failed for {ts_code}: {exc}")
-        return pd.DataFrame(columns=["ts_code", "trade_date", "net_elg_amount", "net_mf_amount"])
+        return pd.DataFrame(columns=cols)
     if df is None or df.empty:
-        return pd.DataFrame(columns=["ts_code", "trade_date", "net_elg_amount", "net_mf_amount"])
-    df = df[["ts_code", "trade_date", "buy_elg_amount", "sell_elg_amount", "net_mf_amount"]].copy()
+        return pd.DataFrame(columns=cols)
+    available = [c for c in cols if c in df.columns]
+    df = df[available].copy()
     df["trade_date"] = pd.to_datetime(df["trade_date"], format="%Y%m%d", errors="coerce")
-    df["net_elg_amount"] = df["buy_elg_amount"] - df["sell_elg_amount"]
+    if "buy_elg_amount" in df.columns and "sell_elg_amount" in df.columns:
+        df["net_elg_amount"] = df["buy_elg_amount"] - df["sell_elg_amount"]
     df = df.sort_values("trade_date")
-    return df[["ts_code", "trade_date", "net_elg_amount", "net_mf_amount"]]
+    return df
 
 
 def _fetch_hk_hold(pro, ts_code: str, start_date: str, end_date: str) -> pd.DataFrame:
@@ -206,8 +224,9 @@ def _load_or_fetch(
     # Merge daily money flow.
     mf = _fetch_moneyflow(pro, ts_code, start_date, end_date)
     if not mf.empty:
+        mf_cols = [c for c in mf.columns if c not in ("ts_code", "trade_date")]
         price = price.merge(
-            mf[["ts_code", "trade_date", "net_elg_amount", "net_mf_amount"]],
+            mf[["ts_code", "trade_date"] + mf_cols],
             on=["ts_code", "trade_date"],
             how="left",
         )
@@ -242,6 +261,10 @@ def load_tushare_data(
         (train_df, test_df) with MultiIndex (symbol, date) and columns:
         open, high, low, close, volume, amount, turnover_rate, pb, total_mv,
         circ_mv, return, forward_return, sector.
+
+    ``forward_period`` (default 1) controls the horizon of ``forward_return``
+    as ``close.pct_change(forward_period).shift(-forward_period)``. Set it to
+    5, 10, 20, etc. to evolve factors for longer holding periods.
     """
     if config.get("tushare_token"):
         os.environ["TUSHARE_TOKEN"] = config["tushare_token"]
@@ -251,6 +274,7 @@ def load_tushare_data(
     end_date = config.get("end_date", "20260601")
     split_date = pd.Timestamp(config.get("split_date", "20240101"))
     cache_dir = Path(config.get("cache_dir", DEFAULT_CACHE_DIR))
+    forward_period = int(config.get("forward_period", 1))
 
     universe = config.get("universe", "csi300")
     if isinstance(universe, str) and universe.lower() in _INDEX_CODES:
@@ -284,9 +308,13 @@ def load_tushare_data(
     data = data.rename(columns={"ts_code": "symbol", "trade_date": "date", "vol": "volume"})
     data = data.set_index(["symbol", "date"]).sort_index()
 
-    # Compute daily return and forward return.
+    # Compute daily return and forward return over the configured horizon.
     data["return"] = data.groupby(level="symbol")["close"].pct_change()
-    data["forward_return"] = data.groupby(level="symbol")["return"].shift(-1)
+    data["forward_return"] = (
+        data.groupby(level="symbol")["close"]
+        .pct_change(forward_period)
+        .shift(-forward_period)
+    )
 
     # Add vwap proxy = amount / volume.
     data["vwap"] = data["amount"] / (data["volume"].replace(0, np.nan))

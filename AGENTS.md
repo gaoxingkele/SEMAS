@@ -50,6 +50,34 @@ The `wiki/` directory is a persistent, compounding knowledge base following
 This split keeps **doing** (logs/readme) separate from **thinking** (wiki),
 making the project portable and auditable.
 
+## Independent Thinking-Process Wiki (`wiki/think/`)
+
+In addition to operational `wiki/` run notes, maintain a separate
+thinking-process wiki at `wiki/think/`:
+
+- **Purpose**: chain-of-thought, methodology evolution, failed hypotheses,
+  absorbed paper/article ideas, and simulated research evolution.
+- **Schema**: same Karpathy-style atomic notes with YAML frontmatter
+  (`date`, `tags`, `sources`, `related`).
+- **Special files**:
+  - `wiki/think/index.md` — content catalog.
+  - `wiki/think/log.md` — chronological thinking log.
+  - `wiki/think/paper_ideas_queue.md` — papers/repos to ingest or already
+    ingested.
+  - `wiki/think/references.md` — BibTeX-like source list.
+
+### Automatic maintenance rules
+
+1. **After every significant interaction**, ask: *did this turn produce a
+   valuable insight, methodological change, or failed hypothesis?* If yes,
+   create/update an atomic note in `wiki/think/`, append one line to
+   `wiki/think/log.md`, and update `wiki/think/index.md`.
+2. **When downloading or searching papers/articles/repos**, extract the core
+   value (claim, method, relevance, caveats) and write it to a new
+   `wiki/think/papers/<short_name>.md`. Add a BibTeX entry to
+   `wiki/think/references.md` and update `wiki/think/paper_ideas_queue.md`.
+3. **Cite every external idea** with `[source: ...]` inside thinking notes.
+
 ## Source Citation Rule
 
 - Always cite external ideas with a stable identifier:

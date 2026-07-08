@@ -1396,6 +1396,7 @@ class MingliFiveAgentSystem:
             "data_validation_analysis": deep.get("data_validation_analysis", {}),
             "method_matrix": deep.get("method_matrix", []),
             "school_debate": deep.get("school_debate", {}),
+            "layered_strategy": deep.get("layered_strategy", {}),
             "luck_start": deep.get("luck_start", {}),
             "major_luck": deep.get("major_luck", []),
             "caution": deep.get("caution"),

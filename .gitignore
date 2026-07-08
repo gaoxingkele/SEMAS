@@ -27,3 +27,15 @@ test_alpha_output/
 .semas_portfolio_repo/
 .tmp_test_loop_repo/
 .tmp_test_portfolio_repo/
+
+# Virtual environments
+.venv_py311/
+.qlib_py311/
+
+# Editor / agent metadata
+.kimi/
+
+# External / standalone subprojects not part of core SEMAS
+external/
+Smart_SkillandAgent/
+tools/

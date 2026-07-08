@@ -1,0 +1,35 @@
+# Continuous factor-mining loop configuration — Iteration 22: 20-day forward horizon.
+
+evolution_config: "china_a_share_alpha/examples/factor_mining_loop_evolution_config_iter22_20d.yaml"
+data_config: "china_a_share_alpha/examples/enhanced_loop_config_iter22_20d_val.yaml"
+
+seed_base: 1022
+
+# Cleaning thresholds (loose enough for longer-horizon IC)
+min_train_ic: 0.001
+min_val_ic: 0.0
+min_val_sharpe: 0.0
+min_test_ic: 0.001
+min_test_sharpe: 0.0
+max_turnover: 0.6
+max_nan_frac: 0.5
+min_daily_coverage: 0.5
+
+# Semantic deduplication
+semantic_dedup_corr_threshold: 0.95
+
+# Combination
+top_n: 10
+weight_method: "equal"
+smooth_span: 10
+sort_by: "auto"
+max_pairwise_corr: 0.4
+
+# Promotion gates
+promote_sharpe_threshold: 0.03
+promote_return_threshold: 0.005
+
+# Hard gates
+min_train_sharpe_gate: 0.0
+min_cleaned_gate: 5
+max_selection_correlation_gate: 0.7

@@ -47,6 +47,7 @@ EXTENDED_UNARY_OPS = UNARY_OPS + ["signed_power", "winsorize"]
 EXTENDED_ROLLING_OPS = ROLLING_OPS + ["ts_ema", "ts_pct_change", "ts_zscore", "ts_shift"]
 EXTENDED_BINARY_OPS = BINARY_OPS + ["if_positive"]  # if_positive(x, y) = y if x > 0 else 0
 EXTENDED_TERNARY_OPS = TERNARY_OPS
+HIGH_ORDER_ROLLING_OPS = ["ts_skew", "ts_kurt", "ts_autocorr", "ts_entropy"]
 
 
 def _random_expression(max_depth: int = 3, max_retries: int = 50) -> FactorExpr:
@@ -58,7 +59,7 @@ def _random_expression(max_depth: int = 3, max_retries: int = 50) -> FactorExpr:
 
         node_type = random.choice([
             "terminal", "unary", "binary", "ternary", "rolling", "rolling_binary",
-            "extended_unary", "extended_rolling"
+            "extended_unary", "extended_rolling", "high_order_rolling"
         ])
         if node_type == "terminal":
             return _random_terminal()
@@ -91,7 +92,14 @@ def _random_expression(max_depth: int = 3, max_retries: int = 50) -> FactorExpr:
                 window=random.choice(WINDOWS),
             )
         if node_type == "extended_rolling":
-            op = random.choice(["ts_ema", "ts_pct_change", "ts_zscore", "ts_shift"])
+            op = random.choice(EXTENDED_ROLLING_OPS)
+            return RollingOp(
+                op=op,
+                child=_grow(depth - 1),
+                window=random.choice(WINDOWS),
+            )
+        if node_type == "high_order_rolling":
+            op = random.choice(HIGH_ORDER_ROLLING_OPS)
             return RollingOp(
                 op=op,
                 child=_grow(depth - 1),

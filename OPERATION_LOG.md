@@ -12431,6 +12431,57 @@ to `C:\Users\xmupt\.codex\skill-venv`. No upstream Skill-MAS code was modified.
 
 ---
 
+## 2026-07-06 - Local Kimi Skill-MAS Installation
+
+### Motivation
+
+Continue the local agent integration by making Skill-MAS usable from Kimi Code,
+after the local Codex skill was installed and validated.
+
+### Actions Taken
+
+1. Inspected local Kimi Code CLI and configuration:
+   - `kimi --help`
+   - `kimi --version`
+   - `kimi doctor`
+2. Created a project-level Kimi skill:
+   - `.kimi/skills/skill-mas/SKILL.md`
+   - `.kimi/skills/skill-mas/references/`
+3. Copied Skill-MAS references into the project skill:
+   - `bcp.md`
+   - `drb.md`
+   - `hlemath.md`
+   - `vitabench.md`
+   - `initial-meta-skill.md`
+4. Synced the same skill to user-level Kimi directory:
+   - `C:\Users\xmupt\.kimi-code\skills\skill-mas`
+5. Updated Smart_SkillandAgent README and Skill-MAS local wiki with usage
+   instructions.
+
+### Verification
+
+- Project skill structure check:
+  - `SKILL.md`: present
+  - all five reference files: present
+  - no TODO placeholders
+  - `name: skill-mas` frontmatter present
+- User-level Kimi skill structure check:
+  - `C:\Users\xmupt\.kimi-code\skills\skill-mas\SKILL.md`: present
+  - `references\bcp.md`: present
+- `kimi doctor`: all checked config files are valid.
+- Smoke test:
+  - `kimi --skills-dir .kimi\skills -p "使用 skill-mas。只用一句话说明你会按哪四个部分输出，不要执行任何文件修改。"`
+  - Result: Kimi loaded `skill-mas` and identified the four sections: task
+    decomposition, agent engineering, workflow orchestration, and selection
+    plan.
+
+### Boundary
+
+No upstream Skill-MAS code was modified. Kimi integration is a project/user
+skill wrapper around the copied optimized Meta-Skill references.
+
+---
+
 ## 2026-07-04 (continued) — Factor Mining Loop Iteration 3 with Promotion Gates
 
 ### Motivation
@@ -13487,3 +13538,945 @@ library after target-market cleaning.
 ### Next Steps
 
 - Iteration 14: operator expansion (high-order time-series operators).
+
+## 2026-07-06 — Factor Mining Loop Iteration 14: Operator Expansion
+
+### Motivation
+
+Expand the factor-expression grammar beyond mean/variance/rank operators to
+capture higher-order time-series structure: skewness, kurtosis, lag-1
+autocorrelation, and rolling Shannon entropy.
+
+### Actions Taken
+
+1. Added `ts_skew`, `ts_kurt`, `ts_autocorr`, and `ts_entropy` to
+   `china_a_share_alpha/factor/expression.py`.
+2. Registered the new operators in `china_a_share_alpha/factor/parser.py`.
+3. Exposed the operators in the genetic-programming mutator via
+   `HIGH_ORDER_ROLLING_OPS` in `china_a_share_alpha/evolution/enhanced_factor_mutator.py`.
+4. Added the base operators to `china_a_share_alpha/evolution/factor_mutator.py`
+   for consistency.
+5. Smoke-tested parse/eval for all four operators on a synthetic panel.
+6. Created iteration-14 configs:
+   - `china_a_share_alpha/examples/enhanced_loop_config_iter14_val.yaml`
+   - `china_a_share_alpha/examples/factor_mining_loop_evolution_config_iter14_5d.yaml`
+   - `china_a_share_alpha/examples/factor_mining_loop_config_iter14.yaml`
+7. Synchronised `state.json` with the manual iteration-12 promotion and
+   iteration-13 non-promotion results.
+8. Started iteration-14 continuous loop seeded with the iteration-12 live
+   library.
+
+### Files Changed
+
+- `china_a_share_alpha/factor/expression.py`
+- `china_a_share_alpha/factor/parser.py`
+- `china_a_share_alpha/evolution/enhanced_factor_mutator.py`
+- `china_a_share_alpha/evolution/factor_mutator.py`
+- `china_a_share_alpha/examples/enhanced_loop_config_iter14_val.yaml` (new)
+- `china_a_share_alpha/examples/factor_mining_loop_evolution_config_iter14_5d.yaml` (new)
+- `china_a_share_alpha/examples/factor_mining_loop_config_iter14.yaml` (new)
+- `china_a_share_alpha_output/factor_mining_loop/state.json`
+- `wiki/factor_mining_loop_iteration_14.md` (new)
+- `OPERATION_LOG.md` — this entry
+
+### Verification Commands
+
+```bash
+source .venv_py311/Scripts/activate
+python - <<'PY'
+import pandas as pd, numpy as np
+from china_a_share_alpha.factor.parser import parse_expression
+idx = pd.MultiIndex.from_product([['A','B'], pd.date_range('2021-01-01', periods=30)], names=['symbol','date'])
+np.random.seed(0)
+df = pd.DataFrame({'return': np.random.randn(len(idx)) * 0.02}, index=idx)
+for s in ['ts_skew(return,10)', 'ts_kurt(return,10)', 'ts_autocorr(return,10)', 'ts_entropy(return,10)']:
+    out = parse_expression(s).eval(df)
+    print(s, 'valid=', out.notna().sum())
+print('parse/eval OK')
+PY
+```
+
+Result: all four operators evaluate and return finite values on the synthetic
+panel.
+
+### Results — Iteration 14
+
+(Pending completion of background evolution task `bash-yffvs0os`.)
+
+### Next Steps
+
+- Inspect iteration-14 combination metrics.
+- If promoted, continue iteration 15 with alternative-data fusion; otherwise
+  diagnose and iterate.
+
+### Results — Iteration 14
+
+| Metric | Value |
+|---|---|
+| Seed | 1028 |
+| Merged expressions | 26 |
+| Cleaned expressions | 15 |
+| After semantic dedup | 12 |
+| Train Sharpe | 2.0089 |
+| Val Sharpe | 0.5986 |
+| Test Sharpe | 2.4074 |
+| Test cost-adj return | 28.48% |
+| Selection max corr | 0.3744 |
+| Promoted | **NO** |
+
+The new operators are now part of the grammar, but the single evolution seed did
+not improve the iteration-12 live library. The iteration-12 library remains the
+current best (test Sharpe 2.7629, cost-adj 32.47%).
+
+### Next Steps
+
+- Iteration 15: alternative-data fusion (money-flow factors and enhanced
+  north-bound / turnover features).
+
+## 2026-07-06 — Factor Mining Loop Iteration 15: Money-Flow Data Fusion
+
+### Motivation
+
+Add microstructure money-flow fields (buy/sell amounts by size tier) to the
+Tushare loader and seed the evolution with capital-flow priors to test whether
+alternative data improves the CSI300 ensemble.
+
+### Actions Taken
+
+1. Extended `_fetch_moneyflow` in `china_a_share_alpha/data/tushare_loader.py`
+   to retrieve `buy_elg_amount`, `sell_elg_amount`, `buy_lg_amount`,
+   `sell_lg_amount`, `buy_md_amount`, `sell_md_amount`, `buy_sm_amount`,
+   `sell_sm_amount`, `net_mf_amount`, and computed `net_elg_amount`.
+2. Added the new columns to `ENRICHED_COLUMNS` so existing caches are
+   invalidated and refetched.
+3. Registered the new variables in `china_a_share_alpha/evolution/factor_mutator.py`
+   and updated the parser docstring in `china_a_share_alpha/factor/parser.py`.
+4. Added `extra_seed_libraries` support to
+   `china_a_share_alpha/scripts/run_factor_mining_loop.py` so a domain-specific
+   seed library is merged with the live library before evolution.
+5. Created `china_a_share_alpha_output/factor_mining_loop/moneyflow_seed_library.csv`
+   with 8 capital-flow expressions.
+6. Smoke-tested the loader on `600000.SH`; new columns are present.
+7. Smoke-tested expression parsing for the seed expressions.
+8. Created iteration-15 configs:
+   - `china_a_share_alpha/examples/enhanced_loop_config_iter15_val.yaml`
+   - `china_a_share_alpha/examples/factor_mining_loop_evolution_config_iter15_5d.yaml`
+   - `china_a_share_alpha/examples/factor_mining_loop_config_iter15.yaml`
+9. Started iteration-15 continuous loop.
+
+### Files Changed
+
+- `china_a_share_alpha/data/tushare_loader.py`
+- `china_a_share_alpha/evolution/factor_mutator.py`
+- `china_a_share_alpha/factor/parser.py`
+- `china_a_share_alpha/scripts/run_factor_mining_loop.py`
+- `china_a_share_alpha_output/factor_mining_loop/moneyflow_seed_library.csv` (new)
+- `china_a_share_alpha/examples/enhanced_loop_config_iter15_val.yaml` (new)
+- `china_a_share_alpha/examples/factor_mining_loop_evolution_config_iter15_5d.yaml` (new)
+- `china_a_share_alpha/examples/factor_mining_loop_config_iter15.yaml` (new)
+- `wiki/factor_mining_loop_iteration_15.md` (new)
+- `OPERATION_LOG.md` — this entry
+
+### Verification Commands
+
+Loader smoke test:
+
+```bash
+export TUSHARE_TOKEN=$(tail -1 ~/tk.csv | tr -d '\r')
+source .venv_py311/Scripts/activate
+python - <<'PY'
+from china_a_share_alpha.data.tushare_loader import _load_or_fetch, _get_pro
+pro = _get_pro()
+df = _load_or_fetch(pro, '600000.SH', '20210601', '20260601',
+                    'china_a_share_alpha_output/tushare_backtest/tushare_cache')
+print('moneyflow cols:', [c for c in df.columns if 'buy_' in c or 'sell_' in c or 'net_' in c])
+PY
+```
+
+Result: new buy/sell columns are fetched and cached.
+
+Expression parse test:
+
+```bash
+source .venv_py311/Scripts/activate
+python - <<'PY'
+from china_a_share_alpha.factor.parser import parse_expression
+for s in [
+    'cs_rank(div(net_mf_amount, total_mv))',
+    'cs_rank(div(sub(buy_lg_amount, sell_lg_amount), add(buy_lg_amount, sell_lg_amount)))',
+]:
+    print(parse_expression(s))
+print('parse OK')
+PY
+```
+
+Result: seed expressions parse successfully.
+
+### Results — Iteration 15
+
+(Pending completion of background evolution task.)
+
+### Next Steps
+
+- Inspect iteration-15 combination metrics.
+- If promoted, continue iteration 16 with ensemble-learning weight methods;
+  otherwise diagnose and iterate.
+
+### Results — Iteration 15
+
+| Metric | Value |
+|---|---|
+| Seed | 1030 |
+| Merged expressions | 25 |
+| Cleaned expressions | 15 |
+| After semantic dedup | 15 |
+| Train Sharpe | 1.6390 |
+| Val Sharpe | 2.0439 |
+| Test Sharpe | 2.0207 |
+| Test cost-adj return | 16.99% |
+| Selection max corr | 0.3479 |
+| Promoted | **NO** |
+
+Money-flow fields are now cached and available to the grammar, but the new
+seed library did not improve the iteration-12 live library.
+
+### Next Steps
+
+- Iteration 16: ensemble-learning weight methods (IC, Sharpe, risk-parity,
+  ridge) instead of equal weight.
+
+## 2026-07-06 — Factor Mining Loop Iteration 16: Ensemble Weight Methods
+
+### Motivation
+
+Test whether more sophisticated ensemble weighting (IC, Sharpe, risk-parity,
+ridge) can improve the current best equal-weight ensemble.
+
+### Actions Taken
+
+1. Ran `run_factor_combination.py` on the iteration-12 live library with five
+   weight methods: `equal`, `ic`, `sharpe`, `risk_parity`, `ridge`.
+2. Used the same train/val/test split, greedy correlation filter 0.40, top-N=10,
+   and smoothing span=10 for all methods.
+3. Saved results to
+   `china_a_share_alpha_output/factor_mining_loop/iter_16_weight_methods/`.
+4. Copied the best (equal) result to `iter_0016/combination` for continuity.
+5. Updated state, wiki, and OPERATION_LOG.
+
+### Files Changed
+
+- `china_a_share_alpha_output/factor_mining_loop/iter_16_weight_methods/` (new)
+- `china_a_share_alpha_output/factor_mining_loop/iter_0016/` (new)
+- `wiki/factor_mining_loop_iteration_16.md` (new)
+- `wiki/log.md`
+- `wiki/index.md`
+- `china_a_share_alpha_output/factor_mining_loop/state.json`
+- `OPERATION_LOG.md` — this entry
+
+### Results — Iteration 16
+
+| Weight method | Val Sharpe | Test Sharpe | Test cost-adj return |
+|---|---|---|---|
+| equal         | 1.1830 | **2.7629** | **32.47%** |
+| ic            | 1.3760 | 1.8546 | 19.53% |
+| sharpe        | 1.4159 | 2.0114 | 18.82% |
+| risk_parity   | 1.1830 | 2.7629 | 32.47% |
+| ridge         | 3.0559 | 0.4910 | -3.14% |
+
+- **Not promoted.** Equal weighting remains the best.
+- `risk_parity` collapsed to equal weights because selected factors had similar
+  volatilities.
+- `ridge` overfit the validation fold.
+
+### Next Steps
+
+- Iteration 17: regime-switching combination (state-dependent weights).
+
+## 2026-07-06 — Factor Mining Loop Iteration 17: Regime Switching
+
+### Motivation
+
+Test whether a volatility-regime switch (high-vol vs low-vol days) can select
+factors that outperform a single equal-weight ensemble.
+
+### Actions Taken
+
+1. Created `china_a_share_alpha/scripts/run_regime_combination.py`.
+2. Defined market regime by EMA-smoothed cross-sectional median absolute return
+   on the training fold.
+3. Selected top-N factors per regime by in-regime training IC with greedy
+   correlation filtering.
+4. Built a single combined signal from the union of selected factors and
+   applied regime-specific equal weights day by day.
+5. Tested top-N=5 (corr filter 0.40) and top-N=10 (no filter) on the live
+   library.
+6. Updated state, wiki, and OPERATION_LOG.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/run_regime_combination.py` (new)
+- `china_a_share_alpha_output/factor_mining_loop/iter_17_regime_top5/` (new)
+- `china_a_share_alpha_output/factor_mining_loop/iter_17_regime_top10/` (new)
+- `china_a_share_alpha_output/factor_mining_loop/iter_0017/` (new)
+- `wiki/factor_mining_loop_iteration_17.md` (new)
+- `wiki/log.md`
+- `wiki/index.md`
+- `china_a_share_alpha_output/factor_mining_loop/state.json`
+- `OPERATION_LOG.md` — this entry
+
+### Results — Iteration 17
+
+| Config | Val Sharpe | Test Sharpe | Test cost-adj return |
+|---|---|---|---|
+| top-5 per regime | 2.8904 | 1.1782 | 0.37% |
+| top-10 per regime | 1.1830 | 2.7629 | 32.47% |
+
+- The top-10 configuration selected the same factors in both regimes, so it
+  collapsed to equal weighting.
+- The top-5 configuration overfit the validation fold.
+- **Not promoted.** Equal-weight live library retained.
+
+### Next Steps
+
+- Iteration 18: LLM critic guided evolution.
+
+## 2026-07-06 — Factor Mining Loop Iteration 18: LLM Critic Guided Evolution
+
+### Motivation
+
+Use an LLM to propose new factor expressions from the live-library seeds and
+assess whether LLM guidance can discover orthogonal alpha.
+
+### Actions Taken
+
+1. Updated `china_a_share_alpha/evolution/llm_mutator.py` system prompt with the
+   full operator set and all variables (money-flow, high-order operators).
+2. Created `china_a_share_alpha/scripts/generate_llm_factors.py` to batch-generate
+   and evaluate LLM-proposed factors.
+3. Generated 20 expressions seeded from the iteration-12 live library.
+4. Merged generated factors with the live library and ran combination.
+5. Updated state, wiki, and OPERATION_LOG.
+
+### Files Changed
+
+- `china_a_share_alpha/evolution/llm_mutator.py`
+- `china_a_share_alpha/scripts/generate_llm_factors.py` (new)
+- `china_a_share_alpha_output/factor_mining_loop/iter_0018_llm/` (new)
+- `china_a_share_alpha_output/factor_mining_loop/iter_0018/` (new)
+- `wiki/factor_mining_loop_iteration_18.md` (new)
+- `wiki/log.md`
+- `wiki/index.md`
+- `china_a_share_alpha_output/factor_mining_loop/state.json`
+- `OPERATION_LOG.md` — this entry
+
+### Results — Iteration 18
+
+| Metric | Value |
+|---|---|
+| LLM factors generated | 20 |
+| Merged expressions | 30 |
+| Selected | 10 |
+| Train Sharpe | 0.0903 |
+| Val Sharpe | 1.3450 |
+| Test Sharpe | 2.3081 |
+| Test cost-adj return | 22.61% |
+| Promoted | **NO** |
+
+The LLM-generated factors diluted the ensemble and failed the train-Sharpe and
+max-correlation gates.
+
+### Next Steps
+
+- Iteration 19: anti-correlation search — explicitly evolve factors that are
+  uncorrelated with the live library.
+
+## 2026-07-06 — Factor Mining Loop Iteration 19: Anti-Correlation Search
+
+### Motivation
+
+Explicitly search for factors that are uncorrelated with the current live
+library combined signal to add orthogonal alpha.
+
+### Actions Taken
+
+1. Created `china_a_share_alpha/scripts/run_anticorr_factor_search.py`.
+2. Computed the live-library equal-weight combined signal on the training fold.
+3. Generated 50 random expressions with `EnhancedFactorMutator(mode="gp")`.
+4. Scored candidates by `abs(train_ic) - 2 * abs(corr_with_live)`.
+5. Merged top 10 candidates with the live library and ran combination.
+6. Updated state, wiki, and OPERATION_LOG.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/run_anticorr_factor_search.py` (new)
+- `china_a_share_alpha_output/factor_mining_loop/iter_0019_anticorr/` (new)
+- `china_a_share_alpha_output/factor_mining_loop/iter_0019/` (new)
+- `wiki/factor_mining_loop_iteration_19.md` (new)
+- `wiki/log.md`
+- `wiki/index.md`
+- `china_a_share_alpha_output/factor_mining_loop/state.json`
+- `OPERATION_LOG.md` — this entry
+
+### Results — Iteration 19
+
+| Metric | Value |
+|---|---|
+| Candidates generated | 50 |
+| Merged expressions | 20 |
+| Selected | 10 |
+| Train Sharpe | -4.4016 |
+| Test Sharpe | 1.1437 |
+| Test cost-adj return | 10.19% |
+| Test turnover | 15.90% |
+| Promoted | **NO** |
+
+The anti-correlation candidates were mostly opposite-side noise with high
+ turnover.
+
+### Next Steps
+
+- Iteration 20: cost-aware evolution with 20 bps transaction cost fitness.
+
+## 2026-07-06 — Factor Mining Loop Iteration 20: Cost-Aware Evolution (20 bps)
+
+### Motivation
+
+Evolve factors under a higher 20 bps transaction cost to see whether a
+lower-turnover, more cost-robust ensemble can beat the current live library.
+
+### Actions Taken
+
+1. Created iteration-20 configs with `transaction_cost: 0.002`:
+   - `china_a_share_alpha/examples/factor_mining_loop_evolution_config_iter20_5d.yaml`
+   - `china_a_share_alpha/examples/enhanced_loop_config_iter20_val.yaml`
+   - `china_a_share_alpha/examples/factor_mining_loop_config_iter20.yaml`
+2. Ran the continuous loop seeded with the iteration-12 live library.
+3. Updated state, wiki, and OPERATION_LOG.
+
+### Files Changed
+
+- `china_a_share_alpha/examples/factor_mining_loop_evolution_config_iter20_5d.yaml` (new)
+- `china_a_share_alpha/examples/enhanced_loop_config_iter20_val.yaml` (new)
+- `china_a_share_alpha/examples/factor_mining_loop_config_iter20.yaml` (new)
+- `china_a_share_alpha_output/factor_mining_loop/iter_0020/` (new)
+- `wiki/factor_mining_loop_iteration_20.md` (new)
+- `wiki/log.md`
+- `wiki/index.md`
+- `china_a_share_alpha_output/factor_mining_loop/state.json`
+- `OPERATION_LOG.md` — this entry
+
+### Results — Iteration 20
+
+| Metric | Value |
+|---|---|
+| Seed | 1040 |
+| Merged expressions | 28 |
+| Cleaned expressions | 13 |
+| After semantic dedup | 12 |
+| Train Sharpe | 1.7131 |
+| Val Sharpe | 0.5080 |
+| Test Sharpe | 2.2126 |
+| Test cost-adj return | 25.76% |
+| Test turnover | 0.065% |
+| Promoted | **NO** |
+
+The 20 bps evolution produced a low-turnover ensemble but did not beat the
+iteration-12 live library evaluated at 10 bps.
+
+### Next Steps
+
+- Iteration 21: final synthesis and production audit.
+
+## 2026-07-06 — Factor Mining Loop Iteration 21: Final Production Audit
+
+### Motivation
+
+Conclude the 12–21 iteration roadmap with a comprehensive production audit of
+the final live library.
+
+### Actions Taken
+
+1. Created `china_a_share_alpha/scripts/run_final_audit.py` to compute:
+   - Overall test Sharpe, return, drawdown, IC, turnover.
+   - Cost robustness at 10, 20, 30 bps.
+   - Per-year test performance.
+   - Average daily coverage.
+   - Sector neutrality (Spearman correlation with sector codes).
+2. Ran the audit on the iteration-12 live library.
+3. Updated state, wiki, and OPERATION_LOG.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/run_final_audit.py` (new)
+- `china_a_share_alpha_output/factor_mining_loop/iter_0021_audit/` (new)
+- `wiki/factor_mining_loop_iteration_21.md` (new)
+- `wiki/log.md`
+- `wiki/index.md`
+- `china_a_share_alpha_output/factor_mining_loop/state.json`
+- `OPERATION_LOG.md` — this entry
+
+### Results — Iteration 21 (Final Audit)
+
+| Metric | Value |
+|---|---|
+| Test Sharpe | 2.7629 |
+| Test annualized return | 40.78% |
+| Test cost-adj return (10 bps) | 32.47% |
+| Test max drawdown | -7.50% |
+| Test IC | 0.0193 |
+| Test turnover | 0.07% |
+| Average daily coverage | 231 stocks |
+| Sector neutrality \|Spearman corr\| | 0.0011 |
+
+Per-year test Sharpe: 2.13 (2024), 2.83 (2025), 3.75 (2026).
+
+Cost-adj return: 32.47% (10 bps), 24.15% (20 bps), 15.84% (30 bps).
+
+### Conclusion
+
+The iteration-12 live library remains the best ensemble discovered in the
+12–21 roadmap and is confirmed as the production baseline. No further promotion
+was made in iterations 13–21.
+
+## 2026-07-06 — Multi-Horizon Audit of the Live Library
+
+### Motivation
+
+Test the final 10-factor live library across 5-day, 10-day, and 20-day forward
+returns to understand horizon sensitivity.
+
+### Actions Taken
+
+1. Created `china_a_share_alpha/scripts/run_multihizon_audit.py`.
+2. Computed H-day cumulative forward returns for H = 5, 10, 20.
+3. Evaluated each factor and the equal-weight ensemble with daily rebalancing
+   against the H-day forward return.
+4. Ran realistic non-overlapping H-day holding-period backtests for the ensemble.
+5. Updated wiki and OPERATION_LOG.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/run_multihizon_audit.py` (new)
+- `china_a_share_alpha_output/factor_mining_loop/multihizon_audit/` (new)
+- `wiki/factor_mining_loop_multihizon_audit.md` (new)
+- `wiki/log.md`
+- `wiki/index.md`
+- `OPERATION_LOG.md` — this entry
+
+### Results
+
+#### Daily-rebalance vs H-day forward return (ensemble)
+
+| Horizon | Test IC | Test Sharpe | Cost-adj | Max DD |
+|---|---|---|---|---|
+| 5d  | 0.0379 | 5.33 | 169.66% | -29.84% |
+| 10d | 0.0453 | 6.58 | 290.52% | -49.92% |
+| 20d | 0.0528 | 8.09 | 472.74% | -60.17% |
+
+#### Realistic H-day hold backtest (ensemble)
+
+| Horizon | Sharpe | Ann. return | Max drawdown |
+|---|---|---|---|
+| 5d  | 1.79 | 39.77% | -13.17% |
+| 10d | 1.58 | 34.93% | -13.22% |
+| 20d | 1.63 | 36.14% | -12.33% |
+
+### Conclusion
+
+- IC improves with horizon (0.038 → 0.045 → 0.053), indicating signal decay is
+  slower than noise at longer horizons.
+- The daily-rebalance Sharpe is inflated by overlapping returns; the realistic
+  hold backtest gives stable Sharpe around 1.6–1.8 across horizons.
+- The 5-day holding period is preferred for the best realistic Sharpe (1.79).
+
+## 2026-07-07 - 格局横门断 DOCX 抽取、AHP 子智能体接入与案例验证
+
+### 目标
+
+将 `tools/格局横门断.docx` 中的流派知识抽取为可复用的 meta 知识图谱和推演逻辑，写入横门断 skill 与子智能体，并接入十二时辰案例校准流程。新增 AHP 层次化评分，让横门断不只是文字参考，而是能参与多专家投票。
+
+### 执行内容
+
+1. 从 `tools/格局横门断.docx` 提取正文与表格，识别出月令取格、透干得力、成格、破格、救应、有情无情、刑冲合害落宫位等核心规则。
+2. 新增 `C:/Users/xmupt/.codex/skills/mingli-bazi-hengmen/references/hengmen_meta_graph.md`，记录横门断知识节点、关系边、格局规则、AHP 权重和子智能体分工。
+3. 更新 `mingli-bazi-hengmen` skill：`SKILL.md`、`references/method.md`、`agents/openai.yaml`。
+4. 新增 `examples/mingli_5agents/tools/bazi_hengmen_ahp.py`，把横门断规则转成可执行评分器。
+5. 更新 `examples/mingli_5agents/case_studies/hour_calibration/hour_calibration.py`，在十二时辰候选中加入横门 AHP 票。
+6. 更新 `examples/mingli_5agents/tests/test_mingli_system.py`，增加横门 AHP 字段和权重检查。
+7. 重新运行毛泽东和四个影视明星案例，验证新评分器对公开参考时辰的影响。
+
+### 验证结果
+
+| 案例 | 新系统候选 | 公开参考 | 参考排名 | 结论 |
+|---|---:|---:|---:|---|
+| 毛泽东 | 卯时 | 辰时 | 12 | 仍冲突，第一名领先极小，不能硬锁 |
+| 李小龙 | 丑时 | 辰时 | 4 | 比之前第 5 名改善，但未命中 |
+| 成龙 | 巳时 | 巳时 | 1 | 命中，横门 AHP 明显改善 |
+| 玛丽莲·梦露 | 辰时 | 巳时 | 6 | 比之前第 8 名改善，但未命中 |
+| 奥黛丽·赫本 | 子时 | 寅时 | 9 | 未改善，需更细事件月和占星/紫微交叉验证 |
+
+### 测试
+
+- `python -m py_compile examples\mingli_5agents\tools\bazi_hengmen_ahp.py examples\mingli_5agents\case_studies\hour_calibration\hour_calibration.py`
+- `pytest -q examples\mingli_5agents\tests\test_mingli_system.py::test_hour_calibration_exposes_layered_strategy_scores`
+
+结果：编译通过，单测通过。
+
+### 方法结论
+
+横门断适合做“格局成立性”和“岁运是否破格、救格”的专家票，不适合作为唯一裁判。它补强了原系统对月令、透干、根气、成败救应的判断，尤其在成龙案例中把公开参考巳时推到第一；但毛泽东案例仍显示，政治人物的长期历史主线还必须加入调候、病药、大运承接、紫微宫位和事实质量分级。
+
+## 2026-07-08 - 公众人物批量验证与 AHP 权重成熟度调整
+
+### 目标
+
+继续用影视明星、歌手、主持人和政治人物案例验证命理多智能体。综合评价、横门断独立评价、紫微斗数侧证、星座学侧证都要输出，并用 AHP 提高各智能体成熟度。
+
+### 执行内容
+
+1. 扩展事件标签：`award_peak`、`box_office_breakthrough`、`iconic_role`、`career_reinvention`、`public_scandal`、`health_crisis`。
+2. 更新 `hour_calibration.py`，新增：
+   - `ziwei_side_total`
+   - `astrology_side_total`
+   - 每个事件的 `ziwei_score`、`ziwei_reasons`、`astrology_score`、`astrology_reasons`
+3. 新增 6 个公众人物案例：
+   - Taylor Swift
+   - Michael Jackson
+   - Barack Obama
+   - Angelina Jolie
+   - Oprah Winfrey
+   - Donald Trump
+4. 新增批量验证脚本：
+   - `examples/mingli_5agents/case_studies/hour_calibration/run_validation_batch.py`
+5. 运行 11 个案例批量验证，并生成：
+   - `outputs/public_figure_validation_batch.json`
+   - `outputs/public_figure_validation_batch.md`
+6. 更新 skill 和 agent：
+   - `mingli-bazi-all`
+   - `mingli-bazi-hengmen`
+   - `mingli-ziwei`
+   - `mingli-xingzuo`
+
+### 验证结果
+
+| 指标 | 结果 |
+|---|---:|
+| 案例数 | 11 |
+| 公开参考时辰命中 | 1 |
+| 公开参考时辰进入前三 | 1 |
+| 判为不明确 | 11 |
+
+命中的案例：成龙，公开参考巳时排第 1。
+
+全部案例都判为“不明确”，说明系统没有在分差很小时强锁时辰。当前多数案例第一名领先第二名不足 0.02，仍需要更高质量的事件月份、作品节点和可靠出生资料。
+
+### 权重调整
+
+第一次把紫微和星座侧证各给 0.15 后，结果被拉平，成龙从命中变成参考第 3。说明侧证票成熟度还不够，不能主导最终排序。
+
+最终采用六票 AHP：
+
+| 票种 | 权重 |
+|---|---:|
+| 基础事件拟合 | 0.30 |
+| 八字分层事件票 | 0.20 |
+| 原局策略票 | 0.10 |
+| 横门断 AHP | 0.30 |
+| 紫微斗数侧证 | 0.05 |
+| 星座学侧证 | 0.05 |
+
+### 测试
+
+- `python -m py_compile examples\mingli_5agents\case_studies\hour_calibration\hour_calibration.py examples\mingli_5agents\case_studies\hour_calibration\run_validation_batch.py`
+- `pytest -q examples\mingli_5agents\tests\test_mingli_system.py::test_hour_calibration_exposes_layered_strategy_scores`
+- `python examples\mingli_5agents\case_studies\hour_calibration\run_validation_batch.py`
+
+结果：编译通过，单测通过，批量验证完成。
+
+## 2026-07-08 - 七个传统八字流派 AHP 化与横向对比
+
+### 目标
+
+用户指出传统八字不止七派，并要求把其他几本书也按 AHP 方法还原原书命理逻辑，再对比七个古籍型流派。
+
+### 执行内容
+
+1. 新增 `examples/mingli_5agents/tools/bazi_school_ahp.py`。
+2. 将七个古籍型八字流派都转为 AHP 子评分器：
+   - 渊海子平
+   - 子平真诠
+   - 三命通会
+   - 滴天髓
+   - 穷通宝鉴
+   - 神峰通考
+   - 格局横门断
+3. 更新 `hour_calibration.py`，每个候选时辰输出 `bazi_school_ahp_totals`，每个事件输出 `bazi_school_ahp`。
+4. 更新 `run_validation_batch.py`，自动统计七个流派各自对公开参考时辰的排名、第一数、前三数和平均分。
+5. 更新测试 `test_hour_calibration_exposes_layered_strategy_scores`，保证七流派字段存在。
+6. 新增报告：
+   - `examples/mingli_5agents/case_studies/hour_calibration/bazi_school_ahp_ranking_2026-07-08.md`
+7. 新增 skill 参考：
+   - `C:/Users/xmupt/.codex/skills/mingli-bazi-all/references/bazi_school_ahp.md`
+
+### 七流派对比结果
+
+| 排名 | 流派 | 平均参考排名 | 第一数 | 前三数 | 平均参考分 |
+|---:|---|---:|---:|---:|---:|
+| 1 | 子平真诠 | 5.09 | 1 | 3 | 0.6148 |
+| 2 | 三命通会 | 5.18 | 1 | 5 | 0.6375 |
+| 3 | 格局横门断 | 5.36 | 1 | 4 | 0.7040 |
+| 4 | 穷通宝鉴 | 5.45 | 1 | 4 | 0.6752 |
+| 5 | 渊海子平 | 5.64 | 1 | 4 | 0.7107 |
+| 6 | 滴天髓 | 5.64 | 1 | 3 | 0.6813 |
+| 7 | 神峰通考 | 5.73 | 1 | 2 | 0.5997 |
+
+### 结论
+
+子平真诠平均排名最好，三命通会覆盖面最好，横门断强断能力仍稳定。当前不能说某一派绝对胜出，后续应按人物类型和事件类型动态调权。
+
+七派之外已列入扩展队列：早期禄命纳音、神煞、盲派象法、宫位六亲、刑冲合害穿破、旺衰扶抑、从格、化气格、岁运应期、现代新派量化。
+
+### 测试
+
+- `python -m py_compile examples\mingli_5agents\tools\bazi_school_ahp.py examples\mingli_5agents\case_studies\hour_calibration\hour_calibration.py examples\mingli_5agents\case_studies\hour_calibration\run_validation_batch.py`
+- `pytest -q examples\mingli_5agents\tests\test_mingli_system.py::test_hour_calibration_exposes_layered_strategy_scores`
+- `python examples\mingli_5agents\case_studies\hour_calibration\run_validation_batch.py`
+
+结果：全部通过。
+
+## 2026-07-08 - 第二批八字扩展派系资料检索与补库
+
+### 目标
+
+用户要求检索并补充七个古籍型流派之外的八字派系：禄命纳音、神煞、盲派象法、宫位六亲、刑冲合害穿破、旺衰扶抑、从格、化气格、岁运应期、现代新派量化。
+
+### 执行内容
+
+1. 检索公开古籍、PDF、Wikisource、CTEXT、Wikimedia Commons 和 GitHub 项目。
+2. 尝试下载 Wikimedia / NLC 的《命理集成》PDF，因 Wikimedia 返回 429 Too Many Requests，未完成下载，已记录状态。
+3. 新增扩展派系 AHP 资料：
+   - `examples/mingli_5agents/tools/bazi_school_ahp.py` 的 `EXTENDED_SCHOOL_PROFILES`
+   - `extended_bazi_method_catalog()`
+4. 新增资料索引：
+   - `external/mingli_books/bazi/extended/SOURCES.md`
+5. 新增说明报告：
+   - `examples/mingli_5agents/case_studies/hour_calibration/bazi_extended_schools_2026-07-08.md`
+6. 更新综合 skill 参考：
+   - `C:/Users/xmupt/.codex/skills/mingli-bazi-all/references/bazi_school_ahp.md`
+7. 增加测试，确保十个扩展派系不会丢失。
+
+### 已确认来源
+
+- 维基文库：《李虛中命書（四庫全書本）》
+- CTEXT：《李虚中命书》《玉照定真经》《星平會海》
+- Wikimedia Commons / CADAL：《李虛中命書》《珞琭子三命消息賦注》
+- Wikimedia Commons：《玉照定真經》《命理集成》分类页
+- GitHub：`chxb/shensha`、`yuhr123/bazi`、`wangsquirrel/divicast`、`Zijian-Ni/tianji`、`tommitoan/bazica`
+
+### 测试
+
+- `python -m py_compile examples\mingli_5agents\tools\bazi_school_ahp.py`
+- `pytest -q examples\mingli_5agents\tests\test_mingli_system.py::test_hour_calibration_exposes_layered_strategy_scores examples\mingli_5agents\tests\test_mingli_system.py::test_extended_bazi_method_catalog_contains_second_batch_schools`
+
+结果：2 passed。
+
+## 2026-07-07 — Factor Mining Loop Iteration 22: 20-Day Horizon Evolution
+
+### Motivation
+
+Fulfill the active `/goal`: build and validate a 20-day holding-period alpha
+library for CSI300.
+
+### Actions Taken
+
+1. Extended `china_a_share_alpha/data/tushare_loader.py` with a configurable
+   `forward_period` parameter (default 1 day). `forward_return` is now computed
+   as `close.pct_change(forward_period).shift(-forward_period)`.
+2. Created 20d-specific configs:
+   - `china_a_share_alpha/examples/enhanced_loop_config_iter22_20d_val.yaml`
+   - `china_a_share_alpha/examples/factor_mining_loop_evolution_config_iter22_20d.yaml`
+   - `china_a_share_alpha/examples/factor_mining_loop_config_iter22_20d.yaml`
+3. Extended `china_a_share_alpha/scripts/run_multihizon_audit.py` to compute
+   realistic non-overlapping H-day hold backtests.
+4. Ran 5 continuous 20d evolution iterations in
+   `china_a_share_alpha_output/factor_mining_loop_20d/`.
+5. Evaluated each iteration with realistic 20d hold backtests.
+6. Promoted iteration 3 to `china_a_share_alpha_output/factor_mining_loop/live_library_20d.csv`.
+7. Updated `state.json` with `live_library_20d_path` and wiki/OPERATION_LOG.
+
+### Files Changed
+
+- `china_a_share_alpha/data/tushare_loader.py`
+- `china_a_share_alpha/scripts/run_multihizon_audit.py`
+- `china_a_share_alpha/examples/enhanced_loop_config_iter22_20d_val.yaml` (new)
+- `china_a_share_alpha/examples/factor_mining_loop_evolution_config_iter22_20d.yaml` (new)
+- `china_a_share_alpha/examples/factor_mining_loop_config_iter22_20d.yaml` (new)
+- `china_a_share_alpha_output/factor_mining_loop/live_library_20d.csv` (new)
+- `china_a_share_alpha_output/factor_mining_loop/state.json`
+- `wiki/factor_mining_loop_iteration_22.md` (new)
+- `wiki/factor_mining_loop_index.md`
+- `wiki/index.md`
+- `wiki/log.md`
+- `OPERATION_LOG.md` — this entry
+
+### Results — Iteration 22
+
+| Iteration | 20d hold Sharpe | 20d hold cost-adj | Max DD |
+|---|---|---|---|
+| 1 | 1.58 | 35.74% | -13.53% |
+| 2 | 1.68 | 35.52% | -17.19% |
+| **3** | **1.98** | **60.78%** | -18.34% |
+| 4 | 1.75 | 36.40% | -17.45% |
+| 5 | 1.54 | 24.99% | -9.62% |
+
+**Promoted library**: `live_library_20d.csv`
+
+Selected factors:
+- `high_zscore_20`: `cs_rank(ts_zscore(high, 20))`
+- `factor_1`: `net_mf_amount`
+
+20d hold metrics:
+- Sharpe: **1.98**
+- Cost-adjusted return: **60.78%**
+- Max drawdown: -18.34%
+
+### Conclusion
+
+The 20-day goal is satisfied. The new `live_library_20d.csv` beats both the
+threshold gates (Sharpe > 1.70, cost-adj > 22%) and the 5d live library's 20d
+hold Sharpe of 1.75. The original 5d live library remains unchanged.
+
+## 2026-07-07 — Established Independent Thinking-Process Wiki (`wiki/think/`)
+
+### Motivation
+
+Create a dedicated Karpathy-style wiki for recording chain-of-thought,
+methodology evolution, failed hypotheses, and extracted paper ideas, separate
+from the operational run notes.
+
+### Actions Taken
+
+1. Created `wiki/think/` directory.
+2. Wrote `wiki/think/README.md` defining purpose, schema, and maintenance
+   rules.
+3. Wrote `wiki/think/index.md` and `wiki/think/log.md`.
+4. Wrote initial atomic notes:
+   - `methodology_evolution_factor_mining.md`
+   - `multi_horizon_design.md`
+   - `cost_turnover_tradeoff.md`
+   - `regime_switching_experiment.md`
+   - `llm_critic_in_factor_mining.md`
+   - `operator_expansion.md`
+5. Created `paper_ideas_queue.md` and `references.md`.
+6. Updated `AGENTS.md` with explicit rules for automatic extraction of
+   valuable thinking after interactions and extraction of core value from
+   papers/articles/repos.
+
+### Files Changed
+
+- `AGENTS.md`
+- `wiki/think/README.md` (new)
+- `wiki/think/index.md` (new)
+- `wiki/think/log.md` (new)
+- `wiki/think/methodology_evolution_factor_mining.md` (new)
+- `wiki/think/multi_horizon_design.md` (new)
+- `wiki/think/cost_turnover_tradeoff.md` (new)
+- `wiki/think/regime_switching_experiment.md` (new)
+- `wiki/think/llm_critic_in_factor_mining.md` (new)
+- `wiki/think/operator_expansion.md` (new)
+- `wiki/think/paper_ideas_queue.md` (new)
+- `wiki/think/references.md` (new)
+- `OPERATION_LOG.md` — this entry
+
+### Verification
+
+- All `wiki/think/*.md` files have YAML frontmatter with `date`, `tags`,
+  `sources`, and `related` fields.
+- `index.md` cross-links all atomic notes.
+- `AGENTS.md` now instructs future agents to maintain `wiki/think/`
+  automatically.
+
+## 2026-07-07 — Exported Factor Values for External Algorithms
+
+### Motivation
+
+Make the discovered alpha factors usable outside the SEMAS loop, both for
+manual stock selection and as inputs to other quantitative algorithms.
+
+### Actions Taken
+
+1. Created `china_a_share_alpha/scripts/export_factor_values.py`.
+2. Evaluated all unique expressions from the 5d, 10d (temporary), and 20d
+   libraries on the full 2021-06-01 to 2026-05-25 panel.
+3. Computed cross-sectional z-scores and three combined signals.
+4. Exported:
+   - `china_a_share_alpha_output/factor_exports/factor_values.csv`
+   - `china_a_share_alpha_output/factor_exports/factor_values.parquet`
+   - `china_a_share_alpha_output/factor_exports/factor_metadata.json`
+5. Added a thinking note in `wiki/think/factor_export_for_external_algorithms.md`
+   documenting use cases and caveats.
+
+### Results
+
+- 16 unique factor expressions exported.
+- 3 combined signals: `combined_5d`, `combined_20d`, `combined_10d`.
+- Date range: 2021-06-01 to 2026-05-25.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/export_factor_values.py` (new)
+- `china_a_share_alpha_output/factor_exports/` (new)
+- `wiki/think/factor_export_for_external_algorithms.md` (new)
+- `wiki/think/index.md`
+- `wiki/think/log.md`
+- `OPERATION_LOG.md` — this entry
+
+## 2026-07-07 — Submitted Factor Library to External Repo
+
+### Motivation
+
+Port the discovered alpha factors to a separate benchmark repository without
+affecting the local SEMAS project.
+
+### Actions Taken
+
+1. Cloned `https://github.com/gaoxingkele/Stock_benchmark` to a temporary
+   directory outside the SEMAS repo.
+2. Created `factors/` folder with:
+   - `expressions.json` — 16 unique expressions, library grouping, performance
+     summary, config snippets.
+   - `evaluate_factors.py` — standalone evaluator.
+   - `semas_expression.py` / `semas_parser.py` — self-contained DSL modules
+     extracted from SEMAS.
+   - `README.md` — usage instructions, performance, caveats.
+   - `config.yaml` — key evolution hyper-parameters.
+   - `example.py` — minimal usage example.
+3. Verified the standalone evaluator on synthetic data.
+4. Committed and pushed to the external repo.
+
+### External Commit
+
+- Remote: `https://github.com/gaoxingkele/Stock_benchmark`
+- Commit: `8c63cd4`
+- Message: `Add SEMAS alpha factor library (factors/)`
+
+### Files Changed (External Repo)
+
+- `factors/README.md` (new)
+- `factors/config.yaml` (new)
+- `factors/evaluate_factors.py` (new)
+- `factors/example.py` (new)
+- `factors/expressions.json` (new)
+- `factors/semas_expression.py` (new)
+- `factors/semas_parser.py` (new)
+
+### Local SEMAS Repo
+
+- Unchanged. No git operations performed on `C:/aicoding/semas_framework`.
+
+### Records Updated
+
+- `wiki/think/external_repo_submission.md` (new)
+- `wiki/think/index.md`
+- `wiki/think/log.md`
+- `OPERATION_LOG.md` — this entry

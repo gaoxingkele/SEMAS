@@ -1,5 +1,5 @@
 ---
-date: 2026-07-04
+date: 2026-07-06
 tags: [index, meta, wiki]
 source_count: 0
 ---
@@ -17,9 +17,10 @@ chronological log.
 
 | Page | Summary | Last Updated |
 |---|---|---|
-| [Factor Mining Loop Index](factor_mining_loop_index.md) | Continuous alpha-factor discovery loop for China A-shares. | 2026-07-05 |
-| [Iteration 10 Live-Library Audit](factor_mining_loop_audit_iter10.md) | Coverage and sector-neutrality audit of the promoted 12-factor ensemble. | 2026-07-05 |
-| [SEMAS Evolution Ideas](semas_evolution_ideas.md) | Broader evolution experiments, including validation weighting, iterative evolution, and the factor-mining loop. | 2026-07-05 |
+| [Factor Mining Loop Index](factor_mining_loop_index.md) | Continuous alpha-factor discovery loop for China A-shares. | 2026-07-06 |
+| [Iteration 10 Live-Library Audit](factor_mining_loop_audit_iter10.md) | Coverage and sector-neutrality analysis of the promoted 12-factor ensemble. | 2026-07-05 |
+| [Multi-Horizon Audit](factor_mining_loop_multihizon_audit.md) | 5d / 10d / 20d horizon test of the final 10-factor live library. | 2026-07-06 |
+| [SEMAS Evolution Ideas](semas_evolution_ideas.md) | Broader evolution experiments, including validation weighting, iterative evolution, and the factor-mining loop. | 2026-07-06 |
 
 ## Factor Mining Loop Run Notes
 
@@ -38,12 +39,22 @@ chronological log.
 | [Iteration 11](factor_mining_loop_iteration_11.md) | 2026-07-05 | 2.70 (20 bps) | N/A | Stress-test validation; cost-adj 23.17% at 20 bps. |
 | [Iteration 12](factor_mining_loop_iteration_12.md) | 2026-07-05 | **2.76** | **YES** | Multi-horizon 5d/10d evolution; new best. |
 | [Iteration 13](factor_mining_loop_iteration_13.md) | 2026-07-05 | 1.84 | NO | Cross-market transfer did not improve on CSI300. |
+| [Iteration 14](factor_mining_loop_iteration_14.md) | 2026-07-06 | 2.41 | NO | High-order operators added; not promoted. |
+| [Iteration 15](factor_mining_loop_iteration_15.md) | 2026-07-06 | 2.02 | NO | Money-flow fields and seed library added; not promoted. |
+| [Iteration 16](factor_mining_loop_iteration_16.md) | 2026-07-06 | 2.76 | NO | Tested equal/ic/sharpe/risk-parity/ridge; equal remains best. |
+| [Iteration 17](factor_mining_loop_iteration_17.md) | 2026-07-06 | 2.76 | NO | Volatility-regime switching did not improve equal weight. |
+| [Iteration 18](factor_mining_loop_iteration_18.md) | 2026-07-06 | 2.31 | NO | LLM critic generated weak factors; did not promote. |
+| [Iteration 19](factor_mining_loop_iteration_19.md) | 2026-07-06 | 1.14 | NO | Anti-correlation search added noise; did not promote. |
+| [Iteration 20](factor_mining_loop_iteration_20.md) | 2026-07-06 | 2.21 | NO | 20 bps cost-aware evolution; viable but not promoted. |
+| [Iteration 21](factor_mining_loop_iteration_21.md) | 2026-07-06 | 2.76 | N/A | Final production audit of iteration-12 live library. |
+| [Iteration 22](factor_mining_loop_iteration_22.md) | 2026-07-07 | 1.98 (20d hold) | YES | 20d forward evolution; promoted `live_library_20d.csv`. |
 
 ## Key Entities
 
 - **Live library**: `china_a_share_alpha_output/factor_mining_loop/live_library.csv`
 - **Loop runner**: `china_a_share_alpha/scripts/run_factor_mining_loop.py`
 - **Combination script**: `china_a_share_alpha/scripts/run_factor_combination.py`
+- **Multi-horizon audit script**: `china_a_share_alpha/scripts/run_multihizon_audit.py`
 - **Loop design**: [../LOOP.md](../LOOP.md)
 - **Project state**: `china_a_share_alpha_output/factor_mining_loop/STATE.md`
 

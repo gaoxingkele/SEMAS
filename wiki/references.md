@@ -10,6 +10,34 @@
   - Core idea: frozen-weight LLM + selection-based evolution over prompts,
     tools, topologies, and memory.
 
+- SEMAS Smart_SkillandAgent Topic
+  - Local source: `Smart_SkillandAgent/README.md`
+  - Core idea: one GitHub-origin skill or agent repository per subproject, with
+    source provenance, evolution records, evaluation receipts, and a local LLM
+    wiki preserved inside that subproject boundary.
+
+- Loop Engineering
+  - GitHub: https://github.com/cobusgreyling/loop-engineering
+  - Local source: `Smart_SkillandAgent/projects/cobusgreyling_loop-engineering/`
+  - License: MIT
+  - Selected revision: `015ad4a57f210bafac1497fd5305d67bf728a21f`
+
+- Patent Disclosure Skill
+  - GitHub: https://github.com/handsomestWei/patent-disclosure-skill
+  - Local source: `Smart_SkillandAgent/projects/handsomestWei_patent-disclosure-skill/`
+  - License: MIT
+  - Selected revision: `c4b843e2037376ce65a63f8db09b0cf635002b8f`
+
+- Skill-MAS
+  - Paper: arXiv:2606.18837, https://arxiv.org/abs/2606.18837
+  - GitHub: https://github.com/linhh29/Skill-MAS
+  - Canonical GitHub path after redirect: https://github.com/linhh29/Skill_MAS
+  - Project page: https://linhh29.github.io/blog/Skill-MAS/index.html
+  - Demo: https://skill-mas-demo.hehailin.life/
+  - Local source: `Smart_SkillandAgent/projects/linhh29_Skill_MAS/`
+  - License: Apache-2.0
+  - Selected revision: `b55d47ee7a08b34afda420bb3c5f2ca53efa64a4`
+
 ## China A-Share Alpha Factor Mining
 
 - Local operational record: `OPERATION_LOG.md` (entries 2026-06-24 through
