@@ -14692,3 +14692,24 @@ Classical fundamental/money-flow factors remain present but diversified.
 Loop-level Sharpe/cost-adj are inflated by overlapping forward returns and
 ideal daily rebalancing. Always use the hold-audit numbers for production
 judgment.
+
+## 2026-07-08 22:16 UTC — Cost robustness hold audit for promoted live library
+
+Ran real non-overlapping hold backtests on the promoted live library under
+higher transaction costs.
+
+| Cost | 5d hold Sharpe | 5d hold ann. return | 5d hold max DD |
+|---|---:|---:|---:|
+| 10 bps | 2.37 | 69.55% | -17.02% |
+| 20 bps | 1.94 | 53.20% | -18.51% |
+| 30 bps | 1.50 | 38.40% | -19.98% |
+
+Even at 30 bps one-way (60 bps round-trip), the 5d hold Sharpe remains
+positive (~1.50), indicating the alpha is not purely an artefact of frictional
+assumptions. Max drawdown scales modestly with cost.
+
+Artifacts:
+- `china_a_share_alpha_output/factor_mining_loop/multihizon_audit_iter24_cost20bps/`
+- `china_a_share_alpha_output/factor_mining_loop/multihizon_audit_iter24_cost30bps/`
+
+Started another 10-iteration evolution run (iter_0032–iter_0041) in background.

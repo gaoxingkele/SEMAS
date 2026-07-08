@@ -66,3 +66,10 @@ absorbed ideas.
 - Previous 5d hold: Sharpe 1.82 / return 41.9%.
 - Key new raw variables used: rsi_14, adx_14, macd, ts_delta(rsi_14,20).
 - Caveat: loop metrics inflated by overlapping returns; hold audit is the production benchmark.
+
+## [2026-07-08] Cost robustness and second 10-iteration run
+
+- Hold audit at 20bps: 5d Sharpe 1.94 / return 53.2%.
+- Hold audit at 30bps: 5d Sharpe 1.50 / return 38.4%.
+- Alpha remains positive even at 60bps round-trip.
+- Started next 10 iterations (iter_0032–iter_0041) in background.
