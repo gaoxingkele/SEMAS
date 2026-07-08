@@ -57,3 +57,12 @@ absorbed ideas.
 - Added 15 TA-Lib indicators as raw variables.
 - Added Alpha101 (alpha_001, alpha_003, alpha_101) as seed expressions.
 - Started 10 iterations of 5d evolution in background.
+
+## [2026-07-08] TA-Lib/Alpha101 10-iteration results
+
+- 10 iterations completed; new live library promoted at iter 28.
+- Loop best: test Sharpe 5.93 / cost-adj return 245.7%.
+- Real 5d hold: Sharpe 2.37 / return 69.5% / max DD -17.0%.
+- Previous 5d hold: Sharpe 1.82 / return 41.9%.
+- Key new raw variables used: rsi_14, adx_14, macd, ts_delta(rsi_14,20).
+- Caveat: loop metrics inflated by overlapping returns; hold audit is the production benchmark.

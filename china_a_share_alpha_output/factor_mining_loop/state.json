@@ -1,9 +1,9 @@
 {
-  "iteration": 21,
-  "last_run": "2026-07-05T19:14:06.666904+00:00",
-  "best_test_sharpe": 2.762927201399869,
-  "best_cost_adjusted_return": 0.32466024145329025,
-  "live_library_path": "china_a_share_alpha_output/factor_mining_loop/live_library.csv",
+  "iteration": 31,
+  "last_run": "2026-07-08T19:25:58.442677+00:00",
+  "best_test_sharpe": 5.9344124965970595,
+  "best_cost_adjusted_return": 2.456853998515278,
+  "live_library_path": "china_a_share_alpha_output\\factor_mining_loop\\live_library.csv",
   "history": [
     {
       "iteration": 1,
@@ -531,6 +531,246 @@
         "train_sharpe": 1.7730312797313668,
         "train_cost_adjusted_return": 0.15910943727787966,
         "selection_correlation_max": 0.3744431610975413
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 22,
+      "timestamp": "2026-07-08T16:36:09.164075+00:00",
+      "seed": 1046,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0022\\evolution",
+      "n_merged": 33,
+      "n_cleaned": 10,
+      "n_deduped": 10,
+      "metrics": {
+        "test_sharpe": 5.411527139342381,
+        "test_cost_adjusted_return": 2.098531998081613,
+        "test_ic": 0.04787260352037857,
+        "train_sharpe": 2.175200283278119,
+        "train_cost_adjusted_return": 0.8522792035887884,
+        "selection_correlation_max": 0.35726847119210864
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": true,
+      "promoted": true
+    },
+    {
+      "iteration": 23,
+      "timestamp": "2026-07-08T16:52:06.261904+00:00",
+      "seed": 1047,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0023\\evolution",
+      "n_merged": 31,
+      "n_cleaned": 18,
+      "n_deduped": 14,
+      "metrics": {
+        "test_sharpe": 4.857430542210438,
+        "test_cost_adjusted_return": 1.8074526072683739,
+        "test_ic": 0.04332630758798092,
+        "train_sharpe": 1.4242818560196666,
+        "train_cost_adjusted_return": 0.4662395233157144,
+        "selection_correlation_max": 0.35617113169502135
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 24,
+      "timestamp": "2026-07-08T17:03:19.728439+00:00",
+      "seed": 1048,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0024\\evolution",
+      "n_merged": 35,
+      "n_cleaned": 19,
+      "n_deduped": 12,
+      "metrics": {
+        "test_sharpe": 5.469545152711827,
+        "test_cost_adjusted_return": 2.1646283530188413,
+        "test_ic": 0.04811638215185855,
+        "train_sharpe": 2.2731671845581998,
+        "train_cost_adjusted_return": 0.8586673515552184,
+        "selection_correlation_max": 0.35514525873883673
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": true,
+      "promoted": true
+    },
+    {
+      "iteration": 25,
+      "timestamp": "2026-07-08T17:23:34.096471+00:00",
+      "seed": 1049,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0025\\evolution",
+      "n_merged": 28,
+      "n_cleaned": 13,
+      "n_deduped": 14,
+      "metrics": {
+        "test_sharpe": 5.469545152711827,
+        "test_cost_adjusted_return": 2.1646283530188413,
+        "test_ic": 0.04811638215185855,
+        "train_sharpe": 2.2731671845581998,
+        "train_cost_adjusted_return": 0.8586673515552184,
+        "selection_correlation_max": 0.35514525873883673
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 26,
+      "timestamp": "2026-07-08T17:36:37.299725+00:00",
+      "seed": 1050,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0026\\evolution",
+      "n_merged": 22,
+      "n_cleaned": 13,
+      "n_deduped": 13,
+      "metrics": {
+        "test_sharpe": 5.469545152711827,
+        "test_cost_adjusted_return": 2.1646283530188413,
+        "test_ic": 0.04811638215185855,
+        "train_sharpe": 2.2731671845581998,
+        "train_cost_adjusted_return": 0.8586673515552184,
+        "selection_correlation_max": 0.35514525873883673
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 27,
+      "timestamp": "2026-07-08T17:59:18.802835+00:00",
+      "seed": 1051,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0027\\evolution",
+      "n_merged": 26,
+      "n_cleaned": 18,
+      "n_deduped": 14,
+      "metrics": {
+        "test_sharpe": 5.393808124920287,
+        "test_cost_adjusted_return": 1.9659407425099371,
+        "test_ic": 0.043945921041741526,
+        "train_sharpe": 3.1854730577547214,
+        "train_cost_adjusted_return": 1.281480707556694,
+        "selection_correlation_max": 0.29900254499843487
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 28,
+      "timestamp": "2026-07-08T18:24:04.738932+00:00",
+      "seed": 1052,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0028\\evolution",
+      "n_merged": 29,
+      "n_cleaned": 17,
+      "n_deduped": 15,
+      "metrics": {
+        "test_sharpe": 5.9344124965970595,
+        "test_cost_adjusted_return": 2.456853998515278,
+        "test_ic": 0.051498334203315774,
+        "train_sharpe": 1.8994628318453155,
+        "train_cost_adjusted_return": 0.7291920790630614,
+        "selection_correlation_max": 0.34827826794315914
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": true,
+      "promoted": true
+    },
+    {
+      "iteration": 29,
+      "timestamp": "2026-07-08T18:45:12.874968+00:00",
+      "seed": 1053,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0029\\evolution",
+      "n_merged": 29,
+      "n_cleaned": 18,
+      "n_deduped": 17,
+      "metrics": {
+        "test_sharpe": 5.939204637179935,
+        "test_cost_adjusted_return": 2.459140766075564,
+        "test_ic": 0.05149919764191512,
+        "train_sharpe": 1.9023963146946803,
+        "train_cost_adjusted_return": 0.7303606120488637,
+        "selection_correlation_max": 0.34827826794315914
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 30,
+      "timestamp": "2026-07-08T19:08:52.874761+00:00",
+      "seed": 1054,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0030\\evolution",
+      "n_merged": 30,
+      "n_cleaned": 24,
+      "n_deduped": 17,
+      "metrics": {
+        "test_sharpe": 4.349620887368708,
+        "test_cost_adjusted_return": 1.6344466383678298,
+        "test_ic": 0.04103487577160001,
+        "train_sharpe": 0.31858300236785375,
+        "train_cost_adjusted_return": 0.06963787887481943,
+        "selection_correlation_max": 0.3298872594583306
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 31,
+      "timestamp": "2026-07-08T19:25:58.442677+00:00",
+      "seed": 1055,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0031\\evolution",
+      "n_merged": 26,
+      "n_cleaned": 19,
+      "n_deduped": 18,
+      "metrics": {
+        "test_sharpe": 4.348958569398781,
+        "test_cost_adjusted_return": 1.6678743374554996,
+        "test_ic": 0.040033999914200306,
+        "train_sharpe": 2.7426370530995974,
+        "train_cost_adjusted_return": 1.2606782466161366,
+        "selection_correlation_max": 0.3236414453209299
       },
       "gates": {
         "train_sharpe_positive": true,

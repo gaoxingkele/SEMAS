@@ -14311,6 +14311,61 @@ returns to understand horizon sensitivity.
 - Wikimedia《玉照定真經》PDF：Wikimedia 429。
 - 其他《命理集成》卷：部分 Wikimedia 原始文件仍 429。
 
+## 2026-07-09 - 每本已下载书籍独立 AHP 建模与案例回测
+
+### 目标
+
+对所有本地已获得全文 PDF、全文网页或完整 DOCX 的命理资料进行建模。每本书对应一个 AHP 框架，每个框架包含多个子智能体，每个子智能体实现该书中的一个研判功能模块。完成后用公众人物案例回测。
+
+### 已建模书籍
+
+- 渊海子平
+- 子平真诠
+- 命理集成
+- 李虚中命书
+- 玉照定真经
+- 星平会海
+- 紫微斗数全书
+- Christian Astrology
+- 格局横门断
+
+### 执行内容
+
+1. 新增 `examples/mingli_5agents/tools/mingli_book_ahp.py`。
+2. 每本书建立独立 AHP 框架，包含 6-7 个子智能体模块。
+3. 更新 `hour_calibration.py`，候选时辰输出：
+   - `book_ahp_totals`
+   - 每个事件的 `book_ahp`
+4. 更新 `run_validation_batch.py`，输出 `book_fit_ranking`。
+5. 新增测试：
+   - `test_book_ahp_catalog_models_downloaded_books_with_subagents`
+6. 新增报告：
+   - `examples/mingli_5agents/case_studies/hour_calibration/book_ahp_backtest_2026-07-09.md`
+7. 新增 skill 参考：
+   - `C:/Users/xmupt/.codex/skills/mingli-bazi-all/references/book_ahp_frameworks.md`
+
+### 回测结果
+
+| 排名 | 书籍 | 平均参考排名 | 第一数 | 前三数 | 平均参考分 |
+|---:|---|---:|---:|---:|---:|
+| 1 | 星平会海 | 5.45 | 1 | 3 | 0.6886 |
+| 2 | 子平真诠 | 5.45 | 1 | 3 | 0.6812 |
+| 3 | 命理集成 | 5.55 | 0 | 4 | 0.6835 |
+| 4 | 格局横门断 | 5.73 | 0 | 2 | 0.7288 |
+| 5 | 渊海子平 | 5.91 | 2 | 3 | 0.7321 |
+| 6 | 玉照定真经 | 6.55 | 1 | 4 | 0.6544 |
+| 7 | 紫微斗数全书 | 6.73 | 0 | 0 | 0.6478 |
+| 8 | Christian Astrology | 7.09 | 1 | 2 | 0.6120 |
+| 9 | 李虚中命书 | 7.09 | 1 | 2 | 0.6436 |
+
+### 测试
+
+- `python -m py_compile examples\mingli_5agents\tools\mingli_book_ahp.py examples\mingli_5agents\case_studies\hour_calibration\hour_calibration.py examples\mingli_5agents\case_studies\hour_calibration\run_validation_batch.py`
+- `pytest -q examples\mingli_5agents\tests\test_mingli_system.py::test_hour_calibration_exposes_layered_strategy_scores examples\mingli_5agents\tests\test_mingli_system.py::test_book_ahp_catalog_models_downloaded_books_with_subagents`
+- `python examples\mingli_5agents\case_studies\hour_calibration\run_validation_batch.py`
+
+结果：编译通过，2 个定向测试通过，11 个案例回测完成。
+
 ## 2026-07-07 — Factor Mining Loop Iteration 22: 20-Day Horizon Evolution
 
 ### Motivation
@@ -14586,3 +14641,54 @@ library + Alpha101 seeds and the new TA-Lib variables.
 
 - Loader test on 3 symbols confirmed TA-Lib columns are produced.
 - Alpha101 seed expressions parse successfully.
+
+## 2026-07-08 19:34 UTC — 10 iterations completed; new live library promoted
+
+### Results Summary
+
+Completed 10 iterations (iter_0022–iter_0031) of the TA-Lib + Alpha101 5d
+factor-mining loop.
+
+- **Loop metrics (daily-rebalance, overlapping 5d labels):**
+  - Best test Sharpe: **5.9344** (iter 28)
+  - Best test cost-adjusted return: **245.69%**
+  - Promoted iterations: 22, 24, 28
+
+- **Realistic non-overlapping hold backtest (5d rebalance, 10 bps one-way):**
+  - 5d hold Sharpe: **2.3684**
+  - 5d hold annualized return: **69.55%**
+  - 5d hold max drawdown: **-17.02%**
+  - Comparison with previous library (pre-TA-Lib/Alpha101):
+    - Old 5d hold Sharpe: 1.8191
+    - Old 5d hold return: 41.89%
+  - Improvement: +0.55 Sharpe, +27.7 pp annual return.
+
+- **Multi-horizon hold (new library):**
+  - 10d hold Sharpe: 2.3048, return 64.36%
+  - 20d hold Sharpe: 2.6764, return 76.48%
+
+### Notable New Factors
+
+The promoted live library now heavily uses TA-Lib raw variables discovered by
+GP:
+
+- `cs_zscore(div(rsi_14, winsorize(total_mv)))`
+- `adx_14`
+- `ts_delta(rsi_14, 20)`
+- `mul(cs_zscore(if_else(sell_md_amount, neg(0.613), macd)), ts_std(...))`
+
+Classical fundamental/money-flow factors remain present but diversified.
+
+### Artifacts
+
+- Live library: `china_a_share_alpha_output/factor_mining_loop/live_library.csv`
+- State: `china_a_share_alpha_output/factor_mining_loop/state.json`
+- STATE.md updated.
+- Hold audit: `china_a_share_alpha_output/factor_mining_loop/multihizon_audit_iter24/`
+- Final audit: `china_a_share_alpha_output/factor_mining_loop/iter_0031_audit/`
+
+### Caveats
+
+Loop-level Sharpe/cost-adj are inflated by overlapping forward returns and
+ideal daily rebalancing. Always use the hold-audit numbers for production
+judgment.

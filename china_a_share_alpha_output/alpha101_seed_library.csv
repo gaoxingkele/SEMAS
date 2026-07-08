@@ -1,0 +1,4 @@
+factor,expression,train_ic,test_ic,test_sharpe,test_turnover
+alpha_001,"cs_rank(ts_max(mul(div(sub(close, ts_delay(close, 1)), ts_delay(close, 1)), div(sub(close, ts_delay(close, 1)), ts_delay(close, 1))), 5))",0.0,0.0,0.0,0.0
+alpha_003,"ts_corr(cs_rank(open), cs_rank(volume), 10)",0.0,0.0,0.0,0.0
+alpha_101,"div(sub(close, open), add(sub(high, low), 0.001))",0.0,0.0,0.0,0.0
