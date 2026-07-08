@@ -39,3 +39,6 @@ test_alpha_output/
 external/
 Smart_SkillandAgent/
 tools/
+.
+# Generated case-study outputs
+examples/mingli_5agents/case_studies/**/outputs/

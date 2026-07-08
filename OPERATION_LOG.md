@@ -14280,6 +14280,37 @@ returns to understand horizon sensitivity.
 
 结果：2 passed。
 
+## 2026-07-08 - 使用系统代理补下载八字扩展古籍
+
+### 目标
+
+用户提供系统代理 `127.0.0.1:18182`，要求继续下载此前缺失的八字扩展派系古籍全文。
+
+### 执行内容
+
+1. 使用 Python `requests` 配置代理：
+   - `http://127.0.0.1:18182`
+   - `https://127.0.0.1:18182`
+2. 重新尝试下载 Wikimedia Commons / NLC / CADAL 扫描文件。
+3. 同时补充维基文库和 CTEXT 的全文网页文本。
+4. 更新 `external/mingli_books/bazi/extended/SOURCES.md`。
+
+### 成功获得
+
+- `external/mingli_books/bazi/extended/mingli_jicheng_13jh001663.pdf`
+- `external/mingli_books/bazi/extended/mingli_jicheng_16002983.pdf`
+- `external/mingli_books/bazi/extended/text_sources/lixuzhong_mingshu_wikisource.html`
+- `external/mingli_books/bazi/extended/text_sources/lixuzhong_mingshu_ctext.html`
+- `external/mingli_books/bazi/extended/text_sources/yuzhao_dingzhenjing_ctext.html`
+- `external/mingli_books/bazi/extended/text_sources/xingping_huihai_ctext.html`
+
+### 仍未成功
+
+- CADAL《李虛中命書·卷上~卷下》DJVU：SSL EOF。
+- CADAL《李虛中命書 珞琭子三命消息賦注》DJVU：Wikimedia 429。
+- Wikimedia《玉照定真經》PDF：Wikimedia 429。
+- 其他《命理集成》卷：部分 Wikimedia 原始文件仍 429。
+
 ## 2026-07-07 — Factor Mining Loop Iteration 22: 20-Day Horizon Evolution
 
 ### Motivation
@@ -14523,3 +14554,35 @@ Per `.gitignore`:
 
 Initial push returned HTTP 408 due to large pack size. Resolved by increasing
 `http.postBuffer` to 500 MB and retrying.
+
+## 2026-07-08 16:15 UTC — Integrate TA-Lib + Alpha101 seeds and start 10 evolution iterations
+
+### Changes
+
+- Added TA-Lib technical indicators as raw variables:
+  - Updated `china_a_share_alpha/data/talib_features.py` with `add_talib_features()`.
+  - Updated `china_a_share_alpha/data/tushare_loader.py` to compute indicators when
+    `use_talib_features: true` (default true).
+  - Extended `china_a_share_alpha/evolution/factor_mutator.py::VARIABLES` with
+    rsi_14, macd, macd_signal, macd_hist, bband_upper/middle/lower, cci_20,
+    adx_14, willr_14, atr_14, mom_10, sma_20, ema_12, ema_26.
+- Generated Alpha101 seed library at
+  `china_a_share_alpha_output/alpha101_seed_library.csv` with alpha_001, alpha_003,
+  alpha_101.
+- Added configs:
+  - `china_a_share_alpha/examples/enhanced_loop_config_iter24_talib_val.yaml`
+  - `china_a_share_alpha/examples/factor_mining_loop_config_iter24_talib.yaml`
+
+### Run
+
+Started 10 iterations of the 5d factor mining loop seeded with the current live
+library + Alpha101 seeds and the new TA-Lib variables.
+
+- Command: `run_factor_mining_loop` with `factor_mining_loop_config_iter24_talib.yaml`
+- Output dir: `china_a_share_alpha_output/factor_mining_loop`
+- First iteration: iter_0022, seed=1046
+
+### Verification
+
+- Loader test on 3 symbols confirmed TA-Lib columns are produced.
+- Alpha101 seed expressions parse successfully.

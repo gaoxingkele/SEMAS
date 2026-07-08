@@ -13,6 +13,7 @@ from typing import Any
 from semas.genome.genome import AgentGenome
 from semas.mutator.mutator import Mutator
 
+from china_a_share_alpha.data.talib_features import TALIB_FEATURE_COLUMNS
 from china_a_share_alpha.factor.expression import (
     BinaryOp,
     Const,
@@ -36,7 +37,7 @@ VARIABLES = [
     "buy_md_amount", "sell_md_amount",
     "buy_sm_amount", "sell_sm_amount",
     "hk_vol", "hk_ratio",
-]
+] + TALIB_FEATURE_COLUMNS
 ROLLING_OPS = ["ts_mean", "ts_std", "ts_sum", "ts_min", "ts_max", "ts_delta", "ts_rank", "ts_skew", "ts_kurt", "ts_autocorr", "ts_entropy", "ts_argmax", "ts_argmin"]
 UNARY_OPS = ["abs", "log", "sign", "neg", "cs_rank", "cs_zscore"]
 BINARY_OPS = ["add", "sub", "mul", "div", "greater", "less", "if_positive"]

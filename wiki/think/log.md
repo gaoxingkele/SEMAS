@@ -51,3 +51,9 @@ absorbed ideas.
 - Commit `2ac47d4` pushed to https://github.com/gaoxingkele/SEMAS.git.
 - Included 91 files: code, configs, wiki/think, and key live libraries.
 - Local SEMAS repo now in sync with remote.
+
+## [2026-07-08] TA-Lib + Alpha101 integration and 10-iteration evolution
+
+- Added 15 TA-Lib indicators as raw variables.
+- Added Alpha101 (alpha_001, alpha_003, alpha_101) as seed expressions.
+- Started 10 iterations of 5d evolution in background.

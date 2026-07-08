@@ -26,6 +26,8 @@ import numpy as np
 import pandas as pd
 import tushare as ts
 
+from china_a_share_alpha.data.talib_features import add_talib_features, TALIB_FEATURE_COLUMNS
+
 
 DEFAULT_CACHE_DIR = Path("./china_a_share_alpha_output/tushare_cache")
 
@@ -318,6 +320,13 @@ def load_tushare_data(
 
     # Add vwap proxy = amount / volume.
     data["vwap"] = data["amount"] / (data["volume"].replace(0, np.nan))
+
+    # Add optional TA-Lib technical indicators.
+    if config.get("use_talib_features", True):
+        try:
+            data = add_talib_features(data)
+        except Exception as exc:
+            print(f"  Warning: failed to add TA-Lib features: {exc}")
 
     # Sector mapping: use synthetic deterministic sector per symbol.
     from china_a_share_alpha.data.sector_mapping import load_sector_market_cap
