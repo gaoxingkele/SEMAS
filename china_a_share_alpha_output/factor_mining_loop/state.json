@@ -1,8 +1,8 @@
 {
-  "iteration": 31,
-  "last_run": "2026-07-08T19:25:58.442677+00:00",
-  "best_test_sharpe": 5.9344124965970595,
-  "best_cost_adjusted_return": 2.456853998515278,
+  "iteration": 41,
+  "last_run": "2026-07-09T01:45:16.748818+00:00",
+  "best_test_sharpe": 5.7212679044294354,
+  "best_cost_adjusted_return": 2.3423885677523897,
   "live_library_path": "china_a_share_alpha_output\\factor_mining_loop\\live_library.csv",
   "history": [
     {
@@ -771,6 +771,246 @@
         "train_sharpe": 2.7426370530995974,
         "train_cost_adjusted_return": 1.2606782466161366,
         "selection_correlation_max": 0.3236414453209299
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 32,
+      "timestamp": "2026-07-08T22:40:27.557561+00:00",
+      "seed": 1056,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0032\\evolution",
+      "n_merged": 28,
+      "n_cleaned": 20,
+      "n_deduped": 18,
+      "metrics": {
+        "test_sharpe": 5.9344124965970595,
+        "test_cost_adjusted_return": 2.4568539984803293,
+        "test_ic": 0.0514983342203903,
+        "train_sharpe": 1.8994628318453155,
+        "train_cost_adjusted_return": 0.7291920790184204,
+        "selection_correlation_max": 0.34827826794315914
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 33,
+      "timestamp": "2026-07-08T23:04:49.888316+00:00",
+      "seed": 1057,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0033\\evolution",
+      "n_merged": 31,
+      "n_cleaned": 23,
+      "n_deduped": 21,
+      "metrics": {
+        "test_sharpe": 5.012948358178792,
+        "test_cost_adjusted_return": 1.7069093769416912,
+        "test_ic": 0.04379955102535238,
+        "train_sharpe": 2.896247923861082,
+        "train_cost_adjusted_return": 0.9725686914036328,
+        "selection_correlation_max": 0.3331457663395532
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 34,
+      "timestamp": "2026-07-08T23:18:52.059417+00:00",
+      "seed": 1058,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0034\\evolution",
+      "n_merged": 28,
+      "n_cleaned": 18,
+      "n_deduped": 16,
+      "metrics": {
+        "test_sharpe": 5.9344124965970595,
+        "test_cost_adjusted_return": 2.456853998515278,
+        "test_ic": 0.051498334203315774,
+        "train_sharpe": 1.8994628318453155,
+        "train_cost_adjusted_return": 0.7291920790630614,
+        "selection_correlation_max": 0.34827826794315914
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 35,
+      "timestamp": "2026-07-08T23:35:51.409961+00:00",
+      "seed": 1059,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0035\\evolution",
+      "n_merged": 33,
+      "n_cleaned": 19,
+      "n_deduped": 19,
+      "metrics": {
+        "test_sharpe": 4.498013488413914,
+        "test_cost_adjusted_return": 1.7022281224230795,
+        "test_ic": 0.04052225964739474,
+        "train_sharpe": 2.8603010856102693,
+        "train_cost_adjusted_return": 1.3069447720339495,
+        "selection_correlation_max": 0.32369909810943664
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 36,
+      "timestamp": "2026-07-08T23:59:24.596810+00:00",
+      "seed": 1060,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0036\\evolution",
+      "n_merged": 33,
+      "n_cleaned": 26,
+      "n_deduped": 23,
+      "metrics": {
+        "test_sharpe": 5.769568936614578,
+        "test_cost_adjusted_return": 2.3838087195935738,
+        "test_ic": 0.051289024405814176,
+        "train_sharpe": 1.987004989645977,
+        "train_cost_adjusted_return": 0.732151904283847,
+        "selection_correlation_max": 0.34827826794315914
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 37,
+      "timestamp": "2026-07-09T00:19:35.829499+00:00",
+      "seed": 1061,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0037\\evolution",
+      "n_merged": 31,
+      "n_cleaned": 20,
+      "n_deduped": 17,
+      "metrics": {
+        "test_sharpe": 6.343624401844357,
+        "test_cost_adjusted_return": 2.31475020770463,
+        "test_ic": 0.050909459649052816,
+        "train_sharpe": 2.1484178250884325,
+        "train_cost_adjusted_return": 0.811390847315708,
+        "selection_correlation_max": 0.34827826794315914
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": true,
+      "promoted": true
+    },
+    {
+      "iteration": 38,
+      "timestamp": "2026-07-09T00:39:07.466236+00:00",
+      "seed": 1062,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0038\\evolution",
+      "n_merged": 31,
+      "n_cleaned": 25,
+      "n_deduped": 20,
+      "metrics": {
+        "test_sharpe": 4.895307576117825,
+        "test_cost_adjusted_return": 1.7645367578036384,
+        "test_ic": 0.04269755678514461,
+        "train_sharpe": 1.9137879205931827,
+        "train_cost_adjusted_return": 0.873913011039029,
+        "selection_correlation_max": 0.34778784298303195
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 39,
+      "timestamp": "2026-07-09T00:58:53.932503+00:00",
+      "seed": 1063,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0039\\evolution",
+      "n_merged": 32,
+      "n_cleaned": 22,
+      "n_deduped": 20,
+      "metrics": {
+        "test_sharpe": 6.343624401844357,
+        "test_cost_adjusted_return": 2.31475020770463,
+        "test_ic": 0.050909459649052816,
+        "train_sharpe": 2.1484178250884325,
+        "train_cost_adjusted_return": 0.811390847315708,
+        "selection_correlation_max": 0.34827826794315914
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 40,
+      "timestamp": "2026-07-09T01:21:47.719528+00:00",
+      "seed": 1064,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0040\\evolution",
+      "n_merged": 34,
+      "n_cleaned": 25,
+      "n_deduped": 23,
+      "metrics": {
+        "test_sharpe": 5.7212679044294354,
+        "test_cost_adjusted_return": 2.3423885677523897,
+        "test_ic": 0.05061360428055321,
+        "train_sharpe": 1.8893700935553823,
+        "train_cost_adjusted_return": 0.695213054089654,
+        "selection_correlation_max": 0.3374030780201217
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true
+      },
+      "improved": true,
+      "promoted": true
+    },
+    {
+      "iteration": 41,
+      "timestamp": "2026-07-09T01:45:16.748818+00:00",
+      "seed": 1065,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0041\\evolution",
+      "n_merged": 33,
+      "n_cleaned": 29,
+      "n_deduped": 26,
+      "metrics": {
+        "test_sharpe": 4.774869774031894,
+        "test_cost_adjusted_return": 1.8577098091958932,
+        "test_ic": 0.04475936452719013,
+        "train_sharpe": 1.6970459539267715,
+        "train_cost_adjusted_return": 0.7681928056325737,
+        "selection_correlation_max": 0.328354089597571
       },
       "gates": {
         "train_sharpe_positive": true,

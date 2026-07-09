@@ -14713,3 +14713,39 @@ Artifacts:
 - `china_a_share_alpha_output/factor_mining_loop/multihizon_audit_iter24_cost30bps/`
 
 Started another 10-iteration evolution run (iter_0032–iter_0041) in background.
+
+## 2026-07-09 02:06 UTC — Second 10-iteration run (iter_0032–0041) and hold-audit findings
+
+### Iterations 32–41 Summary
+
+- Iter 37 promoted with loop test Sharpe 6.3436 / cost-adj 231.48%.
+- Iter 40 promoted with loop test Sharpe 5.7213 / cost-adj 234.24% (promoted by
+  return improvement, despite lower Sharpe).
+- Iter 41 did not improve; run stopped.
+
+### Hold Audit on Current Live Library (iter 40)
+
+Real non-overlapping hold backtests:
+
+| Cost | 5d hold Sharpe | 5d hold return | 5d max DD |
+|---|---:|---:|---:|
+| 10 bps | 1.64 | 39.41% | -18.04% |
+| 20 bps | 1.17 | 25.94% | -20.09% |
+| 30 bps | 0.70 | 13.75% | -22.16% |
+
+### Key Finding
+
+The additional 10 iterations improved loop-level cost-adjusted return but
+**degraded realistic hold Sharpe**. The best hold-Sharpe library remains
+**iter 28** (5d hold Sharpe 2.37 / return 69.55% / max DD -17.02%).
+
+Possible explanation: the loop's promotion criterion combines Sharpe and
+return thresholds, and the extra search overfitted to the high-turnover,
+overlapping forward-return metric rather than to real non-overlapping hold
+performance.
+
+### Decision Point
+
+Recommend restoring the iter 28 combined library as the live 5d library before
+production use, unless the user explicitly prefers the higher loop return of
+iter 40.

@@ -4,14 +4,37 @@ Last run: 2026-07-08
 
 ## Best Result
 
-- Test Sharpe (loop daily-reb): **5.9344**
-- Test cost-adjusted return (loop daily-reb): **245.69%**
+- Current live library: `china_a_share_alpha_output/factor_mining_loop/live_library.csv` (from iter 40)
+- Test Sharpe (loop daily-reb): **5.7213**
+- Test cost-adjusted return (loop daily-reb): **234.24%**
+- Real 5d hold Sharpe (current library, 10bps): **1.6418**
+- Real 5d hold annualized return (current library, 10bps): **39.41%**
+- Real 5d hold max drawdown (current library, 10bps): **-18.04%**
+
+### Best Hold-Sharpe Library (iter 28)
+
+> ⚠️ The additional 10 iterations improved loop-level cost-adjusted return but
+> degraded realistic 5d hold Sharpe. The best hold-Sharpe library remains
+> **iter 28**:
+
 - Real 5d hold Sharpe: **2.3684**
 - Real 5d hold annualized return: **69.55%**
 - Real 5d hold max drawdown: **-17.02%**
-- Live library: `china_a_share_alpha_output/factor_mining_loop/live_library.csv`
-- Final audit: `china_a_share_alpha_output/factor_mining_loop/iter_0031_audit`
-- Multi-horizon hold audit: `china_a_share_alpha_output/factor_mining_loop/multihizon_audit_iter24`
+- Library: `china_a_share_alpha_output/factor_mining_loop/iter_0028/combined_library.csv`
+- Hold audit: `china_a_share_alpha_output/factor_mining_loop/multihizon_audit_iter28_cost0001`
+
+### Cost Robustness (current iter 40 library)
+
+| Cost | 5d hold Sharpe | 5d hold return | 5d max DD |
+|---|---:|---:|---:|
+| 10 bps | 1.64 | 39.41% | -18.04% |
+| 20 bps | 1.17 | 25.94% | -20.09% |
+| 30 bps | 0.70 | 13.75% | -22.16% |
+
+### Other Artifacts
+
+- Final audit: `china_a_share_alpha_output/factor_mining_loop/iter_0041_audit`
+- Multi-horizon hold audit (current): `china_a_share_alpha_output/factor_mining_loop/multihizon_audit_iter40_cost0001`
 - 20d live library: `china_a_share_alpha_output/factor_mining_loop/live_library_20d.csv`
 - 20d hold audit: `china_a_share_alpha_output/factor_mining_loop_20d/iter_0003/horizon_audit`
 
@@ -71,6 +94,16 @@ Last run: 2026-07-08
 | 29 | 1053 | 29 | 18 | 17 | 1.902 | 5.9392 | 245.91% | NO | equal best |
 | 30 | 1054 | 30 | 24 | 17 | 0.319 | 4.3496 | 163.44% | NO | not improved |
 | 31 | 1055 | 26 | 19 | 18 | 2.743 | 4.3490 | 166.79% | NO | not improved |
+| 32 | 1056 | 28 | 20 | 18 | 1.899 | 5.9344 | 245.69% | NO | equal best |
+| 33 | 1057 | 31 | 23 | 21 | 2.896 | 5.0129 | 170.69% | NO | not improved |
+| 34 | 1058 | 28 | 18 | 16 | 1.899 | 5.9344 | 245.69% | NO | equal best |
+| 35 | 1059 | 33 | 19 | 19 | 2.860 | 4.4980 | 170.22% | NO | not improved |
+| 36 | 1060 | 33 | 26 | 23 | 1.987 | 5.7696 | 238.38% | NO | not improved |
+| 37 | 1061 | 31 | 20 | 17 | 2.148 | **6.3436** | 231.48% | YES | all✓ |
+| 38 | 1062 | 31 | 25 | 20 | 1.914 | 4.8953 | 176.45% | NO | not improved |
+| 39 | 1063 | 32 | 22 | 20 | 2.148 | 6.3436 | 231.48% | NO | equal best |
+| 40 | 1064 | 34 | 25 | 23 | 1.889 | 5.7213 | 234.24% | YES | promoted by return |
+| 41 | 1065 | 29 | 29 | 26 | 1.875 | 4.7750 | 185.77% | NO | not improved |
 
 ---
 

@@ -73,3 +73,11 @@ absorbed ideas.
 - Hold audit at 30bps: 5d Sharpe 1.50 / return 38.4%.
 - Alpha remains positive even at 60bps round-trip.
 - Started next 10 iterations (iter_0032–iter_0041) in background.
+
+## [2026-07-09] Iter 32-41: loop metrics up, hold Sharpe down
+
+- Iter 37 promoted: loop Sharpe 6.34.
+- Iter 40 promoted: loop Sharpe 5.72 but higher cost-adj return.
+- Current live library (iter40) real 5d hold: Sharpe 1.64 / return 39.4% / DD -18.0%.
+- Best hold-Sharpe remains iter28: 5d hold Sharpe 2.37 / return 69.6% / DD -17.0%.
+- Lesson: loop-level return threshold can overfit to overlapping forward returns.
