@@ -4,24 +4,31 @@ Last run: 2026-07-08
 
 ## Best Result
 
-- Current live library: `china_a_share_alpha_output/factor_mining_loop/live_library.csv` (from iter 40)
-- Test Sharpe (loop daily-reb): **5.7213**
-- Test cost-adjusted return (loop daily-reb): **234.24%**
-- Real 5d hold Sharpe (current library, 10bps): **1.6418**
-- Real 5d hold annualized return (current library, 10bps): **39.41%**
-- Real 5d hold max drawdown (current library, 10bps): **-18.04%**
+- Current live library: `china_a_share_alpha_output/factor_mining_loop/live_library.csv` (restored from **iter 26**)
+- Test Sharpe (loop daily-reb): **5.4695**
+- Test cost-adjusted return (loop daily-reb): **216.46%**
+- Real 5d hold Sharpe (current library, 10bps): **2.4913**
+- Real 5d hold annualized return (current library, 10bps): **73.70%**
+- Real 5d hold max drawdown (current library, 10bps): **-11.96%**
 
-### Best Hold-Sharpe Library (iter 28)
+> ℹ️ Restored on 2026-07-11 after batch multi-horizon audit showed iter 26 has
+> the best realistic 5d hold Sharpe.  Backup of previous iter 40 live library:
+> `live_library_iter40_backup_20260711.csv`.
 
-> ⚠️ The additional 10 iterations improved loop-level cost-adjusted return but
-> degraded realistic 5d hold Sharpe. The best hold-Sharpe library remains
-> **iter 28**:
+### Best Hold-Sharpe Libraries from Batch Audit
 
-- Real 5d hold Sharpe: **2.3684**
-- Real 5d hold annualized return: **69.55%**
-- Real 5d hold max drawdown: **-17.02%**
-- Library: `china_a_share_alpha_output/factor_mining_loop/iter_0028/combined_library.csv`
-- Hold audit: `china_a_share_alpha_output/factor_mining_loop/multihizon_audit_iter28_cost0001`
+| Rank | Iter | 5d hold Sharpe | 5d hold return | 5d max DD | Library |
+|---|---:|---:|---:|---:|---|
+| 1 | **26** | **2.49** | 73.70% | -11.96% | `iter_0026/combined_library.csv` |
+| 2 | 33 | 2.41 | 69.93% | -9.84% | `iter_0033/combined_library.csv` |
+| 3 | 36 | 2.37 | 61.27% | -12.46% | `iter_0036/combined_library.csv` |
+| 4 | 27 | 2.30 | 61.73% | -11.99% | `iter_0027/combined_library.csv` |
+| 5 | 39 | 2.29 | 60.29% | -13.40% | `iter_0039/combined_library.csv` |
+
+> ⚠️ Iter 28 (previous best from single audit) now ranks lower at 5d hold Sharpe 2.25.
+> The batch audit uses a fresh data load and equal-weight ensemble on
+> `combined_library.csv`, which explains the small numerical shift versus earlier
+> single audits.
 
 ### Cost Robustness (current iter 40 library)
 

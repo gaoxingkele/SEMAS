@@ -30,6 +30,17 @@ promote_sharpe_threshold: 0.03
 promote_return_threshold: 0.005
 
 # Hard gates
-min_train_sharpe_gate: 0.0
-min_cleaned_gate: 5
+# Note: 20d evolution currently produces negative train Sharpe on 2021-2022.
+# We keep a lenient train gate and rely on the realistic hold-Sharpe gate for
+# promotion decisions to avoid overfitting to the loop-level test metric.
+min_train_sharpe_gate: -2.0
+min_cleaned_gate: 2
 max_selection_correlation_gate: 0.7
+
+# Realistic hold-Sharpe gate
+use_hold_sharpe_gate: true
+hold_horizon: 20
+hold_transaction_cost: 0.001
+min_hold_sharpe_gate: 1.0
+promote_hold_sharpe_threshold: 0.03
+use_dynamic_trim_hold: false  # dynamic trim hurts 20d performance

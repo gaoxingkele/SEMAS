@@ -1,6 +1,6 @@
 {
-  "iteration": 41,
-  "last_run": "2026-07-09T01:45:16.748818+00:00",
+  "iteration": 45,
+  "last_run": "2026-07-12T10:19:49.320206+00:00",
   "best_test_sharpe": 5.7212679044294354,
   "best_cost_adjusted_return": 2.3423885677523897,
   "live_library_path": "china_a_share_alpha_output\\factor_mining_loop\\live_library.csv",
@@ -1019,10 +1019,163 @@
       },
       "improved": false,
       "promoted": false
+    },
+    {
+      "iteration": 42,
+      "timestamp": "2026-07-11T09:38:47.709503+00:00",
+      "seed": 1042,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0042\\evolution",
+      "n_merged": 13,
+      "n_cleaned": 10,
+      "n_deduped": 10,
+      "metrics": {
+        "test_sharpe": 2.348873228025022,
+        "test_cost_adjusted_return": 0.35880701659190967,
+        "test_ic": 0.02226263105367445,
+        "train_sharpe": 1.2167979925597545,
+        "train_cost_adjusted_return": 0.16999318850503037,
+        "selection_correlation_max": 0.35726847119210864,
+        "hold_sharpe": 1.9516631590149003,
+        "hold_annualized_return": 0.5262092642629661,
+        "hold_cost_adjusted_return": 0.5262092642629661,
+        "hold_max_drawdown": -0.17889285484452566
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true,
+        "hold_sharpe_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 43,
+      "timestamp": "2026-07-12T00:45:02.080251+00:00",
+      "seed": 1043,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0043\\evolution",
+      "n_merged": 29,
+      "n_cleaned": 10,
+      "n_deduped": 10,
+      "metrics": {
+        "test_sharpe": 2.348873228025022,
+        "test_cost_adjusted_return": 0.35880701659190967,
+        "test_ic": 0.02226263105367445,
+        "train_sharpe": 1.2167979925597545,
+        "train_cost_adjusted_return": 0.16999318850503037,
+        "selection_correlation_max": 0.35726847119210864,
+        "hold_sharpe": 1.9516631590149003,
+        "hold_annualized_return": 0.5262092642629661,
+        "hold_cost_adjusted_return": 0.5262092642629661,
+        "hold_max_drawdown": -0.17889285484452566
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true,
+        "hold_sharpe_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 44,
+      "timestamp": "2026-07-12T01:20:26.826818+00:00",
+      "seed": 1044,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0044\\evolution",
+      "n_merged": 27,
+      "n_cleaned": 17,
+      "n_deduped": 12,
+      "metrics": {
+        "test_sharpe": 1.5726560172658024,
+        "test_cost_adjusted_return": 0.260637776358802,
+        "test_ic": 0.01892590236124982,
+        "train_sharpe": 1.250450928064335,
+        "train_cost_adjusted_return": 0.24475699558122363,
+        "selection_correlation_max": 0.4883772415175892,
+        "hold_sharpe": 2.2353654397435245,
+        "hold_annualized_return": 0.8519223283911448,
+        "hold_cost_adjusted_return": 0.8519223283911448,
+        "hold_max_drawdown": -0.19286889341457192
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": true,
+        "max_corr_ok": true,
+        "hold_sharpe_ok": true
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 45,
+      "timestamp": "2026-07-12T09:41:24.160486+00:00",
+      "seed": 1045,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0045\\evolution",
+      "n_merged": 13,
+      "n_cleaned": 10,
+      "n_deduped": 0,
+      "metrics": {
+        "test_sharpe": 2.284676896301136,
+        "test_cost_adjusted_return": 0.3788644314455202,
+        "test_ic": 0.022800932547647285,
+        "train_sharpe": 0.9441217358977981,
+        "train_cost_adjusted_return": 0.12782848020527482,
+        "selection_correlation_max": 1.0,
+        "hold_sharpe": 0.0,
+        "hold_annualized_return": 0.0,
+        "hold_cost_adjusted_return": 0.0,
+        "hold_max_drawdown": 0.0
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": false,
+        "max_corr_ok": false,
+        "hold_sharpe_ok": false
+      },
+      "improved": false,
+      "promoted": false
+    },
+    {
+      "iteration": 45,
+      "timestamp": "2026-07-12T10:19:49.320206+00:00",
+      "seed": 1045,
+      "evolution_dir": "china_a_share_alpha_output\\factor_mining_loop\\iter_0045\\evolution",
+      "n_merged": 26,
+      "n_cleaned": 15,
+      "n_deduped": 0,
+      "metrics": {
+        "test_sharpe": 1.3614020873153683,
+        "test_cost_adjusted_return": 0.1527392531430228,
+        "test_ic": 0.011662297459116332,
+        "train_sharpe": 2.1777294790790807,
+        "train_cost_adjusted_return": 0.40823833081389244,
+        "selection_correlation_max": 1.0,
+        "hold_sharpe": 0.0,
+        "hold_annualized_return": 0.0,
+        "hold_cost_adjusted_return": 0.0,
+        "hold_max_drawdown": 0.0
+      },
+      "gates": {
+        "train_sharpe_positive": true,
+        "min_cleaned_count": false,
+        "max_corr_ok": false,
+        "hold_sharpe_ok": false
+      },
+      "improved": false,
+      "promoted": false
     }
   ],
   "live_library_20d_path": "china_a_share_alpha_output/factor_mining_loop/live_library_20d.csv",
   "best_20d_hold_sharpe": 1.977425,
   "best_20d_hold_cost_adj_return": 0.607828,
-  "live_library_20d_iteration": 22
+  "live_library_20d_iteration": 22,
+  "manual_restore": {
+    "timestamp": "2026-07-11T06:33:00+00:00",
+    "restored_from": "china_a_share_alpha_output/factor_mining_loop/iter_0026/combined_library.csv",
+    "previous_live_library_backup": "china_a_share_alpha_output/factor_mining_loop/live_library_iter40_backup_20260711.csv",
+    "reason": "Batch multi-horizon audit showed iter_26 has the best realistic 5d hold Sharpe (2.49) versus iter_40 (1.63).",
+    "restored_by": "batch_multihizon_audit follow-up"
+  },
+  "best_hold_sharpe": 2.4913
 }

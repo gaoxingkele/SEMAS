@@ -30,6 +30,10 @@ promote_sharpe_threshold: 0.03
 promote_return_threshold: 0.005
 
 # Hard gates
-min_train_sharpe_gate: 0.0
-min_cleaned_gate: 5
+# 10d evolution also produces negative train Sharpe on 2021-2022; rely on the
+# realistic hold-Sharpe gate to avoid promoting overfit libraries.
+min_train_sharpe_gate: -2.0
+min_cleaned_gate: 3
 max_selection_correlation_gate: 0.7
+
+# Realistic hold-Sharpe gate

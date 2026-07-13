@@ -188,12 +188,14 @@ class FactorPopulation:
         self.archive.append(cand)
         return cand
 
+
     def evaluate_population(self) -> list[FactorCandidate]:
         """Evaluate all agents in the current population."""
         results = []
         for agent in self.population:
             results.append(self.evaluate(agent))
         return results
+
 
     def select_and_breed(self, evaluated: list[FactorCandidate]) -> list[AgentGenome]:
         """Select elites and produce offspring via mutation/crossover."""

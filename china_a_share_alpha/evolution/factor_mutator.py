@@ -38,8 +38,8 @@ VARIABLES = [
     "buy_sm_amount", "sell_sm_amount",
     "hk_vol", "hk_ratio",
 ] + TALIB_FEATURE_COLUMNS
-ROLLING_OPS = ["ts_mean", "ts_std", "ts_sum", "ts_min", "ts_max", "ts_delta", "ts_rank", "ts_skew", "ts_kurt", "ts_autocorr", "ts_entropy", "ts_argmax", "ts_argmin"]
-UNARY_OPS = ["abs", "log", "sign", "neg", "cs_rank", "cs_zscore"]
+ROLLING_OPS = ["ts_mean", "ts_std", "ts_sum", "ts_min", "ts_max", "ts_delta", "ts_rank", "ts_skew", "ts_kurt", "ts_autocorr", "ts_entropy", "ts_argmax", "ts_argmin", "ts_median", "ts_percentile_90", "ts_percentile_10", "ts_decay_linear", "ts_min_max_scale"]
+UNARY_OPS = ["abs", "log", "sign", "neg", "cs_rank", "cs_zscore", "cs_percentile", "cs_demean", "cs_winsorize"]
 BINARY_OPS = ["add", "sub", "mul", "div", "greater", "less", "if_positive"]
 TERNARY_OPS = ["if_else"]
 WINDOWS = [3, 5, 10, 20, 60]

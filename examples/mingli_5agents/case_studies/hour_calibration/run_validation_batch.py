@@ -49,6 +49,7 @@ def run_batch(case_dir: Path, out_dir: Path, case_names: list[str]) -> dict[str,
         "case_count": len(rows),
         "rows": rows,
         "school_fit_ranking": _school_fit_ranking(out_dir, rows),
+        "book_fit_ranking": _book_fit_ranking(out_dir, rows),
         "hit_count": sum(1 for row in rows if row["reference_rank"] == 1),
         "top3_count": sum(1 for row in rows if isinstance(row["reference_rank"], int) and row["reference_rank"] <= 3),
         "ambiguous_count": sum(1 for row in rows if row["decision"] == "ambiguous"),
@@ -116,6 +117,20 @@ def render_summary_markdown(summary: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
+            "## 每本书 AHP 框架吻合度",
+            "",
+            "| 排名 | 书籍 | 平均参考排名 | 第一数 | 前三数 | 平均参考分 |",
+            "|---:|---|---:|---:|---:|---:|",
+        ]
+    )
+    for index, row in enumerate(summary.get("book_fit_ranking", []), start=1):
+        lines.append(
+            f"| {index} | {row['title']} | {row['mean_reference_rank']} | "
+            f"{row['top1_count']} | {row['top3_count']} | {row['average_reference_score']} |"
+        )
+    lines.extend(
+        [
+            "",
             "## 解释边界",
             "",
             "- 该表只检验不同候选时辰对已知事件的解释力，不证明真实出生时辰。",
@@ -174,6 +189,67 @@ def _school_fit_ranking(out_dir: Path, rows: list[dict[str, Any]]) -> list[dict[
                 {
                     "school_id": school_id,
                     "school_name": school_name,
+                    "mean_reference_rank": round(sum(ranks) / len(ranks), 2),
+                    "top1_count": sum(1 for rank in ranks if rank == 1),
+                    "top3_count": sum(1 for rank in ranks if rank <= 3),
+                    "average_reference_score": round(sum(scores) / len(scores), 4),
+                }
+            )
+    output.sort(key=lambda item: (item["mean_reference_rank"], -item["top3_count"], -item["top1_count"]))
+    return output
+
+
+def _book_fit_ranking(out_dir: Path, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    case_ids = {row["case_id"] for row in rows}
+    loaded = []
+    for path in out_dir.glob("*.hour_calibration.json"):
+        if path.stem.replace(".hour_calibration", "") not in case_ids:
+            continue
+        loaded.append(json.loads(path.read_text(encoding="utf-8")))
+    book_ids = sorted(
+        {
+            book_id
+            for result in loaded
+            for book_id in result["winner"].get("book_ahp_totals", {})
+        }
+    )
+    output = []
+    for book_id in book_ids:
+        ranks = []
+        scores = []
+        title = book_id
+        domain = ""
+        for result in loaded:
+            refs = [
+                ref
+                for ref in result.get("reference_evaluation", {}).get("references", [])
+                if isinstance(ref.get("rank"), int)
+            ]
+            if not refs:
+                continue
+            reference_label = refs[0]["label"]
+            ranking = sorted(
+                result["ranking"],
+                key=lambda candidate: candidate.get("book_ahp_totals", {})
+                .get(book_id, {})
+                .get("score", 0.0),
+                reverse=True,
+            )
+            for index, candidate in enumerate(ranking, start=1):
+                if candidate["hour_label"] != reference_label:
+                    continue
+                book_row = candidate["book_ahp_totals"][book_id]
+                title = book_row["title"]
+                domain = book_row.get("domain", "")
+                ranks.append(index)
+                scores.append(float(book_row["score"]))
+                break
+        if ranks:
+            output.append(
+                {
+                    "book_id": book_id,
+                    "title": title,
+                    "domain": domain,
                     "mean_reference_rank": round(sum(ranks) / len(ranks), 2),
                     "top1_count": sum(1 for rank in ranks if rank == 1),
                     "top3_count": sum(1 for rank in ranks if rank <= 3),

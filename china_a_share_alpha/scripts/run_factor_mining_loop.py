@@ -26,6 +26,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import yaml
 
@@ -34,6 +35,13 @@ from china_a_share_alpha.data.tushare_loader import (
     load_tushare_data_with_val,
 )
 from china_a_share_alpha.factor.parser import parse_expression
+from china_a_share_alpha.scripts.run_multihizon_audit import (
+    _compute_forward,
+    _dynamic_trim_backtest,
+    _hold_backtest,
+    _smooth,
+    _zscore,
+)
 
 
 DEFAULT_STATE = {
@@ -41,6 +49,7 @@ DEFAULT_STATE = {
     "last_run": None,
     "best_test_sharpe": 0.0,
     "best_cost_adjusted_return": 0.0,
+    "best_hold_sharpe": 0.0,
     "live_library_path": None,
     "history": [],
 }
@@ -60,18 +69,27 @@ def save_state(state_path: Path, state: dict) -> None:
 
 
 def run_cmd(cmd: list[str], cwd: Path | None = None) -> str:
-    """Run a command and return stdout; raise on error."""
+    """Run a command; raise on error.  Output is streamed to a log file to avoid
+    filling memory buffers during long-running evolution subprocesses."""
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
-    result = subprocess.run(
-        cmd,
-        cwd=cwd,
-        env=env,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    return result.stdout
+    log_name = "run_cmd.log"
+    for i, part in enumerate(cmd):
+        if part == "-m" and i + 1 < len(cmd):
+            log_name = cmd[i + 1].replace(".", "_").replace("-", "_") + ".log"
+            break
+    log_path = Path(cwd if cwd else ".") / log_name
+    with open(log_path, "a", encoding="utf-8") as log_file:
+        result = subprocess.run(
+            cmd,
+            cwd=cwd,
+            env=env,
+            check=True,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+    return ""
 
 
 def merge_libraries(library_paths: list[Path], output_path: Path) -> int:
@@ -113,8 +131,52 @@ def add_high_zscore(library_path: Path, output_path: Path) -> None:
     merged.to_csv(output_path, index=False)
 
 
-def _zscore(s: pd.Series) -> pd.Series:
-    return s.groupby(level="date").transform(lambda x: (x - x.mean()) / (x.std() + 1e-8))
+def compute_hold_sharpe(
+    library_path: Path,
+    data_config: dict,
+    horizon: int = 5,
+    transaction_cost: float = 0.001,
+    smooth_span: int = 10,
+    use_dynamic_trim: bool = False,
+) -> dict:
+    """Compute realistic non-overlapping hold Sharpe for a factor library.
+
+    Equal-weight ensemble of all expressions in ``library_path``; evaluated on
+    the test fold only (the fold that should determine production readiness).
+    Returns a dict with ``sharpe``, ``annualized_return``, ``cost_adjusted_return``,
+    and ``max_drawdown``.
+    """
+    if isinstance(data_config, (str, Path)):
+        with open(data_config, "r", encoding="utf-8") as f:
+            data_config = yaml.safe_load(f)
+
+    train, val, test = load_tushare_data_with_val(data_config)
+    lib = pd.read_csv(library_path)
+    if "factor" not in lib.columns:
+        lib["factor"] = lib["rank"].apply(lambda r: f"factor_{r}")
+
+    factor_frames = {}
+    for _, row in lib.iterrows():
+        try:
+            expr = parse_expression(row["expression"])
+            factor_frames[row["factor"]] = _zscore(expr.eval(test))
+        except Exception as exc:
+            print(f"  [hold] skipping {row.get('factor')}: {exc}")
+
+    if not factor_frames:
+        return {
+            "sharpe": 0.0,
+            "annualized_return": 0.0,
+            "cost_adjusted_return": 0.0,
+            "max_drawdown": 0.0,
+        }
+
+    mat = pd.concat(factor_frames.values(), axis=1).dropna()
+    weights = np.ones(len(factor_frames)) / len(factor_frames)
+    signal = _smooth((mat @ weights).clip(-5, 5), smooth_span)
+    if use_dynamic_trim:
+        return _dynamic_trim_backtest(signal, test["return"], horizon, transaction_cost)
+    return _hold_backtest(signal, test["return"], horizon, transaction_cost)
 
 
 def semantic_deduplicate(
@@ -368,12 +430,36 @@ def run_loop_iteration(
     run_cmd(combo_cmd)
     metrics = parse_combination_result(combo_output)
 
-
+    # ---- HOLD SHARPE GATE (optional) ----
+    use_hold_gate = cfg.get("use_hold_sharpe_gate", False)
+    if use_hold_gate:
+        print(f"[iter {iteration}] Computing realistic hold Sharpe ...")
+        hold_metrics = compute_hold_sharpe(
+            combined_library,
+            cfg["data_config"],
+            horizon=cfg.get("hold_horizon", 5),
+            transaction_cost=cfg.get("hold_transaction_cost", 0.001),
+            smooth_span=cfg.get("smooth_span", 10),
+            use_dynamic_trim=cfg.get("use_dynamic_trim_hold", False),
+        )
+        metrics["hold_sharpe"] = hold_metrics["sharpe"]
+        metrics["hold_annualized_return"] = hold_metrics["annualized_return"]
+        metrics["hold_cost_adjusted_return"] = hold_metrics["cost_adjusted_return"]
+        metrics["hold_max_drawdown"] = hold_metrics["max_drawdown"]
+        print(
+            f"[iter {iteration}] Hold metrics: "
+            f"sharpe={hold_metrics['sharpe']:.3f}, "
+            f"ret={hold_metrics['annualized_return']:.2%}, "
+            f"dd={hold_metrics['max_drawdown']:.2%}"
+        )
 
     # ---- 5. DECIDE with gates ----
     improvement_sharpe = metrics["test_sharpe"] - state["best_test_sharpe"]
     improvement_return = (
         metrics["test_cost_adjusted_return"] - state["best_cost_adjusted_return"]
+    )
+    improvement_hold = (
+        metrics.get("hold_sharpe", 0.0) - state.get("best_hold_sharpe", 0.0)
     )
 
     gates = {
@@ -383,12 +469,20 @@ def run_loop_iteration(
         "max_corr_ok": metrics["selection_correlation_max"]
         <= cfg.get("max_selection_correlation_gate", 1.0),
     }
+    if use_hold_gate:
+        gates["hold_sharpe_ok"] = (
+            metrics["hold_sharpe"] >= cfg.get("min_hold_sharpe_gate", 0.0)
+        )
     gates_passed = all(gates.values())
 
     improved = (
         improvement_sharpe >= cfg.get("promote_sharpe_threshold", 0.05)
         or improvement_return >= cfg.get("promote_return_threshold", 0.005)
     )
+    if use_hold_gate:
+        improved = improved and (
+            improvement_hold >= cfg.get("promote_hold_sharpe_threshold", 0.05)
+        )
     promote = improved and gates_passed
 
     if promote:
@@ -397,10 +491,18 @@ def run_loop_iteration(
         state["live_library_path"] = str(new_live)
         state["best_test_sharpe"] = float(metrics["test_sharpe"])
         state["best_cost_adjusted_return"] = float(metrics["test_cost_adjusted_return"])
+        if use_hold_gate:
+            state["best_hold_sharpe"] = float(metrics["hold_sharpe"])
         print(
             f"[iter {iteration}] PROMOTED new live library "
             f"(sharpe={metrics['test_sharpe']:.3f}, "
-            f"cost_adj={metrics['test_cost_adjusted_return']:.3%})"
+            f"cost_adj={metrics['test_cost_adjusted_return']:.3%}"
+            + (
+                f", hold_sharpe={metrics['hold_sharpe']:.3f}"
+                if use_hold_gate
+                else ""
+            )
+            + ")"
         )
     else:
         reasons = []
@@ -416,7 +518,14 @@ def run_loop_iteration(
             f"new sharpe={metrics['test_sharpe']:.3f}, "
             f"new cost_adj={metrics['test_cost_adjusted_return']:.3%}; "
             f"best sharpe={state['best_test_sharpe']:.3f}, "
-            f"best cost_adj={state['best_cost_adjusted_return']:.3%})"
+            f"best cost_adj={state['best_cost_adjusted_return']:.3%}"
+            + (
+                f", new hold_sharpe={metrics['hold_sharpe']:.3f}, "
+                f"best hold_sharpe={state['best_hold_sharpe']:.3f}"
+                if use_hold_gate
+                else ""
+            )
+            + ")"
         )
 
     # ---- 6. STATE + REPORT ----
@@ -438,7 +547,7 @@ def run_loop_iteration(
     state["history"].append(entry)
     save_state(state_path, state)
 
-    report_path = write_report(output_dir, iteration_dir, state, entry, promote)
+    report_path = write_report(output_dir, iteration_dir, state, entry, promote, cfg)
     print(f"[iter {iteration}] Report: {report_path}")
 
     return state
@@ -450,12 +559,14 @@ def write_report(
     state: dict,
     entry: dict,
     promoted: bool,
+    cfg: dict,
 ) -> Path:
     """Write a human-readable loop report."""
     ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     report_path = output_dir / f"loop_report_{ts}.md"
     metrics = entry["metrics"]
 
+    has_hold = "hold_sharpe" in metrics
     lines = [
         f"# Factor Mining Loop Report — Iteration {entry['iteration']}",
         "",
@@ -472,12 +583,29 @@ def write_report(
         "|---|---|---|---|",
         f"| Train | {metrics['train_sharpe']:.4f} | {metrics['train_cost_adjusted_return']:.4f} | - |",
         f"| Test | {metrics['test_sharpe']:.4f} | {metrics['test_cost_adjusted_return']:.4f} | {metrics['test_ic']:.4f} |",
+    ]
+    if has_hold:
+        lines += [
+            "",
+            "### Realistic Hold Backtest",
+            "",
+            f"- Dynamic trim: {cfg.get('use_dynamic_trim_hold', False)}",
+            f"- Hold Sharpe: {metrics['hold_sharpe']:.4f}",
+            f"- Hold annualized return: {metrics['hold_annualized_return']:.2%}",
+            f"- Hold cost-adjusted return: {metrics['hold_cost_adjusted_return']:.2%}",
+            f"- Hold max drawdown: {metrics['hold_max_drawdown']:.2%}",
+        ]
+    lines += [
         "",
         "## Gates",
         "",
         f"- train_sharpe_positive: {entry['gates']['train_sharpe_positive']}",
         f"- min_cleaned_count: {entry['gates']['min_cleaned_count']}",
         f"- max_corr_ok: {entry['gates']['max_corr_ok']} (max corr = {metrics.get('selection_correlation_max', 1.0):.4f})",
+    ]
+    if has_hold:
+        lines.append(f"- hold_sharpe_ok: {entry['gates'].get('hold_sharpe_ok', False)}")
+    lines += [
         "",
         "## Decision",
         "",
@@ -488,6 +616,10 @@ def write_report(
             "",
             f"- New best Sharpe: {state['best_test_sharpe']:.4f}",
             f"- New best cost-adjusted return: {state['best_cost_adjusted_return']:.4f}",
+        ]
+        if has_hold:
+            lines.append(f"- New best hold Sharpe: {state['best_hold_sharpe']:.4f}")
+        lines += [
             "",
             "> Human gate: review the new `live_library.csv` before committing.",
         ]
@@ -498,6 +630,10 @@ def write_report(
             f"- Previous best Sharpe: {state['best_test_sharpe']:.4f}",
             f"- Previous best cost-adjusted return: {state['best_cost_adjusted_return']:.4f}",
         ]
+        if has_hold:
+            lines.append(
+                f"- Previous best hold Sharpe: {state.get('best_hold_sharpe', 0.0):.4f}"
+            )
 
     lines += [
         "",

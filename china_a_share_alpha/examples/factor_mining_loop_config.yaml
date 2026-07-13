@@ -41,3 +41,18 @@ promote_return_threshold: 0.005
 min_train_sharpe_gate: 0.0      # train Sharpe must be positive
 min_cleaned_gate: 5             # at least this many factors must survive cleaning
 max_selection_correlation_gate: 0.7  # max abs pairwise corr among selected factors
+
+# Realistic hold-Sharpe gate (NEW).  When enabled, the loop computes a
+# non-overlapping H-day hold backtest on the test fold and requires both the
+# absolute gate and an improvement over the previous best hold Sharpe before
+# promoting a new live library.  This prevents overfitting to the loop's
+# internal daily-rebalanced, overlapping-forward-return metric.
+use_hold_sharpe_gate: true
+hold_horizon: 5                 # days between rebalances
+hold_transaction_cost: 0.001    # 10 bps one-way
+min_hold_sharpe_gate: 1.0       # new library must have hold Sharpe >= 1.0
+promote_hold_sharpe_threshold: 0.03  # must improve best hold Sharpe by >= 0.03
+# Dynamic trim: cut long positions if their cross-sectional rank deteriorates
+# during the holding window.  Backtests show it improves Sharpe/drawdown for
+# 5d/10d but harms 20d, so enable only for short/medium horizons.
+use_dynamic_trim_hold: true

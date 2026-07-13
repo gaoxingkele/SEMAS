@@ -242,7 +242,7 @@ def main() -> int:
 
     # Diversity signal: max absolute pairwise correlation among selected factors.
     corr_matrix = weight_mat.corr(method="spearman")
-    corr_values = corr_matrix.abs().values
+    corr_values = corr_matrix.abs().values.copy()
     np.fill_diagonal(corr_values, 0.0)
     max_corr = float(corr_values.max()) if corr_values.size else 0.0
     corr_matrix.to_csv(args.output_dir / "factor_correlation.csv")

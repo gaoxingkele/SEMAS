@@ -28,6 +28,10 @@ from examples.mingli_5agents.tools.bazi_school_ahp import (
     aggregate_school_scores,
     score_all_bazi_schools,
 )
+from examples.mingli_5agents.tools.mingli_book_ahp import (
+    aggregate_book_scores,
+    score_all_book_frameworks,
+)
 from examples.mingli_5agents.tools.bazi_pai_pan import build_bazi_chart
 from examples.mingli_5agents.tools.lunar_date import normalize_birth_input
 from examples.mingli_5agents.tools.ziwei_pai_pan import build_ziwei_chart
@@ -158,11 +162,23 @@ def _candidate_result(
         score_all_bazi_schools(event, rows_by_year.get(int(event["year"]), {}), bazi)
         for event in events
     ]
+    book_event_scores = [
+        score_all_book_frameworks(
+            event,
+            rows_by_year.get(int(event["year"]), {}),
+            bazi,
+            ziwei_rows_by_year.get(int(event["year"]), {}),
+            astrology_rows_by_year.get(int(event["year"]), {}),
+        )
+        for event in events
+    ]
     for event_score, hengmen_score in zip(event_scores, hengmen_event_scores):
         event_score["hengmen_ahp"] = hengmen_score
         event_score["hengmen_score"] = hengmen_score["score"]
     for event_score, school_scores in zip(event_scores, bazi_school_event_scores):
         event_score["bazi_school_ahp"] = school_scores
+    for event_score, book_scores in zip(event_scores, book_event_scores):
+        event_score["book_ahp"] = book_scores
     total_weight = sum(float(event.get("weight", 1.0) or 1.0) for event in events)
     event_fit_total = round(sum(item["weighted_score"] for item in event_scores) / max(total_weight, 0.001), 4)
     layered_event_total = round(
@@ -175,6 +191,7 @@ def _candidate_result(
     ziwei_side_total = _side_total(event_scores, "ziwei_score", events)
     astrology_side_total = _side_total(event_scores, "astrology_score", events)
     bazi_school_ahp_totals = aggregate_school_scores(bazi_school_event_scores, events)
+    book_ahp_totals = aggregate_book_scores(book_event_scores, events)
     strategy_total = round(
         event_fit_total * 0.3
         + layered_event_total * 0.2
@@ -228,6 +245,7 @@ def _candidate_result(
         },
         "hengmen_chart_strategy": hengmen_chart_strategy,
         "bazi_school_ahp_totals": bazi_school_ahp_totals,
+        "book_ahp_totals": book_ahp_totals,
         "event_scores": event_scores,
     }
 

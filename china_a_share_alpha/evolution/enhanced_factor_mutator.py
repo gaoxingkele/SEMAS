@@ -44,8 +44,8 @@ from china_a_share_alpha.factor.expression import (
 
 # Extended operator sets.
 EXTENDED_UNARY_OPS = UNARY_OPS + ["signed_power", "winsorize"]
-EXTENDED_ROLLING_OPS = ROLLING_OPS + ["ts_ema", "ts_pct_change", "ts_zscore", "ts_shift"]
-EXTENDED_BINARY_OPS = BINARY_OPS + ["if_positive"]  # if_positive(x, y) = y if x > 0 else 0
+EXTENDED_ROLLING_OPS = ROLLING_OPS + ["ts_ema", "ts_pct_change", "ts_zscore", "ts_shift", "ts_median", "ts_percentile_90", "ts_percentile_10", "ts_decay_linear", "ts_min_max_scale"]
+EXTENDED_BINARY_OPS = BINARY_OPS  # if_positive already in BINARY_OPS
 EXTENDED_TERNARY_OPS = TERNARY_OPS
 HIGH_ORDER_ROLLING_OPS = ["ts_skew", "ts_kurt", "ts_autocorr", "ts_entropy"]
 
@@ -130,6 +130,9 @@ class EnhancedFactorMutator(FactorMutator):
         meta = copy.deepcopy(dict(agent.meta))
         stage = meta.get("factor_expression", {}).get("stage", 0)
 
+        # Allow deeper trees for richer long-horizon factor expressions.
+        max_depth = 5
+
         if self.mode == "seed" and stage == 0:
             # A strong volatility/reversal seed for recent A-share regime.
             expr: FactorExpr = UnaryOp(
@@ -137,7 +140,7 @@ class EnhancedFactorMutator(FactorMutator):
                 RollingOp("ts_mean", UnaryOp("abs", Var("return")), 5),
             )
         elif self.mode == "gp":
-            expr = _random_expression(max_depth=4)
+            expr = _random_expression(max_depth=5)
         else:
             expr = self._get_expr(agent).copy()
             mutation = random.choice([
@@ -169,7 +172,7 @@ class EnhancedFactorMutator(FactorMutator):
                     elif isinstance(node, BinaryOp):
                         node.op = random.choice(EXTENDED_BINARY_OPS)
             elif mutation == "replace_subtree":
-                expr = _replace_random_node(expr, _random_expression(max_depth=2))
+                expr = _replace_random_node(expr, _random_expression(max_depth=3))
             elif mutation == "add_lag":
                 expr = RollingOp(op="ts_shift", child=expr, window=random.choice([1, 2, 3, 5]))
             elif mutation == "signed_power":
@@ -181,7 +184,7 @@ class EnhancedFactorMutator(FactorMutator):
 
             # Reject mutations that blow up the tree or reintroduce degenerate
             # constant sub-expressions.
-            if not is_reasonable_expression(expr) or _node_count(expr) > MAX_NODES:
+            if not is_reasonable_expression(expr) or _node_count(expr) > 40:
                 expr = self._get_expr(agent).copy()
 
         evolved = self._set_expr(agent, expr)

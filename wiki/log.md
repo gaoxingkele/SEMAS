@@ -4,6 +4,31 @@ Chronological record of wiki updates, loop runs, and key decisions.
 
 ---
 
+## [2026-07-11] implemented recommendations
+
+- Restored 5d live library to `iter_26` (realistic 5d hold Sharpe 2.49).
+- Added hold-Sharpe promotion gate to `run_factor_mining_loop.py`.
+- Enabled hold-Sharpe gate for 5d/10d/20d loops.
+- Fixed read-only NumPy array bug in `run_factor_combination.py`.
+- Fixed `factor/expression.py` to handle `None`/object-dtype/missing columns and
+  prevent 20d evolution crashes.
+- Created 10d loop `state.json` and started 5 more iterations.
+- Relaxed 10d loop `min_train_sharpe_gate` to -2.0 and `min_cleaned_gate` to 3
+  so hold-Sharpe gate dominates promotion decisions.
+- Promoted 20d `iter_0005` to live library (20d hold Sharpe 1.51) and started
+  3 more iterations.
+- Added `wiki/factor_mining_loop_hold_sharpe_gate.md`.
+
+## [2026-07-11] batch multi-horizon audit
+
+- Audited all 47 evolved iteration libraries across 5d / 10d / 20d horizons.
+- 5d loop best realistic 5d hold Sharpe: iter_26 (2.49, return 73.70%, DD -11.96%).
+- Current `live_library.csv` (iter 40) 5d hold Sharpe: 1.63 — worse than iter_26/28.
+- 10d loop has only 1 iteration; 20d loop has 5 iterations but all failed
+  train-Sharpe gate.
+- Added `wiki/factor_mining_loop_multihizon_batch_audit.md` and
+  `china_a_share_alpha/scripts/batch_multihizon_audit.py`.
+
 ## [2026-07-07] loop run | Iteration 22
 
 - Added configurable `forward_period` to Tushare loader.
@@ -214,3 +239,76 @@ Chronological record of wiki updates, loop runs, and key decisions.
 - Promoted a 3-factor live library.
 - Test Sharpe: 1.6283, cost-adj return: 24.75%.
 - Added `wiki/factor_mining_loop_iteration_1.md`.
+
+## [2026-07-11] 10d/20d evolution scope reduction
+
+- Root cause: 10d/20d evolution was not hanging, just very slow
+  (~30-40 min/iteration with population_size=30, max_generations=8).
+- Reduced 10d and 20d evolution configs to population_size=15, max_generations=5,
+  patience=2 to bring iteration time to ~10-15 minutes.
+- Restarted 20d loop iter_0006 with reduced scope.
+
+## [2026-07-11] 10d/20d loops resumed and stable
+
+- 10d loop ran iter_0004–0006; iter_0004 promoted with 10d hold Sharpe 2.782.
+- 20d loop ran iter_0006–0008; retained iter_0005 live library (20d hold Sharpe 1.512).
+- Confirmed hold-Sharpe gate works for promotion decisions.
+
+## [2026-07-11] expanded 20d evolution search
+
+- Increased 20d population_size to 25, max_generations to 8, leaderboard_size to 50.
+- Lowered 20d min_cleaned_gate to 2.
+- Started 3 extended 20d iterations (iter_0009–0011).
+
+## [2026-07-12] adjusted 20d scope to moderate budget
+
+- Expanded 25/8 config too slow; reverted to population_size=18, max_generations=6.
+- Started 2 iterations (iter_0009–0010).
+
+## [2026-07-12] expanded 20d search results
+
+- Ran iter_0009–0010 with population_size=18, max_generations=6.
+- Best hold Sharpe: iter_0009 = 1.511 (just below existing best 1.512).
+- iter_0010 hold Sharpe = 1.001.
+- Existing 20d live library (iter_0005) remains best.
+
+## [2026-07-12] expanded factor grammar
+
+- Added ts_median, ts_percentile_90/10, ts_decay_linear, ts_min_max_scale.
+- Added cs_percentile, cs_demean, cs_winsorize.
+- Increased max depth to 5, max nodes to 40.
+- Updated expression.py, factor_mutator.py, enhanced_factor_mutator.py.
+
+## [2026-07-12] restarted 5d/10d/20d loops with expanded grammar
+
+- Fixed cs_zscore/cs_rank regression from grammar expansion.
+- Restarted 5d iter_0043–0044, 10d iter_0007–0008, 20d iter_0011–0012 in parallel.
+
+## [2026-07-12] final extended evolution results
+
+- 5d iter_0043–0044 did not beat iter_26 (2.491).
+- 10d iter_0007 matched best 2.782 but did not improve; iter_0008 timed out.
+- 20d iter_0011–0012 with expanded grammar did not beat iter_5 (1.512).
+- Current libraries appear near local optima.
+
+## [2026-07-12] dynamic trim hold strategy analysis
+
+- Proposed by user: trim long positions mid-cycle based on rank deterioration.
+- Tested on 5d/10d/20d live libraries.
+- 5d: Sharpe 2.49 -> 2.85, DD -11.96% -> -8.84%.
+- 10d: Sharpe 2.78 -> 3.02, DD -9.28% -> -8.12%.
+- 20d: Sharpe 1.51 -> 0.71, DD -7.59% -> -24.91% (harmful).
+- Script: `china_a_share_alpha/scripts/backtest_dynamic_hold.py`.
+
+## [2026-07-12] integrated dynamic trim into loop promotion
+
+- Added `_dynamic_trim_backtest` to `run_multihizon_audit.py`.
+- `run_factor_mining_loop.py` now supports `use_dynamic_trim_hold` config.
+- Enabled for 5d/10d, disabled for 20d.
+- Started 5d iter_0045–0046 and 10d iter_0007–0008 with dynamic trim.
+
+## [2026-07-12] fixed log-op crash and restarted loops
+
+- `log` unary op crashed on object-dtype None values; fixed with numeric coercion.
+- Fixed run_cmd log-file naming.
+- Restarted 5d iter_0045–0046 and 10d iter_0008–0009.

@@ -81,8 +81,15 @@ continuous factor-mining loop.
 - [Iteration 21 final audit](factor_mining_loop_iteration_21.md) —
   Cost robustness, per-year performance, coverage, and sector neutrality of the
   final live library.
+- [Batch multi-horizon audit](factor_mining_loop_multihizon_batch_audit.md) —
+  5d / 10d / 20d evaluation of all 47 evolved iteration libraries.  Found that
+  iter_26 has the best realistic 5d hold Sharpe (2.49).
 
 ## Design & Infrastructure
+
+- [Hold-Sharpe promotion gate](factor_mining_loop_hold_sharpe_gate.md) —
+  Added realistic non-overlapping hold-Sharpe gate to the loop runner to prevent
+  overfitting to loop-level overlapping metrics.
 
 - [Project LOOP.md](../LOOP.md) — Loop design, stages, triggers, safety gates.
 - [State file](../china_a_share_alpha_output/factor_mining_loop/STATE.md) —

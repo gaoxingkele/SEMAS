@@ -34,6 +34,7 @@ from examples.mingli_5agents.run_demo import (
 )
 from examples.mingli_5agents.case_studies.hour_calibration.hour_calibration import calibrate_case
 from examples.mingli_5agents.tools.bazi_school_ahp import extended_bazi_method_catalog
+from examples.mingli_5agents.tools.mingli_book_ahp import book_ahp_catalog
 
 
 def test_bootstrap_loads_five_agents(tmp_path: Path):
@@ -888,6 +889,9 @@ def test_hour_calibration_exposes_layered_strategy_scores():
     }
     assert "bazi_school_ahp" in first_event
     assert set(first_event["bazi_school_ahp"]) == set(result["winner"]["bazi_school_ahp_totals"])
+    assert "book_ahp_totals" in result["winner"]
+    assert "book_ahp" in first_event
+    assert set(first_event["book_ahp"]) == set(result["winner"]["book_ahp_totals"])
     assert {item["id"] for item in first_event["hengmen_ahp"]["votes"]} == {
         "month_pattern",
         "stem_root",
@@ -925,6 +929,25 @@ def test_extended_bazi_method_catalog_contains_second_batch_schools():
     }
     assert all(item["weights"] for item in catalog.values())
     assert all(item["sources"] for item in catalog.values())
+
+
+def test_book_ahp_catalog_models_downloaded_books_with_subagents():
+    catalog = book_ahp_catalog()
+
+    assert set(catalog) == {
+        "yuanhai_ziping",
+        "ziping_zhenquan",
+        "mingli_jicheng",
+        "lixuzhong_mingshu",
+        "yuzhao_dingzhenjing",
+        "xingping_huihai",
+        "ziwei_doushu_quanshu",
+        "christian_astrology",
+        "geju_hengmen_duan",
+    }
+    assert all(item["local_files"] for item in catalog.values())
+    assert all(len(item["subagents"]) >= 6 for item in catalog.values())
+    assert all(abs(sum(agent["weight"] for agent in item["subagents"].values()) - 1.0) < 0.001 for item in catalog.values())
 
 
 def test_version_history_integrity_detects_historical_tampering(tmp_path: Path):

@@ -109,6 +109,115 @@ def _hold_backtest(
     }
 
 
+def _dynamic_trim_backtest(
+    signal: pd.Series,
+    daily_returns: pd.Series,
+    horizon: int,
+    cost: float = 0.001,
+) -> dict:
+    """Dynamic trim hold backtest.
+
+    Rebalances every `horizon` days with long top 20% / short bottom 20%.
+    During the holding window, long positions are trimmed based on cross-sectional
+    rank deterioration:
+      * rank 20%-40% -> position * 0.7
+      * rank 40%-60% -> position * 0.5
+      * rank 60%-100% -> exit
+    If a stock is still in the top 20% when its horizon expires, it is kept.
+    """
+    dates = daily_returns.index.get_level_values("date").unique().sort_values()
+    rebalance = set(range(0, len(dates), horizon))
+    positions: dict[str, dict] = {}
+    records = []
+    prev_long_target = set()
+
+    for i, d in enumerate(dates):
+        try:
+            sig = signal.xs(d, level="date")
+        except KeyError:
+            sig = pd.Series(dtype=float)
+        sig = sig.dropna()
+        ranked = sig.rank(pct=True, ascending=False) if len(sig) > 0 else pd.Series(dtype=float)
+        top20 = set(ranked[ranked <= 0.2].index)
+        bot20 = set(ranked[ranked >= 0.8].index)
+
+        # Expire positions whose horizon ended and are not still top 20%
+        expired = [s for s, info in positions.items() if info.get("entry_idx", 0) + horizon <= i]
+        for s in expired:
+            if s not in top20:
+                del positions[s]
+            else:
+                positions[s]["entry_idx"] = i
+
+        turnover = 0.0
+        if i in rebalance and len(sig) >= 20:
+            n = max(1, len(sig) // 5)  # 20%
+            longs = sig.sort_values().tail(n).index.tolist()
+            shorts = sig.sort_values().head(n).index.tolist()
+            new_long_target = set(longs)
+            turnover += len(new_long_target ^ prev_long_target) / (len(new_long_target) + len(prev_long_target) + 1e-8)
+            for s in list(positions.keys()):
+                if positions[s]["side"] == 1:
+                    del positions[s]
+            for s in longs:
+                positions[s] = {"side": 1, "w": 1.0 / n, "entry_idx": i}
+            for s in shorts:
+                positions[s] = {"side": -1, "w": 1.0 / n, "entry_idx": i}
+            prev_long_target = new_long_target
+
+        # Mid-cycle trimming for long positions
+        for s in list(positions.keys()):
+            if positions[s]["side"] != 1:
+                continue
+            if s not in ranked.index:
+                del positions[s]
+                continue
+            r = ranked[s]
+            if r >= 0.8:
+                del positions[s]
+            elif r >= 0.6:
+                positions[s]["w"] *= 0.5
+            elif r >= 0.4:
+                positions[s]["w"] *= 0.7
+
+        if positions:
+            try:
+                dr = daily_returns.xs(d, level="date")
+            except KeyError:
+                dr = pd.Series(dtype=float)
+            pnl = 0.0
+            long_w_sum = 0.0
+            short_w_sum = 0.0
+            for s, info in positions.items():
+                if s in dr.index and pd.notna(dr[s]):
+                    if info["side"] == 1:
+                        pnl += info["w"] * dr[s]
+                        long_w_sum += info["w"]
+                    else:
+                        pnl -= info["w"] * dr[s]
+                        short_w_sum += info["w"]
+            if long_w_sum > 0:
+                pnl /= long_w_sum
+            if short_w_sum > 0:
+                pnl /= short_w_sum
+            pnl -= cost * turnover
+            records.append({"date": d, "ret": pnl})
+
+    port = pd.DataFrame(records).set_index("date")["ret"].dropna()
+    if port.empty:
+        return {"sharpe": 0.0, "annualized_return": 0.0, "cost_adjusted_return": 0.0, "max_drawdown": 0.0}
+    sharpe = port.mean() / (port.std() + 1e-12) * np.sqrt(252)
+    ann_ret = (1 + port).prod() ** (252 / len(port)) - 1
+    cum = (1 + port).cumprod()
+    maxdd = (cum / cum.cummax() - 1).min()
+    return {
+        "sharpe": float(sharpe),
+        "annualized_return": float(ann_ret),
+        "cost_adjusted_return": float(ann_ret),
+        "max_drawdown": float(maxdd),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("config", help="YAML data config with val_date")

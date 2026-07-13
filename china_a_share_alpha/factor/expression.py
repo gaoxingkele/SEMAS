@@ -38,7 +38,10 @@ class Var(FactorExpr):
     name: str
 
     def eval(self, data: pd.DataFrame) -> pd.Series:
-        return data[self.name]
+        try:
+            return data[self.name]
+        except KeyError:
+            return pd.Series(np.nan, index=data.index)
 
     def __repr__(self) -> str:
         return self.name
@@ -88,6 +91,11 @@ class UnaryOp(FactorExpr):
 
     def eval(self, data: pd.DataFrame) -> pd.Series:
         x = self.child.eval(data)
+        if x is None:
+            return pd.Series(np.nan, index=data.index)
+        # Coerce to float so object-dtype Series with Python None do not crash
+        # arithmetic / ufunc operations.
+        x = pd.to_numeric(x, errors="coerce")
         if self.op == "abs":
             return x.abs()
         if self.op == "log":
@@ -100,6 +108,15 @@ class UnaryOp(FactorExpr):
             return x.groupby(level="date").rank(pct=True)
         if self.op == "cs_zscore":
             return x.groupby(level="date").transform(lambda s: (s - s.mean()) / (s.std() + 1e-8))
+        if self.op == "cs_percentile":
+            return x.groupby(level="date").rank(pct=True)
+        if self.op == "cs_demean":
+            return x.groupby(level="date").transform(lambda s: s - s.mean())
+        if self.op == "cs_winsorize":
+            def _cs_winsorize(s):
+                lower, upper = s.quantile(0.05), s.quantile(0.95)
+                return s.clip(lower, upper)
+            return x.groupby(level="date").transform(_cs_winsorize)
         if self.op == "signed_power":
             return np.sign(x) * (np.abs(x) ** 0.5)
         if self.op == "winsorize":
@@ -119,6 +136,16 @@ class BinaryOp(FactorExpr):
     def eval(self, data: pd.DataFrame) -> pd.Series:
         l = self.left.eval(data)
         r = self.right.eval(data)
+        # Guard against malformed expressions that evaluate to None (e.g.
+        # missing columns or undefined constants).  Propagate NaN instead of
+        # crashing so the evaluator can discard the agent.
+        if l is None or r is None:
+            idx = data.index if l is None else l.index
+            return pd.Series(np.nan, index=idx)
+        # Coerce to float to avoid object-dtype Series with Python None values
+        # causing TypeError in comparison/arithmetic ops.
+        l = pd.to_numeric(l, errors="coerce")
+        r = pd.to_numeric(r, errors="coerce")
         if self.op == "add":
             return l + r
         if self.op == "sub":
@@ -152,6 +179,13 @@ class TernaryOp(FactorExpr):
         p = self.pred.eval(data)
         t = self.if_true.eval(data)
         f = self.if_false.eval(data)
+        if p is None or t is None or f is None:
+            idx = data.index
+            for s in (p, t, f):
+                if s is not None:
+                    idx = s.index
+                    break
+            return pd.Series(np.nan, index=idx)
         if self.op == "if_else":
             mask = p > 0
             return t.where(mask, f)
@@ -169,6 +203,9 @@ class RollingOp(FactorExpr):
 
     def eval(self, data: pd.DataFrame) -> pd.Series:
         x = self.child.eval(data)
+        if x is None:
+            return pd.Series(np.nan, index=data.index)
+        x = pd.to_numeric(x, errors="coerce")
 
         def _roll(group: pd.Series) -> pd.Series:
             if self.op == "ts_mean":
@@ -216,6 +253,23 @@ class RollingOp(FactorExpr):
                 return group.rolling(self.window, min_periods=1).apply(
                     lambda s: float(s.argmin()) / max(1, len(s) - 1), raw=True
                 )
+            if self.op == "ts_median":
+                return group.rolling(self.window, min_periods=1).median()
+            if self.op == "ts_percentile_90":
+                return group.rolling(self.window, min_periods=1).quantile(0.9)
+            if self.op == "ts_percentile_10":
+                return group.rolling(self.window, min_periods=1).quantile(0.1)
+            if self.op == "ts_decay_linear":
+                # Linearly decreasing weights: most recent observation has highest weight.
+                weights = np.arange(1, self.window + 1)
+                weights = weights / weights.sum()
+                return group.rolling(self.window, min_periods=1).apply(
+                    lambda s: np.dot(s, weights[-len(s):]), raw=True
+                )
+            if self.op == "ts_min_max_scale":
+                rmin = group.rolling(self.window, min_periods=1).min()
+                rmax = group.rolling(self.window, min_periods=1).max()
+                return (group - rmin) / (rmax - rmin + 1e-8)
             raise ValueError(f"Unknown rolling op: {self.op}")
 
         return x.groupby(level="symbol").transform(_roll)
@@ -234,6 +288,11 @@ class RollingBinaryOp(FactorExpr):
     def eval(self, data: pd.DataFrame) -> pd.Series:
         l = self.left.eval(data)
         r = self.right.eval(data)
+        if l is None or r is None:
+            idx = data.index if l is None else l.index
+            return pd.Series(np.nan, index=idx)
+        l = pd.to_numeric(l, errors="coerce")
+        r = pd.to_numeric(r, errors="coerce")
 
         def _roll(group: pd.DataFrame) -> pd.Series:
             # If either series is constant within the rolling window, correlation/covariance

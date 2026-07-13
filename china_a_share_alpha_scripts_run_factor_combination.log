@@ -1,0 +1,51 @@
+Loaded 50/354 symbols
+Loaded 100/354 symbols
+Loaded 150/354 symbols
+Loaded 200/354 symbols
+Loaded 250/354 symbols
+  Cache outdated for 600930.SH, re-fetching enriched data.
+Loaded 300/354 symbols
+Loaded 350/354 symbols
+
+  selection_max_abs_corr: 1.0000
+
+TRAIN:
+  period: train
+  n_factors: 10
+  weight_method: equal
+  sort_by: val_ic
+  smooth_span: 10
+  ic: 0.0229
+  turnover: 0.0020
+  sharpe: 2.1777
+  annualized_return: 0.4777
+  cost_adjusted_return: 0.4082
+  max_drawdown: -0.1575
+
+VAL:
+  period: val
+  n_factors: 10
+  weight_method: equal
+  sort_by: val_ic
+  smooth_span: 10
+  ic: 0.0143
+  turnover: 0.0004
+  sharpe: 1.7592
+  annualized_return: 0.2712
+  cost_adjusted_return: 0.2050
+  max_drawdown: -0.0557
+
+TEST:
+  period: test
+  n_factors: 10
+  weight_method: equal
+  sort_by: val_ic
+  smooth_span: 10
+  ic: 0.0117
+  turnover: 0.0004
+  sharpe: 1.3614
+  annualized_return: 0.2200
+  cost_adjusted_return: 0.1527
+  max_drawdown: -0.1254
+
+Saved results to china_a_share_alpha_output\factor_mining_loop\iter_0045\combination
