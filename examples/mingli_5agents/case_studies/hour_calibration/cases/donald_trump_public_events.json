@@ -1,0 +1,68 @@
+{
+  "case_id": "donald_trump_public_events",
+  "name": "Donald Trump",
+  "gender": "male",
+  "birth_date": "1946-06-14",
+  "birthplace": "Queens, New York, United States",
+  "birth_time_policy": "unknown_hour_generate_12_candidates",
+  "source_policy": "Birth time reference is kept separate from event-fit scoring.",
+  "public_reference_hours": [
+    {
+      "label": "巳时",
+      "hour_window": "09:00-10:59",
+      "reference_time": "10:54",
+      "source": "https://www.astro.com/astro-databank/Trump,_Donald"
+    }
+  ],
+  "events": [
+    {
+      "year": 1971,
+      "type": "role_power",
+      "label": "Took control of the family real estate business.",
+      "weight": 0.9,
+      "source": "https://en.wikipedia.org/wiki/Donald_Trump"
+    },
+    {
+      "year": 1983,
+      "type": "business_power",
+      "label": "Trump Tower opened.",
+      "weight": 1.0,
+      "source": "https://en.wikipedia.org/wiki/Trump_Tower"
+    },
+    {
+      "year": 1991,
+      "type": "public_scandal",
+      "label": "Business crisis and Taj Mahal bankruptcy period.",
+      "weight": 1.1,
+      "source": "https://en.wikipedia.org/wiki/Trump_Taj_Mahal"
+    },
+    {
+      "year": 2004,
+      "type": "public_visibility",
+      "label": "The Apprentice debuted and remade his public image.",
+      "weight": 1.2,
+      "source": "https://en.wikipedia.org/wiki/The_Apprentice_(American_TV_series)"
+    },
+    {
+      "year": 2015,
+      "type": "role_transition",
+      "label": "Announced presidential campaign.",
+      "weight": 1.2,
+      "source": "https://en.wikipedia.org/wiki/Donald_Trump_2016_presidential_campaign"
+    },
+    {
+      "year": 2016,
+      "type": "role_power",
+      "label": "Elected President of the United States.",
+      "weight": 1.5,
+      "source": "https://en.wikipedia.org/wiki/2016_United_States_presidential_election"
+    },
+    {
+      "year": 2020,
+      "type": "role_transition",
+      "label": "Lost re-election and entered a major post-presidency transition.",
+      "weight": 1.3,
+      "source": "https://en.wikipedia.org/wiki/2020_United_States_presidential_election"
+    }
+  ]
+}

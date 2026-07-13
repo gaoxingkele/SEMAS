@@ -1,0 +1,193 @@
+{
+  "case_id": "mao_zedong_public_events",
+  "name": "毛泽东",
+  "gender": "男",
+  "birth_date": "1893-12-26",
+  "birthplace": "湖南省湘潭市韶山",
+  "birth_time_policy": "unknown_hour_generate_12_candidates",
+  "source_policy": "出生日期和事件年份先采用公开资料；时辰校准只作为候选筛选，不等同于证明真实出生时辰。",
+  "events": [
+    {
+      "year": 1908,
+      "type": "relationship",
+      "label": "与罗一秀成婚，属于早年被家庭安排的婚姻关系，作为低权重婚姻校准点。",
+      "weight": 0.4,
+      "source": "https://en.wikipedia.org/wiki/Mao_Zedong"
+    },
+    {
+      "year": 1911,
+      "type": "role_transition",
+      "label": "辛亥革命时期参军，人生从乡村读书转入政治军事时代背景。",
+      "weight": 0.8,
+      "source": "https://en.wikipedia.org/wiki/Mao_Zedong"
+    },
+    {
+      "year": 1918,
+      "type": "study_exam",
+      "label": "湖南第一师范毕业，早期学业与思想形成阶段完成。",
+      "weight": 0.8,
+      "source": "https://en.wikipedia.org/wiki/Mao_Zedong"
+    },
+    {
+      "year": 1920,
+      "type": "relationship",
+      "label": "与杨开慧结婚，家庭关系进入重要阶段。",
+      "weight": 0.7,
+      "source": "https://en.wikipedia.org/wiki/Mao_Zedong"
+    },
+    {
+      "year": 1921,
+      "type": "role_transition",
+      "label": "参与中国共产党早期建党活动，政治身份进入新阶段。",
+      "weight": 1.0,
+      "source": "https://en.wikipedia.org/wiki/Mao_Zedong"
+    },
+    {
+      "year": 1922,
+      "type": "family",
+      "label": "长子毛岸英出生，子女宫与家庭责任进入可校准阶段。",
+      "weight": 0.6,
+      "source": "https://en.wikipedia.org/wiki/Mao_Anying"
+    },
+    {
+      "year": 1923,
+      "type": "family",
+      "label": "毛岸青出生，连续子女事件使家庭线索更加清楚。",
+      "weight": 0.5,
+      "source": "https://en.wikipedia.org/wiki/Mao_Anqing"
+    },
+    {
+      "year": 1927,
+      "type": "movement",
+      "label": "秋收起义受挫后上井冈山，既是失意受阻，也是政治军事路线的重大转向。",
+      "weight": 1.1,
+      "source": "https://en.wikipedia.org/wiki/Autumn_Harvest_Uprising"
+    },
+    {
+      "year": 1930,
+      "type": "family_loss",
+      "label": "杨开慧被处死，婚姻、家庭和政治冲突同时受到强烈冲击。",
+      "weight": 1.1,
+      "source": "https://en.wikipedia.org/wiki/Yang_Kaihui"
+    },
+    {
+      "year": 1931,
+      "type": "role_power",
+      "label": "中华苏维埃共和国成立并任主要领导，权力地位出现阶段性上升。",
+      "weight": 1.0,
+      "source": "https://en.wikipedia.org/wiki/Chinese_Soviet_Republic"
+    },
+    {
+      "year": 1934,
+      "type": "movement",
+      "label": "长征开始，处境受压、迁移、生死风险和战略转折同时出现。",
+      "weight": 1.4,
+      "source": "https://en.wikipedia.org/wiki/Long_March"
+    },
+    {
+      "year": 1935,
+      "type": "role_power",
+      "label": "遵义会议后政治影响力明显上升，是权力路线的重要转折。",
+      "weight": 1.3,
+      "source": "https://en.wikipedia.org/wiki/Zunyi_Conference"
+    },
+    {
+      "year": 1938,
+      "type": "relationship",
+      "label": "与江青结婚，婚姻宫和政治人际关系再次进入重要阶段。",
+      "weight": 0.7,
+      "source": "https://en.wikipedia.org/wiki/Jiang_Qing"
+    },
+    {
+      "year": 1943,
+      "type": "role_power",
+      "label": "成为中共中央政治局主席和书记处主席，组织权威进一步集中。",
+      "weight": 1.1,
+      "source": "https://en.wikipedia.org/wiki/Mao_Zedong"
+    },
+    {
+      "year": 1945,
+      "type": "public_visibility",
+      "label": "中共七大确立毛泽东思想为指导思想，个人政治符号和公开地位明显强化。",
+      "weight": 1.2,
+      "source": "https://en.wikipedia.org/wiki/7th_National_Congress_of_the_Chinese_Communist_Party"
+    },
+    {
+      "year": 1949,
+      "type": "role_power",
+      "label": "中华人民共和国成立，个人事业、权力和历史地位达到决定性高峰。",
+      "weight": 1.6,
+      "source": "https://en.wikipedia.org/wiki/Proclamation_of_the_People%27s_Republic_of_China"
+    },
+    {
+      "year": 1950,
+      "type": "family_loss",
+      "label": "毛岸英在朝鲜战争中去世，子女线出现重大丧失。",
+      "weight": 1.2,
+      "source": "https://en.wikipedia.org/wiki/Mao_Anying"
+    },
+    {
+      "year": 1954,
+      "type": "role_power",
+      "label": "出任中华人民共和国主席，制度性职位进一步明确。",
+      "weight": 1.0,
+      "source": "https://en.wikipedia.org/wiki/Mao_Zedong"
+    },
+    {
+      "year": 1958,
+      "type": "public_visibility",
+      "label": "大跃进等重大政治运动开启，政策影响力和历史争议同步扩大。",
+      "weight": 1.2,
+      "source": "https://afe.easia.columbia.edu/special/china_1950_prc_timeline.htm"
+    },
+    {
+      "year": 1959,
+      "type": "scandal",
+      "label": "庐山会议后党内路线冲突加剧，大跃进后果显现，属于重大负面转折。",
+      "weight": 1.1,
+      "source": "https://en.wikipedia.org/wiki/Lushan_Conference"
+    },
+    {
+      "year": 1966,
+      "type": "scandal",
+      "label": "文化大革命发动，政治冲突和历史争议极强。",
+      "weight": 1.5,
+      "source": "https://en.wikipedia.org/wiki/Cultural_Revolution"
+    },
+    {
+      "year": 1969,
+      "type": "role_power",
+      "label": "中共九大后个人权威在制度层面再次强化。",
+      "weight": 1.0,
+      "source": "https://en.wikipedia.org/wiki/9th_National_Congress_of_the_Chinese_Communist_Party"
+    },
+    {
+      "year": 1971,
+      "type": "scandal",
+      "label": "林彪事件发生，最高权力结构出现严重震荡。",
+      "weight": 1.3,
+      "source": "https://en.wikipedia.org/wiki/Project_571"
+    },
+    {
+      "year": 1972,
+      "type": "public_visibility",
+      "label": "尼克松访华，国际政治曝光和外交格局发生重大变化。",
+      "weight": 1.1,
+      "source": "https://history.state.gov/milestones/1969-1976/rapprochement-china"
+    },
+    {
+      "year": 1976,
+      "type": "death",
+      "label": "逝世，政治生命终结并引发历史阶段转换。",
+      "weight": 1.7,
+      "source": "https://en.wikipedia.org/wiki/Mao_Zedong"
+    }
+  ],
+  "public_reference_hours": [
+    {
+      "label": "辰时",
+      "hour_window": "07:00-08:59",
+      "note": "部分命理资料常见参考时辰，应与事件拟合结果分开报告。"
+    }
+  ]
+}

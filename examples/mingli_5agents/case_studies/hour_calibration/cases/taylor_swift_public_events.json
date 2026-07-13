@@ -1,0 +1,68 @@
+{
+  "case_id": "taylor_swift_public_events",
+  "name": "Taylor Swift",
+  "gender": "female",
+  "birth_date": "1989-12-13",
+  "birthplace": "West Reading, Pennsylvania, United States",
+  "birth_time_policy": "unknown_hour_generate_12_candidates",
+  "source_policy": "Birth time reference is kept separate from event-fit scoring.",
+  "public_reference_hours": [
+    {
+      "label": "辰时",
+      "hour_window": "07:00-08:59",
+      "reference_time": "08:36",
+      "source": "https://www.astro.com/adbvip/adbvip_12_13.htm"
+    }
+  ],
+  "events": [
+    {
+      "year": 2006,
+      "type": "career_launch",
+      "label": "Released debut album Taylor Swift.",
+      "weight": 1.0,
+      "source": "https://en.wikipedia.org/wiki/Taylor_Swift"
+    },
+    {
+      "year": 2008,
+      "type": "box_office_breakthrough",
+      "label": "Fearless became a major commercial breakthrough.",
+      "weight": 1.2,
+      "source": "https://en.wikipedia.org/wiki/Fearless_(Taylor_Swift_album)"
+    },
+    {
+      "year": 2010,
+      "type": "award_peak",
+      "label": "Won Album of the Year at the Grammy Awards for Fearless.",
+      "weight": 1.2,
+      "source": "https://en.wikipedia.org/wiki/52nd_Annual_Grammy_Awards"
+    },
+    {
+      "year": 2014,
+      "type": "career_reinvention",
+      "label": "Released 1989 and moved decisively into pop.",
+      "weight": 1.3,
+      "source": "https://en.wikipedia.org/wiki/1989_(Taylor_Swift_album)"
+    },
+    {
+      "year": 2016,
+      "type": "public_scandal",
+      "label": "High-profile public dispute and reputation crisis period.",
+      "weight": 1.1,
+      "source": "https://en.wikipedia.org/wiki/Taylor_Swift"
+    },
+    {
+      "year": 2020,
+      "type": "career_reinvention",
+      "label": "Folklore and Evermore opened a new artistic phase.",
+      "weight": 1.2,
+      "source": "https://en.wikipedia.org/wiki/Folklore_(Taylor_Swift_album)"
+    },
+    {
+      "year": 2023,
+      "type": "award_peak",
+      "label": "The Eras Tour became a global peak of public visibility and commercial power.",
+      "weight": 1.4,
+      "source": "https://en.wikipedia.org/wiki/The_Eras_Tour"
+    }
+  ]
+}

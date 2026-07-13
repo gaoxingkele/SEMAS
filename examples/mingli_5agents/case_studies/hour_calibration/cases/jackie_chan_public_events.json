@@ -1,0 +1,75 @@
+{
+  "case_id": "jackie_chan_public_events",
+  "name": "Jackie Chan",
+  "gender": "male",
+  "birth_date": "1954-04-07",
+  "birthplace": "Hong Kong",
+  "birth_time_policy": "unknown_hour_generate_12_candidates",
+  "source_policy": "Birth time reference is kept separate from event-fit scoring.",
+  "public_reference_hours": [
+    {
+      "label": "巳时",
+      "hour_window": "09:00-10:59",
+      "reference_time": "09:45",
+      "source": "https://astro-charts.com/persons/chart/jackie-chan/"
+    }
+  ],
+  "events": [
+    {
+      "year": 1962,
+      "type": "career_launch",
+      "label": "Began film work as a child actor.",
+      "weight": 0.5,
+      "source": "https://en.wikipedia.org/wiki/Jackie_Chan"
+    },
+    {
+      "year": 1978,
+      "type": "career_launch",
+      "label": "Snake in the Eagle's Shadow and Drunken Master created a breakthrough.",
+      "weight": 1.3,
+      "source": "https://en.wikipedia.org/wiki/Jackie_Chan"
+    },
+    {
+      "year": 1980,
+      "type": "role_transition",
+      "label": "The Young Master strengthened his lead-star and action-comedy direction.",
+      "weight": 0.9,
+      "source": "https://en.wikipedia.org/wiki/Jackie_Chan"
+    },
+    {
+      "year": 1985,
+      "type": "public_visibility",
+      "label": "Police Story became a key action-film milestone.",
+      "weight": 1.0,
+      "source": "https://en.wikipedia.org/wiki/Jackie_Chan"
+    },
+    {
+      "year": 1995,
+      "type": "public_visibility",
+      "label": "Rumble in the Bronx brought him into the North American mainstream.",
+      "weight": 1.4,
+      "source": "https://en.wikipedia.org/wiki/Jackie_Chan"
+    },
+    {
+      "year": 1998,
+      "type": "public_visibility",
+      "label": "Rush Hour made him a Hollywood star.",
+      "weight": 1.4,
+      "source": "https://en.wikipedia.org/wiki/Jackie_Chan"
+    },
+    {
+      "year": 2012,
+      "type": "public_visibility",
+      "label": "CZ12 earned Guinness World Records for stunt and credit achievements.",
+      "weight": 0.9,
+      "source": "https://en.wikipedia.org/wiki/Jackie_Chan"
+    },
+    {
+      "year": 2016,
+      "type": "role_power",
+      "label": "Received an Honorary Academy Award.",
+      "weight": 1.0,
+      "source": "https://en.wikipedia.org/wiki/Jackie_Chan"
+    }
+  ]
+}

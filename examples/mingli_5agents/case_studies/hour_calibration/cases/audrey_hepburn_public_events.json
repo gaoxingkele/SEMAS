@@ -1,0 +1,75 @@
+{
+  "case_id": "audrey_hepburn_public_events",
+  "name": "Audrey Hepburn",
+  "gender": "female",
+  "birth_date": "1929-05-04",
+  "birthplace": "Brussels, Belgium",
+  "birth_time_policy": "unknown_hour_generate_12_candidates",
+  "source_policy": "Birth time reference is kept separate from event-fit scoring.",
+  "public_reference_hours": [
+    {
+      "label": "寅时",
+      "hour_window": "03:00-04:59",
+      "reference_time": "03:00",
+      "source": "https://celebrity.astrosage.com/audrey-hepburn-birth-chart.asp"
+    }
+  ],
+  "events": [
+    {
+      "year": 1948,
+      "type": "career_launch",
+      "label": "Screen and stage career began after wartime childhood.",
+      "weight": 0.7,
+      "source": "https://en.wikipedia.org/wiki/Audrey_Hepburn"
+    },
+    {
+      "year": 1953,
+      "type": "public_visibility",
+      "label": "Roman Holiday made her an international star.",
+      "weight": 1.5,
+      "source": "https://en.wikipedia.org/wiki/Roman_Holiday"
+    },
+    {
+      "year": 1954,
+      "type": "role_power",
+      "label": "Won the Academy Award for Best Actress and married Mel Ferrer.",
+      "weight": 1.2,
+      "source": "https://en.wikipedia.org/wiki/Audrey_Hepburn"
+    },
+    {
+      "year": 1961,
+      "type": "public_visibility",
+      "label": "Breakfast at Tiffany's became an iconic film role.",
+      "weight": 1.2,
+      "source": "https://en.wikipedia.org/wiki/Audrey_Hepburn"
+    },
+    {
+      "year": 1967,
+      "type": "role_transition",
+      "label": "Moved away from constant starring roles after Two for the Road and Wait Until Dark period.",
+      "weight": 0.9,
+      "source": "https://en.wikipedia.org/wiki/Audrey_Hepburn"
+    },
+    {
+      "year": 1988,
+      "type": "role_transition",
+      "label": "Began major UNICEF humanitarian work.",
+      "weight": 1.1,
+      "source": "https://en.wikipedia.org/wiki/Audrey_Hepburn"
+    },
+    {
+      "year": 1992,
+      "type": "role_power",
+      "label": "Received the US Presidential Medal of Freedom.",
+      "weight": 1.0,
+      "source": "https://en.wikipedia.org/wiki/Audrey_Hepburn"
+    },
+    {
+      "year": 1993,
+      "type": "death",
+      "label": "Died in Switzerland.",
+      "weight": 1.6,
+      "source": "https://en.wikipedia.org/wiki/Audrey_Hepburn"
+    }
+  ]
+}
