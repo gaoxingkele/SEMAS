@@ -67,3 +67,7 @@ chronological log.
 ## Logs
 
 See [log.md](log.md) for a chronological record of wiki updates and loop runs.
+
+## Mingli Research
+
+- [Mingli Book Profiles and Hour Calibration](mingli_book_profiles_hour_calibration.md): inspectable book-level AHP profiles and evidence-bounded candidate-hour ranking (2026-07-13).

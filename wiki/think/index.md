@@ -32,3 +32,7 @@ Catalog of chain-of-thought, methodology evolution, and absorbed ideas.
 
 - [README.md](README.md) — purpose and schema of this wiki.
 - [log.md](log.md) — chronological thinking log.
+
+## Mingli Methodology
+
+- [Mingli Book Profiles and Hour Calibration](mingli_book_profiles_hour_calibration.md): retain independent method votes and evidence-bounded candidate-hour ranking (2026-07-13).

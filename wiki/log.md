@@ -312,3 +312,8 @@ Chronological record of wiki updates, loop runs, and key decisions.
 - `log` unary op crashed on object-dtype None values; fixed with numeric coercion.
 - Fixed run_cmd log-file naming.
 - Restarted 5d iter_0045–0046 and 10d iter_0008–0009.
+
+## [2026-07-13] Mingli book profiles and hour calibration
+
+- Added book-level AHP profiles and structured candidate-hour calibration documentation.
+- Recorded the evidence boundary: rankings are conditional and narrow margins remain ambiguous.

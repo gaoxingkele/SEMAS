@@ -9,7 +9,7 @@ interfaces.
 from __future__ import annotations
 
 from datetime import date
-import importlib
+import importlib.util
 from typing import Any
 
 from examples.mingli_5agents.tools.calendar_provider import (

@@ -81,3 +81,7 @@ absorbed ideas.
 - Current live library (iter40) real 5d hold: Sharpe 1.64 / return 39.4% / DD -18.0%.
 - Best hold-Sharpe remains iter28: 5d hold Sharpe 2.37 / return 69.6% / DD -17.0%.
 - Lesson: loop-level return threshold can overfit to overlapping forward returns.
+
+## [2026-07-13] Mingli book profiles and hour calibration
+
+- Separated book-method votes from public-event fit scoring and retained ambiguity for narrow candidate-hour margins.

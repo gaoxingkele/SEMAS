@@ -17,6 +17,8 @@ __pycache__/
 
 # Generated reports / artifacts
 examples/mingli_5agents/reports/
+examples/mingli_5agents/case_studies/hour_calibration/outputs/*
+!examples/mingli_5agents/case_studies/hour_calibration/outputs/.gitkeep
 *.report.pdf
 *.report.md
 china_a_share_alpha_output/
@@ -39,6 +41,10 @@ test_alpha_output/
 external/
 Smart_SkillandAgent/
 tools/
-.
+
+# The top-level tools checkout is local, but the Mingli example owns Python tools.
+!examples/mingli_5agents/tools/
+!examples/mingli_5agents/tools/*.py
 # Generated case-study outputs
 examples/mingli_5agents/case_studies/**/outputs/
+!examples/mingli_5agents/case_studies/**/outputs/.gitkeep

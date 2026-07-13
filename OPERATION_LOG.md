@@ -15188,3 +15188,39 @@ is correctly redirected to `run_enhanced_factor_loop.log`.
 
 Restarted 5d iter_0045–0046 (`bash-ibr6jjzy`) and 10d iter_0008–0009
 (`bash-432esc0s`) with dynamic trim enabled.
+
+## 2026-07-13 - Mingli Book Profiles and Hour-Calibration Handoff
+
+### Motivation
+
+Capture the latest runnable Mingli work without committing local Python
+environments, downloaded source scans, or generated calibration outputs.
+
+### Actions
+
+1. Added the layered BaZi strategy, extended-school and book-level AHP
+   profiles, the Hengmen profile, and the local skill-generation helper.
+2. Added a twelve-candidate-hour calibration harness, structured public-figure
+   cases, batch runner, and method-fit/backtest notes.
+3. Added ignore rules for local environments, downloaded source material, and
+   regenerated calibration output while retaining the output directory marker.
+4. Documented the evidence boundary: calibration ranks candidates under the
+   configured profiles; it does not establish a historical birth hour.
+5. Fixed the optional lunar-calendar backend probe by explicitly importing
+   `importlib.util`, allowing the offline fallback to run on Python 3.11.
+
+### Files Changed
+
+- `examples/mingli_5agents/tools/`
+- `examples/mingli_5agents/case_studies/hour_calibration/`
+- `examples/mingli_5agents/tests/test_mingli_system.py`
+- `README.md`, `.gitignore`, `wiki/`, and `wiki/think/`
+
+### Verification
+
+- `python -m py_compile examples\\mingli_5agents\\tools\\calendar_core.py ...`
+  completed for the calendar, AHP, skill-generation, and calibration modules.
+- Direct smoke check loaded the 10 extended-school profiles, 9 book profiles,
+  and a 12-candidate public-event calibration successfully.
+- Focused `pytest` tests were not runnable because neither the system Python
+  nor `.venv_py311` has `pytest` installed; no dependency was installed.
