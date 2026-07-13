@@ -3,6 +3,13 @@
 > Centralized citation list for the SEMAS LLM Wiki. Every `[source: ...]` link
 > in the wiki should resolve to an entry here.
 
+## Mingli Source Leads
+
+- **Yuanhai Ziping / Ziping Zhenquan scan**
+  - Wikimedia Commons / National Library of China scan
+  - https://commons.wikimedia.org/wiki/File:NLC416-15jh007754-99036_%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3_%E5%AD%90%E5%B9%B3%E7%9C%9F%E8%A9%AE.pdf
+  - [source: Wikimedia Commons NLC scan]
+
 ## SEMAS Framework
 
 - SEMAS — Self-Evolving Multi-Agent System Framework

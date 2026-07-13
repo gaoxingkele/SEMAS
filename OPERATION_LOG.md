@@ -11884,3 +11884,16 @@ new knowledge into the local LLM wiki.
 - If the next iteration still cannot improve, launch an exploration run with
   no seed library and a larger mutation radius.
 - Push the updated wiki and logs to GitHub.
+
+## 2026-07-13 - Mingli Book Profiles and Hour-Calibration Handoff
+
+Added layered BaZi, Hengmen, extended-school, and book-level AHP modules, plus
+the hour-calibration helper and skill generator. The calibration ranks twelve
+candidate hours against structured public events and keeps narrow winning
+margins ambiguous. Local scans, virtual environments, and generated output
+remain ignored.
+
+Verification: `py_compile` passed for the new modules; a direct smoke check
+loaded 10 extended-school profiles, 9 book profiles, and a 12-candidate
+calibration. Focused `pytest` could not run because `pytest` is unavailable in
+both the system Python and `.venv_py311`.

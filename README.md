@@ -131,7 +131,8 @@ new skill or agent evolution project.
 ## Mingli Five-Agent Example
 
 The `examples/mingli_5agents` demo now includes a governed BaZi school-debate
-layer. The BaZi analyst exposes seven sub-school votes, including the added
+layer, book-level AHP profiles, and a reproducible public-figure hour
+calibration harness. The BaZi analyst exposes seven sub-school votes, including the added
 `格局横门断` paper agent derived from `examples/格局横门断.docx`. Its structured
 layer is `hengmen_pattern_analysis`, focused on 月令提纲, 透干会支, 善顺恶逆,
 藏干待用, and branch-group transformation boundaries.
