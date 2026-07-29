@@ -2,6 +2,13 @@
 
 The generated skills follow the book-to-skill idea: extract usable method
 structure, keep SKILL.md concise, and put school details in references.
+
+NOTE (2026-07-24): the five skills whose ``local`` fields point into
+``external/mingli_books/bazi/extended/text_sources/`` have since been
+re-distilled from the actual full texts (see OPERATION_LOG.md 2026-07-24/25).
+Re-running this generator would overwrite those full-text-backed skills with
+the hand-written versions below; regenerate only after updating the embedded
+frameworks from the distilled ``references/method.md`` files.
 """
 
 from __future__ import annotations
@@ -55,8 +62,8 @@ BAZI_BOOKS = [
         "slug": "mingli-bazi-sanming-tonghui",
         "title": "三命通会",
         "school": "百科型古法综合",
-        "source": "Chinese classics catalogues and Wikisource/CTEXT references; download source still requires stricter public-domain verification.",
-        "local": "",
+        "source": "Kanseki Repository Siku Quanshu edition: https://github.com/kanripo/KR3g0042",
+        "local": "external/mingli_books/bazi/extended/text_sources/sanming_tonghui_kanripo/",
         "frameworks": [
             "把格局、神煞、纳音、刑冲合害、岁运并看，但主次必须分明。",
             "古诀用于提出假设，不可直接替代原局结构和事实校准。",
@@ -74,8 +81,8 @@ BAZI_BOOKS = [
         "slug": "mingli-bazi-ditiansui",
         "title": "滴天髓",
         "school": "气势、体用、流通",
-        "source": "public-domain classical text references; verify edition before direct quotation.",
-        "local": "",
+        "source": "Ren Tieqiao annotated edition via https://github.com/youngzs/xuanxue (docs/滴天髓阐微/); community-typed text, verify before quotation.",
+        "local": "external/mingli_books/bazi/extended/text_sources/ditiansui_chanwei/",
         "frameworks": [
             "不把五行当静态数量，而看气势如何流动。",
             "先辨体，再辨用，再看保护链和流通断点。",
@@ -93,8 +100,8 @@ BAZI_BOOKS = [
         "slug": "mingli-bazi-qiongtong-baojian",
         "title": "穷通宝鉴",
         "school": "调候月令",
-        "source": "public-domain classical text references; verify edition before direct quotation.",
-        "local": "",
+        "source": "community-typed text via https://github.com/youngzs/xuanxue (docs/穷通宝鉴/); verify edition before direct quotation.",
+        "local": "external/mingli_books/bazi/extended/text_sources/qiongtong_baojian/",
         "frameworks": [
             "月令气候优先，先看寒暖燥湿，再谈格局发挥。",
             "同一日主在不同月份取用不同，不能固定套喜忌。",
@@ -112,8 +119,8 @@ BAZI_BOOKS = [
         "slug": "mingli-bazi-shenfeng-tongkao",
         "title": "神峰通考",
         "school": "病药与实践校验",
-        "source": "public-domain classical text references; verify edition before direct quotation.",
-        "local": "",
+        "source": "community-typed text via https://github.com/youngzs/xuanxue (docs/神锋通考/); case section (人命见验类) appears missing.",
+        "local": "external/mingli_books/bazi/extended/text_sources/shenfeng_tongkao/",
         "frameworks": [
             "先找命局之病，再找药；没有病药链，喜忌容易空泛。",
             "强弱判断要服务于病药，不是最终结论。",
@@ -131,8 +138,8 @@ BAZI_BOOKS = [
         "slug": "mingli-bazi-hengmen",
         "title": "格局横门断",
         "school": "横门格局断法",
-        "source": "local examples document requested by user; original DOCX not currently present in repository scan, use prior extracted method notes only.",
-        "local": "",
+        "source": "local DOCX examples/格局横门断.docx (internal circulation; do not redistribute).",
+        "local": "external/mingli_books/bazi/extended/text_sources/geju_hengmen_duan/geju_hengmen_duan_full.txt",
         "frameworks": [
             "重视格局横向比较：同一命盘由多个流派分别下断，再看哪条线最能解释事实。",
             "语言输出要有指向性，少套话，多给可验证断言。",

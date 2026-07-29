@@ -18,6 +18,7 @@ from examples.mingli_5agents.tools.calendar_core import (
 )
 from examples.mingli_5agents.tools.bazi_school_debate import build_bazi_school_debate
 from examples.mingli_5agents.tools.classical_book_agents import build_classical_book_agent_debate
+from examples.mingli_5agents.tools.hengmen_rule_engine import analyze_natal_hengmen
 
 
 PILLAR_KEYS = ["year", "month", "day", "hour"]
@@ -101,10 +102,16 @@ def ensure_bazi_method_layers(deep: dict[str, Any], context: dict[str, Any]) -> 
         "new_school_simplified_analysis",
         _new_school_simplified_analysis(day_element, dominant_element, spread, useful_element),
     )
-    enriched.setdefault(
-        "hengmen_pattern_analysis",
-        _hengmen_pattern_analysis(pillars, day_master),
-    )
+    if context.get("provider_quality") == "offline_approximation":
+        enriched["hengmen_pattern_analysis"] = {
+            "schema_version": "hengmen-rule-engine-v2",
+            "status": "blocked_calendar_precision",
+            "pattern_candidates": [],
+            "summary": "Hengmen analysis is blocked because the supplied four pillars are approximate.",
+            "boundary": "Use lunar_python, sxtwl, or an externally sourced exact calendar context.",
+        }
+    else:
+        enriched["hengmen_pattern_analysis"] = analyze_natal_hengmen(pillars, day_master)
     enriched.setdefault(
         "classical_layered_methodology",
         _classical_layered_methodology(enriched, context),
@@ -535,6 +542,11 @@ HENGMEN_ADVERSE_TEN_GODS = {"peer"}
 
 
 def _hengmen_pattern_analysis(pillars: object, day_master: str) -> dict[str, Any]:
+    """Compatibility entrypoint delegating to the independent Hengmen engine."""
+    return analyze_natal_hengmen(pillars, day_master)
+
+
+def _legacy_hengmen_pattern_analysis(pillars: object, day_master: str) -> dict[str, Any]:
     """Model the Geju Hengmen pattern-school rules as auditable signals."""
     if not isinstance(pillars, dict):
         return {

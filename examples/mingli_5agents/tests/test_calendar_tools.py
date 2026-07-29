@@ -25,7 +25,7 @@ from examples.mingli_5agents.tools.ziwei_pai_pan import build_ziwei_chart
 
 def test_ganzhi_anchor_and_hour_branch():
     assert year_ganzhi(1984) == "JiaZi"
-    assert day_ganzhi(date(1984, 2, 2)) == "JiaZi"
+    assert day_ganzhi(date(1984, 1, 31)) == "JiaZi"
     assert hour_branch(23) == "Zi"
     assert hour_branch(1) == "Chou"
 
@@ -51,9 +51,8 @@ def test_chart_context_contains_shared_fields():
     assert sum(context["element_counts"].values()) == 8
     assert context["solar_term"] == "Clear and Bright"
     assert context["hour_branch"] == "Si"
-    assert context["provider"] in {"auto", "professional"}
+    assert context["provider"] == "professional"
     assert context["provider_quality"] in {
-        "professional_unavailable_fallback",
         "lunar_python",
         "sxtwl",
     }
@@ -61,9 +60,6 @@ def test_chart_context_contains_shared_fields():
     if backend:
         assert context["provider"] == "professional"
         assert context["provider_quality"] == backend
-    else:
-        assert context["provider"] == "auto"
-        assert context["provider_quality"] == "professional_unavailable_fallback"
     assert birth["minute"] == 20
     assert context["birthplace_normalized"] == "Hangzhou, Zhejiang, China"
     assert context["timezone_offset"] == "+08:00"
@@ -133,13 +129,45 @@ def test_auto_calendar_provider_uses_professional_or_fallback_backend():
         }
     )
     context = build_chart_context(birth)
-    assert context["provider"] in {"auto", "professional"}
-    assert context["provider_quality"] in {
-        "professional_unavailable_fallback",
-        "lunar_python",
-        "sxtwl",
-    }
+    assert context["provider"] == "professional"
+    assert context["provider_quality"] in {"lunar_python", "sxtwl"}
     assert set(context["pillars"]) == {"year", "month", "day", "hour"}
+
+
+def test_linfan_exact_calendar_regression():
+    birth = normalize_birth_input(
+        {
+            "name": "Lin Fan",
+            "birth_date": "1978-04-14",
+            "birth_time": "06:50",
+            "gender": "male",
+            "birthplace": "Sanming, Fujian, China",
+            "calendar_provider": "auto",
+        }
+    )
+    context = build_chart_context(birth)
+    assert context["provider_quality"] == "lunar_python"
+    assert context["pillars"] == {
+        "year": "WuWu",
+        "month": "BingChen",
+        "day": "BingWu",
+        "hour": "XinMao",
+    }
+
+
+def test_approximate_calendar_blocks_hengmen_analysis():
+    birth = normalize_birth_input(
+        {
+            "name": "Approximate Boundary",
+            "birth_date": "1978-04-14",
+            "birth_time": "06:50",
+            "gender": "male",
+            "birthplace": "Sanming, Fujian, China",
+            "calendar_provider": "approximate",
+        }
+    )
+    bazi = build_bazi_chart(birth)
+    assert bazi["deep_analysis"]["hengmen_pattern_analysis"]["status"] == "blocked_calendar_precision"
 
 
 def test_professional_calendar_provider_reports_missing_dependency():

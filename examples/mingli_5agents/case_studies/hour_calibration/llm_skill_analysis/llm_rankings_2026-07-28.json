@@ -1,0 +1,20 @@
+{
+  "schema_version": "llm-skill-hour-rankings-v1",
+  "source": "examples/mingli_5agents/case_studies/hour_calibration/llm_skill_analysis/*_analysis.md (2026-07-28), 每个案例由独立 LLM 分析智能体使用全文背书知识库对 12 个候选时辰排序；排序提取自各文件『最终排序/完整排序』一节（一手来源）。",
+  "contamination_warning": "11 例均为公众人物，参考时辰印在简报首部；分析者声明未使用，但零潜意识影响无法证明（见 summary_2026-07-28.md 诚实边界）。LLM 信号应读作上限估计。",
+  "known_discrepancy": "bruce_lee：summary_2026-07-28.md 汇总表记参考时辰（辰）排名为 11，但分析文件 bruce_lee_public_events_analysis.md 最终排序辰列第 3（该文第 3 名即辰时）。本文件以分析文件为准。",
+  "branch_order_note": "每个案例的列表按优→劣给出 12 个时辰地支；分数 = 13 - rank。",
+  "rankings": {
+    "angelina_jolie_public_events": ["丑", "辰", "巳", "申", "亥", "午", "子", "酉", "寅", "卯", "未", "戌"],
+    "audrey_hepburn_public_events": ["酉", "申", "丑", "午", "亥", "未", "子", "寅", "巳", "辰", "戌", "卯"],
+    "barack_obama_public_events": ["子", "卯", "酉", "戌", "寅", "亥", "午", "申", "未", "巳", "辰", "丑"],
+    "bruce_lee_public_events": ["寅", "卯", "辰", "申", "未", "午", "戌", "巳", "酉", "子", "丑", "亥"],
+    "donald_trump_public_events": ["亥", "酉", "申", "子", "寅", "卯", "丑", "辰", "未", "戌", "午", "巳"],
+    "jackie_chan_public_events": ["申", "巳", "午", "酉", "辰", "子", "丑", "未", "寅", "亥", "戌", "卯"],
+    "mao_zedong_public_events": ["辰", "申", "巳", "未", "酉", "寅", "午", "亥", "戌", "丑", "卯", "子"],
+    "marilyn_monroe_public_events": ["辰", "申", "巳", "亥", "子", "酉", "卯", "丑", "午", "寅", "未", "戌"],
+    "michael_jackson_public_events": ["戌", "子", "丑", "亥", "卯", "午", "寅", "酉", "巳", "未", "申", "辰"],
+    "oprah_winfrey_public_events": ["戌", "寅", "子", "巳", "申", "辰", "午", "亥", "未", "丑", "卯", "酉"],
+    "taylor_swift_public_events": ["辰", "卯", "酉", "申", "巳", "丑", "寅", "未", "子", "午", "亥", "戌"]
+  }
+}

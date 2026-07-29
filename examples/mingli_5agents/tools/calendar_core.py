@@ -268,7 +268,13 @@ class ProfessionalCalendarProvider:
 
 
 class AutoCalendarProvider:
-    """Professional provider with deterministic approximate fallback."""
+    """Exact calendar provider selected by default.
+
+    A four-pillar chart is foundational evidence for every downstream BaZi
+    method.  Returning a civil-calendar approximation under ``auto`` silently
+    changes the day master and is therefore worse than failing explicitly.
+    ``approximate`` remains available only as an opt-in demonstration provider.
+    """
 
     name = "auto"
 
@@ -277,14 +283,14 @@ class AutoCalendarProvider:
         self.approximate = ApproximateCalendarProvider()
 
     def build_context(self, birth: dict[str, Any]) -> dict[str, Any]:
-        """Use a professional backend when available, otherwise fall back."""
+        """Use an installed exact backend or fail closed."""
         if self.professional.available_backend():
             return self.professional.build_context(birth)
-        context = self.approximate.build_context(birth)
-        context["provider"] = self.name
-        context["provider_quality"] = "professional_unavailable_fallback"
-        context["fallback_provider"] = "approximate"
-        return context
+        raise ImportError(
+            "The auto calendar provider requires lunar_python or sxtwl for exact four-pillar "
+            "calculation. Install the project's dependencies, supply an external calendar context, "
+            "or explicitly choose calendar_provider='approximate' for non-Hengmen demonstrations."
+        )
 
 
 CALENDAR_PROVIDERS = CalendarProviderRegistry()
@@ -311,8 +317,13 @@ def month_ganzhi(year: int, month: int) -> str:
 
 
 def day_ganzhi(dt: date) -> str:
-    """Return approximate day stem-branch anchored to 1984-02-02 JiaZi."""
-    anchor = date(1984, 2, 2)
+    """Return the civil-day stem-branch anchored to 1984-01-31 JiaZi.
+
+    This arithmetic is exact once the civil-day convention is fixed.  It does
+    not replace the professional provider for solar-term month boundaries or
+    midnight/true-solar-time policy.
+    """
+    anchor = date(1984, 1, 31)
     return ganzhi((dt - anchor).days)
 
 
@@ -325,7 +336,7 @@ def hour_branch(hour: int) -> str:
 
 def hour_ganzhi(dt: date, hour: int) -> str:
     """Return approximate hour stem-branch from day stem and hour branch."""
-    anchor = date(1984, 2, 2)
+    anchor = date(1984, 1, 31)
     day_index = (dt - anchor).days
     stem = STEMS[(day_index * 2 + BRANCHES.index(hour_branch(hour))) % 10]
     return f"{stem}{hour_branch(hour)}"

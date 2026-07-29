@@ -24,6 +24,7 @@ from examples.mingli_5agents.tools.bazi_hengmen_ahp import (
     build_hengmen_chart_strategy,
     score_hengmen_event,
 )
+from examples.mingli_5agents.tools.monthly_luck import build_monthly_luck
 from examples.mingli_5agents.tools.bazi_school_ahp import (
     aggregate_school_scores,
     score_all_bazi_schools,
@@ -138,11 +139,19 @@ def _candidate_result(
     astrology = build_astrology_chart(birth)
     annual = build_annual_luck(birth, bazi, start_year=start_year, end_year=end_year)
     rows_by_year = {row["year"]: row for row in annual["rows"]}
+    monthly = build_monthly_luck(birth, bazi, years=sorted({int(event["year"]) for event in events}))
+    monthly_rows_by_year: dict[int, list[dict[str, Any]]] = {}
+    for row in monthly["rows"]:
+        monthly_rows_by_year.setdefault(int(row["year"]), []).append(row)
     ziwei_rows_by_year = {
         row["year"]: row for row in ziwei.get("deep_analysis", {}).get("annual_activation", [])
     }
     astrology_rows_by_year = {
         row["year"]: row for row in astrology.get("deep_analysis", {}).get("annual_transits", [])
+    }
+    # 案例内全部事件年份：派生反例时用来排除“已有大事发生”的年份。
+    event_years = {
+        int(item["year"]) for item in events if str(item.get("year", "")).lstrip("-").isdigit()
     }
     event_scores = [
         _score_event(
@@ -155,11 +164,23 @@ def _candidate_result(
         for event in events
     ]
     hengmen_event_scores = [
-        score_hengmen_event(event, rows_by_year.get(int(event["year"]), {}), bazi)
+        score_hengmen_event(
+            event,
+            rows_by_year.get(int(event["year"]), {}),
+            bazi,
+            monthly_rows_by_year.get(int(event["year"]), []),
+            _counterexample_rows(event, rows_by_year, event_years),
+        )
         for event in events
     ]
     bazi_school_event_scores = [
-        score_all_bazi_schools(event, rows_by_year.get(int(event["year"]), {}), bazi)
+        score_all_bazi_schools(
+                event,
+                rows_by_year.get(int(event["year"]), {}),
+                bazi,
+                monthly_rows_by_year.get(int(event["year"]), []),
+                _counterexample_rows(event, rows_by_year, event_years),
+            )
         for event in events
     ]
     book_event_scores = [
@@ -169,6 +190,8 @@ def _candidate_result(
             bazi,
             ziwei_rows_by_year.get(int(event["year"]), {}),
             astrology_rows_by_year.get(int(event["year"]), {}),
+            monthly_rows_by_year.get(int(event["year"]), []),
+            _counterexample_rows(event, rows_by_year, event_years),
         )
         for event in events
     ]
@@ -248,6 +271,42 @@ def _candidate_result(
         "book_ahp_totals": book_ahp_totals,
         "event_scores": event_scores,
     }
+
+
+def _counterexample_rows(
+    event: dict[str, Any],
+    rows_by_year: dict[int, dict[str, Any]],
+    event_years: set[int] | None = None,
+) -> list[dict[str, Any]]:
+    """Resolve declared non-event years without inventing negative observations.
+
+    事件未声明反例年份时，回退到“派生反例”：取事件年份前后 3 年内、
+    案例中没有记载任何事件、且岁运行存在的最近 4 个年份。依据是案例事件表
+    声称覆盖人生大事，邻近无事件年份可作为弱负样本；引擎按派生反例口径
+    降低惩罚单价与上限（见 hengmen_rule_engine._counterfactual_receipt）。
+    """
+    raw = event.get("counterexamples", event.get("counterexample_years", []))
+    if isinstance(raw, list) and raw:
+        years = []
+        for item in raw:
+            year = item.get("year") if isinstance(item, dict) else item
+            try:
+                years.append(int(year))
+            except (TypeError, ValueError):
+                continue
+        return [rows_by_year[year] for year in years if year in rows_by_year]
+    try:
+        event_year = int(event.get("year"))
+    except (TypeError, ValueError):
+        return []
+    blocked = set(event_years or ())
+    derived = [
+        year
+        for year in range(event_year - 3, event_year + 4)
+        if year != event_year and year not in blocked and year in rows_by_year
+    ]
+    derived.sort(key=lambda year: (abs(year - event_year), year))
+    return [rows_by_year[year] for year in derived[:4]]
 
 
 def _score_event(

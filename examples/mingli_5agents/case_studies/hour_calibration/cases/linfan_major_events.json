@@ -1,0 +1,123 @@
+{
+  "case_id": "linfan_major_events",
+  "name": "林凡",
+  "gender": "male",
+  "birth_date": "1978-04-14",
+  "birth_time_policy": "withheld_for_calibration",
+  "birthplace": "福建省三明市",
+  "source_policy": "User-provided factual timeline. No independent documents, month-level dates, or non-event counterexamples have yet been supplied.",
+  "public_reference_hours": [
+    {
+      "label": "卯时",
+      "hour_window": "05:00-06:59",
+      "reference_time": "06:50",
+      "source": "user_provided (2026-07-14 timeline)"
+    }
+  ],
+  "events": [
+    {
+      "year": 1996,
+      "type": "study_exam",
+      "label": "Entered a Project 985 university through the national entrance examination.",
+      "outcome": "positive",
+      "weight": 1.2,
+      "source": "user_provided"
+    },
+    {
+      "year": 2000,
+      "type": "career_launch",
+      "label": "Completed undergraduate study, received recommended master's admission, and obtained a teaching establishment at a Project 985 university.",
+      "outcome": "positive",
+      "weight": 1.2,
+      "source": "user_provided"
+    },
+    {
+      "year": 2003,
+      "type": "relationship",
+      "label": "Married and completed master's degree.",
+      "outcome": "positive",
+      "weight": 1.0,
+      "source": "user_provided"
+    },
+    {
+      "year": 2007,
+      "type": "study_exam",
+      "label": "Doctoral application examination was unsuccessful.",
+      "outcome": "negative",
+      "weight": 1.0,
+      "source": "user_provided"
+    },
+    {
+      "year": 2008,
+      "type": "study_exam",
+      "label": "Passed doctoral admission examination.",
+      "outcome": "positive",
+      "weight": 1.0,
+      "source": "user_provided"
+    },
+    {
+      "year": 2010,
+      "type": "family",
+      "label": "First child was born.",
+      "outcome": "positive",
+      "weight": 1.0,
+      "source": "user_provided"
+    },
+    {
+      "year": 2012,
+      "type": "business_power",
+      "label": "Business received a small acquisition; a home purchase entered litigation and caused an approximately one-million-yuan loss before title was ultimately obtained.",
+      "outcome": "mixed",
+      "weight": 1.2,
+      "source": "user_provided"
+    },
+    {
+      "year": 2013,
+      "type": "role_power",
+      "label": "Completed doctorate and was appointed associate professor.",
+      "outcome": "positive",
+      "weight": 1.2,
+      "source": "user_provided"
+    },
+    {
+      "year": 2014,
+      "type": "family",
+      "label": "Team received Xiamen talent-project funding; second child was born.",
+      "outcome": "positive",
+      "weight": 1.0,
+      "source": "user_provided"
+    },
+    {
+      "year": 2015,
+      "type": "role_power",
+      "label": "Received talent-project funding as principal applicant.",
+      "outcome": "positive",
+      "weight": 1.0,
+      "source": "user_provided"
+    },
+    {
+      "year": 2018,
+      "type": "role_power",
+      "label": "Professor promotion application was blocked and did not succeed.",
+      "outcome": "negative",
+      "weight": 1.2,
+      "source": "user_provided"
+    },
+    {
+      "year": 2019,
+      "type": "business_power",
+      "label": "Entered a fraudulent investment scheme and suffered substantial loss.",
+      "outcome": "negative",
+      "weight": 1.2,
+      "source": "user_provided"
+    },
+    {
+      "year": 2020,
+      "type": "role_power",
+      "label": "Was appointed director of a research institute.",
+      "outcome": "positive",
+      "weight": 1.2,
+      "source": "user_provided"
+    }
+  ]
+}

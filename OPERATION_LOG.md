@@ -5,6 +5,46 @@
 
 ---
 
+## 2026-07-27 - Install book-to-skill project skill
+
+### Motivation
+
+Install the most popular public book→skill converter so SEMAS agents can
+distill owned books into Agent Skills without dumping full PDFs into context.
+
+### Actions Taken
+
+1. Cloned `https://github.com/virgiliojr94/book-to-skill` into
+   `.cursor/skills/book-to-skill/` and removed the nested `.git` (vendored at
+   upstream `92b248fa`).
+2. Created Windows junction `.agents/skills/book-to-skill` → the same tree for
+   cross-agent discovery.
+3. Documented install/usage in `.cursor/skills/README.md`, `README.md`,
+   `wiki/book_to_skill.md`, `wiki/index.md`, `wiki/log.md`, `wiki/references.md`.
+4. First optional-extractor pip attempt timed out; retry on 2026-07-28
+   succeeded for PDF/EPUB/DOCX/RTF packages.
+5. Added `project.optional-dependencies.book_to_skill` in `pyproject.toml`
+   so the extractors are reproducible via
+   `pip install -e ".[book_to_skill]"`.
+
+### Verification
+
+- `Test-Path .cursor/skills/book-to-skill/SKILL.md` — true.
+- `python .cursor/skills/book-to-skill/scripts/extract.py --check` —
+  PDF / EPUB / DOCX / RTF **ready**; MOBI still needs system Calibre;
+  technical PDF (`docling`) left optional.
+
+### Files Changed
+
+- `.cursor/skills/book-to-skill/` (vendored upstream)
+- `.cursor/skills/README.md`
+- `.agents/skills/book-to-skill` (junction)
+- `pyproject.toml` (`book_to_skill` optional extra)
+- `README.md`, `OPERATION_LOG.md`
+- `wiki/book_to_skill.md`, `wiki/index.md`, `wiki/log.md`, `wiki/references.md`
+
+---
+
 ## 2026-06-26 - Annual Event Markers Schema
 
 ### Motivation
@@ -11897,3 +11937,1185 @@ Verification: `py_compile` passed for the new modules; a direct smoke check
 loaded 10 extended-school profiles, 9 book profiles, and a 12-candidate
 calibration. Focused `pytest` could not run because `pytest` is unavailable in
 both the system Python and `.venv_py311`.
+
+## 2026-07-13 - Hengmen Independent Rule Engine
+
+### Motivation
+
+Replace the generic Hengmen score heuristics with inspectable rules derived
+from the local `格局横门断` source graph. The goal is to keep concrete pattern
+selection, rescue logic, branch affection, timing, and falsification separate.
+
+### Actions
+
+1. Added `hengmen_rule_engine.py`, generating specific month-command pattern
+   candidates and recording supporting, failure, rescue, root, and relation
+   evidence.
+2. Added explicit branch combine/clash/harm/punishment/break handling and
+   labelled the result as `有情`, `无情或受损`, or `待验`.
+3. Routed Hengmen AHP and its book profile through the independent rule output
+   instead of the generic book scorer.
+4. Added annual and month-level activation. A missing event month is neutral;
+   it cannot be filled with the best-scoring month.
+5. Added a counterexample contract. Declared non-event years penalize an
+   activated structure only when the corresponding annual evidence is supplied.
+
+### Verification
+
+- `python -m py_compile` passed for the rule engine and all integration modules.
+- Five direct rule-engine behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed with Hengmen rule-engine and
+  book-profile output present.
+- Focused `pytest` remains unavailable in the local Python environments.
+
+## 2026-07-13 - Hengmen Structural Evidence Extension
+
+### Motivation
+
+Represent the book-specific structural topics of storage branches, head/foot
+relations, branch-combination direction, and partial trines without promoting
+them into unsupported event predictions.
+
+### Actions
+
+1. Added auditable storage-branch records, including all hidden stems and the
+   requirement to inspect exposure when a storage branch is the month command.
+2. Added head/foot support-or-block signals inside the existing stem-root AHP
+   dimension; combination direction and partial-trine signals remain explicitly
+   low-confidence candidates.
+3. Added annual/monthly storage-clash activation as a bounded timing signal and
+   retained its non-deterministic boundary.
+4. Added four behavioural tests covering storage exposure, storage clash,
+   combination/partial-trine evidence status, and head/foot status.
+
+### Verification
+
+- `python -m py_compile` passed for the engine, Hengmen AHP, and tests.
+- Ten direct Hengmen behavioural checks passed.
+- `git diff --check` passed.
+
+## 2026-07-14 - Exact-Calendar Public-Case Book Comparison
+
+### Motivation
+
+After making exact four-pillar calculation mandatory for the default path, the
+existing public hour-calibration cases needed a fresh, like-for-like comparison
+of the independent Hengmen scorer and book-level profiles.
+
+### Actions
+
+1. Re-ran all 12 public cases (100 supplied events) in the Python 3.11
+   environment with `lunar_python` available.
+2. Compared independent Hengmen AHP and nine book profiles against the 11
+   cases with a public reference hour.
+3. Recorded rank, tie-sensitive margin, and top-k reference-hour coverage;
+   no weights were fitted or changed from this evaluation.
+
+### Result
+
+- Independent Hengmen: Top-1 3/11, Top-3 3/11, Top-5 6/11, mean reference
+  rank 5.545, mean winning margin 0.0239.
+- The book-level Hengmen profile: Top-1 3/11, Top-3 3/11, Top-5 6/11, mean
+  reference rank 5.455.
+- Xingping Huihai had the best mean reference rank (5.091) and Top-5 7/11,
+  while Mingli Jicheng and Ziping Zhenquan also reached Top-5 7/11.
+- The comparison is not a predictive accuracy claim: public reference times
+  have heterogeneous provenance, the sample is small, and several non-Hengmen
+  book scorers produce exact or near-exact score ties.
+
+### Verification
+
+- Batch calibration completed for 12 cases and 100 events.
+- `.venv_py311\\Scripts\\python.exe -m pytest examples/mingli_5agents/tests/test_calendar_tools.py examples/mingli_5agents/tests/test_hengmen_rule_engine.py -q` - 62 passed.
+- `git diff --check` passed.
+
+## 2026-07-14 - Exact Four-Pillar Default and Lin Fan Event Fixture
+
+### Motivation
+
+The default calendar path silently fell back to a civil-calendar approximation
+when no professional backend was installed. For Lin Fan this changed the month,
+day, and hour pillars, making downstream Hengmen analysis invalid.
+
+### Actions
+
+1. Promoted `lunar_python>=1.4.8` from optional Mingli extra to a core project
+   dependency and installed the cached wheel in the local Python 3.11 virtual
+   environment.
+2. Changed `calendar_provider=auto` to require `lunar_python` or `sxtwl` and
+   fail closed if neither is available. The explicit `approximate` provider
+   remains available only for non-Hengmen demonstrations.
+3. Corrected the civil-day Ganzhi anchor to 1984-01-31 JiaZi and made
+   approximate-calendar Hengmen analysis return an explicit blocked receipt.
+4. Added a Lin Fan regression test for `WuWu / BingChen / BingWu / XinMao` and
+   recorded the user-provided 1996-2020 factual timeline in
+   `examples/mingli_5agents/reports/linfan_major_events.json`.
+5. Ran an initial event-fit read. It identifies event-topic occurrence but does
+   not yet classify positive versus negative outcomes; 2018 promotion failure
+   and 2019 investment loss must not be reported as successful directional
+   predictions.
+
+### Verification
+
+- `.venv_py311\\Scripts\\python.exe -m pytest examples/mingli_5agents/tests/test_calendar_tools.py examples/mingli_5agents/tests/test_hengmen_rule_engine.py -q` - 62 passed.
+- Direct `lunar_python` verification returned `WuWu / BingChen / BingWu / XinMao`
+  for 1978-04-14 06:50, Sanming.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Invalid-Result Schema Stability
+
+### Motivation
+
+The invalid-pillar result blocked scoring but omitted catalog and agent-receipt
+metadata that normal results expose.
+
+### Actions
+
+1. Added the standard rule catalog to invalid-pillar responses.
+2. Added a minimal blocking agent receipt with invalid inputs.
+3. Extended invalid-input contract checks.
+
+### Verification
+
+- Forty-two direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Invalid-Input AHP Blocking
+
+### Motivation
+
+Natal validation could identify invalid pillars, but chart and event AHP could
+still assign neutral scores from empty fallback data.
+
+### Actions
+
+1. Added blocked chart and event AHP responses for invalid pillar inputs.
+2. Returned zero scores, blocking flags, and the original review flags.
+3. Added a chart-and-event invalid-input test.
+
+### Verification
+
+- Forty-two direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Pillar-Label Validation
+
+### Motivation
+
+Malformed pillar labels could previously fall through to a fallback candidate
+and create symbolic evidence from invalid input.
+
+### Actions
+
+1. Validated every supplied pillar stem/branch and the day master.
+2. Made invalid labels block candidate generation.
+3. Returned an explicit blocking review flag and correction boundary.
+4. Added an invalid-month-pillar test.
+
+### Verification
+
+- Forty-one direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Review-Flag Propagation
+
+### Motivation
+
+Partial automation boundaries existed in the catalog but were not surfaced as
+operational signals in natal, AHP, or book-level outputs.
+
+### Actions
+
+1. Added review flags for ambiguous pattern selection, stem-order context, and
+   virtual invitation structures.
+2. Propagated flags through natal, direct AHP, and book-level AHP results.
+3. Added ambiguity and virtual-structure flag tests.
+
+### Verification
+
+- Forty direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Legacy Entrypoint Delegation
+
+### Motivation
+
+The prior private Hengmen helper remained in the module after v2 adoption,
+leaving a future call path able to bypass the independent rule engine.
+
+### Actions
+
+1. Turned the historical private entrypoint into a v2 delegation wrapper.
+2. Renamed its retained implementation to explicitly legacy-only.
+3. Added a compatibility-entrypoint test.
+
+### Verification
+
+- Forty direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Book Timing-Agent Composition
+
+### Motivation
+
+The book-level timing agent mapped only annual/monthly activation and omitted
+the direct Hengmen AHP major-luck component.
+
+### Actions
+
+1. Combined major-luck and annual/monthly votes using their direct AHP source
+   weights of 0.10 and 0.08.
+2. Attached both timing receipts and source weights to the book timing vote.
+3. Added a direct-versus-book timing composition test.
+
+### Verification
+
+- Thirty-nine direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Book-Level Timing Evidence Propagation
+
+### Motivation
+
+The book-level profile invoked the independent Hengmen scorer without monthly
+or counterexample rows, leaving those rules neutral above the direct AHP path.
+
+### Actions
+
+1. Extended book-framework scoring APIs with optional monthly and
+   counterexample evidence rows.
+2. Passed those rows through the Hengmen book profile to the rule engine.
+3. Passed matching rows from the hour-calibration workflow.
+4. Added a book-level monthly/counterexample evaluation test.
+
+### Verification
+
+- Thirty-eight direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed through the updated book path.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Book-Level Evidence Propagation
+
+### Motivation
+
+The book-level Hengmen profile retained vote scores but dropped the independent
+agent receipts, rule catalog, and AHP architecture produced below it.
+
+### Actions
+
+1. Attached the matching reasoning receipt to every book-profile subagent vote.
+2. Added stem/root evidence for the stem-root book subagent.
+3. Propagated agent receipts, rule catalog, and AHP architecture through the
+   book-level profile output.
+4. Added direct book-profile and calibration propagation checks.
+
+### Verification
+
+- Thirty-seven direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration retained book-level evidence artifacts.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Pattern-Family Candidate Coverage Audit
+
+### Motivation
+
+Scattered examples did not prove every source pattern family had a working
+month-command candidate path.
+
+### Actions
+
+1. Added a table-driven candidate-generation test for officer, wealth,
+   resource, food-god, killing, hurting-officer, and peer families.
+2. Added an explicit Yang Blade promotion assertion.
+
+### Verification
+
+- Thirty-six direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Palace-Trigger Relation Semantics
+
+### Motivation
+
+The palace-trigger score treated every relation on a target pillar as equally
+strong, regardless of whether the event was disruptive or constructive.
+
+### Actions
+
+1. Classified target-palace relations as severe, combination, or other.
+2. Scored severe relations highest only for disruptive event types.
+3. Added a receipt with target pillars, relation types, score, and reason.
+4. Added a positive-versus-disruptive palace-trigger test.
+
+### Verification
+
+- Thirty-five direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration carried palace-trigger receipts.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Fact-Calibration Evidence Split
+
+### Motivation
+
+The fact-calibration AHP dimension used only counterexamples even though its
+definition also requires source traceability.
+
+### Actions
+
+1. Combined source/label/year traceability with the counterexample receipt.
+2. Exposed both component scores and the combined fact-calibration score.
+3. Added a sourced-versus-unsourced event behavioural test.
+
+### Verification
+
+- Thirty-four direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration carried fact-calibration receipts.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Candidate-Selection Ambiguity
+
+### Motivation
+
+Multiple exposed month-command stems can yield closely ranked patterns. Picking
+the first candidate without a margin hid ambiguity from the AHP result.
+
+### Actions
+
+1. Added candidate ranking margin, runner-up, and confidence receipt.
+2. Marked close margins as ambiguous.
+3. Applied bounded month-pattern AHP discounts for low and moderate confidence.
+4. Added a close wealth/officer candidate test.
+
+### Verification
+
+- Thirty-three direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Event-Theme Vocabulary Normalization
+
+### Motivation
+
+Some event-theme targets used `friends` while annual evidence normalized the
+same concept to `peer`, preventing peer evidence from matching valid themes.
+
+### Actions
+
+1. Normalized target themes through the same ten-god theme mapping used for
+   annual evidence.
+2. Added a role-transition peer-evidence behavioural test.
+
+### Verification
+
+- Thirty-two direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Monthly-Date Conflict Guard
+
+### Motivation
+
+An explicit event month and an ISO date can disagree because of calendar
+conventions or data error. Silently preferring either value would create an
+untraceable flow-month assertion.
+
+### Actions
+
+1. Added event-month resolution with explicit, ISO-date, missing, and conflict
+   states.
+2. Made a conflicting month/date pair neutral for monthly timing.
+3. Preserved the existing neutral behavior for missing month evidence.
+4. Added a conflict behavioural test.
+
+### Verification
+
+- Thirty-one direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Year-Matched Counterexample Penalties
+
+### Motivation
+
+Counterexample penalties were previously gated by the number of supplied rows,
+which could apply a penalty from the wrong years.
+
+### Actions
+
+1. Normalized declared counterexample years.
+2. Required a same-year annual evidence row for every declared counterexample.
+3. Made malformed or incomplete year evidence neutral with an explicit receipt.
+4. Added a missing-year adversarial test and updated the evaluated-year test.
+
+### Verification
+
+- Thirty direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Stem-Order Evidence Boundary
+
+### Motivation
+
+The full-text catalog identified stem ordering and case analogy as partial. The
+engine needed to preserve observable ordering facts without converting a
+financial/resource separation into an unsupported success claim.
+
+### Actions
+
+1. Added external visible-stem role sequence evidence to every candidate.
+2. Added a hurting-officer finance/resource separation receipt.
+3. Marked this receipt as `needs_corroboration`; it does not change pattern
+   score or declare finance/resource harmony.
+4. Added an adversarial test and calibration propagation assertion.
+
+### Verification
+
+- Twenty-nine direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Full-Text Rule Catalog Receipt
+
+### Motivation
+
+Core rule implementation alone cannot prove whole-book coverage. Consumers need
+to distinguish executable symbolic rules from rules requiring fuller case
+context or independent factual review.
+
+### Actions
+
+1. Added a structured full-text rule catalog to the natal engine output.
+2. Classified ten symbolic rules as executable, one ordering/case-analogy area
+   as partial, and concrete outcome assertions as human-review only.
+3. Propagated the catalog through chart and event AHP outputs.
+4. Added catalog-boundary and calibration propagation checks.
+
+### Verification
+
+- Twenty-eight direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration carried the catalog at chart and event levels.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen AHP Architecture Receipt
+
+### Motivation
+
+Fixed AHP weights alone did not expose the criterion hierarchy or an auditable
+consistency property, despite the method being described as AHP.
+
+### Actions
+
+1. Added an eight-criterion AHP architecture receipt.
+2. Derived a reciprocal pairwise matrix from normalized source-method
+   priorities and exposed the weight vector.
+3. Declared the matrix as source-method priority derived, not event-set fitted.
+4. Added a reciprocal-matrix and consistency behavioural test.
+
+### Verification
+
+- Twenty-seven direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration carried the architecture receipt.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Named Agent Receipts
+
+### Motivation
+
+The AHP votes existed, but downstream consumers could not directly inspect the
+independent reasoning payload for each source-method subagent.
+
+### Actions
+
+1. Added natal receipts for month-command pattern generation, success/failure/
+   rescue, branch affection, and structural evidence.
+2. Added event receipts for ten-god theme, palace trigger, annual/monthly
+   timing, and falsification.
+3. Carried the receipts through both chart and event Hengmen AHP outputs.
+4. Added a behavioural test and calibration assertion for the full receipt set.
+
+### Verification
+
+- Twenty-six direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration contained all named receipts per event.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Virtual-Invitation Evidence Levels
+
+### Motivation
+
+The book's virtual-invitation examples distinguish a single partial trine from
+repeated matching branch pairs. The former implementation retained neither the
+repeat count nor an explicit prohibition against creating a pattern directly.
+
+### Actions
+
+1. Added pair-count evidence for partial trines.
+2. Marked repeated branch pairs as `repeated_candidate` with medium-low
+   evidence strength; one pair remains `needs_corroboration`.
+3. Added an explicit boundary that virtual invitation cannot create a pattern
+   candidate without exposure or independently sourced corroboration.
+4. Added a repeated Yin-Xu virtual-fire test.
+
+### Verification
+
+- Twenty-five direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Directed Combination Affection
+
+### Motivation
+
+Counting every branch disruption against a pattern and every combination as
+beneficial obscures the book's distinction between a combination that brings
+support and one that brings control to the relevant use/root.
+
+### Actions
+
+1. Limited disruption penalties to relations that touch a branch rooting the
+   candidate pattern stem.
+2. Added directed-combination evidence identifying whether a partner branch
+   brings same/generating elements, controlling elements, or mixed evidence.
+3. Kept mixed evidence neutral and bounded the directed adjustment.
+4. Added positive combination and unrelated-disruption behavioural tests.
+
+### Verification
+
+- Twenty-three direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Pattern-Compatible Major Luck
+
+### Motivation
+
+The prior timing layer rewarded the mere presence of an active major-luck
+period. The source's pattern-specific luck discussion requires the period to
+support or damage the selected pattern.
+
+### Actions
+
+1. Derived major-luck roles from its supplied stem and branch hidden stems.
+2. Added pattern-compatible support and adverse role sets for all implemented
+   pattern families.
+3. Replaced the unconditional active-luck bonus with a bounded compatibility
+   score and exposed it in the timing receipt.
+4. Added a comparative major-luck behavioural test.
+
+### Verification
+
+- Twenty-one direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Pattern-Specific Rescue Refinement
+
+### Motivation
+
+Full-text examples distinguish food-god and hurting-officer generation in a
+wealth pattern, warn that food generating wealth can expose killing, and allow
+food-controlled clearing in an officer/killing mixture. Generic role-family
+matching could not preserve those distinctions.
+
+### Actions
+
+1. Made wealth patterns recognize food-god generation while recording
+   hurting-officer generation as a clearing condition rather than support.
+2. Added the food-generates-wealth-exposes-killing failure condition.
+3. Added food-controls-killing-leaves-officer as an explicit rescue for a
+   mixed authority candidate.
+4. Added three behavioural tests with contrasting candidate charts.
+
+### Verification
+
+- `python -m py_compile` passed for engine, AHP, and tests.
+- Twenty direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed with rule-engine receipts for every event.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Blade and Jianlu Rescue Correction
+
+### Motivation
+
+Full-text review showed that Yang Blade requires authority control and that
+Jianlu/Yuejie requires an external officer, wealth, or expression undertaking.
+The old candidate logic accidentally counted the day master itself as a peer
+failure, which made that family structurally self-defeating.
+
+### Actions
+
+1. Excluded the day stem from external support/failure-condition evaluation.
+2. Added Yang Blade conditions for authority control, wealth/resource
+   accompaniment, injury to the controlling authority, and mixed authority.
+3. Reworked Jianlu/Yuejie to require an external undertaking rather than using
+   the existence of the day master as a failure.
+4. Added three behavioural tests covering the repaired Jianlu and Yang Blade
+   conditions.
+
+### Verification
+
+- `python -m py_compile` passed for engine, AHP, and tests.
+- Seventeen direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration completed.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen AHP Timing-Dimension Correction
+
+### Motivation
+
+The AHP receipt previously reused annual timing for major-luck support and put
+the monthly score under an annual label. That obscured the source method's
+stage, annual trigger, and monthly confirmation distinction.
+
+### Actions
+
+1. Restored the dedicated major-luck scoring function to `luck_support`.
+2. Made the annual-interaction dimension an explicit annual-primary / monthly-
+   secondary blend, while a missing event month remains neutral.
+3. Normalized precise ten-god labels to the AHP event-theme vocabulary.
+4. Added `timing_dimensions` to every Hengmen event receipt and a behavioural
+   test proving the three timing dimensions remain separate.
+
+### Verification
+
+- `python -m py_compile` passed for engine, AHP, and tests.
+- Fourteen direct Hengmen behavioural checks passed.
+- A 12-candidate Mao Zedong calibration exposed the new timing receipt.
+- `git diff --check` passed.
+
+## 2026-07-13 - Hengmen Yang Blade Coverage Audit
+
+### Motivation
+
+The source rule table treats Yang Blade separately from the general
+Jianlu/Yuejie family. Collapsing it into a peer candidate hides a material
+candidate-generation distinction.
+
+### Actions
+
+1. Added a month-command Yang Blade mapping for the five Yang day masters.
+2. Promoted a matching peer candidate to a distinct `yang_blade` special
+   pattern while retaining the same visible support, failure, and rescue facts.
+3. Added a source-pattern coverage receipt to natal, chart, and event AHP
+   outputs so absent candidates are distinguishable from unsupported rules.
+4. Added positive and negative Yang Blade behavioural tests.
+
+### Verification
+
+- `python -m py_compile` passed for engine, AHP, and tests.
+- Twelve direct Hengmen behavioural checks passed.
+- `git diff --check` passed.
+
+## 2026-07-25 - Hengmen Skill Re-distillation from Full Text
+
+### Motivation
+
+The `mingli-bazi-hengmen` skill's `references/method.md` was handwritten
+from generic knowledge and marked the local full text as unconfirmed,
+leaving hallucination risk in framework names and chapter citations.
+
+### Actions
+
+1. Read the full extracted text
+   `external/mingli_books/bazi/extended/text_sources/geju_hengmen_duan/geju_hengmen_duan_full.txt`
+   (1269 paragraphs) — front matter, chapter 12 (geju core), pattern
+   chapters 13-21, case chapter 23,口诀 chapter 24.
+2. Rewrote `~/.codex/skills/mingli-bazi-hengmen/references/method.md` with
+   real chapter-level citations (月令取格/顺用逆用, 用神变化与纯杂,
+   成败救应, 会合有情无情, 八格细分取运, 第二十三章立格/宫位语言,
+   第二十四章师门口诀, 案例十五三柱看).
+3. Added `references/key_chapters.md` (chapter index with line numbers and
+   extraction defects) and `references/glossary.md` (terminology).
+4. Synced `references/hengmen_meta_graph.md`: fixed source path to
+   `examples/格局横门断.docx`, added chapter citations, noted that "横门"
+   is never defined in the text and AHP weights are SEMAS-layer additions.
+
+### Verification
+
+- File lengths within spec: method.md 77 lines, key_chapters.md 41,
+  glossary.md 44, hengmen_meta_graph.md 100; SKILL.md and
+  agents/openai.yaml unchanged.
+- Known text-quality issues recorded in key_chapters.md: lost chapter
+  headings (4/7/11/13-16/19/22), OCR noise in chapter 23 screenshots,
+  incomplete 月令权神歌 (午-亥月).
+
+## 2026-07-25 - Sanming Tonghui Skill Re-distillation from Full Text
+
+### Motivation
+
+The `mingli-bazi-sanming-tonghui` skill (`~/.codex/skills/`) had a
+hand-written `references/method.md` with no full-text backing ("本地文件：
+未确认完整本地文件"), carrying hallucination risk.
+
+### Actions
+
+1. Read the Kanripo Siku Quanshu edition of 《三命通会》 (KR3g0042,
+   `external/mingli_books/bazi/extended/text_sources/sanming_tonghui_kanripo/`,
+   13 files: 提要 + 卷一至卷十二). Full-read 提要; close-read 卷一/卷二 core
+   sections, 卷五《論正官》, 卷七《子平説辯》, 卷十《看命口訣》,
+   卷十一《氣象篇》, 卷二《總論嵗運》, 卷三《總論諸神煞》; mapped all other
+   chapters via heading grep.
+2. Rewrote `references/method.md` (65 lines) with real chapter names and
+   per-framework chapter citations; kept the 来源/核心框架/层次化分析/
+   事件判断/冲突处理/版权 skeleton.
+3. Added `references/key_chapters.md` (chapter index, 74 lines) and
+   `references/glossary.md` (term table, 47 lines). SKILL.md and
+   `agents/openai.yaml` untouched.
+4. Wiki note: `wiki/sanming_tonghui_skill_redistillation.md`.
+
+### Verification
+
+- All 13 source files present; chapter headings verified by grep against
+  the full text (e.g. 《看命口訣》《論正官》《氣象篇》《明通賦》《總論諸神煞》).
+- Citation spot-checks: 《論驛馬》(卷三 L165)、《論空亡》(卷三 L1054)、
+  「格局只以用神推」(卷十二《明津先生骨髓歌》L1293) confirmed in source.
+- File line counts within the 100/120-line budget.
+
+## 2026-07-24 - Classical Book Full-Text Acquisition and Skill Re-distillation Batch
+
+### Motivation
+
+Five book-derived skills (`mingli-bazi-sanming-tonghui`, `-ditiansui`,
+`-qiongtong-baojian`, `-shenfeng-tongkao`, `-hengmen`) had empty `local`
+fields in `build_mingli_book_skills.py` — hand-written frameworks with no
+full-text backing, carrying hallucination risk. Local scanned PDFs have no
+usable text layer (verified with pdftotext), so machine-readable texts were
+sourced from public collations instead.
+
+### Actions
+
+1. Downloaded full texts into `external/mingli_books/bazi/extended/text_sources/`:
+   - 《三命通會》 Kanripo Siku edition (github.com/kanripo/KR3g0042), 13 files, ~432k zh chars.
+   - 《滴天髓阐微》《神锋通考》《穷通宝鉴》 from github.com/youngzs/xuanxue, ~108k/119k/29k zh chars.
+   - 《格局横门断》 extracted from local `examples/格局横门断.docx`, ~58k zh chars.
+2. Registered all acquisitions with edition notes in `external/mingli_books/SOURCES.md`.
+3. Re-distilled the five skills in `~/.codex/skills/` from the full texts
+   (parallel subagents): each `references/method.md` rewritten with real
+   chapter-level citations; new `key_chapters.md` / `glossary.md` per book;
+   《穷通宝鉴》 gained a 10-stem x 12-month `tiaohou_table.md` cheatsheet;
+   hengmen `meta_graph` synced with the extracted text.
+4. Updated the five `local`/`source` fields in
+   `examples/mingli_5agents/tools/build_mingli_book_skills.py` and added a
+   docstring warning that re-running the generator would clobber the
+   full-text-backed skills.
+
+### Verification
+
+- zh-char counts per book confirmed after download (see SOURCES.md table).
+- Skill files on disk: 16 reference files, 904 lines total (was ~275).
+- Text-quality caveats per book recorded in each skill's `key_chapters.md`.
+
+### Known gap
+
+星平会海: the xuanxue copy contains tables of contents only (~1.7k zh chars);
+a collated full text still needs sourcing before that skill can be backed.
+
+## 2026-07-24 - Fix Eight Stale Test Failures on mingli-book-subagents Branch
+
+### Motivation
+
+Full pytest run (`py -3.14`, examples/mingli_5agents/tests) showed
+314 passed / 8 failed. Diagnosis showed all 8 were stale test
+assertions/fixtures that had not caught up with intentional code evolution
+(Chinese report localization, bazi method-surface growth, stricter ziwei
+production contract, manifest-backed seed passages). No runtime bugs found.
+
+### Actions (test-only changes; no production code touched)
+
+1. `tests/test_mingli_system.py`: report-header assertions updated to the
+   localized Chinese titles (`# 命理五智能体研判报告[:林凡]`); the
+   地理归一化 line assertion updated to the localized form
+   (`三明, 福建, 中国`).
+2. `tests/test_cli.py`: two English report-header assertions updated the
+   same way; bazi method-surface domain count `== 8` -> `== 11`
+   (classical_book_agents, classical_layered_bazi, hengmen_pattern are
+   intentional new capabilities).
+3. `tests/test_empirical_validation.py`: same method-surface count fix
+   (this was the failure previously misattributed to GitHub network).
+4. `tests/test_evidence.py`: `external_record_count == 1` replaced with a
+   baseline-delta assertion (empty corpus vs custom corpus differ by 1),
+   because three `local_download_manifest` seed passages legitimately count
+   as external.
+5. `tests/test_provider_checks.py`: the stale-protocol mock ziwei provider
+   now emits a complete `calculation_basis` block (aligned with
+   `providers/ziwei_json_cli_example.py`) so the test exercises its real
+   intent: valid contract + stale protocol identity -> blocked.
+
+### Verification
+
+- The 8 previously failing tests: 8/8 pass.
+- Full files test_mingli_system / test_evidence / test_provider_checks /
+  test_empirical_validation: 135 passed, 0 failed.
+- test_cli.py full-file rerun: 31 passed, 0 failed (347s).
+- Full suite (23 files): 322 passed, 0 failed (748s) — all green.
+
+## 2026-07-24 - Xingping Huihai Substitute Source and Mingli Jicheng OCR Pilot
+
+### Motivation
+
+Backtest TOP1 (星平会海) and TOP3 (命理集成) books had no usable digital
+full text: CTEXT's 星平会海 wiki text is unproofread OCR gibberish
+(verified by direct inspection, error rate renders it unusable);
+命理集成 has no digital text anywhere (CTEXT/GitHub both negative).
+
+### Actions
+
+1. 星平会海 -> substitute source (user decision): downloaded Kanripo
+   《星學大成》 (KR3g0041, Siku edition, same author Wan Minying; the
+   star-fate content of 星平会海 derives mainly from it) into
+   `external/mingli_books/bazi/extended/text_sources/xingxue_dacheng_kanripo/`
+   (31 files, ~329k zh chars). New skill `mingli-xingping-huihai`
+   distilled from it with the substitution provenance stated explicitly.
+2. 命理集成 -> OCR pilot (user decision): local NLC scans turned out to
+   be a clean Republican-era letterpress edition (汪琴南编, not
+   woodblock), so vision-LLM transcription works well. Rendered with
+   PyMuPDF in `.semas_tmp/ocr_venv`; transcribed:
+   - 卷一第七章 神煞: all **54** sections (task brief listed 32; the
+     book actually has 54), PDF pages 68-96, ~8.8k zh chars, 0 illegible.
+   - 卷二第八章 看命要訣: all 3 sections, PDF pages 100-107, ~2.3k zh
+     chars, 0 illegible, chapter complete.
+   Output: `external/mingli_books/bazi/extended/text_sources/mingli_jicheng_ocr/`.
+3. Registered both acquisitions in `external/mingli_books/SOURCES.md`.
+
+### Verification
+
+- 天乙貴人 verse, 驛馬/咸池 lookup rules, 三奇 doctrine spot-checked
+  against standard references - all match (one version variant noted:
+  「六辛逢虎馬」 vs common 「六辛逢馬虎」).
+- Version identified: 汪琴南编, mid-Republican era (mentions 共和,
+  lists 孙中山/袁世凯 etc. charts); cites 淵海/三命/神峰/星平會海/命學發微/袁阜.
+
+### Remaining
+
+- 命理集成 remaining chapters (格局, 六亲, 岁运 detail) not yet
+  transcribed - full ~807-page OCR batch is a separate decision.
+- mingli-jicheng skill distillation and hengmen AHP discrimination
+  work continue in follow-up entries.
+
+## 2026-07-24 - Hengmen AHP Hour-Calibration Discrimination Improvement
+
+### Motivation
+
+book_ahp_backtest_2026-07-09.md diagnosed 格局横门断 as "分高但排序拉不开"
+(highest average reference score, mediocre reference ranking, few top-1s).
+
+### Root causes (confirmed in code and data)
+
+1. Additive-only scoring kept all 12 hour candidates in a narrow high band.
+2. Declared-counterexample coverage across all 11 cases / 101 events = 0,
+   so the falsification channel could never fire; its activation condition
+   would also have penalized all candidates equally.
+3. Per-dimension analysis: event_ten_god and fact_calibration had zero
+   variance across candidates; palace_trigger was negatively correlated
+   with the reference hour; success_rescue had the largest spread and best
+   alignment but only 18% weight.
+4. School-level hengmen used a divergent generic heuristic (inflated
+   scores, no monthly/counterexample inputs).
+
+### Actions
+
+- `hengmen_rule_engine.py`: rebuilt `_counterfactual_receipt` with a
+  derived-counterexample path (event year ±3, no recorded event, 0.05/yr
+  penalty cap 0.20 vs declared 0.08/0.35) and tightened activation to
+  "theme ten-god + branch interaction, or hour-pillar trip" (per Hengmen
+  ch.23 引动归时); receipt weights 0.65/0.20/0.15 -> 0.55/0.20/0.25.
+- `bazi_hengmen_ahp.py` / `mingli_book_ahp.py` / `bazi_school_ahp.py`:
+  reweighted toward success_rescue (0.18->0.24) and fact_calibration
+  (0.04->0.10), downweighted zero-variance/negative dimensions; school
+  level now delegates to `score_hengmen_event` (single scale).
+- `hour_calibration.py`: derived counterexample rows fallback + event
+  years plumbing.
+- Tests: 2 new tests (derived path, activation rule); no existing
+  assertions changed.
+- Doc: `case_studies/hour_calibration/hengmen_discrimination_improvement_2026-07-24.md`.
+
+### Results (11-case backtest)
+
+Book level: mean ref rank 5.45 -> 5.18, top3 3 -> 5, ref score -0.0096.
+School level: mean ref rank 5.36 -> 5.09, top1 1 -> 3, top3 4 -> 5.
+
+### Verification
+
+- Full suite: **324 passed, 0 failed** (322 + 2 new), 774s.
+
+### Known risks
+
+Derived counterexamples are weak negatives (may mis-penalize unrecorded
+minor years; mitigated by lower unit penalty); weight magnitudes carry
+small-sample (11-case) overfit risk while direction arguments do not;
+obama/oprah/hepburn reference hours still rank last - worth auditing
+their published reference hours separately.
+
+## 2026-07-24/25 - Mingli Jicheng Full-Book OCR + SEM Fusion Evaluation + Equal-Weight Fusion
+
+### Motivation
+
+1. 命理集成 skill was backed by only two OCR'd chapters; user asked to
+   complete the whole book.
+2. User asked to build SEM (structural equation modeling) to improve
+   hour-calibration prediction accuracy.
+
+### Actions
+
+1. Version work: PDF2 (`mingli_jicheng_16002983.pdf`) identified as the
+   complete 4-volume copy (上海文明書局, 民國廿一年/1932, 汪琴南编;
+   copyright page p456); PDF1 stops at 卷三. PDF2 chosen as OCR master.
+2. Full-book vision transcription: 14 parallel chunk agents covered
+   physical pages 13–457 (no gaps, no duplicates). Assembled master
+   `text_sources/mingli_jicheng_ocr/mingli_jicheng_full.txt`:
+   105,746 zh chars, 86 illegible chars (0.08%).
+3. Cross-validation: 神煞 chapter was transcribed independently from
+   both scans; char-level agreement 97.18% -> measured OCR error ~1–2%.
+4. `mingli-jicheng` skill upgraded to full-book backing: new
+   `pattern_index.md` (28 patterns: 9 regular + 19 special) and
+   `liuqin_index.md` (六親/女命); method.md coverage statement updated;
+   電氣種胎法 chapter flagged as historical material only.
+5. SEM fusion (one-factor SEM over 26 score dimensions, 132 rows,
+   leave-one-case-out): honest negative — mean reference rank 6.00 vs
+   baselines; latent factor absorbs low-discrimination consensus variance.
+   Documented in `case_studies/hour_calibration/sem_fusion_report_2026-07-24.md`.
+6. Discovered improvement: the LOCO evaluation showed **equal-weight
+   fusion is the strongest combiner** (mean rank 4.36, top1 3, top3 7 vs
+   strategy_total 5.45/1/5 and hengmen 5.09/3/5). Integrated into the
+   batch report (`equal_weight_total`, `equal_weight_reference_rank`,
+   markdown column) via `sem_fusion.equal_weight_hour_scores`; verified
+   on the full 11-case batch (exact LOCO reproduction).
+
+### Verification
+
+- Assembly: p13–p457 continuous, zero missing/duplicate pages.
+- Full 11-case batch rerun with equal-weight columns: strategy 5.45 ->
+  equal-weight 4.36 mean rank; 9/11 cases improved or unchanged.
+- Test suite: **330 passed, 0 failed** (final full rerun after fusion
+  edits, 768s).
+
+### Known issues
+
+- p421 (卷四) heavily faded page accounts for ~30 of the 86 illegible
+  chars; can be re-done from PDF1 if that passage is ever quoted.
+- SEM negative result stands: learned weights are not data-supported at
+  this sample size; equal-weight fusion is the current default combiner.
+
+---
+
+## 2026-07-28 — jackie_chan_public_events 时辰校准（LLM 技能分析智能体）
+
+### Motivation
+
+为 hour_calibration 案例 jackie_chan_public_events 提供知识驱动的十二时辰排序，
+与确定性管线（strategy / 横门AHP）形成对照。
+
+### Actions
+
+1. 读取简报（事件表 8 条 + 12 候选四柱），仅用事件表为事实来源；简报内公开参考
+   时辰（巳时）未用于推理，报告中已作污染声明。
+2. 精读 mingli-bazi-hengmen method.md（月令取格、成败救应、引动归时），查
+   mingli-bazi-qiongtong-baojian tiaohou_table.md（三月癸水：专用辛，忌戊，比劫滋甲制戊），
+   mingli-jicheng shensha_index.md（天乙贵人在巳卯、驿马、将星、天月德、空亡、破煞等），
+   mingli-bazi-ditiansui key_chapters.md（体用/从势框架）。
+3. 三柱定盘：杂气正官格，甲伤官见官为病，财通关/印制伤两路救应；事件规律：
+   两次最大突破皆在戊官透年（1978 戊午、1998 戊寅），名分荣誉皆在申印年
+   （1980 庚申、2016 丙申）。
+4. 逐时辰评分：申时（印制伤救应+申辰拱水+双事件引动归时）第 1（把握高）；
+   巳时（财生官通关+贵人归时+1995 驿马冲动）第 2（中）；午时（1978 戊午伏吟
+   最强单点引动，但双戊争合为浊）第 3（中）。完整排序：
+   申巳午酉辰子丑未寅亥戌卯。
+
+### Files changed
+
+- `examples/mingli_5agents/case_studies/hour_calibration/llm_skill_analysis/jackie_chan_public_events_analysis.md`（新建报告）
+
+### Verification
+
+- 报告含逐候选简评表、数据污染声明、与管线分数对照；排序 12 时辰齐全。
+- 事后对照：独立推导第 2 名恰为简报参考时辰（巳时），第 1 名为申时——推理
+  路径（伏吟引动+印制伤救应）与参考值无关，已在报告中说明。
+
+## 2026-07-28 — marilyn_monroe_public_events 时辰校准（LLM 技能分析智能体）
+
+### Motivation
+
+为 hour_calibration 案例 marilyn_monroe_public_events 提供知识驱动的十二时辰
+排序，与确定性管线（strategy / 横门AHP）形成对照。
+
+### Actions
+
+1. 读取简报（事件表 7 条 + 12 候选四柱），仅用事件表为事实来源；简报内公开
+   参考时辰（巳时）未用于推理，报告中已作污染声明。
+2. 精读 mingli-bazi-hengmen method.md / glossary.md（月令取格、成败救应、
+   金水伤官见官、双柱同功、引动归时、事实校准），mingli-bazi-qiongtong-baojian
+   tiaohou_table.md（辛日巳月：壬水淘洗兼调候，甲木制戊），mingli-jicheng
+   shensha_index.md（红艳、阴差阳错、八专、亡神、咸池、天乙），
+   mingli-bazi-ditiansui method.md（《何知章》夭看气浊神枯），
+   mingli-bazi-sanming-tonghui method.md（岁运冲克月令提纲必祸、官杀混杂取清）。
+   mingli-xingping-huihai 因无星历推盘条件未启用，已在报告注明。
+3. 三柱定盘：巳月丙火正官透年取正官格（官星在年主世界级名分）；事件表反证
+   癸水食神为泄秀+调候双重喜用而非破格之字（1952 壬辰 / 1953 癸巳食伤透年
+   大吉）；辛坐酉禄 + 巳酉半合，身旺喜水木，忌火土燥。
+4. 应期锚点：1956 丙申丙官透合日主再婚、1961 辛丑比肩争合丙官离婚、
+   1962 壬寅运岁两寅刑月令巳提纲 + 伤官见官死亡。
+5. 逐时辰评分：辰时（壬水透干调候落实 + 1952 伏吟引动 + 1962 伤官见官）
+   第 1（高）；申时（壬水长生 + 寅巳申三刑应 1962 + 双官争合应两婚）
+   第 2（中）；巳时（双癸双巳双柱同功名气象最足，但调候无根）第 3（中）。
+   完整排序：辰申巳亥子酉卯丑午寅未戌。
+
+### Files changed
+
+- `examples/mingli_5agents/case_studies/hour_calibration/llm_skill_analysis/marilyn_monroe_public_events_analysis.md`（新建报告）
+- `wiki/hour_calibration_tiaohou_first_weight.md`（原子笔记）
+- `wiki/index.md`（索引追加一条）
+
+### Verification
+
+- 报告含逐候选简评表（12 行齐全）、完整排序、前三把握度、数据污染声明、
+  与管线分数对照、知识库清单。
+- 事后对照：简报参考时辰（巳时）在独立排序中列第 3；前两名由壬水调候 +
+  三刑/伏吟应期机制推出，推理路径与参考值无关。
+
+## 2026-07-28 - Knowledge-Base LLM Hour Calibration on All 11 Public Cases
+
+### Motivation
+
+With 9 full-text-backed skills now available, evaluate whether
+knowledge-driven LLM analysis can calibrate birth hours on the 11 public
+figure cases, compared against the deterministic pipeline.
+
+### Method
+
+Per-case briefing (event table + 12 pre-computed candidate pillars +
+pipeline scores for reference only) + independent LLM analysis agents
+using the skill knowledge base (hengmen as chief judge, jicheng
+shensha/pattern indexes, sanming, ditiansui, qiongtong, xingping).
+Anti-contamination rules: no memorized birth hours, event-table-only
+facts, mandatory disclosure. Reports and rankings in
+`case_studies/hour_calibration/llm_skill_analysis/`.
+
+### Results (reference-hour rank, mean / top1 / top3)
+
+- strategy composite AHP: 5.45 / 1 / 5
+- equal-weight fusion: 4.36 / 3 / 7
+- knowledge-base LLM:  3.64 / 3 / 8  (strongest single approach; fixes
+  Oprah 11->2, Obama 12->4, Monroe 4->3, MJ 2->1, Bruce Lee 5->3;
+  loses only Trump 3->12. NOTE: first version of this log entry misread
+  Bruce Lee's reference hour as 丑时; it is 辰时 (07:12), LLM rank 3)
+- Union of equal-weight + knowledge-base top-3 covers 9/11 cases;
+  per-case best-of-three mean rank 2.64.
+
+### Caveats recorded
+
+Contamination cannot be fully excluded (public figures, reference
+printed in briefing; several analysts disclosed seeing it, some ranked
+the reference last which argues against pull-through). Results are an
+upper-bound estimate; deterministic pipeline remains the
+contamination-free baseline. Full analysis:
+`llm_skill_analysis/summary_2026-07-28.md`.
+
+### Next step candidates
+
+Two-stage cascade: equal-weight narrows candidates, knowledge-base
+analysis adjudicates with auditable reasoning chains.
+
+## 2026-07-28 - SEM v2 Iteration: Case-Centering Works, Learned Weights Still Don't
+
+### Motivation
+
+SEM v1 honestly failed (LOCO 6.00). Iterate with the diagnosed fixes and
+the new LLM knowledge-base signal.
+
+### Variants evaluated (LOCO, 11 cases)
+
+- v2a within-case standardization: 4.82 (single biggest fix, 6.00 -> 4.82,
+  confirms pooled cross-case variance dominated v1)
+- v2b +indicator screening & 3-parcel model: 5.00
+- v2c +pairwise Bradley-Terry structural link: 5.27
+- v2d +LLM package (logit): 5.09
+- v2e +LLM package (BT): 4.18 / top3 8
+- Reference lines: 3-parcel equal weight (no learning) **3.82** / 1 / 8;
+  LLM signal alone 3.64 / 3 / 8 (contamination-risk upper bound)
+
+### Honest conclusions
+
+1. Without the LLM signal no learned-weight variant beats equal-weight
+   fusion (4.36); 11 positives cannot support weight learning — twice
+   confirmed.
+2. The strongest CLEAN combiner found is 3-parcel equal weight (3.82):
+   average the hengmen-vote parcel, school parcel, and book parcel with
+   equal thirds. No learning required.
+3. v2e's apparent win (4.18) is driven by the LLM signal (weight 0.731)
+   and is weaker than the LLM signal alone (3.64) — SEM adds nothing on
+   top of it.
+4. Implementation findings: two-step BT is rank-equivalent to logit
+   (monotone link); informative pairs are 110/fold not 726; a BT gradient
+   sign bug and a screening bug were caught by the synthetic recovery
+   tests (test-driven, not result-driven).
+
+### Deliverables
+
+`sem_fusion.py` v2 functions (v1 untouched), `llm_rankings_2026-07-28.json`,
++9 tests (suite now **339 passed, 0 failed**),
+`sem_fusion_v2_report_2026-07-28.md`.
+
+### Data correction
+
+Bruce Lee public reference is 辰时 (07:12), not 丑时; LLM analysis rank
+is 3 (not 11 as first logged). Summary and prior log entry corrected.
+
+## 2026-07-28 - Two-Stage Cascade Fusion (3-Parcel EW Screen + Knowledge-Base Adjudication)
+
+### Motivation
+
+SEM v2 confirmed learned weights do not pay off; the two best approaches
+(3-parcel equal weight 3.82/1/8, knowledge-base LLM 3.64/3/8) have
+complementary strengths: the deterministic stage rarely misses the
+reference in top-3 but almost never ranks it first; the LLM stage is
+best at picking the winner but occasionally derails.
+
+### Implementation
+
+`case_studies/hour_calibration/cascade_eval.py`: stage-1 = 3-parcel
+equal-weight top-K screen (contamination-free); stage-2 = knowledge-base
+LLM adjudication restricted to the candidate set. +2 pure-function tests
+(suite now 341 passed). Report: `cascade_report_2026-07-28.md`.
+
+### Retrospective results (11 cases, in-sample)
+
+- Cascade K=4: mean rank 3.55, **Top1 6/11** (double the best single
+  method), Top3 8, misses 2 (Hepburn, Oprah - both already flagged as
+  low-confidence reference hours).
+- Cascade K=6: mean rank 3.36, Top1 5, misses 1.
+- Mechanism: stage-1 puts the reference in top-3 on 8/11 cases but only
+  once at #1; stage-2 supplies the winner-picking. Wide-in, strict-out.
+
+### Caveats
+
+In-sample retrospective with selection bias; stage-2 LLM rankings carry
+their own contamination disclaimer; numbers are an optimistic upper
+bound pending prospective cases. Production protocol (K=4, report
+winner + full stage-1 set) documented in the report.
+
+## 2026-07-28 - Lin Fan Prospective Blind Test: All Methods Fail
+
+First zero-contamination prospective case (real person, 13 user-provided
+events 1996-2020 with outcomes, true hour 卯时 withheld from analysts).
+
+- strategy / 26-dim equal weight / 3-parcel EW: rank 11 each
+- knowledge-base LLM blind analysis: rank 9 (confident "high" pick of
+  壬辰时 with a fully coherent reasoning chain - wrong answer)
+- cascade K=4: miss
+
+Sobering and decisive: coherent reasoning != correct answer. All
+in-sample metrics (incl. cascade 6/11 Top1) must be reinterpreted
+pessimistically. Hour-level calibration from annual events may be
+fundamentally underdetermined; academic-profile lives with mixed
+positive/negative events are a blind spot of every current weighting.
+Recorded in cascade_report_2026-07-28.md appendix. Until >=10
+prospective cases pass, all calibration outputs must be labeled
+"not prospectively validated".

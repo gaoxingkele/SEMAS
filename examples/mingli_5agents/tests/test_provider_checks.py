@@ -306,6 +306,15 @@ def test_provider_health_checks_blocks_valid_contract_with_stale_protocol_identi
         "    'palaces': palaces,\n"
         "    'major_limits': [{'start_year': 1990, 'end_year': 1999, 'palace': 'Career'}],\n"
         "    'annual_activation': [{'year': 2026, 'palace': 'Career'}],\n"
+        "    'calculation_basis': {\n"
+        "        'provider': 'reviewed-ziwei-provider fixture',\n"
+        "        'rule_set': 'fixture_ziwei_rules',\n"
+        "        'rule_set_version': 'fixture-1.0',\n"
+        "        'rule_source': 'bundled protocol fixture',\n"
+        "        'rule_source_sha256': '0' * 64,\n"
+        "        'license_or_review': 'protocol fixture only; not production certified',\n"
+        "        'calculation_scope': 'twelve palaces, major stars, sihua, major limits, annual activation',\n"
+        "    },\n"
         "}))\n",
         encoding="utf-8",
     )

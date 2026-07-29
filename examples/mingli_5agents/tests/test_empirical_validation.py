@@ -1084,7 +1084,7 @@ def test_capability_audit_reports_github_state_of_art_comparison():
     assert result["audit_receipt"]["material"]["status"] == result["status"]
     assert result["method_surface"]["schema_version"] == "method-surface-v1"
     assert len(result["method_surface"]["sha256"]) == 64
-    assert len(result["method_surface"]["material"]["domains"]["bazi"]) == 8
+    assert len(result["method_surface"]["material"]["domains"]["bazi"]) == 11
     assert result["audit_receipt"]["material"]["method_surface"]["sha256"] == result["method_surface"]["sha256"]
     assert result["audit_receipt"]["material"]["method_surface"]["domains"]["bazi"] == sorted(
         result["method_surface"]["material"]["domains"]["bazi"]

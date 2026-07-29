@@ -1,3 +1,21 @@
 # Wiki Log
 
+- 2026-07-27: Installed virgiliojr94/book-to-skill into `.cursor/skills/` (project agent skill).
 - 2026-07-13: Added book-level AHP and hour-calibration note.
+- 2026-07-13: Added Hengmen Rule Engine V2 note and evidence-boundary rationale.
+- 2026-07-13: Extended Hengmen V2 with bounded structural evidence rules.
+- 2026-07-13: Audited source pattern coverage and separated Yang Blade from generic peer candidates.
+- 2026-07-13: Corrected Hengmen AHP timing-dimension semantics and precise-ten-god normalization.
+- 2026-07-13: Corrected Yang Blade and Jianlu/Yuejie support, failure, and rescue boundaries from full-text review.
+- 2026-07-13: Added food/wealth/killing and mixed-authority rescue distinctions from full-text examples.
+- 2026-07-13: Replaced the unconditional Hengmen major-luck bonus with pattern-compatible timing evidence.
+- 2026-07-13: Added directed combination affection and candidate-root-scoped disruption handling.
+- 2026-07-13: Added bounded repeat-count evidence for partial trines and virtual invitation.
+- 2026-07-13: Exposed independent Hengmen agent receipts through chart and event AHP outputs.
+- 2026-07-13: Added auditable Hengmen AHP architecture and source-priority matrix.
+- 2026-07-13: Added a full-text Hengmen rule catalog and explicit automation boundaries.
+- 2026-07-13: Added bounded stem-order evidence for ordering-sensitive Hengmen candidates.
+- 2026-07-13: Required year-matched annual evidence for Hengmen counterexample penalties.
+- 2026-07-13: Added neutral handling for conflicting event month and ISO date evidence.
+- 2026-07-14: Replaced silent default calendar fallback with an exact-provider requirement and added the Lin Fan factual fixture.
+- 2026-07-14: Re-ran all public hour-calibration cases with an exact calendar backend and compared book profiles.

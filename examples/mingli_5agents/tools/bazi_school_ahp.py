@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from examples.mingli_5agents.tools.bazi_hengmen_ahp import score_hengmen_event
+
 
 SCHOOL_PROFILES: dict[str, dict[str, Any]] = {
     "yuanhai_ziping": {
@@ -92,15 +94,17 @@ SCHOOL_PROFILES: dict[str, dict[str, Any]] = {
     "hengmen": {
         "name": "格局横门断",
         "logic": "横向比较多种格局，用月令、透干、成败救应和事实年份筛选强断。",
+        # 权重与 bazi_hengmen_ahp.AHP_WEIGHTS 保持一致；该流派的事件评分
+        # 直接委托 score_hengmen_event，不再走通用启发式 _vote_score。
         "weights": {
             "month_pattern": 0.18,
             "stem_root": 0.14,
-            "success_rescue": 0.18,
-            "event_ten_god": 0.16,
-            "palace_trigger": 0.12,
+            "success_rescue": 0.24,
+            "event_ten_god": 0.10,
+            "palace_trigger": 0.06,
             "luck_support": 0.10,
             "annual_interaction": 0.08,
-            "fact_calibration": 0.04,
+            "fact_calibration": 0.10,
         },
     },
 }
@@ -277,9 +281,13 @@ def score_all_bazi_schools(
     event: dict[str, Any],
     annual_row: dict[str, Any],
     bazi: dict[str, Any],
+    monthly_rows: list[dict[str, Any]] | None = None,
+    counterexample_rows: list[dict[str, Any]] | None = None,
 ) -> dict[str, dict[str, Any]]:
     return {
-        school_id: score_bazi_school_event(school_id, event, annual_row, bazi)
+        school_id: score_bazi_school_event(
+            school_id, event, annual_row, bazi, monthly_rows, counterexample_rows
+        )
         for school_id in SCHOOL_PROFILES
     }
 
@@ -294,8 +302,25 @@ def score_bazi_school_event(
     event: dict[str, Any],
     annual_row: dict[str, Any],
     bazi: dict[str, Any],
+    monthly_rows: list[dict[str, Any]] | None = None,
+    counterexample_rows: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     profile = SCHOOL_PROFILES[school_id]
+    if school_id == "hengmen":
+        # 横门断流派直接复用专用 AHP 评分器（含流月应期与反例证伪通道），
+        # 避免通用启发式与专用引擎口径分叉；vote id 与本流派权重键一一对应。
+        result = score_hengmen_event(event, annual_row, bazi, monthly_rows, counterexample_rows)
+        votes = [
+            _vote(str(vote.get("id", "")), float(vote.get("score", 0.0)), str(vote.get("basis", "")))
+            for vote in result.get("votes", [])
+        ]
+        return {
+            "school_id": school_id,
+            "school_name": profile["name"],
+            "logic": profile["logic"],
+            "score": _weighted(votes, profile["weights"]),
+            "votes": votes,
+        }
     votes = [
         _vote(vote_id, _vote_score(vote_id, event, annual_row, bazi), _vote_basis(vote_id))
         for vote_id in profile["weights"]

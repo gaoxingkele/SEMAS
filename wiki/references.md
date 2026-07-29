@@ -1,14 +1,32 @@
 # References
 
+@software{lunar_python_1_4_8,
+  title = {lunar-python},
+  version = {1.4.8},
+  note = {Exact Chinese calendar backend used for the default four-pillar provider}
+}
+
 > Centralized citation list for the SEMAS LLM Wiki. Every `[source: ...]` link
 > in the wiki should resolve to an entry here.
 
 ## Mingli Source Leads
 
+- **格局横门断**
+  - Local DOCX reference used to derive the independent Hengmen rule graph.
+  - [source: `tools/格局横门断.docx`]
+
 - **Yuanhai Ziping / Ziping Zhenquan scan**
   - Wikimedia Commons / National Library of China scan
   - https://commons.wikimedia.org/wiki/File:NLC416-15jh007754-99036_%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3_%E5%AD%90%E5%B9%B3%E7%9C%9F%E8%A9%AE.pdf
   - [source: Wikimedia Commons NLC scan]
+
+## Agent Skills Tooling
+
+- **book-to-skill** (virgiliojr94)
+  - https://github.com/virgiliojr94/book-to-skill
+  - Converts owned books/docs into structured Agent Skills (`SKILL.md`).
+  - Local install: `.cursor/skills/book-to-skill/` (junction: `.agents/skills/book-to-skill`)
+  - [source: https://github.com/virgiliojr94/book-to-skill]
 
 ## SEMAS Framework
 
@@ -134,3 +152,20 @@
 - **AI Scientist**
   - Lu et al., 2024
   - Key: automated scientific discovery agent.
+
+## Mingli Primary Sources
+
+- **《三命通会》（明·万民英，四库全书本）**
+  - Kanripo 校勘电子文本 KR3g0042, https://github.com/kanripo/KR3g0042
+  - Local: `external/mingli_books/bazi/extended/text_sources/sanming_tonghui_kanripo/`
+  - Key: 百科型古法综合；月令为纲、财官为本；十神正格（卷五）为主、
+    神煞纳音为辅；卷十《看命口訣》为总法。
+
+- **《穷通宝鉴》（栏江网/造化元钥）**
+  - Skill: `mingli-bazi-qiongtong-baojian`（tiaohou_table.md 录各篇末「喜用提要」）
+  - Key: 调候用神体系；时辰校准中作格局之外的独立侧证（如三月癸水"专用辛，忌戊"）。
+
+- **《命理集成》**
+  - Skill: `mingli-jicheng`（shensha_index.md 54 节 / pattern_index.md 28 格局）
+  - Key: 神煞广谱扫描底稿；总纲"神煞无定局，因喜忌而异"决定其只能微调、
+    不可对冲格局成败。

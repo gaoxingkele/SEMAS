@@ -97,8 +97,9 @@ def test_classical_index_loads_optional_jsonl_corpus(tmp_path):
     snippets = retrieve_classical_passages("bazi_ziping", query="custom", corpus_dir=corpus)
     assert snippets[0]["snippet_id"] == "custom_balance"
     assert snippets[0]["provenance"]["corpus"] == "custom"
+    baseline = classical_index_audit(tmp_path / "empty_corpus")
     audit = classical_index_audit(corpus)
-    assert audit["external_record_count"] == 1
+    assert audit["external_record_count"] == baseline["external_record_count"] + 1
     assert "bazi_ziping" in audit["source_ids"]
 
 

@@ -1,0 +1,26 @@
+{
+  "case_id": "linfan_major_events",
+  "name": "Lin Fan",
+  "birth": {
+    "birth_date": "1978-04-14",
+    "birth_time": "06:50",
+    "gender": "male",
+    "birthplace": "Fujian, Sanming, China"
+  },
+  "source_policy": "User-provided factual timeline. No independent documents, month-level dates, or non-event counterexamples have yet been supplied.",
+  "events": [
+    {"year": 1996, "type": "study_exam", "outcome": "positive", "label": "Entered a Project 985 university through the national entrance examination.", "source": "user_provided"},
+    {"year": 2000, "type": "career_launch", "outcome": "positive", "label": "Completed undergraduate study, received recommended master's admission, and obtained a teaching establishment at a Project 985 university.", "source": "user_provided"},
+    {"year": 2003, "type": "relationship", "outcome": "positive", "label": "Married and completed master's degree.", "source": "user_provided"},
+    {"year": 2007, "type": "study_exam", "outcome": "negative", "label": "Doctoral application examination was unsuccessful.", "source": "user_provided"},
+    {"year": 2008, "type": "study_exam", "outcome": "positive", "label": "Passed doctoral admission examination.", "source": "user_provided"},
+    {"year": 2010, "type": "family", "outcome": "positive", "label": "First child was born.", "source": "user_provided"},
+    {"year": 2012, "type": "business_power", "outcome": "mixed", "label": "Business received a small acquisition; a home purchase entered litigation and caused an approximately one-million-yuan loss before title was ultimately obtained.", "source": "user_provided"},
+    {"year": 2013, "type": "role_power", "outcome": "positive", "label": "Completed doctorate and was appointed associate professor.", "source": "user_provided"},
+    {"year": 2014, "type": "family", "outcome": "positive", "label": "Team received Xiamen talent-project funding; second child was born.", "source": "user_provided"},
+    {"year": 2015, "type": "role_power", "outcome": "positive", "label": "Received talent-project funding as principal applicant.", "source": "user_provided"},
+    {"year": 2018, "type": "role_power", "outcome": "negative", "label": "Professor promotion application was blocked and did not succeed.", "source": "user_provided"},
+    {"year": 2019, "type": "business_power", "outcome": "negative", "label": "Entered a fraudulent investment scheme and suffered substantial loss.", "source": "user_provided"},
+    {"year": 2020, "type": "role_power", "outcome": "positive", "label": "Was appointed director of a research institute.", "source": "user_provided"}
+  ]
+}

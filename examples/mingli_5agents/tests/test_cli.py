@@ -1,4 +1,4 @@
-﻿"""Tests for the persistent mingli SEMAS CLI."""
+"""Tests for the persistent mingli SEMAS CLI."""
 
 from __future__ import annotations
 
@@ -2318,7 +2318,7 @@ def test_cli_init_analyze_evolve_status(tmp_path: Path, capsys, monkeypatch):
     assert release["release_manifest_receipt"]["material"]["method_surface"]["sha256"] == release["audit_receipt"][
         "material"
     ]["method_surface"]["sha256"]
-    assert len(release["release_manifest_receipt"]["material"]["method_surface"]["domains"]["bazi"]) == 8
+    assert len(release["release_manifest_receipt"]["material"]["method_surface"]["domains"]["bazi"]) == 11
     release_deliberation_coverage = release["release_manifest_receipt"]["material"][
         "readiness_deliberation_receipt_coverage"
     ]
@@ -3757,7 +3757,7 @@ def test_cli_analyze_preserves_utf8_birth_identity(tmp_path: Path, capsys):
     assert final_report["birth_profile"]["birthplace_normalized"] == "Sanming, Fujian, China"
     assert final_report["birth_profile"]["hour"] == 6
     assert final_report["birth_profile"]["minute"] == 50
-    assert result["result"]["output"].startswith("# Mingli five-agent report for 林凡")
+    assert result["result"]["output"].startswith("# 命理五智能体研判报告：林凡")
     assert "## 出生资料核对" in result["result"]["output"]
     assert context["name"] == "林凡"
     assert context["birthplace"] == "福建省三明市"
@@ -3807,7 +3807,7 @@ def test_cli_subprocess_emits_utf8_json_for_chinese_identity(tmp_path: Path):
     assert final_report["birth_profile"]["name"] == "林凡"
     assert final_report["birth_profile"]["birthplace"] == "福建省三明市"
     assert final_report["birth_profile"]["birthplace_normalized"] == "Sanming, Fujian, China"
-    assert result["result"]["output"].startswith("# Mingli five-agent report for 林凡")
+    assert result["result"]["output"].startswith("# 命理五智能体研判报告：林凡")
 
 
 def test_cli_analyze_accepts_utf8_bom_json_input(tmp_path: Path, capsys):

@@ -5,6 +5,21 @@ tags: [references, bibliography]
 
 # References
 
+@software{book_to_skill_virgiliojr94,
+  title = {book-to-skill},
+  author = {virgiliojr94},
+  howpublished = {\url{https://github.com/virgiliojr94/book-to-skill}},
+  note = {Vendored project skill at .cursor/skills/book-to-skill}
+}
+
+@software{lunar_python_1_4_8,
+  title = {lunar-python},
+  version = {1.4.8},
+  note = {Exact Chinese calendar backend used for the default four-pillar provider}
+}
+
+- [source: `tools/格局横门断.docx`] - local primary source for the Hengmen rule graph.
+
 ```bibtex
 @misc{wikimedia_yuanhai_ziping_scan,
   author = {{Wikimedia Commons} and {National Library of China}},

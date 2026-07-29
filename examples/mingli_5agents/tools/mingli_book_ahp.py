@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from examples.mingli_5agents.tools.bazi_hengmen_ahp import score_hengmen_event
+
 
 BOOK_AHP_PROFILES: dict[str, dict[str, Any]] = {
     "yuanhai_ziping": {
@@ -136,14 +138,17 @@ BOOK_AHP_PROFILES: dict[str, dict[str, Any]] = {
         "local_files": ["tools/格局横门断.docx"],
         "domain": "bazi",
         "logic": "横向比较格局，月令取格，透干根气，成败救应，事实年份筛选。",
+        # 权重与 bazi_hengmen_ahp.AHP_WEIGHTS 同哲学：event_agent 对时辰候选零方差
+        # （0.18->0.10），palace_agent 粗粒度且在本语料上与参考时辰负相关（0.12->0.06），
+        # 权重移给成败救应（横门断核心、候选间区分度最大）与事实筛选（反例通道已生效）。
         "subagents": {
             "month_pattern_agent": {"weight": 0.20, "role": "月令取格"},
             "stem_root_agent": {"weight": 0.16, "role": "透干根气"},
-            "rescue_agent": {"weight": 0.18, "role": "成败救应"},
-            "event_agent": {"weight": 0.18, "role": "十神事件"},
-            "palace_agent": {"weight": 0.12, "role": "宫位落事"},
+            "rescue_agent": {"weight": 0.26, "role": "成败救应"},
+            "event_agent": {"weight": 0.10, "role": "十神事件"},
+            "palace_agent": {"weight": 0.06, "role": "宫位落事"},
             "timing_agent": {"weight": 0.10, "role": "岁运触发"},
-            "fact_agent": {"weight": 0.06, "role": "事实筛选"},
+            "fact_agent": {"weight": 0.12, "role": "事实筛选"},
         },
     },
 }
@@ -155,9 +160,13 @@ def score_all_book_frameworks(
     bazi: dict[str, Any],
     ziwei_row: dict[str, Any] | None = None,
     astrology_row: dict[str, Any] | None = None,
+    monthly_rows: list[dict[str, Any]] | None = None,
+    counterexample_rows: list[dict[str, Any]] | None = None,
 ) -> dict[str, dict[str, Any]]:
     return {
-        book_id: score_book_framework_event(book_id, event, annual_row, bazi, ziwei_row or {}, astrology_row or {})
+        book_id: score_book_framework_event(
+            book_id, event, annual_row, bazi, ziwei_row or {}, astrology_row or {}, monthly_rows, counterexample_rows
+        )
         for book_id in BOOK_AHP_PROFILES
     }
 
@@ -169,8 +178,12 @@ def score_book_framework_event(
     bazi: dict[str, Any],
     ziwei_row: dict[str, Any],
     astrology_row: dict[str, Any],
+    monthly_rows: list[dict[str, Any]] | None = None,
+    counterexample_rows: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     profile = BOOK_AHP_PROFILES[book_id]
+    if book_id == "geju_hengmen_duan":
+        return _score_hengmen_book_profile(profile, event, annual_row, bazi, monthly_rows, counterexample_rows)
     votes = []
     for agent_id, agent in profile["subagents"].items():
         votes.append(
@@ -191,6 +204,80 @@ def score_book_framework_event(
         "local_files": profile["local_files"],
         "score": score,
         "subagent_votes": votes,
+    }
+
+
+def _score_hengmen_book_profile(
+    profile: dict[str, Any], event: dict[str, Any], annual_row: dict[str, Any], bazi: dict[str, Any],
+    monthly_rows: list[dict[str, Any]] | None = None, counterexample_rows: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Keep the Hengmen book profile independent from generic book heuristics."""
+    result = score_hengmen_event(event, annual_row, bazi, monthly_rows, counterexample_rows)
+    votes_by_id = {str(vote.get("id")): vote for vote in result.get("votes", [])}
+    agent_to_vote = {
+        "month_pattern_agent": "month_pattern",
+        "stem_root_agent": "stem_root",
+        "rescue_agent": "success_rescue",
+        "event_agent": "event_ten_god",
+        "palace_agent": "palace_trigger",
+        "timing_agent": "annual_interaction",
+        "fact_agent": "fact_calibration",
+    }
+    agent_to_receipt = {
+        "month_pattern_agent": "month_command_pattern",
+        "rescue_agent": "success_failure_rescue",
+        "event_agent": "event_ten_god",
+        "palace_agent": "palace_trigger",
+        "timing_agent": "annual_monthly_timing",
+        "fact_agent": "fact_calibration",
+    }
+    votes = []
+    for agent_id, agent in profile["subagents"].items():
+        source_vote = votes_by_id.get(agent_to_vote[agent_id], {})
+        receipt = result.get("agent_receipts", {}).get(agent_to_receipt.get(agent_id, ""), {})
+        score = round(float(source_vote.get("score", 0.42)), 4)
+        basis = source_vote.get("basis", "横门规则引擎未提供该维度。")
+        if agent_id == "timing_agent":
+            luck_vote = votes_by_id.get("luck_support", {})
+            annual_vote = votes_by_id.get("annual_interaction", {})
+            luck_score = float(luck_vote.get("score", 0.42))
+            annual_score = float(annual_vote.get("score", 0.42))
+            score = round((0.10 * luck_score + 0.08 * annual_score) / 0.18, 4)
+            basis = "大运承接与流年/流月引动按横门直接 AHP 原权重合成。"
+            receipt = {
+                "major_luck": result.get("timing_dimensions", {}).get("major_luck", {}),
+                "annual_monthly": result.get("agent_receipts", {}).get("annual_monthly_timing", {}),
+                "source_weights": {"luck_support": 0.10, "annual_interaction": 0.08},
+            }
+        if agent_id == "stem_root_agent":
+            selected = bazi.get("deep_analysis", {}).get("hengmen_pattern_analysis", {}).get("selected_pattern", {})
+            receipt = {
+                "exposed": selected.get("exposed"), "roots": selected.get("roots", []),
+                "ordering_evidence": selected.get("ordering_evidence", {}),
+            }
+        votes.append(
+            {
+                "agent_id": agent_id,
+                "role": agent["role"],
+                "weight": agent["weight"],
+                "score": score,
+                "basis": basis,
+                "receipt": receipt,
+            }
+        )
+    return {
+        "book_id": "geju_hengmen_duan",
+        "title": profile["title"],
+        "domain": profile["domain"],
+        "logic": profile["logic"],
+        "local_files": profile["local_files"],
+        "score": round(sum(vote["score"] * vote["weight"] for vote in votes), 4),
+        "subagent_votes": votes,
+        "rule_engine": result.get("rule_engine", {}),
+        "agent_receipts": result.get("agent_receipts", {}),
+        "rule_catalog": result.get("rule_catalog", {}),
+        "review_flags": result.get("review_flags", []),
+        "ahp_architecture": result.get("ahp_architecture", {}),
     }
 
 

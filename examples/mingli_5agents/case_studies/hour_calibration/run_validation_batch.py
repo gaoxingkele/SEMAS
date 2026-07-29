@@ -43,7 +43,7 @@ def run_batch(case_dir: Path, out_dir: Path, case_names: list[str]) -> dict[str,
             encoding="utf-8",
         )
         (out_dir / f"{stem}.hour_calibration.md").write_text(render_markdown(result), encoding="utf-8")
-        rows.append(_summary_row(result))
+        rows.append(_summary_row(result, case))
     summary = {
         "schema_version": "mingli-hour-validation-batch-v1",
         "case_count": len(rows),
@@ -53,6 +53,12 @@ def run_batch(case_dir: Path, out_dir: Path, case_names: list[str]) -> dict[str,
         "hit_count": sum(1 for row in rows if row["reference_rank"] == 1),
         "top3_count": sum(1 for row in rows if isinstance(row["reference_rank"], int) and row["reference_rank"] <= 3),
         "ambiguous_count": sum(1 for row in rows if row["decision"] == "ambiguous"),
+        "equal_weight_hit_count": sum(1 for row in rows if row["equal_weight_reference_rank"] == 1),
+        "equal_weight_top3_count": sum(
+            1
+            for row in rows
+            if isinstance(row["equal_weight_reference_rank"], int) and row["equal_weight_reference_rank"] <= 3
+        ),
     }
     (out_dir / "public_figure_validation_batch.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
@@ -62,9 +68,29 @@ def run_batch(case_dir: Path, out_dir: Path, case_names: list[str]) -> dict[str,
     return summary
 
 
-def _summary_row(result: dict[str, Any]) -> dict[str, Any]:
+def _best_equal_weight_reference_rank(scores: dict[str, float], reference: dict[str, Any]) -> int | None:
+    """Rank of the best public reference hour under equal-weight fusion scores."""
+    if not scores or not reference.get("has_reference"):
+        return None
+    ordered = sorted(scores, key=scores.get, reverse=True)
+    ranks = [
+        ordered.index(str(ref.get("label", ""))) + 1
+        for ref in reference.get("references", [])
+        if str(ref.get("label", "")) in ordered
+    ]
+    return min(ranks) if ranks else None
+
+
+def _summary_row(result: dict[str, Any], case: dict[str, Any]) -> dict[str, Any]:
     reference = result.get("reference_evaluation", {})
     winner_score = result["winner"]["score"]
+    events = [
+        event for event in case.get("events", []) if isinstance(event, dict) and event.get("year") is not None
+    ]
+    # Lazy import: sem_fusion imports DEFAULT_CASES from this module.
+    from examples.mingli_5agents.case_studies.hour_calibration.sem_fusion import equal_weight_hour_scores
+
+    equal_weight = equal_weight_hour_scores(result, events)
     return {
         "case_id": result["case_id"],
         "name": result["name"],
@@ -78,6 +104,8 @@ def _summary_row(result: dict[str, Any]) -> dict[str, Any]:
         "hengmen_ahp_total": winner_score["hengmen_ahp_total"],
         "ziwei_side_total": winner_score["ziwei_side_total"],
         "astrology_side_total": winner_score["astrology_side_total"],
+        "equal_weight_total": max(equal_weight.values()) if equal_weight else None,
+        "equal_weight_reference_rank": _best_equal_weight_reference_rank(equal_weight, reference),
     }
 
 
@@ -89,14 +117,16 @@ def render_summary_markdown(summary: dict[str, Any]) -> str:
         f"- 公开参考时辰命中数：{summary['hit_count']}",
         f"- 公开参考时辰进入前三数：{summary['top3_count']}",
         f"- 判为不明确的案例数：{summary['ambiguous_count']}",
+        f"- 等权融合命中数：{summary['equal_weight_hit_count']}（前三数：{summary['equal_weight_top3_count']}）",
         "",
-        "| 案例 | 系统候选 | 参考排名 | 决策 | 领先差 | 综合分 | 横门断 | 紫微侧证 | 星座侧证 |",
-        "|---|---|---:|---|---:|---:|---:|---:|---:|",
+        "| 案例 | 系统候选 | 参考排名 | 等权排名 | 决策 | 领先差 | 综合分 | 横门断 | 紫微侧证 | 星座侧证 |",
+        "|---|---|---:|---:|---|---:|---:|---:|---:|---:|",
     ]
     for row in summary["rows"]:
         rank = row["reference_rank"] if row["reference_rank"] is not None else ""
+        ew_rank = row["equal_weight_reference_rank"] if row["equal_weight_reference_rank"] is not None else ""
         lines.append(
-            f"| {row['name']} | {row['winner_hour']} | {rank} | {row['decision']} | "
+            f"| {row['name']} | {row['winner_hour']} | {rank} | {ew_rank} | {row['decision']} | "
             f"{row['margin_to_second']} | {row['strategy_total']} | {row['hengmen_ahp_total']} | "
             f"{row['ziwei_side_total']} | {row['astrology_side_total']} |"
         )

@@ -462,7 +462,7 @@ def test_five_agent_executor_can_render_chinese_markdown(tmp_path: Path):
     task = {**demo_task(), "language": "zh", "annual_start_year": 2024, "annual_end_year": 2026}
     result = MingliFiveAgentSystem(repo)(coordinator, task)
 
-    assert result["output"].startswith("# Mingli five-agent report")
+    assert result["output"].startswith("# 命理五智能体研判报告")
     assert "## 出生资料核对" in result["output"]
     assert "- 公历时间：" in result["output"]
     assert "## 使用边界" in result["output"]
@@ -572,10 +572,10 @@ def test_five_agent_executor_preserves_unicode_birth_identity(tmp_path: Path):
         item["birth_profile_sha256"] == provenance["birth_profile_sha256"]
         for item in provenance["specialist_contexts"].values()
     )
-    assert result["output"].startswith("# Mingli five-agent report for 林凡")
+    assert result["output"].startswith("# 命理五智能体研判报告：林凡")
     assert "## 出生资料核对" in result["output"]
     assert "福建省三明市" in result["output"]
-    assert "地理归一化：Sanming, Fujian, China" in result["output"]
+    assert "地理归一化：三明, 福建, 中国" in result["output"]
     assert result["specialists"]["bazi"]["chart"]["context"]["birthplace"] == "福建省三明市"
     assert result["specialists"]["bazi"]["chart"]["context"]["birthplace_normalized"] == "Sanming, Fujian, China"
     assert result["specialists"]["bazi"]["chart"]["context"]["timezone_offset"] == "+08:00"

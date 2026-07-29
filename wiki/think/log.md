@@ -1,3 +1,21 @@
 # Thinking Log
 
+- 2026-07-27: Chose virgiliojr94/book-to-skill as the project book→skill converter (highest-star public repo; Agent Skills standard).
 - 2026-07-13: Recorded why method votes remain separate from public-event fit scoring.
+- 2026-07-13: Recorded Hengmen timing and counterexample anti-leakage constraints.
+- 2026-07-13: Recorded asymmetric confidence handling for Hengmen structural rules.
+- 2026-07-13: Recorded why source-level candidate labels must survive AHP aggregation.
+- 2026-07-13: Recorded the need for timing-dimension labels to match their evidence source.
+- 2026-07-13: Recorded the intrinsic-versus-external evidence boundary in peer-family candidates.
+- 2026-07-13: Recorded why broad role-family aggregation cannot replace pattern-specific rescue rules.
+- 2026-07-13: Recorded why timing-layer presence cannot substitute for pattern compatibility.
+- 2026-07-13: Recorded the candidate-root ownership boundary for relation evidence.
+- 2026-07-13: Recorded why repeated virtual structures remain non-decisive evidence.
+- 2026-07-13: Recorded why independent AHP layers require independent evidence receipts.
+- 2026-07-13: Recorded the distinction between source-derived and event-fitted AHP priorities.
+- 2026-07-13: Recorded why coverage status must not be mistaken for outcome validation.
+- 2026-07-13: Recorded the boundary between stem-order evidence and a success conclusion.
+- 2026-07-13: Recorded why counterexample rows must be bound to their declared years.
+- 2026-07-13: Recorded why date/month conflicts must remain neutral in flow-month evidence.
+- 2026-07-14: Recorded why exact calendar provenance must gate Hengmen analysis and why occurrence fit is distinct from outcome direction.
+- 2026-07-14: Recorded why exact-calendar book comparison remains a tie-aware, small-sample descriptive result.
