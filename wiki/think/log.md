@@ -85,3 +85,39 @@ absorbed ideas.
 ## [2026-07-13] Mingli book profiles and hour calibration
 
 - Separated book-method votes from public-event fit scoring and retained ambiguity for narrow candidate-hour margins.
+
+## [2026-07-13] metric identity and frozen evaluator contract
+
+- A hold metric is comparable only when strategy, horizon, costs, coverage, and data hash match.
+- Invalid evaluation is missing evidence, not a zero score.
+- Persist structured promotion baselines and verify state before reconciliation.
+
+## [2026-07-14] rank-decile schedule regime failure
+
+- A 20d dynamic schedule won development but reversed on the later audit regime.
+- Retained the identity schedule and prohibited selection after opening final data.
+- Next research must use a new state variable and a new holdout.
+
+## [2026-07-14] MA correlation is exposure, not quality
+
+- The 20d ensemble has stable MA exposure, mostly from `high_zscore_20`.
+- Treat MA correlation as a redundancy/style diagnostic, not predictive proof.
+- Test incremental quality through MA-neutralized IC or conditional returns.
+
+## [2026-07-14] statistical residual alpha versus execution
+
+- MA-neutralized IC and Q5-Q1 spreads remain positive across all folds.
+- Fixed 20d cohort Sharpe does not improve consistently across folds.
+- Preserve the distinction between independent information and tradable policy.
+
+## [2026-07-16] horizon value requires execution stability
+
+- 5d remains positive across folds and test years under no-lookahead execution.
+- 10d has value but reverses in train IC and 2024 execution.
+- 20d remains research-only; historical warm-up is now evaluator identity.
+
+## [2026-07-16] stock selection export preserves execution state
+
+- Dynamic picks require rebalance cohort, current multiplier, and explicit exits.
+- Static 10d picks remain the rebalance cohort rather than today's top ranks.
+- A name union does not authorize unaudited cross-strategy capital weights.

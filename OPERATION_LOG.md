@@ -15224,3 +15224,948 @@ environments, downloaded source scans, or generated calibration outputs.
   and a 12-candidate public-event calibration successfully.
 - Focused `pytest` tests were not runnable because neither the system Python
   nor `.venv_py311` has `pytest` installed; no dependency was installed.
+
+## 2026-07-13 - Frozen promotion audit and state reconciliation
+
+### Motivation
+
+The 5d state contained a duplicate iteration 45 and invalid hold evaluations
+encoded as numerical zero. The 10d config documented a hold gate but omitted
+its parameters. Promotion also compared dynamic-trim candidates with a stale
+simple-hold scalar, so candidate and baseline were not guaranteed to use the
+same evaluator. The user approved repairing state and promotion semantics,
+then rerunning all live libraries on one frozen dataset.
+
+### Actions Taken
+
+1. Created an isolated git worktree for `china-a-share-alpha-evolver` because
+   another active process repeatedly switched and committed in the original
+   worktree.
+2. Added a structured hold-evaluation receipt with explicit validity, mode,
+   horizon, transaction cost, smoothing, factor coverage, observation count,
+   and factor errors.
+3. Replaced complete-case factor intersection with a 50% minimum available-
+   factor threshold and preserved duplicate factor labels through unique
+   internal row identities.
+4. Corrected dynamic trim to use the intended 20/40/60 percentile bands,
+   target weights rather than repeated multiplication, separate long/short P&L
+   normalization, and valid long-only continuation at expiry.
+5. Changed hold-gated promotion to compare the candidate and current live
+   library on the same in-memory panel and contract. Overlapping loop Sharpe
+   and return are now diagnostic metrics only.
+6. Normalized state schema version 2 and retained only the latest history entry
+   for each iteration. The tracked 5d state now has 44 unique history entries
+   through iteration 45.
+7. Added explicit contracts to all horizon configs: dynamic trim for 5d/10d,
+   simple hold for 20d, with 10 bps cost and 50% factor coverage.
+8. Added `run_frozen_promotion_audit.py` with separate freeze, read-only audit,
+   and guarded state-reconciliation commands. Reconciliation verifies the live
+   library SHA-256 and state iteration before atomic replacement.
+9. Froze train, validation, and test Parquet panels. The snapshot ID is
+   `242f762f4229bc9723b8b2a146b34dedc9d1b2d86e30f0c1bad5d7d10019e011`.
+10. Audited all three live libraries and reconciled their promotion baselines;
+    no library was promoted or replaced.
+
+### Frozen Audit Results
+
+| Library | Contract | Sharpe | Annualized return | Max DD | Verdict |
+|---|---|---:|---:|---:|---|
+| 5d live | dynamic trim, 5d | 2.4843 | 50.76% | -8.09% | PASS |
+| 10d live | dynamic trim, 10d | 3.8514 | 84.38% | -10.97% | PASS |
+| 20d live | simple hold, 20d | 1.3067 | 20.74% | -13.91% | PASS |
+
+The test panel has 203,432 rows, 354 symbols, and dates from 2024-01-02 through
+2026-05-29. The old dynamic-trim figures are not directly comparable because
+the rank bands and weight semantics were corrected in this change.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/run_factor_mining_loop.py`
+- `china_a_share_alpha/scripts/run_multihizon_audit.py`
+- `china_a_share_alpha/scripts/batch_multihizon_audit.py`
+- `china_a_share_alpha/scripts/run_frozen_promotion_audit.py` (new)
+- `china_a_share_alpha/examples/frozen_promotion_audit.yaml` (new)
+- 5d/10d/20d factor-mining loop configs
+- `china_a_share_alpha_output/factor_mining_loop/state.json`
+- `china_a_share_alpha_output/factor_mining_loop/STATE.md`
+- `tests/test_factor_promotion.py` (new)
+- `README.md`, `china_a_share_alpha/README.md`, `LOOP.md`
+- factor-mining operational and thinking wiki pages
+
+### Verification
+
+- `python -m py_compile` for all changed Python modules - passed.
+- `python -m pytest tests/test_factor_promotion.py tests/test_china_a_share_alpha.py tests/test_china_a_share_alpha_advanced.py -q` - 22 passed.
+- Focused promotion tests after reconciliation support was added - 7 passed.
+- Frozen snapshot checksum verification - passed for train, validation, and
+  test Parquet files.
+- State reconciliation dry-run - passed for all three libraries.
+- State reconciliation apply - passed after matching each library hash and
+  state iteration.
+
+### Boundary
+
+The audit is a reproducibility and evaluator-consistency gate, not evidence of
+future profitability. Human review remains required before production use.
+
+## 2026-07-14 - 20d rank-decile position-schedule evolution
+
+### Motivation
+
+The user requested combined optimization of 20d dynamic additions and
+reductions in 10% steps. The optimization needed to separate factor quality
+from execution sizing, charge turnover costs, and prevent same-day
+signal/return leakage.
+
+### Actions Taken
+
+1. Added a ten-bin genome with 0.1 multiplier increments, monotone rank
+   schedules, multi-seed genetic search, and static/legacy baselines.
+2. Implemented a vectorized 20d cohort backtest where day `d` positions earn
+   returns from day `d+1` and actual target changes incur 10 bps one-way cost.
+3. Froze factor library, short book, data snapshot, horizon, and cohort rules so
+   only the long-book schedule evolved.
+4. Ran four seeds on 2021-2022 development and 2023 selection. The selected
+   dynamic schedule failed the 2024-2026 blind fold (Sharpe -0.5719 versus
+   0.3643 static), triggering a bounded recovery cycle.
+5. Reassigned 2021-06 to 2023-12 as development, 2024-2025 as audit, and 2026
+   as final isolation without optimizing against previously observed aggregate
+   final metrics. Four new seeds produced 31 unique finalists.
+6. Selected the static schedule `[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+   1.0, 1.0]`. No dynamic schedule passed audit, so no live state or library
+   was promoted.
+7. Marked the previous same-day hold comparison as superseded for execution
+   policy decisions and recorded the result in operational and thinking wikis.
+
+### Result
+
+| Fold | Sharpe | Annualized return | Max DD |
+|---|---:|---:|---:|
+| Development (2021-06 to 2023-12) | 0.4165 | 4.73% | -14.75% |
+| Audit (2024-2025) | 0.2367 | 2.13% | -15.05% |
+| Final isolation (2026-01 to 2026-05) | 1.7582 | 23.10% | -3.86% |
+
+The legacy trim scored -0.6092 on audit and 2.2755 on the short final fold. It
+was not selected because final data cannot retroactively change the winner.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/evolve_20d_position_schedule.py` (new)
+- `china_a_share_alpha/examples/position_schedule_evolution_20d*.yaml` (new)
+- `china_a_share_alpha/examples/position_schedule_20d_best.yaml` (new)
+- `tests/test_20d_position_schedule.py` (new)
+- `china_a_share_alpha/README.md`, `LOOP.md`, and 20d state documentation
+- factor-mining operational and thinking wiki pages
+
+### Verification
+
+- Four-seed initial search: 32 unique finalists; blind dynamic failure captured.
+- Four-seed recovery search: 31 unique finalists; static rollback selected.
+- Recovery receipt snapshot and library SHA-256 verification: passed.
+- Optimizer, promotion, and China A-share regression tests: 29 passed.
+- All three position-schedule YAML files parsed successfully.
+- `git diff --check` passed (line-ending conversion warnings only).
+
+### Boundary
+
+This result optimizes only absolute current-rank long-book multipliers. It does
+not establish future profitability and does not authorize production trading.
+
+## 2026-07-14 - 20d factor / MA correlation audit
+
+### Motivation
+
+The user asked whether correlations between the 20d factors and MA5/MA10/MA20
+could be measured and whether those statistics are meaningful. Direct
+correlation with raw MA price levels would be dominated by stock price scale.
+
+### Actions Taken
+
+1. Defined each MA signal as `close / trailing_MA(close, n) - 1` for scale-free
+   cross-stock comparison.
+2. Added a read-only analyzer for individual factors, the raw equal-weight
+   ensemble, and its EMA10 execution signal.
+3. Calculated daily cross-sectional Spearman correlations separately on train,
+   validation, and test folds, with 20-day Newey-West uncertainty estimates.
+4. Calculated rolling expressions and MAs continuously before slicing folds so
+   valid historical observations remain available at fold boundaries.
+5. Added tests for trailing-only MA construction, cross-sectional grouping,
+   and HAC summary statistics.
+6. Ran the verified frozen snapshot against the checksum-matched 20d library.
+
+### Results
+
+| Test-fold signal | MA5 | MA10 | MA20 |
+|---|---:|---:|---:|
+| Raw ensemble | 0.3802 | 0.4080 | 0.4161 |
+| EMA10 ensemble | 0.1929 | 0.3109 | 0.4255 |
+| `high_zscore_20` | 0.5918 | 0.7965 | 0.8847 |
+| `net_mf_amount` | 0.4851 | 0.3570 | 0.2658 |
+
+The ensemble exposure is positive and similar across all three folds. Factor
+evaluation completed with zero expression errors and 98.81% ensemble coverage.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/analyze_factor_ma_correlation.py` (new)
+- `tests/test_factor_ma_correlation.py` (new)
+- `china_a_share_alpha/README.md`, root `README.md`, and `STATE.md`
+- factor-mining operational and thinking wiki pages
+
+### Verification
+
+- Focused MA-correlation and position-schedule tests: 10 passed.
+- Frozen snapshot checksum verification: passed.
+- Library SHA-256 verification: passed.
+- MA-correlation, position-schedule, promotion, and China A-share regression
+  tests: 32 passed.
+- Black check, Python compilation, and `git diff --check`: passed (line-ending
+  conversion warnings only).
+
+### Boundary
+
+Correlation measures current signal exposure and redundancy. It is not evidence
+of forward-return prediction or future profitability.
+
+## 2026-07-14 - 20d MA-neutralized independent-alpha audit
+
+### Motivation
+
+The factor/MA correlation audit found material trend exposure. The user asked
+to remove MA5/10/20 exposure and compare 20d IC, layered returns, and hold
+Sharpe to determine how much independent alpha remains.
+
+### Actions Taken
+
+1. Added daily joint cross-sectional OLS neutralization against standardized
+   `close/MA5-1`, `close/MA10-1`, and `close/MA20-1` exposures.
+2. Restricted original and residual signals to exactly the same dates and
+   symbols for every comparison.
+3. Constructed 20d labels from compounded day `d+1` through `d+20` returns
+   separately inside each frozen fold, preventing labels from crossing fold
+   boundaries.
+4. Added 20d Rank IC with HAC statistics, five equal-count layers, Q5-Q1
+   spreads, monotonicity diagnostics, and the next-day 10 bps cohort backtest.
+5. Evaluated both the raw equal-weight ensemble and EMA10 execution signal.
+6. Added tests for OLS residualization, forward-return alignment, and layer
+   ordering.
+
+### Results
+
+MA5/10/20 jointly explain 19.2% of raw-ensemble variance and 18.1% of EMA10
+variance. Residual raw IC is positive across train/validation/test at
+0.0216/0.0181/0.0095. Residual Q5-Q1 spreads are also positive at
+0.67%/0.52%/0.34%.
+
+| Fold | Raw version | 20d IC | Q5-Q1 | Hold Sharpe |
+|---|---|---:|---:|---:|
+| Train | original | 0.0089 | 0.32% | -0.0188 |
+| Train | MA-neutral | 0.0216 | 0.67% | -0.2336 |
+| Validation | original | 0.0158 | 0.89% | -0.8346 |
+| Validation | MA-neutral | 0.0181 | 0.52% | -1.1379 |
+| Test | original | 0.0073 | 0.70% | 0.9542 |
+| Test | MA-neutral | 0.0095 | 0.34% | 1.0302 |
+
+For test EMA10, neutralization raises Sharpe from 0.5954 to 0.6578 and reduces
+maximum drawdown from -13.21% to -6.04%, but annualized return falls from 6.60%
+to 4.31%. Execution performance does not improve consistently in earlier folds.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/analyze_ma_neutralized_alpha.py` (new)
+- `tests/test_ma_neutralized_alpha.py` (new)
+- root and China A-share READMEs, `STATE.md`
+- factor-mining operational and thinking wiki pages
+
+### Verification
+
+- Neutralization, MA correlation, position schedule, promotion, and China
+  A-share regression tests: 35 passed.
+- Frozen snapshot and library checksum verification: passed.
+- Black check, Python compilation, and `git diff --check`: passed (line-ending
+  conversion warnings only).
+
+### Boundary
+
+Independent cross-sectional information remains after linear MA neutralization,
+but the current 20d holding rule does not monetize it robustly. No live factor,
+weight, or promotion state was changed.
+
+## 2026-07-16 - unified no-lookahead 5d/10d/20d audit
+
+### Motivation
+
+The user accepted de-prioritizing 20d and requested a proper no-lookahead review
+of whether 5d and 10d retain value. Earlier 5d/10d promotion figures shared the
+same signal-day return contamination found in the 20d evaluator.
+
+### Actions Taken
+
+1. Added a unified audit for each native library with 1d/5d/10d/20d IC decay,
+   native five-layer returns, predefined static/trim execution, and annual hold
+   stability.
+2. Verified the frozen snapshot and library hashes: 5d `d88190b9...` (13
+   factors), 10d `31f0ebff...` (5 factors), and 20d `8c40c145...` (5 factors).
+3. Computed all factor expressions and EMA10 smoothing on continuous historical
+   data, then restricted IC, layers, and returns to each frozen fold.
+4. Selected static versus fixed trim on 2023 validation Sharpe only and opened
+   the 2024-2026 test fold after selection.
+5. Downgraded otherwise positive horizons when train or calendar-year signs
+   reversed. This changed 10d from robust to regime-sensitive.
+6. Extracted the cohort backtest into a shared module with top/bottom 20%
+   cohorts, actual target turnover, and day-`d+1` return application.
+7. Changed the 10d promotion contract from dynamic trim to simple hold; retained
+   5d dynamic trim and enforced 20d research-only with a disabled promotion gate.
+8. Independently recalculated the three test metrics through the production
+   promotion API. The first comparison exposed missing pre-test history in the
+   production path, so the evaluator was repaired to warm rolling factors from
+   continuous past data while scoring only test dates.
+9. Repeated the production verification until it matched the independent audit
+   exactly. No factor library was promoted or replaced.
+
+### Results
+
+| Horizon | Selected mode | Validation Sharpe | Test Sharpe | Return | Max DD | Decision |
+|---|---|---:|---:|---:|---:|---|
+| 5d | dynamic trim | 0.7669 | 1.6337 | 29.17% | -12.42% | primary |
+| 10d | simple hold | 0.1662 | 0.9906 | 15.58% | -17.81% | secondary, regime-sensitive |
+| 20d | dynamic trim | -0.1146 | -0.0697 | -1.59% | -21.64% | research-only |
+
+5d test-year Sharpe is 0.9391, 2.0879, and 2.9197 for 2024-2026. The 10d
+sequence is -0.0008, 2.0663, and 2.4599, confirming a 2024 regime weakness.
+The test IC curves at 1d/5d/10d/20d are 0.0091/0.0243/0.0287/0.0243 for the 5d
+library, 0.0008/0.0149/0.0230/0.0163 for 10d, and
+-0.0012/0.0053/0.0070/0.0057 for 20d.
+
+### Files Changed
+
+- `china_a_share_alpha/backtest/position_schedule.py` (new shared backtester)
+- `china_a_share_alpha/scripts/run_no_lookahead_horizon_audit.py` (new)
+- promotion, frozen-audit, batch-audit, and 20d schedule scripts
+- 5d/10d/20d promotion configs and horizon-priority YAML
+- `tests/test_no_lookahead_horizon_audit.py` and promotion tests
+- READMEs, `LOOP.md`, state documentation, and factor-mining wikis
+
+### Verification
+
+- Horizon, promotion, MA analysis, position-schedule, and China A-share
+  regression tests: 40 passed.
+- Snapshot and all library SHA-256 checks: passed.
+- Independent production-entry metrics matched the audit exactly: 5d 1.6337,
+  10d 0.9906, and 20d static diagnostic 0.5708.
+- Black check, Python compilation, YAML parsing, and `git diff --check`: passed
+  (line-ending conversion warnings only).
+
+### Boundary
+
+The audit supports 5d as the primary research/execution horizon and 10d as a
+regime-sensitive secondary horizon. It does not authorize production trading.
+The 20d library remains available for research but is not a promotion target.
+
+## 2026-07-16 - complete audited 5d/10d stock selection export
+
+### Motivation
+
+The user requested the complete combined factor stock-selection list after the
+5d primary and 10d secondary horizon decisions were finalized.
+
+### Actions Taken
+
+1. Added a frozen-snapshot exporter for the audited 5d dynamic and 10d static
+   contracts.
+2. Recomputed both signals on continuous train/validation/test history with the
+   same factor coverage and EMA10 settings used in the horizon audit.
+3. Anchored 5d selection to 2026-05-25 and 10d selection to 2026-05-18, matching
+   the fold's deterministic rebalance calendar.
+4. Exported complete rebalance longs, current positive longs, fixed shorts, and
+   the combined positive long union.
+5. Retained 5d cohort members whose multiplier fell to zero as explicit
+   `EXIT_0` rows instead of silently deleting them.
+6. Tagged combined names as dual-horizon core, 5d primary, or 10d secondary.
+7. Did not assign a combined capital weight because no 5d/10d allocation has
+   passed a frozen validation audit.
+
+### Results
+
+- 5d: 70 rebalance longs, 69 positive current longs, one exit, 70 shorts.
+- 10d: 70 static longs and 70 shorts.
+- Combined positive long union: 108 names.
+- Buckets: 31 core, 38 5d-primary, and 39 10d-secondary.
+- 5d actions: 53 full, 15 at 70%, one at 50%, and one exit.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/export_audited_horizon_picks.py` (new)
+- `tests/test_export_audited_horizon_picks.py` (new)
+- China A-share README, state documentation, operation log, and wiki indexes
+
+### Verification
+
+- Exporter, horizon, promotion, MA analysis, position-schedule, and China
+  A-share regression tests: 42 passed.
+- Frozen snapshot and both library hashes: verified.
+- Both factor libraries evaluated with zero expression errors.
+- CSV integrity verification passed: 108 unique combined longs, 70 names per
+  rebalance cohort, and exactly one 5d exit.
+- Black check, Python compilation, and `git diff --check`: passed (line-ending
+  conversion warnings only).
+
+### Boundary
+
+The selection date is 2026-05-29 and is not current as of 2026-07-16. Stock
+names are omitted because the only cached name mapping is encoding-damaged.
+The exported short cohorts are research constructs and may not be executable in
+an A-share cash account.
+
+---
+
+## 2026-07-19 — Resume Factor Evolution from Frozen Snapshot
+
+### Motivation
+
+Resume the interrupted 5d factor-evolution loop from iteration 45 without
+changing the libraries frozen by the no-lookahead audit.
+
+### Actions Taken
+
+1. Located the durable checkpoint at
+   `china_a_share_alpha_output/factor_mining_loop/state.json` (iteration 45).
+2. Added a `snapshot_dir` loader path so the loop can read the checksum-described
+   train/validation/test parquet snapshot without requiring a live Tushare call.
+3. Started iteration 46 using the existing live library as its seed and the
+   2026-07-17 frozen snapshot.
+4. Used a temporary research configuration with `promotion_enabled: false`, so
+   the resumed search cannot overwrite the audited live library or baseline.
+
+### Verification
+
+- Offline loader smoke check passed: train/validation/test rows were
+  `130772 / 84644 / 213322`.
+- Iteration 46 entered enhanced evolution; stdout and stderr are captured in
+  `china_a_share_alpha_output/factor_mining_loop/`.
+
+### Boundary
+
+This starts candidate research only. It does not authorize promotion, trading,
+or replacement of a frozen factor library.
+
+### Resume Correction
+
+The first resumed attempt passed its candidate-generation, cleaning, and
+combination stages but stopped when a path-valued `data_config` reached the
+snapshot loader. The loader now normalizes YAML paths before reading the
+snapshot; compilation passed and iteration 46 was restarted from the unchanged
+iteration-45 checkpoint.
+
+### Promotion Authorization
+
+The user explicitly enabled automatic promotion for subsequent resumed runs.
+The frozen snapshot, hold-Sharpe evaluation, factor-count, correlation, and
+training-quality gates remain in effect; only the temporary research-only
+promotion switch was changed to `true`.
+
+### Iteration 46 Result
+
+Iteration 46 completed from the frozen snapshot and passed the enabled
+promotion gates. The candidate was promoted with dynamic-hold Sharpe `1.7911`,
+cost-adjusted return `33.31%`, and maximum drawdown `-9.54%`. Iteration 47 was
+then started from that promoted live library under the same gates.
+
+---
+
+## 2026-07-19 — Frozen-Snapshot 5D / 10D 30-Round Campaign
+
+### Motivation
+
+The user requested thirty iterations focused on 5-day and 10-day horizons.
+The prior snapshot carried a 1-day forward-return column, so holding-period
+backtests alone could not establish horizon-specific factor discovery.
+
+### Actions Taken
+
+1. Made frozen-snapshot loading recompute `forward_return` independently
+   inside each train, validation, and test fold for the requested horizon.
+2. Added a durable dual-horizon campaign runner with separate 5D and 10D
+   states, candidate archives, logs, and checkpointed round history.
+3. Made campaign lineage selection validation-only: a candidate replaces the
+   next-round research seed only when validation Sharpe improves. Test metrics
+   remain recorded artifacts and do not select the seed.
+4. Started the first 5D/10D campaign round with a 16-candidate, five-generation
+   search budget per horizon and thirty rounds per horizon.
+
+### Verification
+
+- Frozen-snapshot label smoke check passed for both horizons: 5D folds were
+  `129037 / 82889 / 211552`; 10D folds were `127305 / 81134 / 209782`.
+- Loader and campaign runner compiled successfully.
+- The campaign process entered 5D round 1 and wrote a durable stdout log.
+
+### Boundary
+
+The campaign evolves research archives, not production factor libraries. A
+final test-fold comparison occurs only after the validation-selected lineage is
+complete.
+
+---
+
+## 2026-07-20 — Frozen-Snapshot 5D / 10D 30-Round Campaign Completion
+
+### Motivation
+
+Complete the user-requested thirty evolution rounds for each 5D and 10D
+horizon, then report results without using the test fold for lineage choice.
+
+### Actions Taken
+
+1. Ran the checkpointed dual-horizon campaign to completion: 30 rounds for
+   5D and 30 rounds for 10D (60 recorded rounds total).
+2. Retained validation-only promotion. The campaign accepted 9 5D and 8 10D
+   strict validation-Sharpe improvements; test metrics did not control
+   promotion.
+3. Audited `campaign_history.json`, each horizon state, and the final
+   `combination_result.json` artifacts.
+
+### Results
+
+| Horizon | Best validation Sharpe | Final independent test Sharpe | Test IC | Test cost-adjusted return |
+| --- | ---: | ---: | ---: | ---: |
+| 5D | 6.4191 | 4.0395 | 0.0389 | 1.5775 |
+| 10D | 7.7895 | 3.4117 | 0.0336 | 1.5443 |
+
+Both final out-of-sample Sharpes exceed the user's 1.5 observation threshold.
+The results are research artifacts rather than production trading approval;
+the final 5D and 10D test maximum drawdowns were respectively -47.66% and
+-72.15%, requiring further risk validation before deployment.
+
+### Verification
+
+- `campaign_history.json`: 60 records, with exactly iterations 1 through 30 for each
+  horizon and no duplicates.
+- `5d/state.json` and `10d/state.json`: both report iteration 30.
+- Validation-selected 5D parent: `iter_0027/combination/combination_result.json`.
+- Validation-selected 10D parent: `iter_0029/combination/combination_result.json`.
+
+---
+
+## 2026-07-21 — Unused-Stock External Validation for 5D / 10D Candidates
+
+### Motivation
+
+Test the complete frozen set of prior candidates with original OOS Sharpe above
+2 on stocks absent from the original 354-symbol snapshot, specifically across
+the user-requested 2025 and 2026 periods.
+
+### Actions Taken
+
+1. Froze all 178 distinct campaign expressions selected solely by their prior
+   original-universe OOS Sharpe: 135 at 5D and 43 at 10D.
+2. Constructed an external universe from historical CSI500 constituent records,
+   excluded all 354 original snapshot symbols, and applied membership as of
+   each historical record date rather than using current constituents.
+3. Drew a deterministic 30-stock external sample (seed `20260721`), loaded
+   price, valuation, fundamental, money-flow, northbound-holding, and TA-Lib
+   fields via Tushare, and evaluated all candidates for full, 2025, and 2026
+   periods. Credentials were environment-only and were not persisted.
+4. Reconciled the factor parser's whitelist with already implemented expression
+   operations (`cs_percentile`, `cs_demean`, `cs_winsorize`, `ts_median`,
+   percentile, decay, and min-max operators), allowing all frozen candidates
+   to execute.
+
+### Results
+
+The external audit completed 534 factor-period evaluations (178 factors ×
+full/2025/2026) with no expression failures. Three candidates met a strict
+stability screen: full-period Sharpe >= 1.5, both yearly Sharpes >= 1.5,
+positive IC in both years, and at least 1,500 factor-return observations in
+each year. The leading robust candidate was 10D `ts_mean(net_mf_amount, 20)`:
+full Sharpe 3.2040, 2025 Sharpe 3.6223, 2026 Sharpe 2.9056, and full maximum
+drawdown -50.58%.
+
+### Verification
+
+- `china_a_share_alpha/scripts/run_external_unused_csi500_validation.py`
+  completed with `candidate_count=178`, `external_symbol_count=30`, and
+  `evaluation_start=20250530`.
+- Audit artifacts: `china_a_share_alpha_output/external_unused_csi500_2025_2026/`.
+- 2025 coverage begins 2025-05-30 because earlier historical CSI500 membership
+  records were unavailable from the data query; the report explicitly does not
+  claim January–May coverage.
+---
+
+## 2026-07-23 — Market-State Gate Falsification Check
+
+### Motivation
+
+The unused-stock audit showed clustered drawdowns in high-Sharpe factors. Test
+whether a simple observable market-state gate can reduce that risk before any
+production or automatic-promotion integration.
+
+### Actions Taken
+
+1. Reconstructed daily long-short return streams for the three externally
+   stable candidates from the cached, stock-disjoint CSI500 sample.
+2. Defined a no-lookahead gate using only prior-day observable market data:
+   20-day equal-weight-market volatility and 20-day market trend.
+3. Calibrated the volatility/trend thresholds on the 2025 portion only, then
+   froze them and evaluated 2026 without retuning.
+
+### Results
+
+The candidate gate did not generalize. In 2026 it reduced the return-5D
+candidate's maximum drawdown from -26.08% to -22.76% but reduced its Sharpe
+from 2.53 to 1.73. It worsened the 10D money-flow candidate's maximum drawdown
+from -50.58% to -54.88%, and changed the third candidate's Sharpe from 2.28
+to -0.11. The gate is therefore rejected and was not integrated into promotion
+or live-library logic.
+
+### Verification
+
+- Used the cached external-universe panel and the existing 30-stock frozen
+  sample; no new symbols, candidates, or selection rules were introduced.
+- All gate inputs are lagged by one day; no future return or realized factor IC
+  was available to the gate at decision time.
+
+---
+
+## 2026-07-24 — Sharpe-First External Factor Utility Ranking
+
+### Motivation
+
+The user requested that the rejected market-state gating route be abandoned and
+that factor utility instead be ordered from high to low by Sharpe.
+
+### Actions Taken
+
+1. Used the frozen stock-disjoint external-audit results as the single ranking
+   source, retaining all 178 expressions rather than selecting a new subset.
+2. Added a reusable ranking generator that orders full-period external Sharpe
+   descending and preserves IC, RankIC, annualized return, cost-adjusted
+   return, maximum drawdown, turnover, observations, and 2025/2026 metrics.
+3. Flagged insufficient observations and cross-year sign instability separately
+   from the requested Sharpe ordering.
+4. Generated the complete CSV ranking and a wiki note documenting the metric
+   taxonomy and the boundary between descriptive rank and promotion eligibility.
+
+### Verification
+
+- `python -m china_a_share_alpha.scripts.generate_external_factor_utility_ranking ...`
+  completed successfully.
+- Ranking contains 178 frozen factors; 4 have sufficient observations plus
+  positive Sharpe and IC in both 2025 and 2026.
+- Artifacts: `china_a_share_alpha_output/external_unused_csi500_2025_2026/`
+  and `wiki/factor_utility_sharpe_ranking_20260724.md`.
+
+---
+
+## 2026-07-24 — External Utility Diagnostics for Ranked Factors
+
+### Motivation
+
+Compute the non-Sharpe utility metrics requested for the externally consistent
+candidate set, including predictive stability and factor redundancy.
+
+### Actions Taken
+
+1. Rebuilt the four externally consistent factor signals on the cached
+   stock-disjoint panel without fetching new data.
+2. Calculated full-period, 2025, and 2026 ICIR values.
+3. Calculated both pairwise daily long-short return correlation and
+   cross-sectional signal Spearman correlation.
+
+### Results
+
+The candidates have low mutual dependence: daily long-short return correlations
+range from -0.0279 to 0.0537, and signal correlations range from -0.0614 to
+0.0687. ICIR ranges from 0.1241 to 0.3941; the high-turnover 5D return-shape
+candidate has the weakest 2026 ICIR (0.0825). The low correlations support
+portfolio-diversification research but do not remove the individual drawdown
+constraint.
+
+### Verification
+
+- `run_external_factor_utility_diagnostics.py` compiled and completed with
+  `diagnosed=4`.
+- Generated diagnostics and correlation matrices reside in
+  `china_a_share_alpha_output/external_unused_csi500_2025_2026/`.
+
+---
+
+## 2026-07-24 — Permanent -20% Drawdown Stop Stress Test
+
+### Motivation
+
+Evaluate the user's proposed rule that every factor should be forcefully and
+permanently stopped once its post-entry cumulative drawdown reaches -20%.
+
+### Actions Taken
+
+1. Replayed all 178 frozen external-audit candidates from their cached daily
+   five-quantile long-short return streams.
+2. On the first peak-to-trough drawdown at or below -20%, set every subsequent
+   daily return to zero through the end of the external audit.
+3. Recorded baseline and stopped Sharpe, annualized return, maximum drawdown,
+   stop date, active days, and active fraction for every candidate.
+
+### Results
+
+The stop triggered for 160/178 candidates. Median maximum drawdown improved
+from -85.44% to -21.22%, but median Sharpe deteriorated from 0.00 to -1.20.
+Most stops (139) occurred in June–July 2025. Of the four externally consistent
+candidates, only `ts_skew(ts_min_max_scale(return, 3), 5)` retained positive
+high utility (Sharpe 2.034, drawdown -21.04%); the others were stopped too
+early and ended with Sharpe 0.318, -0.579, and -1.546.
+
+### Verification
+
+- `run_external_drawdown_stop_audit.py` compiled and completed with 178/178
+  factor rows and zero expression errors.
+- Artifact: `china_a_share_alpha_output/external_unused_csi500_2025_2026/`
+  `permanent_drawdown_stop_audit.csv` and its summary JSON.
+
+---
+
+## 2026-07-24 — Daily Ranked Re-entry after -20% Sleeve Stops
+
+### Motivation
+
+Replace permanent factor exclusion with the user's requested daily all-factor
+ranking and cooldown-based re-entry after a -20% sleeve drawdown.
+
+### Actions Taken
+
+1. Rebuilt daily long-short returns for all 178 frozen factors.
+2. Ranked all factors every trading day by 60-day rolling Sharpe using only
+   completed returns, delayed 6 days for 5D factors and 11 days for 10D
+   factors to avoid forward-label leakage.
+3. Allowed a stopped factor sleeve to re-enter only when it was in the daily
+   top 20%, comparing 5-, 10-, and 20-trading-day cooldowns.
+
+### Results
+
+Median maximum drawdown was -38.87%, -36.28%, and -34.49% for 5-, 10-, and
+20-day cooldowns. Re-entry improves on permanent exclusion but does not create
+a global -20% drawdown bound because a sleeve can incur several separately
+capped loss episodes. The four externally consistent candidates did not share
+one best cooldown, so no cooldown was auto-selected.
+
+### Verification
+
+- `run_ranked_reentry_drawdown_audit.py` compiled and completed for all 178
+  candidates and three cooldowns.
+- Artifacts: `ranked_reentry_drawdown_audit.csv` and
+  `ranked_reentry_drawdown_summary.csv` in the external audit output folder.
+
+---
+
+## 2026-07-25 — Daily TOP100 Factor Membership
+
+### Motivation
+
+Replace the previous top-20%-of-factors entry threshold with the user's
+specified fixed TOP100 daily factor selection.
+
+### Actions Taken
+
+1. Added a fixed `--top-n` ranking mode to the no-lookahead ranked re-entry
+   audit; it overrides the fractional eligibility threshold.
+2. Ran the all-178-factor audit with `--top-n 100` and 5/10/20-day cooldowns.
+3. Persisted each eligible date's TOP100 membership with rank, rolling Sharpe,
+   factor identity, horizon, iteration, and expression.
+
+### Results
+
+The selection file has 22,500 rows: 100 selected factors for each of 225
+ranking dates, spanning 156 distinct factors. TOP100 has median Sharpe
+0.9016/1.3004/1.2281 and median drawdown -59.53%/-55.22%/-44.59% under
+5/10/20-day cooldowns, respectively.
+
+### Verification
+
+- The rerun completed for all 178 factors with the fixed `top_100` rule.
+- Every membership date has exactly 100 rows; output is under
+  `china_a_share_alpha_output/external_unused_csi500_2025_2026/`
+  `ranked_reentry_top100/`.
+
+---
+
+## 2026-07-25 — TOP100 Ranking Correction: 20-Day Mean Rank
+
+### Motivation
+
+Correct the daily TOP100 criterion from a 60-day rolling Sharpe to the user's
+specified 20-day mean of daily factor ranks.
+
+### Actions Taken
+
+1. Added `rolling_rank_mean` mode to the ranked re-entry audit.
+2. Ranked each completed, horizon-delayed daily factor return cross-section,
+   averaged the percentile rank over the prior 20 trading days, then selected
+   the 100 lowest mean-rank factors every day.
+3. Replayed 5/10/20-day cooldown variants and persisted the corrected daily
+   membership list in a separate output directory.
+
+### Results
+
+The corrected selection covers 245 dates and 155 unique factors. Median
+Sharpe is 1.0364/1.0291/0.4251 and median drawdown is
+-56.77%/-56.20%/-52.88% for 5/10/20-day cooldowns. The result supersedes the
+previous 60-day-Sharpe TOP100 ranking experiment.
+
+### Verification
+
+- Corrected audit compiled and completed for all 178 candidate factors.
+- Every eligible date has exactly 100 TOP100 members in
+  `ranked_reentry_top100_rankmean20/daily_top_100_rolling_rank_mean_20d_membership.csv`.
+
+---
+
+## 2026-07-25 — Set 60-Day Rolling Sharpe as Current TOP100 Rule
+
+### Motivation
+
+The user selected 60-day rolling Sharpe rather than the 20-day mean-rank
+comparison experiment as the daily TOP100 ordering criterion.
+
+### Actions Taken
+
+1. Confirmed the existing all-factor TOP100 audit uses 60-day rolling Sharpe
+   from completed, horizon-delayed returns.
+2. Confirmed `rolling_sharpe` with a 60-day lookback is the audit script's
+   default ranking mode.
+3. Recorded the 20-day mean-rank run as a comparison artifact rather than the
+   active selection definition; no new data fetch or re-ranking was needed.
+
+### Verification
+
+- Current artifacts: `ranked_reentry_top100/` with 225 daily TOP100 lists.
+- Current 60-day ranking summary: 5/10/20-day cooldown median Sharpes of
+  0.9016/1.3004/1.2281.
+
+---
+
+## 2026-07-26 — Export Latest Daily TOP100 Snapshot
+
+### Motivation
+
+Provide the user with the current ordered TOP100 factor list under the active
+60-day no-lookahead rolling-Sharpe selection rule.
+
+### Actions Taken
+
+1. Located the last available daily ranking date in the frozen external audit.
+2. Exported its 100 factors in rank order with score, horizon, iteration, and
+   expression using a reusable snapshot exporter.
+
+### Verification
+
+- Latest valid date is 2026-07-09; the CSV contains exactly 100 ranked rows.
+- Artifact: `ranked_reentry_top100/top100_latest_20260709.csv`.
+
+---
+
+## 2026-07-27 — TOP100 Multi-Dimensional A-Share Dynamic Portfolio Research
+
+### Motivation
+
+Explore whether the user-provided aggregated TOP100 candidate pool can support
+better A-share factor performance under stock-disjoint validation and dynamic
+factor/position management.
+
+### Actions Taken
+
+1. Re-evaluated all 100 expressions at both 5D and 10D horizons on the
+   historical-unused-CSI500 panel: 200 variants total, 112 with adequate 2025
+   coverage.
+2. Scored 2025 utility using Sharpe, IC, RankIC, ICIR, cost-adjusted return,
+   drawdown, turnover, coverage, and recurrence; froze the top 12 variants for
+   a static 2026 comparison.
+3. Compared A-share long-only next-day-execution portfolios with equal weights,
+   liquidity-filtered inverse-volatility weights, and volatility-target weights.
+4. Added a second, adaptive round: a 2025-frozen pool of 50 variants, daily
+   selection by completed horizon-delayed 60-day Sharpe, and correlation-based
+   redundancy removal before building the long-only composite.
+
+### Results
+
+The static 12-factor composite failed in 2026 (equal-weight Sharpe -0.360).
+The adaptive composite generalized better: 2026 equal-weight long-only Sharpe
+0.934, annualized return 21.83%, maximum drawdown -10.85%. The more elaborate
+liquidity/inverse-volatility and volatility-target position rules underperformed
+with Sharpes 0.675 and 0.354. Position stop/trailing-stop simulation was not
+promoted because daily data cannot prove executable A-share exits under T+1 and
+limit-down constraints.
+
+### Verification
+
+- `run_top100_multidim_a_share_research.py` compiled and completed; 100 input
+  candidates, 200 variants, 112 valid variants, 12 static selections.
+- Artifacts reside in `china_a_share_alpha_output/top100_multidim_a_share_research/`.
+
+---
+
+## 2026-07-26 — Explain All Factors in the Latest TOP100 Snapshot
+
+### Motivation
+
+The user requested a complete list of the 100 current factors with an
+approximate explanation of what each expression represents.
+
+### Actions Taken
+
+1. Added a deterministic expression-description exporter that identifies the
+   input variables and principal time-series/cross-sectional operators.
+2. Generated Chinese structural descriptions for all 100 factors while
+   explicitly excluding causal or performance claims from those descriptions.
+3. Corrected feature detection to use exact expression tokens, preventing
+   sub-string errors such as treating `bband_lower` as the raw `low` field.
+
+### Verification
+
+- Exporter compiled and generated exactly 100 explained factor rows.
+- Artifacts: `top100_latest_20260709_explained.csv` and
+  `wiki/factor_top100_explained_20260726.md`.
+
+---
+
+## 2026-08-28 — Factor branch cleanup and release preparation
+
+### Motivation
+
+Reconcile the accumulated factor-evolution research into a clean, auditable
+GitHub branch and publish the externally validated factor ranking.
+
+### Actions Taken
+
+1. Classified the working tree into source, configuration, tests, atomic Wiki
+   notes, compact state, generated logs, and ignored market-data artifacts.
+2. Kept the reproducible source/configuration/test/research files and removed
+   three generated runtime logs from version control while preserving them
+   locally through the `*.log` ignore rule.
+3. Reconciled `STATE.md` with machine-readable iteration 47 state and recorded
+   the comparable no-lookahead promotion metrics.
+4. Defined effective factors as the four candidates with sufficient external
+   observations and positive Sharpe and IC in both 2025 and 2026, ranked by
+   full-period stock-disjoint external Sharpe.
+5. Redacted a historical plaintext Tushare credential from the current Wiki;
+   the credential must be rotated because it may remain reachable in Git history.
+
+### Files Changed
+
+- Factor loaders, parser, backtest/audit/evolution scripts, and configurations.
+- Focused factor-promotion, horizon, schedule, correlation, neutralization,
+  export, and snapshot tests.
+- `README.md`, `LOOP.md`, `OPERATION_LOG.md`, factor state, and atomic Wiki notes.
+- `.gitignore` and tracked runtime-log cleanup.
+
+### Verification
+
+- `python -m pytest` across 11 factor/A-share test modules: **45 passed, 2 skipped**.
+- `python -m black --check --line-length 100` across all 29 changed Python files:
+  passed; all files unchanged after formatting.
+- `python -m compileall -q china_a_share_alpha tests`: passed.
+- `git diff --check`: passed; only configured LF-to-CRLF checkout warnings.
+
+### Boundary
+
+The ranked factors remain research candidates. Repository cleanup and external
+cross-year consistency do not constitute production trading approval.

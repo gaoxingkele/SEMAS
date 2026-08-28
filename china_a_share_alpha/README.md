@@ -72,6 +72,31 @@ Run tests:
 python -m pytest tests/ -q
 ```
 
+Run a reproducible promotion audit by freezing the data panel first, then
+evaluating all live libraries from that immutable snapshot:
+
+```bash
+python -m china_a_share_alpha.scripts.run_frozen_promotion_audit freeze \
+    china_a_share_alpha/examples/enhanced_loop_config_val.yaml \
+    --snapshot-dir china_a_share_alpha_output/frozen_promotion_snapshot
+
+python -m china_a_share_alpha.scripts.run_frozen_promotion_audit audit \
+    --snapshot-dir china_a_share_alpha_output/frozen_promotion_snapshot \
+    --audit-config china_a_share_alpha/examples/frozen_promotion_audit.yaml \
+    --output-dir china_a_share_alpha_output/frozen_promotion_audit
+```
+
+The audit verifies snapshot checksums and writes a JSON/Markdown receipt. It is
+read-only. State reconciliation is a separate command and checks that both the
+library hash and state iteration still match the receipt before writing:
+
+```bash
+python -m china_a_share_alpha.scripts.run_frozen_promotion_audit \
+    reconcile-state \
+    --receipt china_a_share_alpha_output/frozen_promotion_audit/promotion_audit_receipt.json \
+    --apply
+```
+
 ## Architecture
 
 - `data/` — Qlib loader with train/test split, synthetic A-share panel with
@@ -133,6 +158,21 @@ crossover_fraction: 0.25
 mutator: gp                  # "seed" | "gp"
 ```
 
+### Frozen-snapshot 5D / 10D campaign
+
+Use the dual-horizon campaign to run a durable 30-round experiment for each
+horizon. It recomputes each fold's forward-return label inside that fold, uses
+validation metrics to decide the next research seed, and keeps test metrics out
+of the selection decision.
+
+```bash
+python -m china_a_share_alpha.scripts.run_dual_horizon_campaign \
+  china_a_share_alpha/examples/dual_horizon_30round_campaign.yaml
+```
+
+The campaign writes separate `5d/` and `10d/` checkpoints under its output
+directory, plus a single `campaign_history.json` for progress monitoring.
+
 ## Multi-factor portfolio evolution
 
 After running the factor loop, use the top expressions as a library and evolve
@@ -185,6 +225,87 @@ falls back to GP.
 The loop tracks per-generation best test IC and computes a rolling slope. When
 the slope turns negative, it prints a decay warning so you can trigger
 re-evolution or retire the factor.
+
+## 20-day position-schedule evolution
+
+The 20-day execution optimizer searches monotone long-position multipliers in
+10-percentile rank bins and 10% weight increments. It charges 10 bps on actual
+target-weight changes and enforces that positions formed on day `d` earn
+returns beginning on day `d+1`.
+
+```bash
+python -m china_a_share_alpha.scripts.evolve_20d_position_schedule \
+  china_a_share_alpha/examples/position_schedule_evolution_20d_recovery.yaml
+```
+
+The frozen 2026-07-14 review selected the static schedule
+`[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]`; no dynamic schedule
+passed the 2024-2025 audit fold. The machine-readable selection is in
+`examples/position_schedule_20d_best.yaml`. A static winner is an explicit
+rollback result, not an omitted optimization outcome.
+
+To measure whether the 20d library duplicates moving-average information, run
+the frozen cross-sectional correlation audit:
+
+```bash
+python -m china_a_share_alpha.scripts.analyze_factor_ma_correlation \
+  --snapshot-dir china_a_share_alpha_output/frozen_promotion_snapshot_20260713 \
+  --library china_a_share_alpha_output/factor_mining_loop_20d/live_library.csv \
+  --output-dir china_a_share_alpha_output/factor_ma_correlation_20d_20260714
+```
+
+The audit correlates each factor and the ensemble with
+`close / trailing_MA(close, n) - 1` using daily cross-sectional Spearman
+statistics. Raw MA price levels are intentionally not used because their scale
+would make cross-stock comparisons misleading.
+
+To test the alpha remaining after removing MA exposure:
+
+```bash
+python -m china_a_share_alpha.scripts.analyze_ma_neutralized_alpha \
+  --snapshot-dir china_a_share_alpha_output/frozen_promotion_snapshot_20260713 \
+  --library china_a_share_alpha_output/factor_mining_loop_20d/live_library.csv \
+  --output-dir china_a_share_alpha_output/ma_neutralized_alpha_20d_20260714
+```
+
+This jointly regresses the ensemble on standardized MA5/10/20 deviations in
+each daily cross-section. It compares same-sample 20d rank IC, five-layer
+forward returns, and a next-day, 10 bps hold backtest before and after
+neutralization.
+
+## No-lookahead horizon audit
+
+Audit the live 5d, 10d, and 20d libraries under the same cohort, cost, history,
+and next-day execution contract:
+
+```bash
+python -m china_a_share_alpha.scripts.run_no_lookahead_horizon_audit \
+  --snapshot-dir china_a_share_alpha_output/frozen_promotion_snapshot_20260713 \
+  --library-5d china_a_share_alpha_output/factor_mining_loop/live_library.csv \
+  --library-10d china_a_share_alpha_output/factor_mining_loop_10d/live_library.csv \
+  --library-20d china_a_share_alpha_output/factor_mining_loop_20d/live_library.csv \
+  --output-dir china_a_share_alpha_output/no_lookahead_horizon_audit_20260716
+```
+
+The audit computes signals on continuous historical data, then scores only the
+requested fold. Its frozen result makes 5d dynamic trim the primary contract,
+10d static hold a regime-sensitive secondary contract, and 20d research-only.
+See `examples/horizon_priority_20260716.yaml` for the machine-readable decision.
+
+Export the complete audited stock cohorts from the frozen snapshot:
+
+```bash
+python -m china_a_share_alpha.scripts.export_audited_horizon_picks \
+  --snapshot-dir china_a_share_alpha_output/frozen_promotion_snapshot_20260713 \
+  --library-5d china_a_share_alpha_output/factor_mining_loop/live_library.csv \
+  --library-10d china_a_share_alpha_output/factor_mining_loop_10d/live_library.csv \
+  --output-dir china_a_share_alpha_output/audited_stock_selection_20260529
+```
+
+The export includes complete rebalance cohorts, current positive positions,
+fixed short cohorts, and a combined long union tagged as 5d/10d consensus,
+5d-primary, or 10d-secondary. It does not invent an unaudited cross-strategy
+capital weight.
 
 ## Downloading real Qlib data
 

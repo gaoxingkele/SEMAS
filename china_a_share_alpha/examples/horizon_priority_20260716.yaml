@@ -1,0 +1,34 @@
+schema_version: 1
+snapshot_id: 242f762f4229bc9723b8b2a146b34dedc9d1b2d86e30f0c1bad5d7d10019e011
+contract:
+  lookahead_rule: positions formed at day d earn returns beginning day d+1
+  selection_fraction: 0.2
+  transaction_cost: 0.001
+  smooth_span: 10
+  min_factor_coverage: 0.5
+horizons:
+  5d:
+    priority: primary
+    execution: dynamic_trim
+    schedule: [1.0, 1.0, 0.7, 0.7, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0]
+    validation_sharpe: 0.7669
+    test_sharpe: 1.6337
+    test_annualized_return: 0.2917
+    test_max_drawdown: -0.1242
+    verdict: ROBUST_RESEARCH_AND_EXECUTION_VALUE
+  10d:
+    priority: secondary
+    execution: simple_hold
+    schedule: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    validation_sharpe: 0.1662
+    test_sharpe: 0.9906
+    test_annualized_return: 0.1558
+    test_max_drawdown: -0.1781
+    verdict: RESEARCH_AND_EXECUTION_VALUE_REGIME_SENSITIVE
+  20d:
+    priority: research_only
+    execution: no_promotion
+    validation_selected_schedule: legacy_trim
+    validation_sharpe: -0.1146
+    test_sharpe: -0.0697
+    verdict: STATISTICAL_VALUE_ONLY

@@ -35,7 +35,7 @@ CLEAN   ── validation-aware cleaning (density, sign agreement, Sharpe)
 COMBINE ── equal-weight + EMA of top-N cleaned factors + high_zscore_20
     │
     ▼
-DECIDE  ── promote if test Sharpe or cost-adjusted return improves
+DECIDE  ── compare candidate and live baseline under one hold contract
     │
     ▼
 REPORT  ── write loop_report_*.md; update STATE.md
@@ -50,6 +50,13 @@ REPORT  ── write loop_report_*.md; update STATE.md
 The live library is the durable memory across iterations. Each iteration seeds
 from it, so good structures persist and are refined.
 
+The promotion contract is explicit per horizon: 5d uses dynamic trim, 10d uses
+simple hold, and 20d is retained for research rather than promotion. Candidate
+and live baseline are evaluated
+on the same in-memory test panel, with the same horizon, costs, smoothing, and
+factor-coverage threshold. Daily-rebalanced Sharpe and return remain diagnostic
+metrics and no longer decide promotion when the hold gate is enabled.
+
 ## Human Gates
 
 1. **Review live_library.csv** before committing.
@@ -61,6 +68,14 @@ from it, so good structures persist and are refined.
 
 - No git mutations inside the loop.
 - Promotion threshold requires a clear out-of-sample improvement.
+- Invalid or empty evaluations are recorded as failures, never as a zero score.
+- Frozen audits verify panel and library hashes before state reconciliation.
+- Execution backtests apply positions formed on day `d` only to returns from
+  day `d+1`; same-day signal/return evaluation is invalid for promotion.
+- Factor expressions and smoothing use continuous past history before the test
+  fold, while scoring remains restricted to test dates.
+- All horizon hold comparisons use top/bottom 20% cohorts and charge actual
+  target-weight changes.
 - Each iteration runs in its own `iter_NNNN/` directory for auditability.
 
 ## Files

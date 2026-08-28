@@ -26,6 +26,7 @@ sort_by: "auto"
 max_pairwise_corr: 0.4
 
 # Promotion gates
+promotion_enabled: false  # research-only after the 2026-07-16 no-lookahead audit
 promote_sharpe_threshold: 0.03
 promote_return_threshold: 0.005
 
@@ -43,4 +44,6 @@ hold_horizon: 20
 hold_transaction_cost: 0.001
 min_hold_sharpe_gate: 1.0
 promote_hold_sharpe_threshold: 0.03
-use_dynamic_trim_hold: false  # dynamic trim hurts 20d performance
+promotion_evaluation_mode: "simple_hold"
+min_factor_coverage: 0.5
+use_dynamic_trim_hold: false  # 20d is research-only after no-lookahead review

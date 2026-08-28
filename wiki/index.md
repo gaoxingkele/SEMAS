@@ -17,12 +17,28 @@ chronological log.
 
 | Page | Summary | Last Updated |
 |---|---|---|
+| [Factor Repository Hygiene](factor_repository_hygiene_20260828.md) | Reconcile machine state, compact receipts, and externally valid factor rankings. | 2026-08-28 |
 | [Factor Mining Loop Index](factor_mining_loop_index.md) | Continuous alpha-factor discovery loop for China A-shares. | 2026-07-06 |
 | [Iteration 10 Live-Library Audit](factor_mining_loop_audit_iter10.md) | Coverage and sector-neutrality analysis of the promoted 12-factor ensemble. | 2026-07-05 |
 | [Multi-Horizon Audit](factor_mining_loop_multihizon_audit.md) | 5d / 10d / 20d horizon test of the final 10-factor live library. | 2026-07-06 |
+| [Frozen Promotion Audit](factor_promotion_frozen_audit_20260713.md) | Checksum-verified 5d / 10d / 20d live-library audit and guarded state reconciliation. | 2026-07-13 |
 | [SEMAS Evolution Ideas](semas_evolution_ideas.md) | Broader evolution experiments, including validation weighting, iterative evolution, and the factor-mining loop. | 2026-07-06 |
 
 ## Factor Mining Loop Run Notes
+
+- [20d Position-Schedule Evolution](factor_20d_position_schedule_evolution_20260714.md):
+  frozen ten-bin execution search selected static sizing after dynamic schedules
+  failed the later audit regime (2026-07-14).
+- [20d Factor / MA Correlation](factor_20d_ma_correlation_20260714.md): stable
+  MA5/10/20 exposure in the frozen library, with component-level attribution
+  (2026-07-14).
+- [20d MA-Neutralized Alpha](factor_20d_ma_neutralized_alpha_20260714.md):
+  same-sample IC, layered returns, and costed hold comparison after removing
+  linear MA5/10/20 exposure (2026-07-14).
+- [No-Lookahead Horizon Audit](factor_horizon_no_lookahead_audit_20260716.md):
+  unified 5d/10d/20d review and production priority decision (2026-07-16).
+- [Audited Stock Selection](factor_audited_stock_selection_20260529.md): complete
+  frozen 5d/10d cohorts as of 2026-05-29 (exported 2026-07-16).
 
 | Iteration | Date | Test Sharpe | Promoted | Summary |
 |---|---|---|---|---|
@@ -67,6 +83,18 @@ chronological log.
 ## Logs
 
 See [log.md](log.md) for a chronological record of wiki updates and loop runs.
+
+## External Factor Utility
+
+- [Sharpe-first external factor utility ranking](factor_utility_sharpe_ranking_20260724.md): full frozen-candidate ordering with observation and cross-year stability flags (2026-07-24).
+- [Permanent drawdown-stop stress test](factor_permanent_drawdown_stop_20260724.md): all-factor -20% permanent-stop analysis (2026-07-24).
+- [Daily-ranked drawdown-stop re-entry](factor_ranked_reentry_drawdown_20260724.md): all-factor delayed-Sharpe ranking with 5/10/20-day cooldowns (2026-07-24).
+- [Daily TOP100 factor membership](factor_daily_top100_20260725.md): auditable fixed-size daily selection list (2026-07-25).
+- [TOP100 20-day mean-rank correction](factor_top100_rank_mean_20260725.md): corrected daily selection criterion (2026-07-25).
+- [Current TOP100 60-day rolling-Sharpe rule](factor_top100_rolling_sharpe_60d_20260725.md): active daily selection definition (2026-07-25).
+- [Latest TOP100 snapshot](factor_top100_latest_snapshot_20260726.md): ordered current daily membership (2026-07-26).
+- [TOP100 multi-dimensional A-share research](top100_multidim_a_share_research_20260727.md): 2025 selection and 2026 frozen dynamic portfolio audit (2026-07-27).
+- [TOP100 factor explanations](factor_top100_explained_20260726.md): all current factors with expression-structure descriptions (2026-07-26).
 
 ## Mingli Research
 

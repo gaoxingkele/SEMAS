@@ -17,7 +17,8 @@ improved, and to run an independent verification on real Tushare data.
 ## Setup
 
 - Seed 1005, pop 25, gen 8.
-- Tushare token: `TUSHARE_TOKEN=d5386a1783719a1c704837dfd8b2de9c7490dcb5194b89940834dbbd`
+- Tushare token: supplied at runtime through the `TUSHARE_TOKEN` environment
+  variable; never store the credential in the repository.
 - Semantic dedup threshold `|rho| > 0.95` on training-set factor values.
 - Promotion gates: `train_sharpe > 0`, `n_deduped >= 5`, `max_corr <= 0.7`.
 

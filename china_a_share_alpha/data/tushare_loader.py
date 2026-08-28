@@ -18,6 +18,7 @@ With an in-sample validation fold:
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 from typing import Any
@@ -25,9 +26,9 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import tushare as ts
+import yaml
 
 from china_a_share_alpha.data.talib_features import add_talib_features, TALIB_FEATURE_COLUMNS
-
 
 DEFAULT_CACHE_DIR = Path("./china_a_share_alpha_output/tushare_cache")
 
@@ -65,8 +66,7 @@ def _get_pro():
     token = os.environ.get("TUSHARE_TOKEN")
     if not token:
         raise RuntimeError(
-            "TUSHARE_TOKEN environment variable is required. "
-            "Set it before running the loader."
+            "TUSHARE_TOKEN environment variable is required. " "Set it before running the loader."
         )
     ts.set_token(token)
     return ts.pro_api()
@@ -133,11 +133,16 @@ def _fetch_fina_indicator(pro, ts_code: str, start_date: str, end_date: str) -> 
 def _fetch_moneyflow(pro, ts_code: str, start_date: str, end_date: str) -> pd.DataFrame:
     """Fetch daily money-flow data and compute net elite / net mainforce amounts."""
     cols = [
-        "ts_code", "trade_date",
-        "buy_elg_amount", "sell_elg_amount",
-        "buy_lg_amount", "sell_lg_amount",
-        "buy_md_amount", "sell_md_amount",
-        "buy_sm_amount", "sell_sm_amount",
+        "ts_code",
+        "trade_date",
+        "buy_elg_amount",
+        "sell_elg_amount",
+        "buy_lg_amount",
+        "sell_lg_amount",
+        "buy_md_amount",
+        "sell_md_amount",
+        "buy_sm_amount",
+        "sell_sm_amount",
         "net_mf_amount",
     ]
     try:
@@ -217,8 +222,16 @@ def _load_or_fetch(
         )
         # Forward-fill fundamentals within each symbol so quarterly values apply
         # to all subsequent trading days until the next report.
-        fina_cols = ["roe", "roe_dt", "netprofit_yoy", "dt_netprofit_yoy",
-                     "grossprofit_margin", "debt_to_assets", "ocfps", "eps"]
+        fina_cols = [
+            "roe",
+            "roe_dt",
+            "netprofit_yoy",
+            "dt_netprofit_yoy",
+            "grossprofit_margin",
+            "debt_to_assets",
+            "ocfps",
+            "eps",
+        ]
         for col in fina_cols:
             if col in price.columns:
                 price[col] = price.groupby("ts_code")[col].ffill()
@@ -268,6 +281,47 @@ def load_tushare_data(
     as ``close.pct_change(forward_period).shift(-forward_period)``. Set it to
     5, 10, 20, etc. to evolve factors for longer holding periods.
     """
+    if isinstance(config, (str, Path)):
+        with open(config, "r", encoding="utf-8") as handle:
+            config = yaml.safe_load(handle)
+
+    snapshot_dir = config.get("snapshot_dir")
+    if snapshot_dir:
+        snapshot_path = Path(snapshot_dir)
+        manifest_path = snapshot_path / "manifest.json"
+        if not manifest_path.exists():
+            raise FileNotFoundError(f"Frozen snapshot manifest not found: {manifest_path}")
+        with open(manifest_path, "r", encoding="utf-8") as handle:
+            manifest = json.load(handle)
+        files = manifest.get("files", {})
+        missing = [name for name in ("train", "val", "test") if name not in files]
+        if missing:
+            raise ValueError(f"Frozen snapshot is missing required folds: {', '.join(missing)}")
+        try:
+            train = pd.read_parquet(snapshot_path / files["train"]["file"])
+            validation = pd.read_parquet(snapshot_path / files["val"]["file"])
+            test = pd.read_parquet(snapshot_path / files["test"]["file"])
+        except KeyError as exc:
+            raise ValueError("Frozen snapshot manifest has an invalid file entry.") from exc
+        forward_period = int(config.get("forward_period", 1))
+
+        def with_fold_local_labels(panel: pd.DataFrame) -> pd.DataFrame:
+            """Recompute labels inside one frozen fold without boundary leakage."""
+            labeled = panel.copy().sort_index()
+            close = labeled["close"]
+            labeled["return"] = close.groupby(level="symbol").pct_change(fill_method=None)
+            labeled["forward_return"] = close.groupby(level="symbol").transform(
+                lambda series: series.pct_change(periods=forward_period, fill_method=None).shift(
+                    -forward_period
+                )
+            )
+            return labeled.dropna(subset=["forward_return"])
+
+        train = with_fold_local_labels(train)
+        validation = with_fold_local_labels(validation)
+        test = with_fold_local_labels(test)
+        return pd.concat([train, validation]).sort_index(), test.sort_index()
+
     if config.get("tushare_token"):
         os.environ["TUSHARE_TOKEN"] = config["tushare_token"]
 
@@ -313,9 +367,7 @@ def load_tushare_data(
     # Compute daily return and forward return over the configured horizon.
     data["return"] = data.groupby(level="symbol")["close"].pct_change()
     data["forward_return"] = (
-        data.groupby(level="symbol")["close"]
-        .pct_change(forward_period)
-        .shift(-forward_period)
+        data.groupby(level="symbol")["close"].pct_change(forward_period).shift(-forward_period)
     )
 
     # Add vwap proxy = amount / volume.
@@ -354,13 +406,19 @@ def split_by_date(
     return before, after
 
 
-def load_tushare_data_with_val(config: dict[str, Any]) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def load_tushare_data_with_val(
+    config: dict[str, Any],
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Load Tushare data and split it into train / validation / test panels.
 
     ``val_date`` must lie between ``start_date`` and ``split_date`` in the
     config.  The validation fold is used for factor selection and weight
     estimation without leaking the final test set.
     """
+    if isinstance(config, (str, Path)):
+        with open(config, "r", encoding="utf-8") as handle:
+            config = yaml.safe_load(handle)
+
     train, test = load_tushare_data(config)
     val_date = config.get("val_date")
     if not val_date:

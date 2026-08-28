@@ -1,0 +1,10 @@
+rounds: 30
+output_dir: "china_a_share_alpha_output/dual_horizon_30round_campaign"
+snapshot_dir: "china_a_share_alpha_output/tushare_snapshot_20260717"
+seed_library_5d: "china_a_share_alpha_output/factor_mining_loop/live_library.csv"
+seed_library_10d: "C:/aicoding/semas_framework/china_a_share_alpha_output/factor_mining_loop_10d/live_library.csv"
+search:
+  population_size: 16
+  max_generations: 5
+  patience: 2
+  leaderboard_size: 30

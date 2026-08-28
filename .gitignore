@@ -25,6 +25,7 @@ china_a_share_alpha_output/
 test_alpha_output/
 *.factor_report_*.json
 *.factor_report_*.md
+*.log
 .semas_factor_loop_repo/
 .semas_portfolio_repo/
 .tmp_test_loop_repo/

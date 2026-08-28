@@ -1,0 +1,30 @@
+libraries:
+  - name: 5d-live
+    library_path: china_a_share_alpha_output/factor_mining_loop/live_library.csv
+    state_path: china_a_share_alpha_output/factor_mining_loop/state.json
+    horizon: 5
+    evaluation_mode: dynamic_trim
+    transaction_cost: 0.001
+    smooth_span: 10
+    min_factor_coverage: 0.5
+    min_hold_sharpe: 1.0
+
+  - name: 10d-live
+    library_path: china_a_share_alpha_output/factor_mining_loop_10d/live_library.csv
+    state_path: china_a_share_alpha_output/factor_mining_loop_10d/state.json
+    horizon: 10
+    evaluation_mode: dynamic_trim
+    transaction_cost: 0.001
+    smooth_span: 10
+    min_factor_coverage: 0.5
+    min_hold_sharpe: 1.0
+
+  - name: 20d-live
+    library_path: china_a_share_alpha_output/factor_mining_loop_20d/live_library.csv
+    state_path: china_a_share_alpha_output/factor_mining_loop_20d/state.json
+    horizon: 20
+    evaluation_mode: simple_hold
+    transaction_cost: 0.001
+    smooth_span: 10
+    min_factor_coverage: 0.5
+    min_hold_sharpe: 1.0

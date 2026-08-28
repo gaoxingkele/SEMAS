@@ -34,10 +34,46 @@ from china_a_share_alpha.factor.expression import (
     Var,
 )
 
-UNARY_FUNCS = {"abs", "log", "sign", "neg", "cs_rank", "cs_zscore", "signed_power", "winsorize"}
+UNARY_FUNCS = {
+    "abs",
+    "log",
+    "sign",
+    "neg",
+    "cs_rank",
+    "cs_zscore",
+    "cs_percentile",
+    "cs_demean",
+    "cs_winsorize",
+    "signed_power",
+    "winsorize",
+}
 BINARY_FUNCS = {"add", "sub", "mul", "div", "greater", "less", "if_positive"}
 TERNARY_FUNCS = {"if_else"}
-ROLLING_FUNCS = {"ts_mean", "ts_std", "ts_sum", "ts_min", "ts_max", "ts_delta", "ts_delay", "ts_shift", "ts_ema", "ts_pct_change", "ts_zscore", "ts_rank", "ts_skew", "ts_kurt", "ts_autocorr", "ts_entropy", "ts_argmax", "ts_argmin"}
+ROLLING_FUNCS = {
+    "ts_mean",
+    "ts_std",
+    "ts_sum",
+    "ts_min",
+    "ts_max",
+    "ts_delta",
+    "ts_delay",
+    "ts_shift",
+    "ts_ema",
+    "ts_pct_change",
+    "ts_zscore",
+    "ts_rank",
+    "ts_skew",
+    "ts_kurt",
+    "ts_autocorr",
+    "ts_entropy",
+    "ts_argmax",
+    "ts_argmin",
+    "ts_median",
+    "ts_percentile_90",
+    "ts_percentile_10",
+    "ts_decay_linear",
+    "ts_min_max_scale",
+}
 ROLLING_BINARY_FUNCS = {"ts_corr", "ts_cov"}
 ALL_FUNCS = UNARY_FUNCS | BINARY_FUNCS | TERNARY_FUNCS | ROLLING_FUNCS | ROLLING_BINARY_FUNCS
 

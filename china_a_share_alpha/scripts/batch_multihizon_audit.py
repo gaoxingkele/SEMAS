@@ -18,7 +18,6 @@ import json
 import re
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import yaml
 
@@ -30,10 +29,10 @@ from china_a_share_alpha.factor.parser import parse_expression
 # Re-use helper logic from the single-library audit script.
 from china_a_share_alpha.scripts.run_multihizon_audit import (
     _backtest,
+    _build_equal_weight_signal,
     _compute_forward,
-    _hold_backtest,
-    _smooth,
     _zscore,
+    evaluate_library_hold,
 )
 
 
@@ -54,18 +53,20 @@ def _evaluate_library(
     """Run multi-horizon audit for one factor library."""
     periods = ["train", "val", "test"]
     factor_frames = {p: {} for p in periods}
-    for _, row in lib.iterrows():
+    expression_by_factor = {}
+    for row_index, row in lib.reset_index(drop=True).iterrows():
+        factor_name = f"{row['factor']}__row_{row_index + 1}"
         try:
             expr = parse_expression(row["expression"])
             for p in periods:
-                factor_frames[p][row["factor"]] = _zscore(expr.eval(data[p]))
+                factor_frames[p][factor_name] = _zscore(expr.eval(data[p]))
+            expression_by_factor[factor_name] = row["expression"]
         except Exception as exc:
             print(f"  skipping {row.get('factor')}: {exc}")
 
     def _ensemble(factor_dict: dict, span: int) -> pd.Series:
-        mat = pd.concat(factor_dict.values(), axis=1).dropna()
-        weights = np.ones(len(factor_dict)) / len(factor_dict)
-        return _smooth((mat @ weights).clip(-5, 5), span)
+        signal, _ = _build_equal_weight_signal(factor_dict, span)
+        return signal
 
     def _period_stats(factor: pd.Series, fwd: pd.Series) -> dict:
         valid = factor.notna() & fwd.notna()
@@ -82,47 +83,57 @@ def _evaluate_library(
         fwd = {p: _compute_forward(data[p], h) for p in periods}
         ens = {p: _ensemble(factor_frames[p], smooth_span) for p in periods}
         stats = {p: _period_stats(ens[p], fwd[p]) for p in periods}
-        ensemble_rows.append({
-            "horizon": h,
-            "train_ic": stats["train"]["ic"],
-            "train_sharpe": stats["train"]["sharpe"],
-            "train_cost_adj_return": stats["train"]["cost_adjusted_return"],
-            "val_ic": stats["val"]["ic"],
-            "val_sharpe": stats["val"]["sharpe"],
-            "val_cost_adj_return": stats["val"]["cost_adjusted_return"],
-            "test_ic": stats["test"]["ic"],
-            "test_sharpe": stats["test"]["sharpe"],
-            "test_cost_adj_return": stats["test"]["cost_adjusted_return"],
-            "test_turnover": stats["test"]["turnover"],
-            "test_max_drawdown": stats["test"]["max_drawdown"],
-        })
+        ensemble_rows.append(
+            {
+                "horizon": h,
+                "train_ic": stats["train"]["ic"],
+                "train_sharpe": stats["train"]["sharpe"],
+                "train_cost_adj_return": stats["train"]["cost_adjusted_return"],
+                "val_ic": stats["val"]["ic"],
+                "val_sharpe": stats["val"]["sharpe"],
+                "val_cost_adj_return": stats["val"]["cost_adjusted_return"],
+                "test_ic": stats["test"]["ic"],
+                "test_sharpe": stats["test"]["sharpe"],
+                "test_cost_adj_return": stats["test"]["cost_adjusted_return"],
+                "test_turnover": stats["test"]["turnover"],
+                "test_max_drawdown": stats["test"]["max_drawdown"],
+            }
+        )
 
         for fname in factor_frames["test"]:
-            row_expr = lib.loc[lib["factor"] == fname, "expression"].values[0]
+            row_expr = expression_by_factor[fname]
             fstats = {p: _period_stats(factor_frames[p][fname], fwd[p]) for p in periods}
-            per_factor_rows.append({
-                "factor": fname,
-                "expression": row_expr,
-                "horizon": h,
-                "train_ic": fstats["train"]["ic"],
-                "train_sharpe": fstats["train"]["sharpe"],
-                "train_cost_adj_return": fstats["train"]["cost_adjusted_return"],
-                "val_ic": fstats["val"]["ic"],
-                "val_sharpe": fstats["val"]["sharpe"],
-                "val_cost_adj_return": fstats["val"]["cost_adjusted_return"],
-                "test_ic": fstats["test"]["ic"],
-                "test_sharpe": fstats["test"]["sharpe"],
-                "test_cost_adj_return": fstats["test"]["cost_adjusted_return"],
-                "test_turnover": fstats["test"]["turnover"],
-                "test_max_drawdown": fstats["test"]["max_drawdown"],
-            })
+            per_factor_rows.append(
+                {
+                    "factor": fname,
+                    "expression": row_expr,
+                    "horizon": h,
+                    "train_ic": fstats["train"]["ic"],
+                    "train_sharpe": fstats["train"]["sharpe"],
+                    "train_cost_adj_return": fstats["train"]["cost_adjusted_return"],
+                    "val_ic": fstats["val"]["ic"],
+                    "val_sharpe": fstats["val"]["sharpe"],
+                    "val_cost_adj_return": fstats["val"]["cost_adjusted_return"],
+                    "test_ic": fstats["test"]["ic"],
+                    "test_sharpe": fstats["test"]["sharpe"],
+                    "test_cost_adj_return": fstats["test"]["cost_adjusted_return"],
+                    "test_turnover": fstats["test"]["turnover"],
+                    "test_max_drawdown": fstats["test"]["max_drawdown"],
+                }
+            )
 
     # Realistic non-overlapping hold backtest for the ensemble.
     hold_rows = []
-    daily_returns = data["test"]["return"]
     for h in horizons:
-        ens_test = _ensemble(factor_frames["test"], smooth_span)
-        hold = _hold_backtest(ens_test, daily_returns, h, transaction_cost)
+        hold = evaluate_library_hold(
+            lib,
+            data["test"],
+            horizon=h,
+            transaction_cost=transaction_cost,
+            smooth_span=smooth_span,
+            evaluation_mode="simple_hold",
+            history_data=pd.concat(data.values()).sort_index(),
+        )
         hold_rows.append({"horizon": h, **hold})
 
     return pd.DataFrame(ensemble_rows), pd.DataFrame(per_factor_rows), pd.DataFrame(hold_rows)
@@ -201,23 +212,25 @@ def main() -> int:
             hold_df.to_csv(audit_dir / "hold_ensemble_horizon.csv", index=False)
 
             for _, r in ens_df.iterrows():
-                summary_rows.append({
-                    "loop": loop_name,
-                    "iteration": iter_num,
-                    "horizon": int(r["horizon"]),
-                    "n_factors": len(lib),
-                    "train_ic": r["train_ic"],
-                    "train_sharpe": r["train_sharpe"],
-                    "train_cost_adj_return": r["train_cost_adj_return"],
-                    "val_ic": r["val_ic"],
-                    "val_sharpe": r["val_sharpe"],
-                    "val_cost_adj_return": r["val_cost_adj_return"],
-                    "test_ic": r["test_ic"],
-                    "test_sharpe": r["test_sharpe"],
-                    "test_cost_adj_return": r["test_cost_adj_return"],
-                    "test_turnover": r["test_turnover"],
-                    "test_max_drawdown": r["test_max_drawdown"],
-                })
+                summary_rows.append(
+                    {
+                        "loop": loop_name,
+                        "iteration": iter_num,
+                        "horizon": int(r["horizon"]),
+                        "n_factors": len(lib),
+                        "train_ic": r["train_ic"],
+                        "train_sharpe": r["train_sharpe"],
+                        "train_cost_adj_return": r["train_cost_adj_return"],
+                        "val_ic": r["val_ic"],
+                        "val_sharpe": r["val_sharpe"],
+                        "val_cost_adj_return": r["val_cost_adj_return"],
+                        "test_ic": r["test_ic"],
+                        "test_sharpe": r["test_sharpe"],
+                        "test_cost_adj_return": r["test_cost_adj_return"],
+                        "test_turnover": r["test_turnover"],
+                        "test_max_drawdown": r["test_max_drawdown"],
+                    }
+                )
             for _, r in hold_df.iterrows():
                 # Merge hold metrics into the matching summary row.
                 for row in summary_rows:
@@ -226,10 +239,11 @@ def main() -> int:
                         and row["iteration"] == iter_num
                         and row["horizon"] == int(r["horizon"])
                     ):
-                        row["hold_sharpe"] = r["sharpe"]
-                        row["hold_annualized_return"] = r["annualized_return"]
-                        row["hold_cost_adj_return"] = r["cost_adjusted_return"]
-                        row["hold_max_drawdown"] = r["max_drawdown"]
+                        row["hold_valid"] = bool(r.get("valid", False))
+                        row["hold_sharpe"] = r.get("sharpe", float("nan"))
+                        row["hold_annualized_return"] = r.get("annualized_return", float("nan"))
+                        row["hold_cost_adj_return"] = r.get("cost_adjusted_return", float("nan"))
+                        row["hold_max_drawdown"] = r.get("max_drawdown", float("nan"))
 
     summary = pd.DataFrame(summary_rows)
     summary.to_csv(args.output_root / "batch_audit_summary.csv", index=False)

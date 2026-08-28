@@ -5,7 +5,7 @@
 # 2. Merge the new leaderboard with the live library.
 # 3. Clean on train/val/test; keep dense, sign-consistent factors.
 # 4. Combine top-N + high_zscore_20 with equal weight and EMA smoothing.
-# 5. Promote to live library only if test Sharpe or cost-adj return improves.
+# 5. Promote only if the realistic hold metric improves under one contract.
 
 evolution_config: "china_a_share_alpha/examples/factor_mining_loop_evolution_config.yaml"
 data_config: "china_a_share_alpha/examples/enhanced_loop_config_val.yaml"
@@ -52,7 +52,8 @@ hold_horizon: 5                 # days between rebalances
 hold_transaction_cost: 0.001    # 10 bps one-way
 min_hold_sharpe_gate: 1.0       # new library must have hold Sharpe >= 1.0
 promote_hold_sharpe_threshold: 0.03  # must improve best hold Sharpe by >= 0.03
+promotion_evaluation_mode: "dynamic_trim"
+min_factor_coverage: 0.5
 # Dynamic trim: cut long positions if their cross-sectional rank deteriorates
-# during the holding window.  Backtests show it improves Sharpe/drawdown for
-# 5d/10d but harms 20d, so enable only for short/medium horizons.
+# during the holding window. The no-lookahead frozen audit selects it for 5d.
 use_dynamic_trim_hold: true

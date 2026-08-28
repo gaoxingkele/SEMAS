@@ -150,6 +150,11 @@
 
 ## Related Surveys / Frameworks
 
+- **Tushare Pro index constituent weights**
+  - https://tushare.pro/document/2?doc_id=96
+  - Key: historical index constituent records used to construct the stock-disjoint
+    CSI500 external-validation universe.
+
 - **Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents**
   - Zhang et al., 2025
   - arXiv:2505.22954, https://arxiv.org/abs/2505.22954

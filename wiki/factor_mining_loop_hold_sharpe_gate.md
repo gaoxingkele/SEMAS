@@ -33,6 +33,8 @@ Added an optional realistic **hold-Sharpe gate** to
 | `hold_transaction_cost` | `0.001` | One-way cost |
 | `min_hold_sharpe_gate` | `1.0` | Absolute minimum hold Sharpe |
 | `promote_hold_sharpe_threshold` | `0.03` | Required improvement over best hold Sharpe |
+| `promotion_evaluation_mode` | `simple_hold` | `simple_hold` or `dynamic_trim` |
+| `min_factor_coverage` | `0.5` | Minimum available-factor fraction per row |
 
 ### Promotion rule (when enabled)
 
@@ -40,8 +42,11 @@ A library is promoted only if:
 
 1. All hard gates pass (train Sharpe, min factor count, max selection
    correlation, and hold Sharpe ≥ `min_hold_sharpe_gate`).
-2. It improves on the loop-level metric **and** improves the realistic hold
-   Sharpe by at least `promote_hold_sharpe_threshold`.
+2. Its realistic hold Sharpe improves over the live baseline by at least
+   `promote_hold_sharpe_threshold` under the same evaluation contract.
+
+Loop-level overlapping Sharpe and return remain diagnostics; they do not decide
+promotion when the hold gate is enabled.
 
 This ties the loop's objective more closely to production reality.
 
@@ -80,5 +85,12 @@ realistic, cost-adjusted, non-overlapping backtest.
 
 ## Related pages
 
+The 2026-07-16 contract applies all position targets to next-day returns, uses
+continuous historical warm-up, and standardizes cohorts at top/bottom 20%.
+The 5d loop retains dynamic trim, the 10d loop uses simple hold, and the 20d
+loop has `promotion_enabled: false` while it remains research-only [source:
+local horizon audit and loop configs].
+
+- [Frozen Promotion Audit](factor_promotion_frozen_audit_20260713.md)
 - [Batch Multi-Horizon Audit](factor_mining_loop_multihizon_batch_audit.md)
 - [Factor Mining Loop Index](factor_mining_loop_index.md)

@@ -7,13 +7,16 @@ Evaluates each selected factor and the equal-weight ensemble on 5-day,
 from __future__ import annotations
 
 import argparse
+import math
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
 import yaml
 
 from china_a_share_alpha.backtest.long_short_backtest import run_long_short_backtest
+from china_a_share_alpha.backtest.position_schedule import backtest_schedule, prepare_fold
 from china_a_share_alpha.data.tushare_loader import load_tushare_data_with_val
 from china_a_share_alpha.evaluator.metrics import ic_score, turnover_score
 from china_a_share_alpha.factor.parser import parse_expression
@@ -29,6 +32,125 @@ def _smooth(s: pd.Series, span: int) -> pd.Series:
     return s.groupby(level="symbol").transform(lambda x: x.ewm(span=span, min_periods=1).mean())
 
 
+def _build_equal_weight_signal(
+    factor_frames: dict[str, pd.Series],
+    smooth_span: int,
+    min_factor_coverage: float = 0.5,
+) -> tuple[pd.Series, dict[str, Any]]:
+    """Build an equal-weight signal without requiring a complete-case intersection."""
+    if not factor_frames:
+        raise ValueError("no valid factor series")
+    if not 0 < min_factor_coverage <= 1:
+        raise ValueError("min_factor_coverage must be in (0, 1]")
+
+    mat = pd.concat(factor_frames, axis=1)
+    required = max(1, math.ceil(len(factor_frames) * min_factor_coverage))
+    available = mat.notna().sum(axis=1)
+    valid = available >= required
+    signal = mat.mean(axis=1, skipna=True).where(valid).dropna()
+    if signal.empty:
+        raise ValueError(
+            "no rows meet factor coverage threshold " f"({required}/{len(factor_frames)} factors)"
+        )
+
+    receipt = {
+        "n_factors": len(factor_frames),
+        "min_required_factors": required,
+        "candidate_rows": int(len(mat)),
+        "valid_rows": int(valid.sum()),
+        "valid_row_fraction": float(valid.mean()),
+    }
+    return _smooth(signal.clip(-5, 5), smooth_span), receipt
+
+
+def evaluate_library_hold(
+    library: pd.DataFrame,
+    test_data: pd.DataFrame,
+    horizon: int,
+    transaction_cost: float,
+    smooth_span: int,
+    evaluation_mode: str,
+    min_factor_coverage: float = 0.5,
+    history_data: pd.DataFrame | None = None,
+) -> dict[str, Any]:
+    """Evaluate a library and return a structured, validity-aware receipt."""
+    if evaluation_mode not in {"simple_hold", "dynamic_trim"}:
+        raise ValueError(f"unsupported evaluation_mode: {evaluation_mode}")
+
+    lib = library.copy()
+    if "factor" not in lib.columns:
+        lib["factor"] = lib["rank"].apply(lambda rank: f"factor_{rank}")
+
+    evaluation_data = test_data
+    if history_data is not None:
+        evaluation_data = pd.concat([history_data, test_data])
+        evaluation_data = evaluation_data[~evaluation_data.index.duplicated(keep="last")]
+        evaluation_data = evaluation_data.sort_index()
+
+    factor_frames: dict[str, pd.Series] = {}
+    errors = []
+    for row_index, row in lib.reset_index(drop=True).iterrows():
+        factor_name = str(row.get("factor", f"factor_{row_index + 1}"))
+        unique_name = f"{factor_name}__row_{row_index + 1}"
+        try:
+            expr = parse_expression(row["expression"])
+            factor_frames[unique_name] = _zscore(expr.eval(evaluation_data))
+        except Exception as exc:
+            errors.append({"factor": factor_name, "error": str(exc)})
+
+    receipt: dict[str, Any] = {
+        "valid": False,
+        "evaluation_mode": evaluation_mode,
+        "horizon": int(horizon),
+        "transaction_cost": float(transaction_cost),
+        "smooth_span": int(smooth_span),
+        "min_factor_coverage": float(min_factor_coverage),
+        "n_library_rows": int(len(lib)),
+        "n_factors_evaluated": int(len(factor_frames)),
+        "factor_errors": errors,
+        "history_rows": int(len(evaluation_data) - len(test_data)),
+    }
+    try:
+        min_required_library_factors = max(1, math.ceil(len(lib) * min_factor_coverage))
+        receipt["min_required_library_factors"] = min_required_library_factors
+        if len(factor_frames) < min_required_library_factors:
+            raise ValueError(
+                "insufficient valid factors: "
+                f"{len(factor_frames)}/{len(lib)}; "
+                f"required {min_required_library_factors}"
+            )
+        signal, coverage = _build_equal_weight_signal(
+            factor_frames,
+            smooth_span,
+            min_factor_coverage,
+        )
+        signal = signal.reindex(test_data.index).dropna()
+        if evaluation_mode == "dynamic_trim":
+            metrics = _dynamic_trim_backtest(
+                signal,
+                test_data["return"],
+                horizon,
+                transaction_cost,
+            )
+        else:
+            metrics = _hold_backtest(
+                signal,
+                test_data["return"],
+                horizon,
+                transaction_cost,
+            )
+        if metrics.get("n_observations", 0) <= 1:
+            raise ValueError("hold backtest produced insufficient observations")
+    except Exception as exc:
+        receipt["error"] = str(exc)
+        return receipt
+
+    receipt.update(coverage)
+    receipt.update(metrics)
+    receipt["valid"] = True
+    return receipt
+
+
 def _compute_forward(data: pd.DataFrame, horizon: int) -> pd.Series:
     """Cumulative forward return over `horizon` trading days."""
     return data.groupby(level="symbol")["close"].pct_change(horizon).shift(-horizon)
@@ -38,7 +160,12 @@ def _backtest(factor: pd.Series, fwd: pd.Series, cost: float) -> dict:
     valid = factor.notna() & fwd.notna()
     f, r = factor.loc[valid], fwd.loc[valid]
     if f.empty:
-        return {"sharpe": 0.0, "annualized_return": 0.0, "cost_adjusted_return": 0.0, "max_drawdown": 0.0}
+        return {
+            "sharpe": 0.0,
+            "annualized_return": 0.0,
+            "cost_adjusted_return": 0.0,
+            "max_drawdown": 0.0,
+        }
     bt = run_long_short_backtest(f, r, transaction_cost=cost)
     return {
         "sharpe": bt["sharpe"],
@@ -54,59 +181,16 @@ def _hold_backtest(
     horizon: int,
     cost: float = 0.001,
 ) -> dict:
-    """Realistic non-overlapping H-day holding backtest.
-
-    Rebalances every `horizon` trading days, holds long/short decile positions
-    for `horizon` days, and compounds daily P&L.
-    """
-    dates = daily_returns.index.get_level_values("date").unique().sort_values()
-    rebalance = set(range(0, len(dates), horizon))
-    positions: dict[str, dict] = {}
-    records = []
-    for i, d in enumerate(dates):
-        expired = [s for s, info in positions.items() if info["entry_idx"] + horizon <= i]
-        for s in expired:
-            del positions[s]
-        if i in rebalance:
-            try:
-                sig = signal.xs(d, level="date")
-            except KeyError:
-                sig = pd.Series(dtype=float)
-            sig = sig.dropna()
-            if len(sig) >= 20:
-                n = max(1, len(sig) // 10)
-                ranked = sig.sort_values()
-                shorts = ranked.head(n).index.tolist()
-                longs = ranked.tail(n).index.tolist()
-                for s in shorts:
-                    positions[s] = {"side": -1, "w": 1.0 / n, "entry_idx": i}
-                for s in longs:
-                    positions[s] = {"side": 1, "w": 1.0 / n, "entry_idx": i}
-        if positions:
-            try:
-                dr = daily_returns.xs(d, level="date")
-            except KeyError:
-                dr = pd.Series(dtype=float)
-            pnl = 0.0
-            for s, info in positions.items():
-                if s in dr.index and pd.notna(dr[s]):
-                    pnl += info["side"] * info["w"] * dr[s]
-            if i in rebalance:
-                pnl -= cost * 2.0
-            records.append({"date": d, "ret": pnl})
-    port = pd.DataFrame(records).set_index("date")["ret"].dropna()
-    if port.empty:
-        return {"sharpe": 0.0, "annualized_return": 0.0, "cost_adjusted_return": 0.0, "max_drawdown": 0.0}
-    sharpe = port.mean() / (port.std() + 1e-12) * np.sqrt(252)
-    ann_ret = (1 + port).prod() ** (252 / len(port)) - 1
-    cum = (1 + port).cumprod()
-    maxdd = (cum / cum.cummax() - 1).min()
-    return {
-        "sharpe": float(sharpe),
-        "annualized_return": float(ann_ret),
-        "cost_adjusted_return": float(ann_ret),
-        "max_drawdown": float(maxdd),
-    }
+    """Hold top/bottom 20% cohorts with next-day return application."""
+    panel = daily_returns.rename("return").to_frame()
+    prepared = prepare_fold(
+        name=f"simple_{horizon}d",
+        signal=signal,
+        panel=panel,
+        horizon=horizon,
+        selection_fraction=0.2,
+    )
+    return backtest_schedule(prepared, [1.0] * 10, transaction_cost=cost)
 
 
 def _dynamic_trim_backtest(
@@ -115,107 +199,17 @@ def _dynamic_trim_backtest(
     horizon: int,
     cost: float = 0.001,
 ) -> dict:
-    """Dynamic trim hold backtest.
-
-    Rebalances every `horizon` days with long top 20% / short bottom 20%.
-    During the holding window, long positions are trimmed based on cross-sectional
-    rank deterioration:
-      * rank 20%-40% -> position * 0.7
-      * rank 40%-60% -> position * 0.5
-      * rank 60%-100% -> exit
-    If a stock is still in the top 20% when its horizon expires, it is kept.
-    """
-    dates = daily_returns.index.get_level_values("date").unique().sort_values()
-    rebalance = set(range(0, len(dates), horizon))
-    positions: dict[str, dict] = {}
-    records = []
-    prev_long_target = set()
-
-    for i, d in enumerate(dates):
-        try:
-            sig = signal.xs(d, level="date")
-        except KeyError:
-            sig = pd.Series(dtype=float)
-        sig = sig.dropna()
-        ranked = sig.rank(pct=True, ascending=False) if len(sig) > 0 else pd.Series(dtype=float)
-        top20 = set(ranked[ranked <= 0.2].index)
-        bot20 = set(ranked[ranked >= 0.8].index)
-
-        # Expire positions whose horizon ended and are not still top 20%
-        expired = [s for s, info in positions.items() if info.get("entry_idx", 0) + horizon <= i]
-        for s in expired:
-            if s not in top20:
-                del positions[s]
-            else:
-                positions[s]["entry_idx"] = i
-
-        turnover = 0.0
-        if i in rebalance and len(sig) >= 20:
-            n = max(1, len(sig) // 5)  # 20%
-            longs = sig.sort_values().tail(n).index.tolist()
-            shorts = sig.sort_values().head(n).index.tolist()
-            new_long_target = set(longs)
-            turnover += len(new_long_target ^ prev_long_target) / (len(new_long_target) + len(prev_long_target) + 1e-8)
-            for s in list(positions.keys()):
-                if positions[s]["side"] == 1:
-                    del positions[s]
-            for s in longs:
-                positions[s] = {"side": 1, "w": 1.0 / n, "entry_idx": i}
-            for s in shorts:
-                positions[s] = {"side": -1, "w": 1.0 / n, "entry_idx": i}
-            prev_long_target = new_long_target
-
-        # Mid-cycle trimming for long positions
-        for s in list(positions.keys()):
-            if positions[s]["side"] != 1:
-                continue
-            if s not in ranked.index:
-                del positions[s]
-                continue
-            r = ranked[s]
-            if r >= 0.8:
-                del positions[s]
-            elif r >= 0.6:
-                positions[s]["w"] *= 0.5
-            elif r >= 0.4:
-                positions[s]["w"] *= 0.7
-
-        if positions:
-            try:
-                dr = daily_returns.xs(d, level="date")
-            except KeyError:
-                dr = pd.Series(dtype=float)
-            pnl = 0.0
-            long_w_sum = 0.0
-            short_w_sum = 0.0
-            for s, info in positions.items():
-                if s in dr.index and pd.notna(dr[s]):
-                    if info["side"] == 1:
-                        pnl += info["w"] * dr[s]
-                        long_w_sum += info["w"]
-                    else:
-                        pnl -= info["w"] * dr[s]
-                        short_w_sum += info["w"]
-            if long_w_sum > 0:
-                pnl /= long_w_sum
-            if short_w_sum > 0:
-                pnl /= short_w_sum
-            pnl -= cost * turnover
-            records.append({"date": d, "ret": pnl})
-
-    port = pd.DataFrame(records).set_index("date")["ret"].dropna()
-    if port.empty:
-        return {"sharpe": 0.0, "annualized_return": 0.0, "cost_adjusted_return": 0.0, "max_drawdown": 0.0}
-    sharpe = port.mean() / (port.std() + 1e-12) * np.sqrt(252)
-    ann_ret = (1 + port).prod() ** (252 / len(port)) - 1
-    cum = (1 + port).cumprod()
-    maxdd = (cum / cum.cummax() - 1).min()
-    return {
-        "sharpe": float(sharpe),
-        "annualized_return": float(ann_ret),
-        "cost_adjusted_return": float(ann_ret),
-        "max_drawdown": float(maxdd),
-    }
+    """Apply the fixed long-book trim schedule with next-day returns."""
+    panel = daily_returns.rename("return").to_frame()
+    prepared = prepare_fold(
+        name=f"dynamic_trim_{horizon}d",
+        signal=signal,
+        panel=panel,
+        horizon=horizon,
+        selection_fraction=0.2,
+    )
+    schedule = [1.0, 1.0, 0.7, 0.7, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0]
+    return backtest_schedule(prepared, schedule, transaction_cost=cost)
 
 
 def main() -> int:
@@ -240,11 +234,20 @@ def main() -> int:
         lib["factor"] = lib["rank"].apply(lambda r: f"factor_{r}")
 
     factor_frames = {"train": {}, "val": {}, "test": {}}
-    for _, row in lib.iterrows():
+    expression_by_factor = {}
+    for row_index, row in lib.reset_index(drop=True).iterrows():
+        factor_name = f"{row['factor']}__row_{row_index + 1}"
         try:
-            factor_frames["train"][row["factor"]] = _zscore(parse_expression(row["expression"]).eval(train))
-            factor_frames["val"][row["factor"]] = _zscore(parse_expression(row["expression"]).eval(val))
-            factor_frames["test"][row["factor"]] = _zscore(parse_expression(row["expression"]).eval(test))
+            factor_frames["train"][factor_name] = _zscore(
+                parse_expression(row["expression"]).eval(train)
+            )
+            factor_frames["val"][factor_name] = _zscore(
+                parse_expression(row["expression"]).eval(val)
+            )
+            factor_frames["test"][factor_name] = _zscore(
+                parse_expression(row["expression"]).eval(test)
+            )
+            expression_by_factor[factor_name] = row["expression"]
         except Exception as exc:
             print(f"Skipping {row['factor']}: {exc}")
 
@@ -252,9 +255,8 @@ def main() -> int:
     ensemble_rows = []
 
     def _ensemble(factor_dict: dict, span: int) -> pd.Series:
-        mat = pd.concat(factor_dict.values(), axis=1).dropna()
-        weights = np.ones(len(factor_dict)) / len(factor_dict)
-        return _smooth((mat @ weights).clip(-5, 5), span)
+        signal, _ = _build_equal_weight_signal(factor_dict, span)
+        return signal
 
     def _period_stats(factor: pd.Series, fwd: pd.Series) -> dict:
         valid = factor.notna() & fwd.notna()
@@ -274,40 +276,44 @@ def main() -> int:
 
         ens = {p: _ensemble(factor_frames[p], args.smooth_span) for p in fwd}
         stats = {p: _period_stats(ens[p], fwd[p]) for p in fwd}
-        ensemble_rows.append({
-            "horizon": h,
-            "train_ic": stats["train"]["ic"],
-            "train_sharpe": stats["train"]["sharpe"],
-            "train_cost_adj_return": stats["train"]["cost_adjusted_return"],
-            "val_ic": stats["val"]["ic"],
-            "val_sharpe": stats["val"]["sharpe"],
-            "val_cost_adj_return": stats["val"]["cost_adjusted_return"],
-            "test_ic": stats["test"]["ic"],
-            "test_sharpe": stats["test"]["sharpe"],
-            "test_cost_adj_return": stats["test"]["cost_adjusted_return"],
-            "test_turnover": stats["test"]["turnover"],
-            "test_max_drawdown": stats["test"]["max_drawdown"],
-        })
+        ensemble_rows.append(
+            {
+                "horizon": h,
+                "train_ic": stats["train"]["ic"],
+                "train_sharpe": stats["train"]["sharpe"],
+                "train_cost_adj_return": stats["train"]["cost_adjusted_return"],
+                "val_ic": stats["val"]["ic"],
+                "val_sharpe": stats["val"]["sharpe"],
+                "val_cost_adj_return": stats["val"]["cost_adjusted_return"],
+                "test_ic": stats["test"]["ic"],
+                "test_sharpe": stats["test"]["sharpe"],
+                "test_cost_adj_return": stats["test"]["cost_adjusted_return"],
+                "test_turnover": stats["test"]["turnover"],
+                "test_max_drawdown": stats["test"]["max_drawdown"],
+            }
+        )
 
         for fname in factor_frames["test"]:
-            row_expr = lib.loc[lib["factor"] == fname, "expression"].values[0]
+            row_expr = expression_by_factor[fname]
             fstats = {p: _period_stats(factor_frames[p][fname], fwd[p]) for p in fwd}
-            per_factor_rows.append({
-                "factor": fname,
-                "expression": row_expr,
-                "horizon": h,
-                "train_ic": fstats["train"]["ic"],
-                "train_sharpe": fstats["train"]["sharpe"],
-                "train_cost_adj_return": fstats["train"]["cost_adjusted_return"],
-                "val_ic": fstats["val"]["ic"],
-                "val_sharpe": fstats["val"]["sharpe"],
-                "val_cost_adj_return": fstats["val"]["cost_adjusted_return"],
-                "test_ic": fstats["test"]["ic"],
-                "test_sharpe": fstats["test"]["sharpe"],
-                "test_cost_adj_return": fstats["test"]["cost_adjusted_return"],
-                "test_turnover": fstats["test"]["turnover"],
-                "test_max_drawdown": fstats["test"]["max_drawdown"],
-            })
+            per_factor_rows.append(
+                {
+                    "factor": fname,
+                    "expression": row_expr,
+                    "horizon": h,
+                    "train_ic": fstats["train"]["ic"],
+                    "train_sharpe": fstats["train"]["sharpe"],
+                    "train_cost_adj_return": fstats["train"]["cost_adjusted_return"],
+                    "val_ic": fstats["val"]["ic"],
+                    "val_sharpe": fstats["val"]["sharpe"],
+                    "val_cost_adj_return": fstats["val"]["cost_adjusted_return"],
+                    "test_ic": fstats["test"]["ic"],
+                    "test_sharpe": fstats["test"]["sharpe"],
+                    "test_cost_adj_return": fstats["test"]["cost_adjusted_return"],
+                    "test_turnover": fstats["test"]["turnover"],
+                    "test_max_drawdown": fstats["test"]["max_drawdown"],
+                }
+            )
 
     df_factors = pd.DataFrame(per_factor_rows)
     df_ensemble = pd.DataFrame(ensemble_rows)
@@ -317,8 +323,14 @@ def main() -> int:
     # Realistic non-overlapping hold backtest for the ensemble.
     hold_rows = []
     for h in args.horizons:
-        ens_test = _ensemble(factor_frames["test"], args.smooth_span)
-        hold = _hold_backtest(ens_test, test["return"], h, args.transaction_cost)
+        hold = evaluate_library_hold(
+            lib,
+            test,
+            horizon=h,
+            transaction_cost=args.transaction_cost,
+            smooth_span=args.smooth_span,
+            evaluation_mode="simple_hold",
+        )
         hold_rows.append({"horizon": h, **hold})
     df_hold = pd.DataFrame(hold_rows)
     df_hold.to_csv(args.output_dir / "hold_ensemble_horizon.csv", index=False)
@@ -338,12 +350,21 @@ def main() -> int:
             f"{r['val_ic']:.4f} | {r['val_sharpe']:.4f} | {r['test_ic']:.4f} | {r['test_sharpe']:.4f} | "
             f"{r['test_cost_adj_return']:.2%} | {r['test_turnover']:.4f} | {r['test_max_drawdown']:.2%} |"
         )
-    lines += ["", "## Realistic H-Day Hold Backtest (ensemble)", "", "| Horizon | Sharpe | Ann. return | Cost-adj | Max DD |", "|---|---|---|---|---|"]
+    lines += [
+        "",
+        "## Realistic H-Day Hold Backtest (ensemble)",
+        "",
+        "| Horizon | Sharpe | Ann. return | Cost-adj | Max DD |",
+        "|---|---|---|---|---|",
+    ]
     for _, r in df_hold.iterrows():
-        lines.append(
-            f"| {r['horizon']}d | {r['sharpe']:.4f} | {r['annualized_return']:.2%} | "
-            f"{r['cost_adjusted_return']:.2%} | {r['max_drawdown']:.2%} |"
-        )
+        if r.get("valid", False):
+            lines.append(
+                f"| {r['horizon']}d | {r['sharpe']:.4f} | {r['annualized_return']:.2%} | "
+                f"{r['cost_adjusted_return']:.2%} | {r['max_drawdown']:.2%} |"
+            )
+        else:
+            lines.append(f"| {r['horizon']}d | INVALID | - | - | - |")
     lines += ["", "## Per-Factor Test Sharpe by Horizon", ""]
     pivot = df_factors.pivot(index="factor", columns="horizon", values="test_sharpe").reset_index()
     cols = ["factor"] + [c for c in pivot.columns if c != "factor"]

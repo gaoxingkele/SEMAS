@@ -115,6 +115,21 @@ built on SEMAS and compatible with Qlib data/operators and TA-Lib:
 python -m china_a_share_alpha.demo
 ```
 
+Production promotion audits use a frozen train/validation/test snapshot and an
+explicit horizon-specific evaluation contract. See the subpackage README for
+the snapshot, audit, and state-reconciliation commands.
+
+The 20d execution optimizer also searches 10-percentile, 10%-increment
+add/reduce schedules with next-day execution. Its frozen 2026-07-14 audit
+retained static sizing; no dynamic schedule was promoted.
+
+A companion frozen audit measures factor exposure to normalized MA5/10/20
+signals with daily cross-sectional rank correlations and HAC uncertainty.
+The residual-alpha audit then compares same-sample IC, layered returns, and
+costed 20d holding performance after jointly neutralizing those exposures.
+The unified no-lookahead horizon audit now designates 5d as primary, 10d as a
+regime-sensitive secondary horizon, and 20d as research-only.
+
 See `china_a_share_alpha/README.md`.
 
 ## Mingli Five-Agent Example

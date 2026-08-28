@@ -85,6 +85,25 @@ continuous factor-mining loop.
   5d / 10d / 20d evaluation of all 47 evolved iteration libraries.  Found that
   iter_26 has the best realistic 5d hold Sharpe (2.49).
 
+- [Frozen promotion audit](factor_promotion_frozen_audit_20260713.md) - Unified
+  checksum-verified review of the 5d, 10d, and 20d live libraries under explicit
+  promotion contracts; all three passed.
+- [20d position-schedule evolution](factor_20d_position_schedule_evolution_20260714.md)
+  - Ten-bin, 10%-step search with next-day execution; static sizing won the
+  frozen audit and no dynamic policy was promoted.
+- [20d factor / MA correlation](factor_20d_ma_correlation_20260714.md)
+  - Frozen rank-correlation audit found stable MA exposure, dominated by
+  `high_zscore_20`; correlation is treated as redundancy, not quality.
+- [20d MA-neutralized alpha](factor_20d_ma_neutralized_alpha_20260714.md)
+  - Residual IC and layers remain positive, but fixed-cohort execution does not
+  improve consistently across folds.
+- [No-lookahead horizon audit](factor_horizon_no_lookahead_audit_20260716.md)
+  - 5d is primary, 10d is regime-sensitive secondary, and 20d is research-only
+  after unified IC, layers, hold, and annual review.
+- [Audited stock selection](factor_audited_stock_selection_20260529.md)
+  - Complete frozen 5d/10d long and short cohorts plus the 108-name combined
+  positive long union.
+
 ## Design & Infrastructure
 
 - [Hold-Sharpe promotion gate](factor_mining_loop_hold_sharpe_gate.md) —

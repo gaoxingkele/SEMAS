@@ -26,7 +26,6 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import yaml
 
@@ -36,13 +35,9 @@ from china_a_share_alpha.data.tushare_loader import (
 )
 from china_a_share_alpha.factor.parser import parse_expression
 from china_a_share_alpha.scripts.run_multihizon_audit import (
-    _compute_forward,
-    _dynamic_trim_backtest,
-    _hold_backtest,
-    _smooth,
     _zscore,
+    evaluate_library_hold,
 )
-
 
 DEFAULT_STATE = {
     "iteration": 0,
@@ -58,8 +53,22 @@ DEFAULT_STATE = {
 def load_state(state_path: Path) -> dict:
     if state_path.exists():
         with open(state_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return DEFAULT_STATE.copy()
+            state = json.load(f)
+    else:
+        state = json.loads(json.dumps(DEFAULT_STATE))
+
+    history_by_iteration = {}
+    for entry in state.get("history", []):
+        iteration = entry.get("iteration")
+        if isinstance(iteration, int):
+            history_by_iteration[iteration] = entry
+    state["history"] = [history_by_iteration[key] for key in sorted(history_by_iteration)]
+    if history_by_iteration:
+        state["iteration"] = max(history_by_iteration)
+    state.setdefault("best_hold_sharpe", 0.0)
+    state.setdefault("promotion_baseline", None)
+    state["state_schema_version"] = 2
+    return state
 
 
 def save_state(state_path: Path, state: dict) -> None:
@@ -138,6 +147,9 @@ def compute_hold_sharpe(
     transaction_cost: float = 0.001,
     smooth_span: int = 10,
     use_dynamic_trim: bool = False,
+    min_factor_coverage: float = 0.5,
+    test_data: pd.DataFrame | None = None,
+    history_data: pd.DataFrame | None = None,
 ) -> dict:
     """Compute realistic non-overlapping hold Sharpe for a factor library.
 
@@ -150,33 +162,21 @@ def compute_hold_sharpe(
         with open(data_config, "r", encoding="utf-8") as f:
             data_config = yaml.safe_load(f)
 
-    train, val, test = load_tushare_data_with_val(data_config)
+    if test_data is None:
+        train_data, val_data, test_data = load_tushare_data_with_val(data_config)
+        history_data = pd.concat([train_data, val_data, test_data]).sort_index()
     lib = pd.read_csv(library_path)
-    if "factor" not in lib.columns:
-        lib["factor"] = lib["rank"].apply(lambda r: f"factor_{r}")
-
-    factor_frames = {}
-    for _, row in lib.iterrows():
-        try:
-            expr = parse_expression(row["expression"])
-            factor_frames[row["factor"]] = _zscore(expr.eval(test))
-        except Exception as exc:
-            print(f"  [hold] skipping {row.get('factor')}: {exc}")
-
-    if not factor_frames:
-        return {
-            "sharpe": 0.0,
-            "annualized_return": 0.0,
-            "cost_adjusted_return": 0.0,
-            "max_drawdown": 0.0,
-        }
-
-    mat = pd.concat(factor_frames.values(), axis=1).dropna()
-    weights = np.ones(len(factor_frames)) / len(factor_frames)
-    signal = _smooth((mat @ weights).clip(-5, 5), smooth_span)
-    if use_dynamic_trim:
-        return _dynamic_trim_backtest(signal, test["return"], horizon, transaction_cost)
-    return _hold_backtest(signal, test["return"], horizon, transaction_cost)
+    evaluation_mode = "dynamic_trim" if use_dynamic_trim else "simple_hold"
+    return evaluate_library_hold(
+        lib,
+        test_data,
+        horizon=horizon,
+        transaction_cost=transaction_cost,
+        smooth_span=smooth_span,
+        evaluation_mode=evaluation_mode,
+        min_factor_coverage=min_factor_coverage,
+        history_data=history_data,
+    )
 
 
 def semantic_deduplicate(
@@ -222,14 +222,14 @@ def semantic_deduplicate(
         df.to_csv(output_path, index=False)
         return 0
 
-    mat = pd.concat(frames, axis=1).dropna()
+    mat = pd.concat(frames, axis=1)
 
     # Drop degenerate columns (constant or zero variance) before correlation checks.
     valid_meta = []
     for col_name, base, row in frame_meta:
         if col_name not in mat.columns:
             continue
-        std = mat[col_name].std()
+        std = mat[col_name].dropna().std()
         if pd.isna(std) or float(std) < 1e-12:
             print(f"  [dedup] dropping {base}: constant/degenerate series")
         else:
@@ -265,14 +265,10 @@ def parse_combination_result(output_dir: Path) -> dict:
     results = {r["period"]: r for r in data["results"]}
     return {
         "test_sharpe": results.get("test", {}).get("sharpe", 0.0),
-        "test_cost_adjusted_return": results.get("test", {}).get(
-            "cost_adjusted_return", 0.0
-        ),
+        "test_cost_adjusted_return": results.get("test", {}).get("cost_adjusted_return", 0.0),
         "test_ic": results.get("test", {}).get("ic", 0.0),
         "train_sharpe": results.get("train", {}).get("sharpe", 0.0),
-        "train_cost_adjusted_return": results.get("train", {}).get(
-            "cost_adjusted_return", 0.0
-        ),
+        "train_cost_adjusted_return": results.get("train", {}).get("cost_adjusted_return", 0.0),
         "selection_correlation_max": data.get("selection_correlation_max", 1.0),
     }
 
@@ -301,9 +297,7 @@ def run_loop_iteration(
     # Build the seed library by merging the live library with any extra seed
     # libraries configured for this iteration (e.g., domain-specific priors).
     seed_library_path = iteration_dir / "seed_library.csv"
-    extra_seed_paths = [
-        Path(p) for p in cfg.get("extra_seed_libraries", []) if Path(p).exists()
-    ]
+    extra_seed_paths = [Path(p) for p in cfg.get("extra_seed_libraries", []) if Path(p).exists()]
     seed_sources = []
     if live_library_path and live_library_path.exists():
         seed_sources.append(live_library_path)
@@ -432,56 +426,108 @@ def run_loop_iteration(
 
     # ---- HOLD SHARPE GATE (optional) ----
     use_hold_gate = cfg.get("use_hold_sharpe_gate", False)
+    candidate_hold = None
+    baseline_hold = None
     if use_hold_gate:
-        print(f"[iter {iteration}] Computing realistic hold Sharpe ...")
-        hold_metrics = compute_hold_sharpe(
+        evaluation_mode = cfg.get(
+            "promotion_evaluation_mode",
+            "dynamic_trim" if cfg.get("use_dynamic_trim_hold", False) else "simple_hold",
+        )
+        min_factor_coverage = cfg.get("min_factor_coverage", 0.5)
+        promotion_train, promotion_val, promotion_test = load_tushare_data_with_val(
+            cfg["data_config"]
+        )
+        promotion_history = pd.concat([promotion_train, promotion_val, promotion_test]).sort_index()
+        print(
+            f"[iter {iteration}] Computing {evaluation_mode} promotion metrics "
+            "for candidate and live baseline ..."
+        )
+        candidate_hold = compute_hold_sharpe(
             combined_library,
             cfg["data_config"],
             horizon=cfg.get("hold_horizon", 5),
             transaction_cost=cfg.get("hold_transaction_cost", 0.001),
             smooth_span=cfg.get("smooth_span", 10),
-            use_dynamic_trim=cfg.get("use_dynamic_trim_hold", False),
+            use_dynamic_trim=evaluation_mode == "dynamic_trim",
+            min_factor_coverage=min_factor_coverage,
+            test_data=promotion_test,
+            history_data=promotion_history,
         )
-        metrics["hold_sharpe"] = hold_metrics["sharpe"]
-        metrics["hold_annualized_return"] = hold_metrics["annualized_return"]
-        metrics["hold_cost_adjusted_return"] = hold_metrics["cost_adjusted_return"]
-        metrics["hold_max_drawdown"] = hold_metrics["max_drawdown"]
-        print(
-            f"[iter {iteration}] Hold metrics: "
-            f"sharpe={hold_metrics['sharpe']:.3f}, "
-            f"ret={hold_metrics['annualized_return']:.2%}, "
-            f"dd={hold_metrics['max_drawdown']:.2%}"
-        )
+        if live_library_path and live_library_path.exists():
+            baseline_hold = compute_hold_sharpe(
+                live_library_path,
+                cfg["data_config"],
+                horizon=cfg.get("hold_horizon", 5),
+                transaction_cost=cfg.get("hold_transaction_cost", 0.001),
+                smooth_span=cfg.get("smooth_span", 10),
+                use_dynamic_trim=evaluation_mode == "dynamic_trim",
+                min_factor_coverage=min_factor_coverage,
+                test_data=promotion_test,
+                history_data=promotion_history,
+            )
+            baseline_hold["library_path"] = str(live_library_path)
+        else:
+            baseline_hold = {
+                "valid": True,
+                "sharpe": 0.0,
+                "evaluation_mode": evaluation_mode,
+                "reason": "no live library; using zero initialization baseline",
+            }
+
+        metrics["hold_evaluation"] = candidate_hold
+        metrics["hold_sharpe"] = candidate_hold.get("sharpe")
+        metrics["hold_annualized_return"] = candidate_hold.get("annualized_return")
+        metrics["hold_cost_adjusted_return"] = candidate_hold.get("cost_adjusted_return")
+        metrics["hold_max_drawdown"] = candidate_hold.get("max_drawdown")
+        if candidate_hold["valid"]:
+            print(
+                f"[iter {iteration}] Candidate hold metrics: "
+                f"sharpe={candidate_hold['sharpe']:.3f}, "
+                f"ret={candidate_hold['annualized_return']:.2%}, "
+                f"dd={candidate_hold['max_drawdown']:.2%}"
+            )
+        else:
+            print(
+                f"[iter {iteration}] Candidate hold evaluation INVALID: "
+                f"{candidate_hold.get('error', 'unknown error')}"
+            )
 
     # ---- 5. DECIDE with gates ----
     improvement_sharpe = metrics["test_sharpe"] - state["best_test_sharpe"]
-    improvement_return = (
-        metrics["test_cost_adjusted_return"] - state["best_cost_adjusted_return"]
-    )
-    improvement_hold = (
-        metrics.get("hold_sharpe", 0.0) - state.get("best_hold_sharpe", 0.0)
-    )
+    improvement_return = metrics["test_cost_adjusted_return"] - state["best_cost_adjusted_return"]
+    improvement_hold = None
+    if (
+        use_hold_gate
+        and candidate_hold
+        and baseline_hold
+        and candidate_hold["valid"]
+        and baseline_hold["valid"]
+    ):
+        improvement_hold = candidate_hold["sharpe"] - baseline_hold["sharpe"]
 
     gates = {
-        "train_sharpe_positive": metrics["train_sharpe"]
-        > cfg.get("min_train_sharpe_gate", 0.0),
+        "promotion_enabled": bool(cfg.get("promotion_enabled", True)),
+        "train_sharpe_positive": metrics["train_sharpe"] > cfg.get("min_train_sharpe_gate", 0.0),
         "min_cleaned_count": n_deduped >= cfg.get("min_cleaned_gate", 1),
         "max_corr_ok": metrics["selection_correlation_max"]
         <= cfg.get("max_selection_correlation_gate", 1.0),
     }
     if use_hold_gate:
-        gates["hold_sharpe_ok"] = (
-            metrics["hold_sharpe"] >= cfg.get("min_hold_sharpe_gate", 0.0)
+        gates["candidate_evaluation_valid"] = bool(candidate_hold["valid"])
+        gates["baseline_evaluation_valid"] = bool(baseline_hold["valid"])
+        gates["hold_sharpe_ok"] = bool(
+            candidate_hold["valid"]
+            and candidate_hold["sharpe"] >= cfg.get("min_hold_sharpe_gate", 0.0)
         )
     gates_passed = all(gates.values())
 
-    improved = (
-        improvement_sharpe >= cfg.get("promote_sharpe_threshold", 0.05)
-        or improvement_return >= cfg.get("promote_return_threshold", 0.005)
-    )
+    improved = improvement_sharpe >= cfg.get(
+        "promote_sharpe_threshold", 0.05
+    ) or improvement_return >= cfg.get("promote_return_threshold", 0.005)
     if use_hold_gate:
-        improved = improved and (
-            improvement_hold >= cfg.get("promote_hold_sharpe_threshold", 0.05)
+        improved = bool(
+            improvement_hold is not None
+            and improvement_hold >= cfg.get("promote_hold_sharpe_threshold", 0.05)
         )
     promote = improved and gates_passed
 
@@ -489,19 +535,24 @@ def run_loop_iteration(
         new_live = output_dir / "live_library.csv"
         pd.read_csv(combined_library).to_csv(new_live, index=False)
         state["live_library_path"] = str(new_live)
-        state["best_test_sharpe"] = float(metrics["test_sharpe"])
-        state["best_cost_adjusted_return"] = float(metrics["test_cost_adjusted_return"])
+        state["best_test_sharpe"] = max(
+            float(state["best_test_sharpe"]), float(metrics["test_sharpe"])
+        )
+        state["best_cost_adjusted_return"] = max(
+            float(state["best_cost_adjusted_return"]),
+            float(metrics["test_cost_adjusted_return"]),
+        )
+        state["live_test_sharpe"] = float(metrics["test_sharpe"])
+        state["live_cost_adjusted_return"] = float(metrics["test_cost_adjusted_return"])
         if use_hold_gate:
-            state["best_hold_sharpe"] = float(metrics["hold_sharpe"])
+            state["best_hold_sharpe"] = float(candidate_hold["sharpe"])
+            candidate_hold["library_path"] = str(new_live)
+            state["promotion_baseline"] = candidate_hold
         print(
             f"[iter {iteration}] PROMOTED new live library "
             f"(sharpe={metrics['test_sharpe']:.3f}, "
             f"cost_adj={metrics['test_cost_adjusted_return']:.3%}"
-            + (
-                f", hold_sharpe={metrics['hold_sharpe']:.3f}"
-                if use_hold_gate
-                else ""
-            )
+            + (f", hold_sharpe={candidate_hold['sharpe']:.3f}" if use_hold_gate else "")
             + ")"
         )
     else:
@@ -520,13 +571,18 @@ def run_loop_iteration(
             f"best sharpe={state['best_test_sharpe']:.3f}, "
             f"best cost_adj={state['best_cost_adjusted_return']:.3%}"
             + (
-                f", new hold_sharpe={metrics['hold_sharpe']:.3f}, "
-                f"best hold_sharpe={state['best_hold_sharpe']:.3f}"
-                if use_hold_gate
+                f", new hold_sharpe={candidate_hold['sharpe']:.3f}, "
+                f"baseline hold_sharpe={baseline_hold['sharpe']:.3f}"
+                if use_hold_gate and candidate_hold["valid"] and baseline_hold["valid"]
                 else ""
             )
             + ")"
         )
+
+    if use_hold_gate and not promote:
+        state["promotion_baseline"] = baseline_hold
+        if baseline_hold["valid"]:
+            state["best_hold_sharpe"] = float(baseline_hold["sharpe"])
 
     # ---- 6. STATE + REPORT ----
     entry = {
@@ -539,6 +595,7 @@ def run_loop_iteration(
         "n_deduped": n_deduped,
         "metrics": metrics,
         "gates": {k: bool(v) for k, v in gates.items()},
+        "promotion_baseline": baseline_hold,
         "improved": improved,
         "promoted": promote,
     }
@@ -567,6 +624,7 @@ def write_report(
     metrics = entry["metrics"]
 
     has_hold = "hold_sharpe" in metrics
+    hold_evaluation = metrics.get("hold_evaluation", {})
     lines = [
         f"# Factor Mining Loop Report — Iteration {entry['iteration']}",
         "",
@@ -585,16 +643,19 @@ def write_report(
         f"| Test | {metrics['test_sharpe']:.4f} | {metrics['test_cost_adjusted_return']:.4f} | {metrics['test_ic']:.4f} |",
     ]
     if has_hold:
-        lines += [
-            "",
-            "### Realistic Hold Backtest",
-            "",
-            f"- Dynamic trim: {cfg.get('use_dynamic_trim_hold', False)}",
-            f"- Hold Sharpe: {metrics['hold_sharpe']:.4f}",
-            f"- Hold annualized return: {metrics['hold_annualized_return']:.2%}",
-            f"- Hold cost-adjusted return: {metrics['hold_cost_adjusted_return']:.2%}",
-            f"- Hold max drawdown: {metrics['hold_max_drawdown']:.2%}",
-        ]
+        lines += ["", "### Realistic Hold Backtest", ""]
+        lines.append(f"- Evaluation mode: {hold_evaluation.get('evaluation_mode', 'unknown')}")
+        lines.append(f"- Valid: {hold_evaluation.get('valid', False)}")
+        if hold_evaluation.get("valid"):
+            lines += [
+                f"- Hold Sharpe: {metrics['hold_sharpe']:.4f}",
+                f"- Hold annualized return: {metrics['hold_annualized_return']:.2%}",
+                f"- Hold cost-adjusted return: {metrics['hold_cost_adjusted_return']:.2%}",
+                f"- Hold max drawdown: {metrics['hold_max_drawdown']:.2%}",
+                f"- Valid rows: {hold_evaluation.get('valid_rows', 0)}",
+            ]
+        else:
+            lines.append(f"- Error: {hold_evaluation.get('error', 'unknown error')}")
     lines += [
         "",
         "## Gates",
@@ -604,7 +665,11 @@ def write_report(
         f"- max_corr_ok: {entry['gates']['max_corr_ok']} (max corr = {metrics.get('selection_correlation_max', 1.0):.4f})",
     ]
     if has_hold:
-        lines.append(f"- hold_sharpe_ok: {entry['gates'].get('hold_sharpe_ok', False)}")
+        lines += [
+            f"- candidate_evaluation_valid: {entry['gates'].get('candidate_evaluation_valid', False)}",
+            f"- baseline_evaluation_valid: {entry['gates'].get('baseline_evaluation_valid', False)}",
+            f"- hold_sharpe_ok: {entry['gates'].get('hold_sharpe_ok', False)}",
+        ]
     lines += [
         "",
         "## Decision",
@@ -614,8 +679,8 @@ def write_report(
         lines += [
             "The new library improved on the previous best and has been promoted to live library.",
             "",
-            f"- New best Sharpe: {state['best_test_sharpe']:.4f}",
-            f"- New best cost-adjusted return: {state['best_cost_adjusted_return']:.4f}",
+            f"- Historical best diagnostic Sharpe: {state['best_test_sharpe']:.4f}",
+            f"- Historical best diagnostic cost-adjusted return: {state['best_cost_adjusted_return']:.4f}",
         ]
         if has_hold:
             lines.append(f"- New best hold Sharpe: {state['best_hold_sharpe']:.4f}")
@@ -631,9 +696,11 @@ def write_report(
             f"- Previous best cost-adjusted return: {state['best_cost_adjusted_return']:.4f}",
         ]
         if has_hold:
-            lines.append(
-                f"- Previous best hold Sharpe: {state.get('best_hold_sharpe', 0.0):.4f}"
-            )
+            baseline = entry.get("promotion_baseline") or {}
+            if baseline.get("valid"):
+                lines.append(f"- Live baseline hold Sharpe: {baseline['sharpe']:.4f}")
+            else:
+                lines.append("- Live baseline hold Sharpe: unavailable")
 
     lines += [
         "",
@@ -667,10 +734,25 @@ def main() -> int:
         action="store_true",
         help="Start evolution from scratch instead of seeding with the live library",
     )
+    parser.add_argument(
+        "--repair-state-only",
+        action="store_true",
+        help="Normalize and rewrite state.json without running an iteration",
+    )
     args = parser.parse_args()
 
     with open(args.config, "r", encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
+
+    if args.repair_state_only:
+        state_path = args.output_dir / "state.json"
+        state = load_state(state_path)
+        save_state(state_path, state)
+        print(
+            f"Repaired {state_path}: iteration={state['iteration']}, "
+            f"history_entries={len(state['history'])}"
+        )
+        return 0
 
     run_loop_iteration(
         cfg,

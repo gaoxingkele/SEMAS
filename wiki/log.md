@@ -317,3 +317,54 @@ Chronological record of wiki updates, loop runs, and key decisions.
 
 - Added book-level AHP profiles and structured candidate-hour calibration documentation.
 - Recorded the evidence boundary: rankings are conditional and narrow margins remain ambiguous.
+
+## [2026-07-13] frozen promotion audit and state reconciliation
+
+- Froze train/validation/test panels with SHA-256 checksums.
+- Unified promotion contracts for 5d, 10d, and 20d live libraries.
+- Corrected dynamic-trim rank bands and coverage-aware ensemble construction.
+- All three live libraries passed the frozen audit; no library was promoted.
+- Reconciled state baselines after library-hash and iteration checks passed.
+## 2026-07-14 - 20d position-schedule evolution
+
+- Added a no-lookahead, transaction-costed optimizer for ten rank-decile
+  position multipliers.
+- First dynamic winner failed blind review; recovery selection retained the
+  static 100% schedule on the 2024-2025 audit fold.
+- Opened the 2026 final fold only after selection and made no live mutation.
+## 2026-07-14 - 20d factor / MA correlation audit
+
+- Measured each 20d factor and raw/EMA10 ensembles against normalized MA5,
+  MA10, and MA20 signals on the verified frozen snapshot.
+- Found stable positive ensemble exposure across all temporal folds, dominated
+  by `high_zscore_20`; no factor or live state changed.
+## 2026-07-14 - 20d MA-neutralized alpha audit
+
+- Jointly neutralized raw and EMA10 ensembles against MA5/10/20 deviations.
+- Compared same-sample 20d IC, five-layer returns, and costed hold performance.
+- Found independent ordering information but no robust execution improvement;
+  no live state changed.
+
+## 2026-07-16 - unified no-lookahead horizon audit
+
+- Re-audited 5d, 10d, and 20d libraries with next-day returns, top/bottom 20%
+  cohorts, real target turnover, and continuous-history signal warm-up.
+- Selected 5d dynamic trim as primary, 10d static as regime-sensitive
+  secondary, and 20d as research-only.
+- Replaced the shared promotion backtester and verified production metrics
+  against the independent audit path.
+
+## 2026-07-16 - exported audited 5d/10d stock cohorts
+
+- Exported complete 5d dynamic and 10d static long/short lists as of the frozen
+  2026-05-29 date.
+- Produced a 108-name positive long union with consensus and component tags.
+- Preserved component weights and avoided assigning an unaudited combined weight.
+
+## 2026-08-28 - reconciled factor research state for release
+
+- Reconciled the human-readable state to machine iteration 47.
+- Removed generated runtime logs from version control while retaining compact
+  state and research receipts.
+- Fixed the effective-factor boundary to sufficient observations plus positive
+  2025/2026 Sharpe and IC on the stock-disjoint frozen panel.
