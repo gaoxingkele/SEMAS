@@ -16172,3 +16172,55 @@ GitHub branch and publish the externally validated factor ranking.
 
 The ranked factors remain research candidates. Repository cleanup and external
 cross-year consistency do not constitute production trading approval.
+
+---
+
+## 2026-08-29 - Factor Mining Loop Iteration 48
+
+### Motivation
+
+Resume the continuous 5d factor-mining loop from iteration 47, reconcile
+`STATE.md` with machine-readable state, and wire loop configs to the frozen
+Tushare snapshot so evolution runs without live API calls.
+
+### Actions Taken
+
+1. Reconciled `STATE.md` with `state.json` (iter 47 baseline, history rows
+   42–47).
+2. Added `enhanced_loop_config_val_frozen.yaml` and pointed
+   `factor_mining_loop_config.yaml` at it.
+3. Added `snapshot_dir` to `factor_mining_loop_evolution_config.yaml` so the
+   enhanced evolution subprocess also uses the frozen panel.
+4. Ran iteration 48 (seed 1048) from the iter 47 live library.
+
+### Verification
+
+- Frozen snapshot loader smoke check: train/val/test rows loaded offline.
+- Iteration 48 completed in ~28 minutes; all promotion gates passed.
+- Hold Sharpe **1.8444** (+0.018 vs iter 47 baseline 1.8262); promoted.
+
+### Results — Iteration 48
+
+| Metric | Value |
+|---|---|
+| Merged / cleaned / deduped | 20 / 14 / 12 |
+| Train Sharpe | 2.3812 |
+| Test Sharpe (diagnostic) | 1.9142 |
+| Hold Sharpe | **1.8444** |
+| Hold annualized return | 34.17% |
+| Hold max drawdown | -10.04% |
+| Promoted | YES |
+
+### Files Changed
+
+- `china_a_share_alpha/examples/enhanced_loop_config_val_frozen.yaml` (new)
+- `china_a_share_alpha/examples/factor_mining_loop_config.yaml`
+- `china_a_share_alpha/examples/factor_mining_loop_evolution_config.yaml`
+- `china_a_share_alpha_output/factor_mining_loop/{STATE.md,state.json,live_library.csv}`
+- `china_a_share_alpha_output/factor_mining_loop/loop_report_20260829_154248.md`
+- `OPERATION_LOG.md`
+
+### Boundary
+
+Promotion under the frozen hold contract does not authorize production trading.
+Human review of `live_library.csv` remains required before deployment.

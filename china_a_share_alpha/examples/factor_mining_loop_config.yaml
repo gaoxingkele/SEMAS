@@ -8,7 +8,7 @@
 # 5. Promote only if the realistic hold metric improves under one contract.
 
 evolution_config: "china_a_share_alpha/examples/factor_mining_loop_evolution_config.yaml"
-data_config: "china_a_share_alpha/examples/enhanced_loop_config_val.yaml"
+data_config: "china_a_share_alpha/examples/enhanced_loop_config_val_frozen.yaml"
 
 seed_base: 1000
 

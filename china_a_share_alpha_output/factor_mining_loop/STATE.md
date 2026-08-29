@@ -1,25 +1,24 @@
 # Factor Mining Loop State
 
-Last evolution state: iteration 47 (2026-07-19)
+Last evolution state: iteration 48 (2026-08-29)
 
-Last state reconciliation: 2026-07-19
+Last state reconciliation: 2026-08-29
 
 ## Current Live Result
 
-- Current live library: `china_a_share_alpha_output/factor_mining_loop/live_library.csv` (**iter 47**, 10 factors)
-- Diagnostic test Sharpe (loop daily-reb): **2.3505**
-- Diagnostic test cost-adjusted return (loop daily-reb): **39.30%**
+- Current live library: `china_a_share_alpha_output/factor_mining_loop/live_library.csv` (**iter 48**, 12 factors)
+- Diagnostic test Sharpe (loop daily-reb): **1.9142**
+- Diagnostic test cost-adjusted return (loop daily-reb): **30.89%**
 - Promotion contract: **dynamic_trim**, 5d, 10 bps, minimum 50% factor coverage
-- No-lookahead hold Sharpe: **1.8262**
-- No-lookahead annualized return: **33.98%**
-- No-lookahead max drawdown: **-9.55%**
+- No-lookahead hold Sharpe: **1.8444**
+- No-lookahead annualized return: **34.17%**
+- No-lookahead max drawdown: **-10.04%**
 - Frozen snapshot: `242f762f4229bc9723b8b2a146b34dedc9d1b2d86e30f0c1bad5d7d10019e011`
 
-> Iter 26 was restored on 2026-07-11 under the then-current batch audit, but was
-> superseded by frozen-snapshot promotions at iterations 46 and 47. Iter 47
-> improved the comparable iter 46 hold-Sharpe baseline from 1.7911 to 1.8262.
-> Historical daily-rebalanced best fields remain in `state.json` for schema
-> compatibility and must not be interpreted as the current promotion baseline.
+> Iter 48 promoted on the frozen snapshot with hold Sharpe **1.8444**, improving
+> iter 47 baseline **1.8262** by +0.018. Historical daily-rebalanced best fields
+> remain in `state.json` for schema compatibility and must not be interpreted as
+> the current promotion baseline.
 
 ### 2026-07-13 Unified Frozen Audit
 
@@ -159,7 +158,22 @@ stock codes rather than unreliable names.
 > `combined_library.csv`, which explains the small numerical shift versus earlier
 > single audits.
 
-### Cost Robustness (current iter 40 library)
+### 2026-07-19 Frozen-Snapshot Resume (iter 46–48)
+
+Iterations 46–48 run on snapshot `tushare_snapshot_20260717` (checksum
+`242f762f...`). Promotion uses the no-lookahead dynamic-trim hold contract;
+daily-rebalanced Sharpe is diagnostic only.
+
+| Iter | Hold Sharpe | Hold return | Max DD | Promoted |
+|---:|---:|---:|---:|---|
+| 46 | 1.7911 | 33.31% | -9.54% | YES |
+| 47 | 1.8262 | 33.98% | -9.55% | YES |
+| 48 | **1.8444** | **34.17%** | -10.04% | YES |
+
+Iter 48 is the current promotion baseline. Iter 26 remains the best historical
+batch-audit library (hold Sharpe 2.49) under an older evaluation contract.
+
+### Cost Robustness (iter 40 library, superseded contract)
 
 | Cost | 5d hold Sharpe | 5d hold return | 5d max DD |
 |---|---:|---:|---:|
@@ -184,15 +198,19 @@ stock codes rather than unreliable names.
 - [x] Built and promoted a 20-day horizon library (`live_library_20d.csv`).
 - [x] Integrated TA-Lib indicators and Alpha101 seeds (iter 22–31).
 - [x] Promoted new 5d live library with realistic hold Sharpe 2.37 (vs previous 1.82).
+- [x] Resumed frozen-snapshot loop at iter 46–47; current hold Sharpe **1.8262**.
+- [x] Iter 48 promoted on frozen snapshot; hold Sharpe **1.8444** (12 factors).
 - [ ] Human review of the 5d primary and 10d secondary libraries before production use.
 
 
 ## Watch List
 
-- Multi-horizon evolution improved both Sharpe and cost-adjusted return.
-- Greedy correlation filter kept max selection correlation at 0.37.
-- Training Sharpe is positive (1.36) but lower than iteration 10; monitor
-  stability in future iterations.
+- Current live library (iter 47) has 10 factors after semantic dedup; max
+  selection correlation 0.36.
+- Promotion baseline is hold Sharpe under dynamic trim, not daily-rebalanced
+  Sharpe (historical best 6.34 is not comparable).
+- Iter 45 failed min-count and correlation gates; hold gate now active for all
+  promotions from iter 42 onward.
 
 ## Iteration History
 
@@ -240,6 +258,16 @@ stock codes rather than unreliable names.
 | 39 | 1063 | 32 | 22 | 20 | 2.148 | 6.3436 | 231.48% | NO | equal best |
 | 40 | 1064 | 34 | 25 | 23 | 1.889 | 5.7213 | 234.24% | YES | promoted by return |
 | 41 | 1065 | 29 | 29 | 26 | 1.875 | 4.7750 | 185.77% | NO | not improved |
+| 42 | 1042 | 13 | 10 | 10 | 1.217 | 2.3489 | 35.88% | NO | hold 1.95 |
+| 43 | 1043 | 29 | 10 | 10 | 1.217 | 2.3489 | 35.88% | NO | hold 1.95 |
+| 44 | 1044 | 27 | 17 | 12 | 1.250 | 1.5727 | 26.06% | NO | hold 2.24 |
+| 45 | 1045 | 26 | 15 | 0 | 2.178 | 1.3614 | 15.27% | NO | gates failed |
+| 46 | 1046 | 21 | 10 | 8 | 0.449 | 2.0512 | 34.30% | YES | hold **1.79** |
+| 47 | 1047 | 18 | 16 | 10 | 1.162 | 2.3505 | 39.30% | YES | hold **1.83** |
+| 48 | 1048 | 20 | 14 | 12 | 2.381 | 1.9142 | 30.89% | YES | hold **1.84** |
+
+> Rows 42–47: **Cost-adj** is loop daily-reb diagnostic return. **Gates** column
+> shows no-lookahead hold Sharpe when the hold gate was active.
 
 ---
 
