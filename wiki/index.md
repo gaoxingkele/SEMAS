@@ -10,6 +10,7 @@ tags: [index, wiki]
 - [Factor Mining Loop Index](factor_mining_loop_index.md): CoT for the continuous factor-mining loop iterations.
 - [Factor Mining Loop Iteration 1](factor_mining_loop_iteration_1.md): first loop run, seed 1001, promoted 3-factor ensemble with test Sharpe 1.63 and negative train Sharpe.
 - [Factor Mining Loop Iteration 2](factor_mining_loop_iteration_2.md): seed 1002, cleaned 5 expressions, no improvement, retained existing library.
+- [Factor Mining Loop Iterations 3–45](factor_mining_loop_iterations_3_45.md): promotion chain, the hold-Sharpe audit that showed the final live library had regressed, and the 10D/20D branch results.
 - [Mingli Book Profiles and Hour Calibration](mingli_book_profiles_hour_calibration.md): inspectable book-level AHP profiles and evidence-bounded candidate-hour ranking.
 - [Hengmen Rule Engine V2](hengmen_rule_engine_v2.md): explicit pattern, rescue, relation, timing, and counterexample logic.
 - [Exact Four-Pillar Boundary and Lin Fan Fixture](exact_four_pillar_linfan.md): fail-closed calendar policy and an evidence-bounded factual timeline.
@@ -29,3 +30,4 @@ tags: [index, wiki]
 - Hengmen falsification now requires an annual evidence row for each declared counterexample year.
 - Hengmen monthly timing now stays neutral when supplied date and month conflict.
 - [Hour calibration: tiaohou first weight](hour_calibration_tiaohou_first_weight.md): with shared three pillars, tiaohou fulfillment and hour-pillar clash/combine structure dominate hour ranking (巳月辛金 case).
+- [Mingli Skill Manifest and BaZi v2](mingli_skill_manifest_and_bazi_v2.md): separate hash-pinned skill identity from versioned agent behavior before changing inference logic.

@@ -12,6 +12,27 @@ The system contains one coordinator agent and four specialist agents:
 
 The implementation is deliberately deterministic and offline-friendly. It is a framework scaffold for cultural research, entertainment, and algorithm demonstrations, not a claim that fortune-telling predictions are scientifically valid.
 
+## Skill Registry and BaZi v2
+
+`skill_manifest.json` is the checked-in inventory for the 12 installed Mingli
+skills. It pins each installed directory and `SKILL.md` by SHA-256, records the
+knowledge backing and maturity boundary, and maps the skill to its runtime
+agent role. Verify the current installation without modifying it:
+
+```bash
+python -m examples.mingli_5agents.skill_registry
+```
+
+`genomes/bazi_v2.yaml` is the first specialist genome with explicit skill
+bindings. It uses seven classical BaZi schools as independent primary votes,
+`mingli-jicheng` as an auxiliary evidence pass, and
+`mingli-xingping-huihai` as side validation. New repositories bootstrap both
+BaZi v1 and v2 and select v2 as latest. Runtime specialist output includes an
+`agent-skill-binding-receipt-v1` receipt that detects manifest drift.
+
+The skill payloads are not yet vendored into this repository. The manifest is
+therefore an integrity and provenance control, not a complete offline installer.
+
 ## Run
 
 ```bash

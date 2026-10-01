@@ -42,6 +42,7 @@ from examples.mingli_5agents.memory import MingliFeedbackMemory
 from examples.mingli_5agents.provider_contracts import chart_contract
 from examples.mingli_5agents.provider_protocols import provider_protocol_document
 from examples.mingli_5agents.report_renderers import render_chinese_markdown
+from examples.mingli_5agents.skill_registry import agent_skill_binding_receipt
 from examples.mingli_5agents.topic_synthesis import build_topic_synthesis
 from examples.mingli_5agents.tools.annual_luck import build_annual_luck
 from examples.mingli_5agents.tools.astrology_chart import build_astrology_chart
@@ -57,6 +58,7 @@ from examples.mingli_5agents.workflow import MingliWorkflow, workflow_from_meta
 GENOME_FILES = [
     "orchestrator_v1.yaml",
     "bazi_v1.yaml",
+    "bazi_v2.yaml",
     "ziwei_v1.yaml",
     "qimen_v1.yaml",
     "astrology_v1.yaml",
@@ -131,6 +133,12 @@ class MingliFiveAgentSystem:
 
     def __init__(self, repo: GenomeRepository):
         self.repo = repo
+        self.specialist_genomes: dict[str, AgentGenome | None] = {}
+        for domain, agent_name in self.specialist_names.items():
+            try:
+                self.specialist_genomes[domain] = repo.load_agent(agent_name)
+            except FileNotFoundError:
+                self.specialist_genomes[domain] = None
 
     def __call__(self, coordinator: AgentGenome, task_input: dict[str, Any]) -> dict[str, Any]:
         birth = normalize_birth_input(task_input["birth"])
@@ -221,6 +229,15 @@ class MingliFiveAgentSystem:
     def _bazi_report(self, birth: dict[str, Any]) -> dict[str, Any]:
         chart = build_bazi_chart(birth)
         deep = chart["deep_analysis"]
+        bazi_genome = self.specialist_genomes.get("bazi")
+        binding_receipt = agent_skill_binding_receipt(
+            bazi_genome
+            or {
+                "name": self.specialist_names["bazi"],
+                "version": None,
+                "meta": {},
+            }
+        )
         current_luck = _current_major_luck(deep)
         month_ten_god = deep["ten_gods"]["month"]["stem"]
         school_debate = deep.get("school_debate", {})
@@ -229,6 +246,8 @@ class MingliFiveAgentSystem:
         primary_school_text = ", ".join(primary_schools[:3]) if primary_schools else "school debate pending"
         return self._with_layers({
             "agent": self.specialist_names["bazi"],
+            "agent_version": bazi_genome.version if bazi_genome else None,
+            "skill_binding_receipt": binding_receipt,
             "chart": chart,
             "macro": f"BaZi structure is {chart['structure']} with {chart['dominant_element']} emphasis.",
             "micro": (

@@ -1,0 +1,167 @@
+{
+  "schema_version": "mingli-skill-manifest-v1",
+  "manifest_version": "2026.08.08.1",
+  "created_date": "2026-08-08",
+  "scope": "Hash-pinned inventory and runtime bindings for the installed SEMAS mingli skills.",
+  "payload_policy": {
+    "status": "external_hash_pinned",
+    "runtime_root": "$CODEX_HOME/skills or ~/.codex/skills",
+    "canonical_payload_in_repository": false,
+    "note": "This first milestone detects missing or changed installed payloads. A later reviewed snapshot is required for fully offline installation."
+  },
+  "required_bazi_primary_skills": [
+    "mingli-bazi-yuanhai-ziping",
+    "mingli-bazi-ziping-zhenquan",
+    "mingli-bazi-sanming-tonghui",
+    "mingli-bazi-ditiansui",
+    "mingli-bazi-qiongtong-baojian",
+    "mingli-bazi-shenfeng-tongkao",
+    "mingli-bazi-hengmen"
+  ],
+  "skills": [
+    {
+      "id": "mingli-bazi-all",
+      "version": "2026.07.09.1",
+      "role": "bazi_council_coordinator",
+      "maturity": "governed_ensemble",
+      "knowledge_backing": "SEMAS seven-school debate and AHP policy",
+      "source_refs": ["examples/mingli_5agents/tools/build_mingli_book_skills.py", "OPERATION_LOG.md#2026-07-08"],
+      "runtime_binding": {"agent": "mingli_orchestrator", "mode": "coordination_policy", "status": "manifest_only"},
+      "file_count": 5,
+      "sha256": "a285e479bbc8adee65201c2a913472d8ee9760adfc674fdce0a9445d494b907e",
+      "skill_md_sha256": "5f25f679197ea7a0dc7c6babf41f5a1e131c07fc70735c464446a379f712d164"
+    },
+    {
+      "id": "mingli-bazi-yuanhai-ziping",
+      "version": "2026.07.05.1",
+      "role": "bazi_primary_school",
+      "maturity": "baseline_distillation",
+      "knowledge_backing": "《渊海子平》 method card",
+      "source_refs": ["examples/mingli_5agents/classical_sources/method_cards.json"],
+      "runtime_binding": {"agent": "bazi_analyst", "mode": "primary", "status": "v2_bound"},
+      "file_count": 3,
+      "sha256": "d9e8966e36ab50ea86d0d06e724c8bb9ff407c212147e10abb7ee8ce4a81c2c3",
+      "skill_md_sha256": "b4e93256486b359cd81b8bcdd893559bd0bed4f281bf06e434e4b8190351434f"
+    },
+    {
+      "id": "mingli-bazi-ziping-zhenquan",
+      "version": "2026.07.05.1",
+      "role": "bazi_primary_school",
+      "maturity": "baseline_distillation",
+      "knowledge_backing": "《子平真诠》 method card",
+      "source_refs": ["examples/mingli_5agents/classical_sources/method_cards.json"],
+      "runtime_binding": {"agent": "bazi_analyst", "mode": "primary", "status": "v2_bound"},
+      "file_count": 3,
+      "sha256": "f62eb3697339fc4f5cdadbfac163c97c1e58d200c1c0bf51d40773868945d127",
+      "skill_md_sha256": "b108f2beb24d6444d7cacf55a0af6475e26ba61c14abe52b4d3e147e15f4a2d1"
+    },
+    {
+      "id": "mingli-bazi-sanming-tonghui",
+      "version": "2026.07.25.1",
+      "role": "bazi_primary_school",
+      "maturity": "full_text_redistilled",
+      "knowledge_backing": "《三命通会》四库全书本十二卷",
+      "source_refs": ["https://github.com/kanripo/KR3g0042", "wiki/sanming_tonghui_skill_redistillation.md"],
+      "runtime_binding": {"agent": "bazi_analyst", "mode": "primary", "status": "v2_bound"},
+      "file_count": 5,
+      "sha256": "b9c441d417745fea0d9f98d900aed36cd86cee821ae4c31d97d770ee0e610e72",
+      "skill_md_sha256": "e46c8289bef22de94a6793571fb1b10cbd1de5b164383275e7259d9e229ab23c"
+    },
+    {
+      "id": "mingli-bazi-ditiansui",
+      "version": "2026.07.25.1",
+      "role": "bazi_primary_school",
+      "maturity": "full_text_redistilled",
+      "knowledge_backing": "《滴天髓阐微》全文",
+      "source_refs": ["https://github.com/youngzs/xuanxue", "OPERATION_LOG.md#2026-07-24-Classical-Book-Full-Text-Acquisition"],
+      "runtime_binding": {"agent": "bazi_analyst", "mode": "primary", "status": "v2_bound"},
+      "file_count": 5,
+      "sha256": "e1ac3e919ac67887f6726823ac8aa99920e73d3a1ef5ef01f7b353aa612887c4",
+      "skill_md_sha256": "bf6adadf7fcd622a3f2cfab8bff79ce3b5f48c59f4a2158f8deedc40ad9f477a"
+    },
+    {
+      "id": "mingli-bazi-qiongtong-baojian",
+      "version": "2026.07.25.1",
+      "role": "bazi_primary_school",
+      "maturity": "full_text_redistilled",
+      "knowledge_backing": "《穷通宝鉴》全文与十干十二月调候表",
+      "source_refs": ["https://github.com/youngzs/xuanxue", "OPERATION_LOG.md#2026-07-24-Classical-Book-Full-Text-Acquisition"],
+      "runtime_binding": {"agent": "bazi_analyst", "mode": "primary", "status": "v2_bound"},
+      "file_count": 5,
+      "sha256": "053d6b8206b2e329976a2cd38e42860696696e7ff4b0ed2f10e75da1516249b9",
+      "skill_md_sha256": "56133b82024c5b973a98257e96bcd87a2426524efe3c5d5d38271797fedea6a2"
+    },
+    {
+      "id": "mingli-bazi-shenfeng-tongkao",
+      "version": "2026.07.25.1",
+      "role": "bazi_primary_school",
+      "maturity": "full_text_redistilled",
+      "knowledge_backing": "《神峰通考》全文",
+      "source_refs": ["https://github.com/youngzs/xuanxue", "OPERATION_LOG.md#2026-07-24-Classical-Book-Full-Text-Acquisition"],
+      "runtime_binding": {"agent": "bazi_analyst", "mode": "primary", "status": "v2_bound"},
+      "file_count": 5,
+      "sha256": "9b642d7ef614a1a09b9e28d39e0a82adf8a448a0a556ca475b7f991bbcbfe64c",
+      "skill_md_sha256": "dcc2db5f818f651490fd3b7c04a95ef7a50eedcca9742450b2b43b5caa4ef85f"
+    },
+    {
+      "id": "mingli-bazi-hengmen",
+      "version": "2026.07.25.1",
+      "role": "bazi_primary_school",
+      "maturity": "full_text_redistilled_rule_engine",
+      "knowledge_backing": "《格局横门断》全文、规则图与独立 v2 引擎",
+      "source_refs": ["examples/格局横门断.docx", "wiki/hengmen_rule_engine_v2.md"],
+      "runtime_binding": {"agent": "bazi_analyst", "mode": "primary", "status": "v2_bound"},
+      "file_count": 6,
+      "sha256": "d29e145cd3292aad88ec577ec96ffa04fead16bf3b58fa13d440172abbb434e1",
+      "skill_md_sha256": "db1c0b0ec846ad83b336e1decee8691fb9d579fccd8258a10f7433169bb5733a"
+    },
+    {
+      "id": "mingli-jicheng",
+      "version": "2026.07.28.1",
+      "role": "bazi_auxiliary_evidence",
+      "maturity": "full_book_ocr_auxiliary",
+      "knowledge_backing": "《命理集成》四卷十八章 OCR、54 节神煞、28 类格局",
+      "source_refs": ["external/mingli_books/bazi/extended/text_sources/mingli_jicheng_ocr/", "wiki/references.md#命理集成"],
+      "runtime_binding": {"agent": "bazi_analyst", "mode": "auxiliary", "status": "v2_bound"},
+      "file_count": 7,
+      "sha256": "81361b116c1bbaf3a20b5e3228bae04725820dca3d810c1165670710bd0cc92b",
+      "skill_md_sha256": "e2b1478ff142608ebfa35b2b1a38c24591acb8d643ab2d49f42fa625ca6c220e"
+    },
+    {
+      "id": "mingli-xingping-huihai",
+      "version": "2026.07.27.1",
+      "role": "bazi_side_validation",
+      "maturity": "substitute_full_text",
+      "knowledge_backing": "《星學大成》四库本替代《星平会海》星命部分",
+      "source_refs": ["https://github.com/kanripo/KR3g0041", "OPERATION_LOG.md#2026-07-24-Xingping-Huihai-Substitute-Source"],
+      "runtime_binding": {"agent": "bazi_analyst", "mode": "side_validation", "status": "v2_bound"},
+      "file_count": 5,
+      "sha256": "bae1f5328d82be64f28def3d65ada4707386a19ab1ca90d7a076b0ca6d22de88",
+      "skill_md_sha256": "6f804f110dcb1b0965e71dcea147f0d8f4ff552e976651c25fcdd74e826fa526"
+    },
+    {
+      "id": "mingli-ziwei",
+      "version": "2026.07.08.1",
+      "role": "ziwei_specialist",
+      "maturity": "symbolic_scaffold",
+      "knowledge_backing": "紫微宫位、四化、大限方法卡；本地 PDF 待复核",
+      "source_refs": ["examples/mingli_5agents/tools/ziwei_deep_analysis.py"],
+      "runtime_binding": {"agent": "ziwei_analyst", "mode": "primary", "status": "v1_unbound"},
+      "file_count": 3,
+      "sha256": "0e2ba1326286c7ea404e5ba33712ef932a52fe90fa39220d0a4bde2ac182597f",
+      "skill_md_sha256": "98939ec0c446f96b2646c3b482c94ea321fa15ea2c39321607828a4cfb100e95"
+    },
+    {
+      "id": "mingli-xingzuo",
+      "version": "2026.07.08.1",
+      "role": "astrology_specialist",
+      "maturity": "symbolic_scaffold",
+      "knowledge_backing": "西占本命盘、宫位、相位与过境方法卡",
+      "source_refs": ["examples/mingli_5agents/tools/astrology_deep_analysis.py"],
+      "runtime_binding": {"agent": "astrology_analyst", "mode": "primary", "status": "v1_unbound"},
+      "file_count": 3,
+      "sha256": "f3f5ab90ed4c90dcce60832410f2802212d3f8cb286ee901a74d25c1c2715131",
+      "skill_md_sha256": "8accd2f89bf1f8686a34500f173b14ea0dcf95f0e44cf787d35378380e047bc8"
+    }
+  ]
+}

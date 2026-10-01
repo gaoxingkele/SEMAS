@@ -13119,3 +13119,182 @@ positive/negative events are a blind spot of every current weighting.
 Recorded in cascade_report_2026-07-28.md appendix. Until >=10
 prospective cases pass, all calibration outputs must be labeled
 "not prospectively validated".
+
+## 2026-07-29 - Lin Fan Re-Analysis with Two-Stage Cascade (Reproduction)
+
+### Motivation
+
+Run the newest two-layer cascade architecture end-to-end on the Lin Fan case
+to confirm the 2026-07-28 blind-test failure mode is reproducible and to
+localize where the failure occurs.
+
+### Actions Taken
+
+1. Stage 1 (deterministic, contamination-free): recomputed the 26-dim
+   features for `cases/linfan_major_events.json`, standardized within case,
+   applied the 11-case screened parcels (hengmen_votes/schools/books), and
+   ranked all 12 candidate hours by 3-parcel equal weight. Result identical
+   to the blind test: reference hour 卯 ranks 11/12; top-4 = 申寅亥巳.
+2. Stage 2: three zero-context blind analyst subagents (hengmen chief judge;
+   sanming/ditiansui pattern side-evidence; qiongtong/jicheng/xingping
+   tiaohou-shensha side-evidence) adjudicated the 4 candidates with reasoning
+   chains. Borda aggregation: 申 10 > 亥 9 > 巳 8 > 寅 4; cascade verdict
+   申时 - miss, matching the blind test.
+3. Report: `llm_skill_analysis/linfan_cascade_2026-07-29.md`.
+
+### Honest Boundaries
+
+- Not a clean prospective test: the true hour is known to the orchestrator
+  (stage-2 subagents remained blind). Counts as a reproducibility demo, not
+  a validation sample (prospective tally stays 1/10; all calibration output
+  must be labeled "not prospectively validated").
+- Failure localized to Stage 1: the reference hour never entered the top-4
+  candidate set (parcel scores rank it 11th). Stage-2 adjudication was
+  internally consistent across three lenses - coherent reasoning, wrong
+  answer, again. K=6 would still miss; nothing indicates K=11 would help.
+
+### Verification
+
+- Stage-1 ranking reproduced via `sem_fusion.build_dataset(..., cache_path=None, recompute=True)`
+  + `within_case_standardize` + `build_parcels` + `cascade_eval.stage1_topk`
+  (`.venv_py311` python; matches 2026-07-28 blind-test numbers exactly).
+
+## 2026-08-08 - Mingli Skill Manifest and BaZi Analyst v2 Binding
+
+### Motivation
+
+The installed Mingli knowledge skills had advanced beyond the persisted five-agent
+genomes. Twelve skills lived outside Git under the Codex skills directory, while
+`bazi_analyst` remained v1 and did not declare which school skills it consumed.
+This made knowledge identity, runtime binding, and drift difficult to audit.
+
+### Actions
+
+1. Added `examples/mingli_5agents/skill_manifest.json`, covering all 12 installed
+   Mingli skills with version labels, maturity boundaries, source references,
+   file counts, directory SHA-256 hashes, `SKILL.md` hashes, and runtime roles.
+2. Added `skill_registry.py`, a read-only audit command that resolves the Codex
+   skills root, hashes installed payloads deterministically, and reports missing
+   or drifting skills.
+3. Added `genomes/bazi_v2.yaml`. It explicitly binds seven primary BaZi school
+   skills, `mingli-jicheng` as auxiliary evidence, and
+   `mingli-xingping-huihai` as side validation, with conflict-preserving and
+   fail-closed output contracts.
+4. Updated repository bootstrap and the five-agent runtime so BaZi v2 is the
+   latest bundled specialist genome and each BaZi specialist result exposes an
+   `agent-skill-binding-receipt-v1` receipt bound to the manifest hash.
+5. Added registry, drift, bootstrap, and runtime receipt tests. Updated the root
+   README, Mingli README, and the atomic wiki note/index/reference record.
+
+### Files Changed
+
+- `README.md`
+- `examples/mingli_5agents/README.md`
+- `examples/mingli_5agents/skill_manifest.json`
+- `examples/mingli_5agents/skill_registry.py`
+- `examples/mingli_5agents/genomes/bazi_v2.yaml`
+- `examples/mingli_5agents/run_demo.py`
+- `examples/mingli_5agents/tests/test_skill_registry.py`
+- `examples/mingli_5agents/tests/test_mingli_system.py`
+- `wiki/mingli_skill_manifest_and_bazi_v2.md`
+- `wiki/index.md`
+- `wiki/references.md`
+
+### Verification
+
+- `python -m examples.mingli_5agents.skill_registry`: 12/12 installed skills
+  matched the checked-in hashes; status `pass`.
+- `pytest test_mingli_system.py test_skill_registry.py`: 26 passed.
+- `pytest test_benchmark.py` plus the release-governance Schema contract test:
+  3 passed.
+- Black check on the new Python module and tests: pass.
+- `compileall` and `git diff --check`: pass. Ruff was not available in the
+  active virtual environment and was not installed during this change.
+
+### Known Boundary
+
+The skill payloads remain external to the repository. This milestone detects
+drift and binds agent behavior to an exact manifest, but full offline
+reinstallation still requires a reviewed payload snapshot or deterministic
+distillation package.
+
+## 2026-09-22 — Continuous Factor-Mining Loop Iterations 3–45 Retro-Capture
+
+### Motivation
+
+The 2026-07-04 entries in this log cover only iterations 1–2 of the continuous
+factor-mining loop, and `wiki/` holds chain-of-thought notes for the same two
+runs. The on-disk run tree under `china_a_share_alpha_output/` (git-ignored)
+shows 45 reported iterations in the main 5D loop plus two horizon branches, and
+contains the audit that ended the effort: on 2026-07-11 a same-standard
+hold-Sharpe re-evaluation showed the promoted live library had regressed
+against earlier iterations. None of that reached the operational or wiki
+record, so the reconstruction was captured before the runtime tree is rotated.
+
+### Actions
+
+1. Rebuilt the 5D iteration history from `loop_report_*.md` (37 reports
+   covering iterations 1–10, 14, 15, 20, 22–45) and identified the unlogged
+   variant runs (11–13, 16–19, 21) from their `iter_00NN_*` directories.
+2. Extracted the promotion chain — iterations 1, 4, 5, 10, 22, 24, 28, 37, 40
+   replaced the live library — with merged/cleaned counts, test Sharpe, and
+   cost-adjusted return for each.
+3. Re-read the 2026-07-11 batch multi-horizon audit and extracted the
+   same-standard 5d/10d/20d hold-Sharpe table for iterations 24–41, then built
+   the `iter_0026` / `iter_0028` / `iter_0040` live-candidate comparison
+   (2.491 vs 2.245 vs 1.634 hold Sharpe at 5 days).
+4. Recorded the 10D branch (7 iterations, best = iteration 4: test Sharpe
+   3.9883, hold Sharpe 2.7824) and the 20D branch (12 iterations, best =
+   iteration 5: test Sharpe 7.1158 with negative train Sharpe -0.4385), plus
+   the 2026-07-13 frozen promotion baselines (10D `dynamic_trim` Sharpe
+   3.8514 / annualized 84.38%; 20D `simple_hold` Sharpe 1.3067 / annualized
+   20.74%).
+5. Wrote `wiki/factor_mining_loop_iterations_3_45.md`, updated
+   `wiki/factor_mining_loop_index.md` (replacing the stale `STATE.md` link with
+   the surviving state files and an explicit note that the 5D state is gone),
+   added the note to `wiki/index.md`, and extended `wiki/references.md` with the
+   loop-engineering source and the local run artifacts.
+
+### Files Changed
+
+- `wiki/factor_mining_loop_iterations_3_45.md` (new)
+- `wiki/factor_mining_loop_index.md`
+- `wiki/index.md`
+- `wiki/references.md`
+- `OPERATION_LOG.md`
+
+### Verification
+
+- `Get-ChildItem china_a_share_alpha_output/factor_mining_loop -Filter
+  'loop_report_*.md'` → 37 reports, iteration numbers
+  `1–10, 14, 15, 20, 22–45`; `iter_0046` contains only a seed library and an
+  evolution snapshot (run aborted 2026-07-12 18:19).
+- `Import-Csv china_a_share_alpha_output/batch_multihizon_audit/batch_audit_summary.csv`
+  filtered to `loop=5d, horizon=5` → hold Sharpe 2.117 (iter 24), 2.491
+  (iter 26), 2.245 (iter 28), 1.969 (iter 37), 1.634 (iter 40); matches
+  `FINDINGS.md`.
+- `.../batch_multihizon_audit/5d/iter_0026/hold_ensemble_horizon.csv` →
+  2.491 / 1.990 / 1.981 at 5 / 10 / 20 days, consistent with the summary CSV.
+- `.../factor_mining_loop_10d/state.json` and `.../factor_mining_loop_20d/state.json`
+  → iteration counts 7 and 12, promotion baselines and snapshot id
+  `242f762f...` as recorded; the referenced
+  `frozen_promotion_audit_20260713/promotion_audit_receipt.json` is absent from
+  disk.
+- `.venv_py311 python -m pytest tests/test_factor_loop.py -q` → 1 passed,
+  1 failed. The failure is pre-existing and unrelated to this documentation
+  change: `test_run_factor_loop` raises `KeyError: 'turnover_rate'` because the
+  GP mutator variable list includes `turnover_rate`
+  (`china_a_share_alpha/evolution/factor_mutator.py:30`) while
+  `make_synthetic_panel` does not provide that column.
+- `git diff --check` → clean (LF/CRLF conversion warnings only).
+
+### Known Boundary
+
+This is a documentation-only change: no code, configuration, or factor library
+was modified, and no backtest was re-run. The hold-Sharpe figures are re-read
+from stored audit CSVs; the audit scripts referenced by `FINDINGS.md`
+(`batch_multihizon_audit.py`, `run_multihizon_audit.py`) and the state-schema-v2
+loop runner are not in the repository, so fresh recomputation would first
+require restoring those tools. The 5D loop's own `state.json`,
+`live_library.csv`, and `STATE.md` are missing from the runtime tree; the
+retrospective records this and the other open items.

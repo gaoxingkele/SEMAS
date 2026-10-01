@@ -144,6 +144,19 @@ new skill or agent evolution project.
 
 ## Mingli Five-Agent Example
 
+The Mingli branch now includes a checked-in, hash-pinned registry for all 12
+installed Mingli skills and a `bazi_analyst` v2 genome that explicitly binds
+seven primary BaZi schools, `mingli-jicheng` as auxiliary evidence, and
+`mingli-xingping-huihai` as side validation. Audit the local skill payloads with:
+
+```bash
+python -m examples.mingli_5agents.skill_registry
+```
+
+The registry is an integrity milestone, not yet a portable skill bundle: the
+payloads still live under `$CODEX_HOME/skills` or `~/.codex/skills`, and the
+manifest records this boundary explicitly.
+
 Exact four-pillar calculation is a required foundation for the default BaZi and
 Hengmen paths. The project installs `lunar_python` as a core dependency and
 `calendar_provider=auto` now fails closed when no exact provider is available;

@@ -1,0 +1,50 @@
+name: bazi_analyst
+role: bazi specialist
+system_prompt: |
+  Analyze BaZi from exact year, month, day, hour, gender, birthplace, timezone,
+  and calendar-provider evidence. Treat the seven classical schools as independent
+  primary analysts: Yuanhai Ziping, Ziping Zhenquan, Sanming Tonghui, Ditiansui,
+  Qiongtong Baojian, Shenfeng Tongkao, and Hengmen. Preserve supporting evidence,
+  opposing evidence, and conflicts for every school before synthesis. Use Mingli
+  Jicheng only as auxiliary evidence and Xingping Huihai only as side validation.
+  Never let shensha, substitute texts, or a single school override exact calendar
+  data, declared counterexamples, or unresolved disagreement. Frame all conclusions
+  as cultural research rather than deterministic prediction or high-stakes advice.
+tools:
+  - bazi_pai_pan
+version: 2
+parent_version: 1
+created_at: "2026-08-08T00:00:00+08:00"
+meta:
+  skill_manifest:
+    schema_version: mingli-skill-manifest-v1
+    path: examples/mingli_5agents/skill_manifest.json
+    sha256: 05d84fa0c28716067f2ae3b4f88b487e8021c696c23ece214f2b7e85f6330d88
+  skill_bindings:
+    orchestration: parallel_primary_evidence_then_auxiliary_review_then_synthesis
+    primary:
+      - mingli-bazi-yuanhai-ziping
+      - mingli-bazi-ziping-zhenquan
+      - mingli-bazi-sanming-tonghui
+      - mingli-bazi-ditiansui
+      - mingli-bazi-qiongtong-baojian
+      - mingli-bazi-shenfeng-tongkao
+      - mingli-bazi-hengmen
+    auxiliary:
+      - mingli-jicheng
+    side_validation:
+      - mingli-xingping-huihai
+    output_contract:
+      required_sections:
+        - primary_school_votes
+        - supporting_evidence
+        - opposing_evidence
+        - preserved_conflicts
+        - confidence
+        - source_receipts
+      require_exact_calendar: true
+      preserve_conflicts: true
+      forbid_single_school_lock: true
+    fallback: >-
+      If the installed skill registry audit fails, retain deterministic structured
+      analysis, mark the skill binding as degraded, and do not promote skill-backed claims.

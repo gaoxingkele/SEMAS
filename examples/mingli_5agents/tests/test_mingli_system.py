@@ -37,7 +37,10 @@ from examples.mingli_5agents.run_demo import (
 def test_bootstrap_loads_five_agents(tmp_path: Path):
     repo = bootstrap_repo(tmp_path)
     assert repo.load_agent("mingli_orchestrator").role == "coordinator"
-    assert repo.load_agent("bazi_analyst").role == "bazi specialist"
+    bazi = repo.load_agent("bazi_analyst")
+    assert bazi.role == "bazi specialist"
+    assert bazi.version == 2
+    assert bazi.parent_version == 1
     assert repo.load_agent("ziwei_analyst").role == "ziwei specialist"
     assert repo.load_agent("qimen_analyst").role == "qimen specialist"
     assert repo.load_agent("astrology_analyst").role == "western astrology specialist"
@@ -56,6 +59,11 @@ def test_five_agent_executor_returns_required_artifacts(tmp_path: Path):
     }
     result = MingliFiveAgentSystem(repo)(coordinator, task)
     assert set(result["specialists"]) == {"bazi", "ziwei", "qimen", "astrology"}
+    bazi_binding = result["specialists"]["bazi"]["skill_binding_receipt"]
+    assert result["specialists"]["bazi"]["agent_version"] == 2
+    assert bazi_binding["status"] == "bound"
+    assert len(bazi_binding["bound_skill_ids"]) == 9
+    assert len(bazi_binding["sha256"]) == 64
     for specialist in result["specialists"].values():
         assert set(specialist["layers"]) == {"macro", "micro", "yearly", "monthly", "uncertainty"}
         assert specialist["layers"]["macro"]["text"] == specialist["macro"]

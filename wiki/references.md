@@ -35,14 +35,35 @@
   - Core idea: frozen-weight LLM + selection-based evolution over prompts,
     tools, topologies, and memory.
 
+@misc{semas_mingli_skill_manifest_v1,
+  title = {SEMAS Mingli Skill Manifest v1 and BaZi Analyst v2},
+  year = {2026},
+  howpublished = {Local design artifacts: examples/mingli_5agents/skill_manifest.json and genomes/bazi_v2.yaml},
+  note = {Hash-pinned external skill identity, explicit agent binding, and runtime drift receipt}
+}
+
 ## China A-Share Alpha Factor Mining
 
 - Local operational record: `OPERATION_LOG.md` (entries 2026-06-24 through
-  2026-06-30).
+  2026-06-30, plus the 2026-04/07 continuous factor-mining loop entries and the
+  2026-09-22 retro-capture of iterations 3–45).
 - Local code:
   - `china_a_share_alpha/scripts/clean_factor_library.py`
   - `china_a_share_alpha/scripts/run_factor_combination.py`
   - `china_a_share_alpha/scripts/run_portfolio_weight_evolution.py`
+  - `china_a_share_alpha/scripts/run_factor_mining_loop.py`
+- Local run artifacts (git-ignored runtime output):
+  - `china_a_share_alpha_output/batch_multihizon_audit/FINDINGS.md` — the
+    2026-07-11 same-standard hold-Sharpe audit across every stored iteration.
+  - `china_a_share_alpha_output/factor_mining_loop_{10d,20d}/state.json` —
+    per-iteration history, gates, and frozen promotion baselines.
+  - `wiki/factor_mining_loop_iterations_3_45.md` — consolidated retrospective.
+
+- **loop-engineering** (Cobus Greyling)
+  - https://github.com/cobusgreyling/loop-engineering
+  - Design pattern for the continuous factor-mining loop: durable state,
+    scheduled triggers, sub-process evolution, verification, human gate.
+  - [source: https://github.com/cobusgreyling/loop-engineering]
 
 - **WorldQuant 101 Formulaic Alphas**
   - Kakushadze, "101 Formulaic Alphas", 2016
