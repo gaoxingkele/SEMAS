@@ -17,6 +17,7 @@ chronological log.
 
 | Page | Summary | Last Updated |
 |---|---|---|
+| [Factor Evolution Complete History 1–114](factor_evolution_complete_history_1_114.md) | Canonical per-iteration ledger, promotion chain, DGM/RSI phases, paired results, and current iter-109 live state. | 2026-10-07 |
 | [RSI Phase-2 Paired Selection](factor_rsi_phase2_paired_selection_20260921.md) | Three-seed parent/child controls gate reproductive eligibility. | 2026-09-21 |
 | [RSI Phase-1 Causal Verifier](factor_rsi_phase1_causal_verifier_20260920.md) | Hard-gated parent eligibility, identity-bound receipts, and one-field causal credit. | 2026-09-20 |
 | [DGM RSI for Factor Mining](factor_dgm_rsi_factor_mining_20260918.md) | True Recursive Self-Improvement: policy archive + empirical hold eval. | 2026-09-18 |

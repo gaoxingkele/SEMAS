@@ -444,3 +444,17 @@ Chronological record of wiki updates, loop runs, and key decisions.
   selection gates.
 - Made single-valid/pair-pending children ineligible and blocking until their
   paired receipt is selected or rejected.
+
+## 2026-10-07 - consolidated factor evolution through iteration 114
+
+- Reconciled the 113 machine-history entries plus iteration-11 stress audit
+  into one outer-loop ledger covering iterations 1–114.
+- Recorded iteration 109 / `policy_0060` as the current live library at Hold
+  Sharpe 2.3256 and documented why iterations 110–114 did not replace it.
+- Distinguished 114 outer iterations from at least 796 currently recoverable
+  inner-generation records and from the separate TOP-factor counts.
+- Captured paired-campaign outcomes for policies 0060, 0062, and 0065 and
+  corrected the human state from “paired running” to “paired rejected” for
+  policy 0065.
+- Added `factor_evolution_complete_history_1_114.md` as the canonical entry for
+  LLMs and other coding tools.

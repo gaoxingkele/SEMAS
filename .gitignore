@@ -32,6 +32,9 @@ test_alpha_output/
 .tmp_test_portfolio_repo/
 
 # Virtual environments
+.env
+.env.*
+!.env.example
 .venv_py311/
 .qlib_py311/
 

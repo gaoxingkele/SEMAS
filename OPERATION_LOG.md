@@ -16978,3 +16978,76 @@ Iteration 106 was not started. Phase 1 records deterministic evaluation groups
 and seeds but does not yet perform replicated paired-seed selection.
 
 ---
+
+## 2026-10-07 - Consolidate and publish factor evolution through iteration 114
+
+### Motivation
+
+The user asked for the complete factor-evolution history to be written into the
+local LLM wiki so that other coding tools can recover the true current state,
+then asked for all outstanding project work to be committed and pushed to
+GitHub. Earlier summaries had stopped at committed iteration 48 and missed the
+dirty factor worktree, whose machine state had already reached iteration 114.
+
+### Actions taken
+
+1. Audited the dedicated `china-a-share-alpha-evolver` worktree and preserved
+   its 88-file backlog: T+1 execution, recent-regime audits, D1/D2/D3 search,
+   DGM/RSI policy evolution, paired selection, tests, ARA, wiki notes, machine
+   state, and iteration-109 live library.
+2. Reconciled `state.json`: outer iteration 114, 113 history entries because
+   iteration 11 was a non-mutating stress audit, current live iteration 109,
+   and best frozen Hold Sharpe 2.3255961299.
+3. Rebuilt a complete 1–114 ledger with candidate Hold Sharpe, diagnostic Test
+   Sharpe, factor count, promotion decision, failed gates, DGM policy identity,
+   and mutation surface where available.
+4. Counted 796 currently recoverable inner-generation records across 69 stored
+   histories and explicitly separated this count from outer iterations and
+   TOP-factor rankings.
+5. Reconciled paired receipts for policies 0060, 0062, and 0065. All three
+   children were rejected; policy 0065 completed with 2/3 valid pairs, mean
+   delta +0.0358, and 0.50 win rate, failing minimum-pair, all-valid, and
+   win-rate gates.
+6. Added `wiki/factor_evolution_complete_history_1_114.md` as the canonical
+   LLM-readable entry and linked it from both wiki indexes, the project README,
+   the alpha README, and the human state receipt.
+7. Added `.env` patterns to `.gitignore` after detecting a local untracked
+   `TUSHARE_TOKEN` file; no value was printed or committed.
+
+### Files changed
+
+- `.gitignore`
+- `README.md`
+- `china_a_share_alpha/README.md`
+- `china_a_share_alpha_output/factor_mining_loop/STATE.md`
+- `wiki/factor_evolution_complete_history_1_114.md` (new)
+- `wiki/factor_mining_loop_index.md`
+- `wiki/index.md`
+- `wiki/log.md`
+- `wiki/references.md`
+- `OPERATION_LOG.md`
+
+### Verification
+
+- Full repository tests from the factor worktree:
+  `python -m pytest -p no:cacheprovider --basetemp <workspace-temp> tests china_a_share_alpha/tests`
+  produced 118 passed, 2 skipped, and one sandbox-only relative-path failure.
+- Re-ran that test from the writable workspace with the factor worktree on
+  `PYTHONPATH`: 1 passed. Combined functional result: **119 passed, 2 skipped**.
+- Secret scan over code, tests, wiki, ARA, README, and operation log: no token,
+  password, or private-key value matched.
+- Complete-ledger validation: 114 rows, minimum 1, maximum 114, no missing or
+  duplicate iteration number.
+- Machine-state validation: iteration 114, 113 history entries, live Hold
+  Sharpe 2.3255961299286074.
+- `git diff --check`: passed after normalizing Markdown trailing whitespace.
+
+### Boundary
+
+The complete history preserves what was evaluated; it does not authorize live
+trading. Runtime population caches and `.semas_repo` snapshots remain ignored.
+Only compact state, live-library, code, tests, research notes, and consolidated
+evidence are committed. The local market panel ends on 2026-07-16 and is no
+longer a blind forward test.
+
+---

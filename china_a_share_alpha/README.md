@@ -427,12 +427,13 @@ python -m china_a_share_alpha.loop.recursive_self_improve \
   --audit-existing --baseline-iteration 49
 ```
 
-The migrated phase-1 archive contains 28 eligible parents, 29 invalid nodes,
-and one pending child (`policy_0057`). Iteration 106 has intentionally not been
-run yet. Proposal metadata records the policy/parent IDs, mutation field,
-evaluation group, seed, and config hashes. This phase fixes causal attribution;
-new children must also pass a resumable paired-seed campaign before becoming
-eligible parents:
+The phase-1 archive migration initially contained 28 eligible parents, 29
+invalid nodes, and pending `policy_0057`. The loop subsequently ran through
+iteration 114. Iteration 109 / `policy_0060` is the current live library with
+Hold Sharpe 2.3256; iterations 110–114 did not replace it. Proposal metadata
+records the policy/parent IDs, mutation field, evaluation group, seed, and
+config hashes. New children must pass a resumable paired-seed campaign before
+becoming eligible parents:
 
 ```bash
 python -m china_a_share_alpha.scripts.run_paired_policy_evaluation \
@@ -449,6 +450,9 @@ deltas, a win rate of at least two thirds, and no single-seed regression worse
 than 0.10 Sharpe. A single-run-valid child remains ineligible while this receipt
 is pending. Do not launch a paired campaign for a child that already failed its
 single-run hard gates.
+
+The complete per-iteration ledger and the latest paired-selection outcomes are
+maintained in `../wiki/factor_evolution_complete_history_1_114.md`.
 
 ## Downloading real Qlib data
 

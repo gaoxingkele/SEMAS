@@ -9,6 +9,17 @@ related: [index.md, log.md]
 This index collects the chain-of-thought and knowledge notes produced by the
 continuous factor-mining loop.
 
+## Canonical Complete History
+
+- [Iterations 1–114 complete history](factor_evolution_complete_history_1_114.md)
+  — authoritative LLM-readable consolidation of the outer loop, all per-run
+  metrics and gates, promotion chain, DGM/RSI policies, paired campaigns,
+  parallel horizon branches, and current iter-109 live state.
+- Machine source of truth:
+  `../china_a_share_alpha_output/factor_mining_loop/state.json`.
+- Human current-state receipt:
+  `../china_a_share_alpha_output/factor_mining_loop/STATE.md`.
+
 ## Run Notes
 
 - [Iteration 1](factor_mining_loop_iteration_1.md) — First loop run, empty

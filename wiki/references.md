@@ -206,3 +206,13 @@
 - **AI Scientist**
   - Lu et al., 2024
   - Key: automated scientific discovery agent.
+
+## Local Factor Evolution State
+
+- **SEMAS China A-Share Factor Evolution History, Iterations 1–114**
+  - SEMAS Contributors, 2026
+  - Canonical note: `wiki/factor_evolution_complete_history_1_114.md`
+  - Machine state: `china_a_share_alpha_output/factor_mining_loop/state.json`
+  - Human receipt: `china_a_share_alpha_output/factor_mining_loop/STATE.md`
+  - Scope: complete outer-loop ledger, promotion chain, hold-gate transition,
+    DGM/RSI policy evolution, and paired-selection status.

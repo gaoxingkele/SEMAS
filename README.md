@@ -174,6 +174,13 @@ New children must additionally pass a three-seed parent/child evaluation before
 they can reproduce. Every pair starts from the same frozen seed library and
 uses the same random seed; production writes are disabled in research arms.
 
+The outer factor loop is recorded through iteration 114. The current live
+library is iteration 109 (`policy_0060`), with frozen 5-day dynamic-trim Hold
+Sharpe 2.3256; iterations 110–114 did not replace it. The canonical
+LLM-readable history, including every iteration, gate, promotion, DGM policy,
+paired campaign, and the distinction between outer iterations and inner
+generations, is `wiki/factor_evolution_complete_history_1_114.md`.
+
 See `china_a_share_alpha/README.md`.
 
 ## Mingli Five-Agent Example
