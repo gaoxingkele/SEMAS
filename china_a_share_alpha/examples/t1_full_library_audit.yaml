@@ -1,0 +1,9 @@
+snapshot_dir: china_a_share_alpha_output/tushare_snapshot_20260717
+factor_output_root: china_a_share_alpha_output
+output_dir: china_a_share_alpha_output/t1_full_library_audit_20260830
+horizons: [5, 10, 20]
+selection_fraction: 0.20
+transaction_cost: 0.001
+slippage: 0.0005
+min_factor_coverage: 0.50
+min_universe_symbols: 5

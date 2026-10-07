@@ -1,0 +1,25 @@
+snapshot_dir: china_a_share_alpha_output/tushare_snapshot_20260717
+factor_output_root: china_a_share_alpha_output
+expression_signal_cache: china_a_share_alpha_output/recent_all_factor_audit/expression_signals
+output_dir: china_a_share_alpha_output/recent_all_factor_audit/run_20260913
+workers: 3
+horizons: [5, 10, 20]
+market_ma_windows: [20]
+selection_fraction: 0.20
+transaction_cost: 0.001
+slippage: 0.0005
+min_factor_coverage: 0.50
+min_signal_active_days: 20
+periods:
+  - name: "2024"
+    start: "2024-01-01"
+    end: "2024-12-31"
+    role: pressure
+  - name: "2025"
+    start: "2025-01-01"
+    end: "2025-12-31"
+    role: recent_primary
+  - name: "2026_ytd"
+    start: "2026-01-01"
+    end: "2026-07-16"
+    role: current_primary

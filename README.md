@@ -130,6 +130,50 @@ costed 20d holding performance after jointly neutralizing those exposures.
 The unified no-lookahead horizon audit now designates 5d as primary, 10d as a
 regime-sensitive secondary horizon, and 20d as research-only.
 
+A board-aware full-library audit additionally supports D+1 open entry,
+D+6/D+11/D+21 forced expiry, queued limit-down exits, cumulative stops, and
+peak-drawdown trailing profit for main-board, STAR/ChiNext, and BSE policy tiers.
+Missing BSE, index, or ETF frozen panels are reported as unavailable rather
+than imputed.
+
+A subsequent 12-round stock-to-library matching experiment selected factor
+mixtures from train-only stock, industry, market, and global utility estimates.
+Its 2023 validation Sharpe reached 1.722, but the unopened 2024--2026 test
+Sharpe was only 0.374 with a -48.55% drawdown. The candidate was rejected as
+non-generalizing and did not replace any live factor library.
+
+Recent-regime research now isolates 2025 half-years and 2026 subperiods,
+re-estimates matching utilities from trailing history, and validates across
+stock-disjoint buckets. A continuous-history market trend gate can suspend new
+long entries while leaving T+1 exits active. The first MA20-gated candidate
+improved the April--July 2026 diagnostic, but remains research-only because the
+period was already observed and main-board performance stayed slightly negative.
+
+The current 55-library catalog has also been expanded into 119 unique
+expressions and audited one expression at a time. The complete recent matrix
+contains 6,426 rows across 2024/2025/2026 YTD, 5d/10d/20d exits, ungated/MA20
+entry, and all/main/innovation universes. Thirty-eight expressions pass at least
+one strict 2025--2026 contract; two expressions have explicitly invalid periods
+because their cross-sectional variation is insufficient.
+
+A companion individual-stock audit now maps every entry-time factor percentile
+into ten 0--100 score buckets and compares realized return, win rate, target-hit
+rate, cohort Sharpe, payoff, drawdown, and maximum favorable excursion. It also
+reports each factor's best realized 5d/10d/20d horizon separately from its best
+peak-return horizon so that temporary floating profit is not presented as an
+executable strategy return.
+
+The Recursive Self-Improvement (RSI) outer loop now uses a verified policy
+archive. Only nodes that pass every frozen evaluation gate may reproduce;
+failed or unevaluated high-return nodes cannot become parents. Each child
+changes exactly one field on one of four search surfaces, is diagnosed from its
+own parent's receipt, and carries an explicit policy identity and evaluation
+seed into the inner-loop receipt. This makes policy credit assignment auditable
+and prevents the search from improving its score by changing the examiner.
+New children must additionally pass a three-seed parent/child evaluation before
+they can reproduce. Every pair starts from the same frozen seed library and
+uses the same random seed; production writes are disabled in research arms.
+
 See `china_a_share_alpha/README.md`.
 
 ## Mingli Five-Agent Example

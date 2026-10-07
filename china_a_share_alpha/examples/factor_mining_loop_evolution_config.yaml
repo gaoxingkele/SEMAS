@@ -17,3 +17,14 @@ transaction_cost: 0.001
 neutralize_sector: true
 neutralize_market_cap: true
 sector_csv: null
+
+# D2 / D3 evolution controls (Stage-1 paper track)
+ast_regularizer_enabled: true
+ast_similarity_tau: 0.85
+ast_max_depth: 6
+ast_max_nodes: 40
+mutator_mode: mutate
+parent_mode: dag_neighbors
+dag_edge_similarity: 0.35
+dag_temperature: 1.0
+global_epsilon: 0.15

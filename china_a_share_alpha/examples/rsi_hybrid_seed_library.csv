@@ -1,0 +1,11 @@
+rank,expression,train_ic,test_ic,test_sharpe,factor,note
+1,"ts_shift(cs_zscore(div(sub(rsi_14, sub(ocfps, turnover_rate)), winsorize(total_mv))), 1)",0.0,0.0,0.0,rsi_hyb_adx_slot,"RSI replaces ADX in live top structure"
+2,"cs_zscore(div(sub(rsi_14, sub(ocfps, turnover_rate)), winsorize(total_mv)))",0.0,0.0,0.0,rsi_hyb_adx_slot_raw,"RSI in ADX-style size-adj residual"
+3,"ts_shift(cs_zscore(div(sub(adx_14, sub(ocfps, ts_zscore(rsi_14, 20))), winsorize(total_mv))), 1)",0.0,0.0,0.0,rsi_hyb_adx_rsi_z,"ADX structure with RSI-z as turnover proxy"
+4,"cs_rank(mul(sign(ts_delta(rsi_14, 5)), div(sub(adx_14, sub(ocfps, turnover_rate)), winsorize(total_mv))))",0.0,0.0,0.0,rsi_hyb_signed_adx,"signed RSI-momentum x ADX residual"
+5,"cs_rank(mul(ts_delta(rsi_14, 14), cs_zscore(ts_zscore(netprofit_yoy, 3))))",0.0,0.0,0.0,rsi_hyb_profit,"RSI momentum x earnings momentum"
+6,"div(less(vwap, if_positive(ts_min(rsi_14, 20), ts_autocorr(hk_vol, 5))), 0.848)",0.0,0.0,0.0,rsi_hyb_vwap,"live vwap gate with RSI min (ablation survivor)"
+7,"cs_zscore(div(sub(greater(eps, neg(0.033)), sub(ocfps, ts_delta(rsi_14, 5))), winsorize(total_mv)))",0.0,0.0,0.0,rsi_hyb_eps,"eps residual with RSI delta"
+8,"cs_rank(mul(sub(100, rsi_14), ts_rank(neg(ts_rank(turnover_rate, 20)), 5)))",0.0,0.0,0.0,rsi_hyb_rev_turn,"RSI reversion x turnover anti-rank"
+9,"ts_shift(cs_zscore(div(sub(adx_14, sub(rsi_14, turnover_rate)), winsorize(total_mv))), 1)",0.0,0.0,0.0,rsi_hyb_ocfps_slot,"RSI replaces ocfps in ADX residual"
+10,"cs_rank(div(ts_delta(rsi_14, 5), add(ts_std(rsi_14, 20), 0.01)))",0.0,0.0,0.0,rsi_hyb_norm_mom,"vol-normalized RSI momentum"

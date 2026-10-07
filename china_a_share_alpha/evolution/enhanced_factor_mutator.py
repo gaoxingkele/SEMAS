@@ -30,6 +30,10 @@ from china_a_share_alpha.evolution.factor_mutator import (
     _replace_random_node,
     is_reasonable_expression,
 )
+from china_a_share_alpha.evolution.ast_regularizer import (
+    RegularizerConfig,
+    check_expression_gates,
+)
 from china_a_share_alpha.factor.expression import (
     BinaryOp,
     Const,
@@ -41,6 +45,7 @@ from china_a_share_alpha.factor.expression import (
     Var,
     expr_to_dict,
 )
+from china_a_share_alpha.factor.parser import parse_expression
 
 # Extended operator sets.
 EXTENDED_UNARY_OPS = UNARY_OPS + ["signed_power", "winsorize"]
@@ -122,8 +127,20 @@ def _random_expression(max_depth: int = 3, max_retries: int = 50) -> FactorExpr:
 class EnhancedFactorMutator(FactorMutator):
     """SEMAS Mutator with richer grammar for factor expression evolution."""
 
-    def __init__(self, seed: int | None = None, mode: str = "gp"):
+    def __init__(
+        self,
+        seed: int | None = None,
+        mode: str = "gp",
+        library_expressions: list[str] | None = None,
+        regularizer: RegularizerConfig | None = None,
+    ):
         super().__init__(seed=seed, mode=mode)
+        self.library_expressions = list(library_expressions or [])
+        self.regularizer = regularizer
+
+    def set_library(self, expressions: list[str]) -> None:
+        """Update the live-library reference used by AST originality gates."""
+        self.library_expressions = list(expressions)
 
     def mutate_prompt(self, agent: AgentGenome, failure_logs: list[str]) -> AgentGenome:
         """Apply one structural mutation from the extended grammar."""
@@ -132,6 +149,7 @@ class EnhancedFactorMutator(FactorMutator):
 
         # Allow deeper trees for richer long-horizon factor expressions.
         max_depth = 5
+        parent_expr = self._get_expr(agent).copy()
 
         if self.mode == "seed" and stage == 0:
             # A strong volatility/reversal seed for recent A-share regime.
@@ -142,7 +160,7 @@ class EnhancedFactorMutator(FactorMutator):
         elif self.mode == "gp":
             expr = _random_expression(max_depth=5)
         else:
-            expr = self._get_expr(agent).copy()
+            expr = parent_expr.copy()
             mutation = random.choice([
                 "wrap_unary", "insert_binary", "change_window", "replace_op",
                 "replace_subtree", "add_lag", "signed_power"
@@ -185,13 +203,47 @@ class EnhancedFactorMutator(FactorMutator):
             # Reject mutations that blow up the tree or reintroduce degenerate
             # constant sub-expressions.
             if not is_reasonable_expression(expr) or _node_count(expr) > 40:
-                expr = self._get_expr(agent).copy()
+                expr = parent_expr.copy()
+
+        if self.regularizer and self.regularizer.enabled:
+            # Compare against the live library, excluding the parent itself.
+            reference = [
+                text
+                for text in self.library_expressions
+                if text and text != str(parent_expr)
+            ]
+            gate = check_expression_gates(expr, reference, self.regularizer)
+            if not gate.accepted:
+                expr = parent_expr
 
         evolved = self._set_expr(agent, expr)
         evolved_meta = copy.deepcopy(dict(evolved.meta))
         evolved_meta.setdefault("factor_expression", {})
         evolved_meta["factor_expression"]["stage"] = stage + 1
         return agent.evolve_from(meta=evolved_meta)
+
+    def mutate_from_parent_string(self, parent_expression: str) -> FactorExpr:
+        """Mutate starting from a DSL string (used by DAG neighborhood breeding)."""
+        parent = parse_expression(parent_expression)
+        agent = AgentGenome(
+            name="dag_parent",
+            role="factor_miner",
+            system_prompt="Evolve a formulaic alpha factor.",
+            meta={
+                "factor_expression": {
+                    "expr": expr_to_dict(parent),
+                    "string": str(parent),
+                    "stage": 1,
+                }
+            },
+        )
+        old_mode = self.mode
+        self.mode = "mutate"
+        try:
+            child = self.mutate_prompt(agent, failure_logs=["dag_parent"])
+        finally:
+            self.mode = old_mode
+        return self._get_expr(child)
 
     def crossover(self, parent1: FactorExpr, parent2: FactorExpr) -> FactorExpr:
         """Subtree crossover (inherited behavior, but using extended random expressions)."""

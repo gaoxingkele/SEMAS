@@ -121,3 +121,18 @@ absorbed ideas.
 - Dynamic picks require rebalance cohort, current multiplier, and explicit exits.
 - Static 10d picks remain the rebalance cohort rather than today's top ranks.
 - A name union does not authorize unaudited cross-strategy capital weights.
+
+## [2026-09-20] RSI causal credit assignment
+
+- Feasibility is now a parent-eligibility boundary rather than a soft score.
+- Parent diagnosis is bound to the sampled parent's own receipt.
+- One-field mutation makes policy effects interpretable; paired multi-seed
+  evaluation is the next layer, not a completed capability.
+
+## [2026-09-21] paired evidence before RSI reproduction
+
+- Matching parent and child on deterministic seeds reduces search-noise
+  confounding without changing the evaluator.
+- Single-run validity authenticates evidence; paired validity grants
+  reproductive eligibility.
+- Borderline mutations should receive more matched seeds, not softer gates.

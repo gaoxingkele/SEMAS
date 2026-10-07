@@ -368,3 +368,79 @@ Chronological record of wiki updates, loop runs, and key decisions.
   state and research receipts.
 - Fixed the effective-factor boundary to sufficient observations plus positive
   2025/2026 Sharpe and IC on the stock-disjoint frozen panel.
+
+## 2026-08-31 - audited all canonical libraries under board-aware T+1 exits
+
+- Added D+1 entry, post-buy-day counting, close-confirmed stops, queued locked
+  exits, board-specific thresholds, trailing profit, and forced expiry.
+- Deduplicated 69 source libraries into 54 expression sets and completed 486
+  stock backtests over 5d/10d/20d policies.
+- Found 10d strongest overall and invalidated transfer of the iter-48 live
+  library's old promotion score to the new execution contract.
+
+## 2026-08-31 - rejected stock-to-factor matching after frozen test
+
+- Evolved 12 generations of 10d library matching using train-only stock,
+  industry, market, and global utilities and 2023 validation selection.
+- Validation Sharpe rose to 1.722, but the once-opened 2024--2026 test produced
+  0.374 Sharpe and -48.55% maximum drawdown.
+- The genome assigned only 0.88% to stock-specific utility, and removing the
+  five largest contributors made test annualized return negative.
+- Classified the candidate as validation overfit; no live factor state changed.
+
+## 2026-09-11 - refocused matching on the 2025--2026 market regime
+
+- Split recent history into 2025 half-years and 2026 subperiods and recomputed
+  each window's matching utility from its preceding 504 trading days.
+- Ran two additional eight-round campaigns with temporal lower-tail,
+  stock-disjoint, drawdown, and return-concentration objectives.
+- Diagnosed a sharp 2026 Q1 factor-ranking reversal and failure of ungated
+  long-only matching in April--July 2026.
+- Selected an MA20 market entry gate on 2025 H2 and 2026 Q1 only; it improved
+  the latest all-stock diagnostic to Sharpe 1.027 and -7.13% drawdown.
+- Retained the result as research-only because the diagnostic was previously
+  observed, data stop at 2026-07-16, and main-board Sharpe remained negative.
+
+## 2026-09-13 - completed the current all-expression audit
+
+- Froze 55 canonical libraries into 119 unique expressions, including all four
+  expressions added by iteration 49.
+- Completed all 6,426 requested stock rows over three periods, three holding
+  horizons, two entry modes, and three stock universes.
+- Replaced infinite signal values with missing values and explicitly rejected
+  three factor-period combinations with fewer than 20 cross-sectionally active
+  days instead of accepting tie-driven portfolios.
+- Found 38 unique factors passing at least one strict recent contract; MA20 10d
+  all-stock has the broadest coverage with 32 effective factors.
+- Recorded 54 unavailable BSE/ETF/index contract receipts; no proxy results were
+  fabricated and no live library was promoted.
+
+## 2026-09-13 - calibrated factor scores and ranked maximum horizons
+
+- Completed 42,840 unique score-bucket rows for 119 expressions across two
+  recent periods, three horizons, two gates, three universes, and ten buckets.
+- Measured positive-trade and target-hit rates, realized and peak returns,
+  cohort Sharpe/drawdown, payoff, holding time, and exit-reason distributions.
+- Produced 702 comparable maximum-realized-return contracts; 10 days is the
+  most frequent best horizon among all-stock contracts.
+- Kept maximum favorable excursion separate because the 20-day window wins
+  mechanically for nearly every factor and does not represent executable return.
+
+## 2026-09-20 - added the RSI phase-1 causal verifier
+
+- Migrated the DGM policy archive to a hard-gated v2 eligibility contract.
+- Bound every new policy to its parent receipt, mutation field, evaluation seed,
+  and explicit execution identity.
+- Isolated 29 historical gate failures from parent sampling; retained 28
+  verified eligible parents and one pending proposal.
+- Documented why single-field mutations are required before paired replicated
+  evaluation.
+
+## 2026-09-21 - added paired multi-seed RSI selection
+
+- Added isolated, resumable parent/child arms on identical seeds and a frozen
+  seed-library checksum.
+- Added mean, median, win-rate, worst-regression, validity, and minimum-pair
+  selection gates.
+- Made single-valid/pair-pending children ineligible and blocking until their
+  paired receipt is selected or rejected.

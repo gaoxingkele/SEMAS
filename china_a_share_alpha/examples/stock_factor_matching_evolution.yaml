@@ -1,0 +1,12 @@
+snapshot_dir: china_a_share_alpha_output/tushare_snapshot_20260717
+factor_output_root: china_a_share_alpha_output
+signal_cache: china_a_share_alpha_output/stock_factor_matching/library_signals.parquet
+output_dir: china_a_share_alpha_output/stock_factor_matching/evolution_12round_20260831
+horizon: 10
+rounds: 12
+population_size: 12
+elite_count: 3
+seed: 20260831
+transaction_cost: 0.001
+slippage: 0.0005
+min_factor_coverage: 0.50

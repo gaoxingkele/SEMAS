@@ -23,6 +23,7 @@ import json
 import os
 import subprocess
 import sys
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -48,6 +49,32 @@ DEFAULT_STATE = {
     "live_library_path": None,
     "history": [],
 }
+
+
+@contextmanager
+def exclusive_output_lock(output_dir: Path):
+    """Prevent two loop iterations from writing the same state/output tree."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    lock_path = output_dir / ".factor_mining_iteration.lock"
+    payload = json.dumps(
+        {
+            "pid": os.getpid(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "output_dir": str(output_dir.resolve()),
+        },
+        ensure_ascii=False,
+    )
+    try:
+        descriptor = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError as exc:
+        owner = lock_path.read_text(encoding="utf-8", errors="replace")
+        raise RuntimeError(f"factor-mining output is already locked: {owner}") from exc
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write(payload)
+        yield lock_path
+    finally:
+        lock_path.unlink(missing_ok=True)
 
 
 def load_state(state_path: Path) -> dict:
@@ -184,12 +211,17 @@ def semantic_deduplicate(
     data_config: dict,
     output_path: Path,
     corr_threshold: float = 0.95,
+    keep_diversity_slots: int = 0,
 ) -> int:
     """Drop semantically duplicate expressions based on train-set correlation.
 
     Keeps the first expression in library order and removes any later
     expression whose absolute Spearman correlation with an already-kept
     expression exceeds ``corr_threshold``.
+
+    ``keep_diversity_slots`` (RSI outer-loop knob) allows up to N near-duplicate
+    survivors to be retained anyway — used when meta-diagnosis finds that
+    aggressive dedup destroyed useful ensemble diversity.
     """
     if isinstance(data_config, (str, Path)):
         with open(data_config, "r", encoding="utf-8") as f:
@@ -238,6 +270,7 @@ def semantic_deduplicate(
 
     kept_rows = []
     kept_cols = []
+    diversity_kept = 0
     for col_name, base, row in valid_meta:
         if kept_cols:
             corr_values = mat[kept_cols].corrwith(mat[col_name], method="spearman").abs()
@@ -247,6 +280,14 @@ def semantic_deduplicate(
         else:
             corr_max = 0.0
         if corr_max < corr_threshold:
+            kept_rows.append(row)
+            kept_cols.append(col_name)
+        elif diversity_kept < int(keep_diversity_slots):
+            diversity_kept += 1
+            print(
+                f"  [dedup] diversity-slot keep {base} "
+                f"(max |corr|={corr_max:.3f}, slot {diversity_kept}/{keep_diversity_slots})"
+            )
             kept_rows.append(row)
             kept_cols.append(col_name)
         else:
@@ -273,7 +314,7 @@ def parse_combination_result(output_dir: Path) -> dict:
     }
 
 
-def run_loop_iteration(
+def _run_loop_iteration_unlocked(
     cfg: dict,
     output_dir: Path,
     dry_run: bool = False,
@@ -306,7 +347,7 @@ def run_loop_iteration(
         merge_libraries(seed_sources, seed_library_path)
 
     # ---- 1. EVOLVE ----
-    seed = cfg.get("seed_base", 42) + iteration
+    seed = int(cfg.get("rsi_evaluation_seed", cfg.get("seed_base", 42) + iteration))
     seed_output = iteration_dir / "evolution"
     seed_output.mkdir(parents=True, exist_ok=True)
 
@@ -389,8 +430,30 @@ def run_loop_iteration(
         cfg["data_config"],
         combined_library,
         corr_threshold=cfg.get("semantic_dedup_corr_threshold", 0.95),
+        keep_diversity_slots=int(cfg.get("keep_diversity_slots", 0)),
     )
     print(f"[iter {iteration}] After semantic dedup: {n_deduped} expressions")
+
+    if cfg.get("ast_regularizer_enabled", False):
+        from china_a_share_alpha.evolution.ast_regularizer import (
+            RegularizerConfig,
+            filter_library_by_ast,
+        )
+
+        pre_ast = pd.read_csv(combined_library)
+        kept = filter_library_by_ast(
+            pre_ast["expression"].astype(str).tolist(),
+            RegularizerConfig(
+                enabled=True,
+                similarity_tau=float(cfg.get("ast_similarity_tau", 0.85)),
+                max_depth=int(cfg.get("ast_max_depth", 6)),
+                max_nodes=int(cfg.get("ast_max_nodes", 40)),
+            ),
+        )
+        filtered = pre_ast[pre_ast["expression"].astype(str).isin(kept)].copy()
+        filtered.to_csv(combined_library, index=False)
+        n_deduped = len(filtered)
+        print(f"[iter {iteration}] After AST filter: {n_deduped} expressions")
 
     combo_output = iteration_dir / "combination"
     combo_cmd = [
@@ -423,6 +486,36 @@ def run_loop_iteration(
     print(f"[iter {iteration}] Running combination ...")
     run_cmd(combo_cmd)
     metrics = parse_combination_result(combo_output)
+
+    # ---- D1 pool IC diagnostics (optional; does not replace hold gate) ----
+    if cfg.get("report_pool_ic", True):
+        try:
+            from china_a_share_alpha.loop.synergy_objective import (
+                load_expressions_from_csv,
+                pool_ic_metrics,
+            )
+
+            _, _, test_panel = load_tushare_data_with_val(cfg["data_config"])
+            exprs = load_expressions_from_csv(
+                combined_library, top_n=int(cfg.get("top_n", 10))
+            )
+            pool = pool_ic_metrics(
+                exprs,
+                test_panel,
+                smooth_span=int(cfg.get("smooth_span", 10)),
+                min_factor_coverage=float(cfg.get("min_factor_coverage", 0.5)),
+            )
+            metrics["pool_ic"] = pool.get("pool_ic")
+            metrics["pool_rank_ic"] = pool.get("pool_rank_ic")
+            metrics["pool_ic_valid"] = pool.get("valid")
+            if pool.get("valid"):
+                print(
+                    f"[iter {iteration}] Pool IC={pool['pool_ic']:.4f}, "
+                    f"RankIC={pool['pool_rank_ic']:.4f}"
+                )
+        except Exception as exc:  # noqa: BLE001
+            metrics["pool_ic_error"] = str(exc)
+            print(f"[iter {iteration}] Pool IC skipped: {exc}")
 
     # ---- HOLD SHARPE GATE (optional) ----
     use_hold_gate = cfg.get("use_hold_sharpe_gate", False)
@@ -589,6 +682,14 @@ def run_loop_iteration(
         "iteration": iteration,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "seed": seed,
+        "rsi_policy_id": cfg.get("rsi_policy_id"),
+        "rsi_parent_id": cfg.get("rsi_parent_id"),
+        "rsi_policy_version": cfg.get("rsi_policy_version"),
+        "rsi_island": cfg.get("rsi_island"),
+        "rsi_mutation_surface": cfg.get("rsi_mutation_surface"),
+        "rsi_mutation_field": cfg.get("rsi_mutation_field"),
+        "rsi_evaluation_group_id": cfg.get("rsi_evaluation_group_id"),
+        "rsi_proposal_seed": cfg.get("rsi_proposal_seed"),
         "evolution_dir": str(seed_output),
         "n_merged": n_merged,
         "n_cleaned": n_cleaned,
@@ -604,10 +705,32 @@ def run_loop_iteration(
     state["history"].append(entry)
     save_state(state_path, state)
 
+    if entry.get("rsi_policy_id"):
+        (iteration_dir / "rsi_execution_receipt.json").write_text(
+            json.dumps(entry, indent=2, ensure_ascii=False, default=str),
+            encoding="utf-8",
+        )
+
     report_path = write_report(output_dir, iteration_dir, state, entry, promote, cfg)
     print(f"[iter {iteration}] Report: {report_path}")
 
     return state
+
+
+def run_loop_iteration(
+    cfg: dict,
+    output_dir: Path,
+    dry_run: bool = False,
+    use_live_seed: bool = True,
+) -> dict:
+    """Execute one iteration while holding an exclusive output-directory lock."""
+    with exclusive_output_lock(output_dir):
+        return _run_loop_iteration_unlocked(
+            cfg,
+            output_dir,
+            dry_run=dry_run,
+            use_live_seed=use_live_seed,
+        )
 
 
 def write_report(
@@ -630,6 +753,10 @@ def write_report(
         "",
         f"- **Timestamp**: {entry['timestamp']}",
         f"- **Evolution seed**: {entry['seed']}",
+        f"- **RSI policy**: {entry.get('rsi_policy_id') or 'none'}",
+        f"- **RSI parent**: {entry.get('rsi_parent_id') or 'none'}",
+        f"- **RSI mutation**: {entry.get('rsi_mutation_surface') or 'none'} / "
+        f"{entry.get('rsi_mutation_field') or 'none'}",
         f"- **Merged expressions**: {entry['n_merged']}",
         f"- **Cleaned expressions**: {entry['n_cleaned']}",
         f"- **Deduplicated expressions**: {entry.get('n_deduped', entry['n_cleaned'])}",
@@ -639,8 +766,14 @@ def write_report(
         "",
         "| Period | Sharpe | Cost-adj return | IC |",
         "|---|---|---|---|",
-        f"| Train | {metrics['train_sharpe']:.4f} | {metrics['train_cost_adjusted_return']:.4f} | - |",
-        f"| Test | {metrics['test_sharpe']:.4f} | {metrics['test_cost_adjusted_return']:.4f} | {metrics['test_ic']:.4f} |",
+        (
+            f"| Train | {metrics['train_sharpe']:.4f} | "
+            f"{metrics['train_cost_adjusted_return']:.4f} | - |"
+        ),
+        (
+            f"| Test | {metrics['test_sharpe']:.4f} | "
+            f"{metrics['test_cost_adjusted_return']:.4f} | {metrics['test_ic']:.4f} |"
+        ),
     ]
     if has_hold:
         lines += ["", "### Realistic Hold Backtest", ""]
@@ -662,12 +795,21 @@ def write_report(
         "",
         f"- train_sharpe_positive: {entry['gates']['train_sharpe_positive']}",
         f"- min_cleaned_count: {entry['gates']['min_cleaned_count']}",
-        f"- max_corr_ok: {entry['gates']['max_corr_ok']} (max corr = {metrics.get('selection_correlation_max', 1.0):.4f})",
+        (
+            f"- max_corr_ok: {entry['gates']['max_corr_ok']} "
+            f"(max corr = {metrics.get('selection_correlation_max', 1.0):.4f})"
+        ),
     ]
     if has_hold:
         lines += [
-            f"- candidate_evaluation_valid: {entry['gates'].get('candidate_evaluation_valid', False)}",
-            f"- baseline_evaluation_valid: {entry['gates'].get('baseline_evaluation_valid', False)}",
+            (
+                "- candidate_evaluation_valid: "
+                f"{entry['gates'].get('candidate_evaluation_valid', False)}"
+            ),
+            (
+                "- baseline_evaluation_valid: "
+                f"{entry['gates'].get('baseline_evaluation_valid', False)}"
+            ),
             f"- hold_sharpe_ok: {entry['gates'].get('hold_sharpe_ok', False)}",
         ]
     lines += [
@@ -680,7 +822,10 @@ def write_report(
             "The new library improved on the previous best and has been promoted to live library.",
             "",
             f"- Historical best diagnostic Sharpe: {state['best_test_sharpe']:.4f}",
-            f"- Historical best diagnostic cost-adjusted return: {state['best_cost_adjusted_return']:.4f}",
+            (
+                "- Historical best diagnostic cost-adjusted return: "
+                f"{state['best_cost_adjusted_return']:.4f}"
+            ),
         ]
         if has_hold:
             lines.append(f"- New best hold Sharpe: {state['best_hold_sharpe']:.4f}")
@@ -690,7 +835,10 @@ def write_report(
         ]
     else:
         lines += [
-            "The new library did not improve on the previous best. The existing live library is retained.",
+            (
+                "The new library did not improve on the previous best. "
+                "The existing live library is retained."
+            ),
             "",
             f"- Previous best Sharpe: {state['best_test_sharpe']:.4f}",
             f"- Previous best cost-adjusted return: {state['best_cost_adjusted_return']:.4f}",

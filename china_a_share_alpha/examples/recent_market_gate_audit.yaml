@@ -1,0 +1,22 @@
+snapshot_dir: china_a_share_alpha_output/tushare_snapshot_20260717
+factor_output_root: china_a_share_alpha_output
+signal_cache: china_a_share_alpha_output/stock_factor_matching/library_signals.parquet
+source_campaign_dir: china_a_share_alpha_output/stock_factor_matching/current_regime_20260911
+output_dir: china_a_share_alpha_output/stock_factor_matching/current_regime_20260911
+horizon: 10
+utility_lookback_days: 504
+market_ma_windows: [5, 10, 20]
+transaction_cost: 0.001
+slippage: 0.0005
+min_factor_coverage: 0.50
+selection_windows:
+  - name: 2025_h2
+    start: "2025-07-01"
+    end: "2025-12-31"
+  - name: 2026_q1
+    start: "2026-01-01"
+    end: "2026-03-31"
+diagnostic_windows:
+  - name: 2026_q2_to_july16
+    start: "2026-04-01"
+    end: "2026-07-16"

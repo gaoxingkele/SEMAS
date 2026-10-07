@@ -98,13 +98,33 @@ continuous factor-mining loop.
   - Residual IC and layers remain positive, but fixed-cohort execution does not
   improve consistently across folds.
 - [No-lookahead horizon audit](factor_horizon_no_lookahead_audit_20260716.md)
+- [T+1 board-aware full-library audit](factor_t1_board_exit_full_library_audit_20260831.md)
   - 5d is primary, 10d is regime-sensitive secondary, and 20d is research-only
   after unified IC, layers, hold, and annual review.
+- [Stock-to-factor matching evolution](factor_stock_matching_evolution_20260831.md)
+  - A 12-round 10d matching search over stock/industry/market/global utility
+    failed the frozen test and was not promoted.
+- [Recent-regime factor matching](factor_recent_regime_matching_20260911.md)
+  - Rolling 2025--2026 utilities exposed a 2026 Q1 factor-rank reversal; an
+    MA20 entry gate improved the latest diagnostic but remains unpromoted.
+- [Recent all-expression audit](factor_recent_all_expression_audit_20260913.md)
+  - All 119 current expressions completed a 6,426-row recent T+1 matrix; 38
+    unique expressions pass at least one strict 2025--2026 contract.
+- [Factor score-bucket and maximum-horizon audit](factor_score_bucket_max_horizon_audit_20260913.md)
+  - All 119 expressions received ten-band individual-stock calibration; realized
+    best horizons remain separate from mechanically optimistic peak-return horizons.
 - [Audited stock selection](factor_audited_stock_selection_20260529.md)
   - Complete frozen 5d/10d long and short cohorts plus the 108-name combined
   positive long union.
 
 ## Design & Infrastructure
+
+- [RSI phase-2 paired selection](factor_rsi_phase2_paired_selection_20260921.md)
+  - Three matched parent/child seeds and a frozen input checksum now gate
+    reproductive eligibility for new policy mutations.
+- [RSI phase-1 causal verifier](factor_rsi_phase1_causal_verifier_20260920.md)
+  - Only hard-gate-valid nodes reproduce; child identity, ancestry, mutation,
+    and evaluation seed are persisted in receipts.
 
 - [Hold-Sharpe promotion gate](factor_mining_loop_hold_sharpe_gate.md) —
   Added realistic non-overlapping hold-Sharpe gate to the loop runner to prevent

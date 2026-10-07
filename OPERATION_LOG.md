@@ -16224,3 +16224,757 @@ Tushare snapshot so evolution runs without live API calls.
 
 Promotion under the frozen hold contract does not authorize production trading.
 Human review of `live_library.csv` remains required before deployment.
+
+---
+
+## 2026-08-31 — Board-aware T+1 full factor-library audit
+
+### Motivation
+
+Re-evaluate every canonical factor library under the user's explicit D+1 entry,
+post-purchase 5/10/20-day holding count, board-specific stop/trailing-profit,
+limit-down sellability, and forced-expiry rules.
+
+### Actions Taken
+
+1. Added a long-only event-driven execution engine with D+1 open entry, T+1
+   sale lock, close-confirmed stop/trailing signals, next-sellable-open fills,
+   and D+6/D+11/D+21 scheduled close expiry.
+2. Applied main-board, STAR/ChiNext, and BSE policy tiers; excluded current ST
+   names and blocked limit-up entries and locked limit-down exits.
+3. Added a canonical-library discovery and content-deduplication runner. It
+   reduced 69 source libraries to 54 distinct sets and evaluated 115 unique
+   expressions once on continuous history.
+4. Ran 648 audit rows: 486 completed stock backtests and 162 explicit BSE
+   unavailable receipts. ETF and independent index audits were also marked
+   unavailable because no corresponding frozen panel exists locally.
+
+### Results
+
+- Best all-stock 5d/10d/20d Sharpes: 0.791/1.269/0.987.
+- Best main-board 5d/10d/20d Sharpes: 0.578/1.302/0.927.
+- Best STAR/ChiNext 5d/10d/20d Sharpes: 1.304/1.171/1.110.
+- Iteration-48 live-library all-stock Sharpes: 0.128/0.756/0.577; its 5d
+  annualized return was -1.64%, so the old promotion result does not transfer.
+- 1,250,622 trade receipts contain 6,170 cumulative stops, 21,236 limit-down
+  stops, 31,716 trailing-profit exits, and exact 5/10/20-day median expiry.
+
+### Files Changed
+
+- `china_a_share_alpha/backtest/t1_exit_policy.py`
+- `china_a_share_alpha/scripts/run_t1_full_library_audit.py`
+- `china_a_share_alpha/examples/t1_full_library_audit.yaml`
+- `tests/test_t1_exit_policy.py`, `tests/test_t1_full_library_audit.py`
+- China A-share README, operation log, and factor/Wiki indexes.
+
+### Verification
+
+- Focused T+1 and library-discovery tests: 5 passed before the full run.
+- T+1 plus factor-promotion, no-lookahead, schedule, loop, and A-share
+  regression suite: **41 passed** after formatting.
+- Full audit completed all 115 expressions with zero expression errors and
+  wrote 486 completed plus 162 unavailable audit rows.
+- Black, Python compilation, YAML parsing, and `git diff --check`: passed.
+
+### Boundary
+
+The frozen snapshot covers 283 main-board and 69 STAR/ChiNext securities after
+metadata filtering, but no BSE securities, ETFs, or independent index OHLC
+panel. Current-name ST filtering is not historical ST membership. Daily bars
+cannot prove intraday path order or exchange queue fills.
+
+---
+
+## 2026-08-31 - Twelve-round stock-to-factor matching evolution
+
+### Motivation
+
+Test whether the canonical factor libraries can be matched to individual stocks
+more accurately under the new 10-day T+1 execution contract, without choosing a
+policy on the final test fold.
+
+### Actions Taken
+
+1. Added a stock-to-library matching runner that caches signals for all 54
+   canonical libraries and calculates forward labels separately inside each
+   fold to prevent boundary leakage.
+2. Estimated train-only stock, industry, market, and global factor utilities.
+   Evolved top-library count, shrinkage weights, utility temperature, minimum
+   observations, and selection fraction for 12 rounds with 12 candidates and
+   three elites per round.
+3. Selected genomes exclusively on the 2023 validation fold, with drawdown and
+   maximum trade-contribution penalties, then opened the 2024--2026 test once.
+4. Evaluated all stocks, main-board stocks, and STAR/ChiNext stocks and reran the
+   all-stock test after removing the top 1, 3, 5, and 10 contributors.
+
+### Results
+
+- Best validation Sharpe improved from 1.186 in round 1 to 1.722 in round 11
+  and remained there in round 12; validation drawdown was -11.18%.
+- Best genome: top 7 libraries; stock/industry/market/global weights
+  0.88%/35.58%/39.81%/23.74%; temperature 0.0368; minimum observations 160;
+  selection fraction 10%.
+- Frozen all-stock test: Sharpe 0.374, annualized return 6.07%, total return
+  15.41%, maximum drawdown -48.55%, and 1,787 trades.
+- Main-board test: Sharpe 0.775 and -25.67% drawdown. STAR/ChiNext test: Sharpe
+  0.883 and -52.16% drawdown.
+- Removing the top five stock contributors produced Sharpe 0.185, annualized
+  return -0.87%, and total return -2.11%.
+- The candidate failed to beat the static 10-day full-library all-stock Sharpe
+  of 1.269 and was rejected. No live library or promotion state changed.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/evolve_stock_factor_matching.py`
+- `china_a_share_alpha/examples/stock_factor_matching_evolution.yaml`
+- `tests/test_stock_factor_matching_evolution.py`
+- China A-share README, root README, operation log, and factor/Wiki indexes.
+
+### Verification
+
+- The 12-round campaign completed all 144 validation evaluations and wrote its
+  receipt, full history, frozen test tables, trades, contributor ranking, and
+  contributor-removal stress test.
+- Matching, T+1, factor-promotion, factor-loop, position-schedule, and A-share
+  regression suite: **39 passed** with 22 existing small-sample correlation
+  warnings.
+- Python compilation, YAML parsing, and `git diff --check`: passed. The installed
+  Python environments do not contain Black or Ruff, so no formatter executable
+  was available; the files comply with the configured 100-column style by
+  review and pass the whitespace check.
+
+### Boundary
+
+This is a negative research result. The 2023 validation improvement did not
+generalize to 2024--2026 and performance remained concentrated in a few stocks.
+More rounds on the same validation fold are not authorized as evidence of
+improvement.
+
+---
+
+## 2026-09-04 - CCF-A paper track: three-direction kickoff + GitHub baselines
+
+### Motivation
+
+User asked to try all three literature directions (AlphaGen synergy, AlphaAgent
+AST regularization, AlphaPROBE DAG navigation), prepare a CCF-A paper, and use
+`C:\aicoding\mylib` skills — starting by pulling GitHub baselines.
+
+### Actions Taken
+
+1. Pulled `C:\aicoding\mylib` (`git pull`; already up to date).
+2. Routed via mylib `paper-writing` / `paper_search` / `experiment-design` and
+   venue rankings (KDD = CCF-A).
+3. Cloned baselines into worktree `external/` (gitignored):
+   - `ICT-FinD-Lab/alphagen` @ 259687e
+   - `RndmVariableQ/AlphaAgent` @ b42cb39
+   - `gta0804/AlphaPROBE` @ 872299d
+   - `QuantaAlpha/QuantaAlpha` @ b7ceb27
+4. Ran multi-query `paper_search` (2022–2026); wrote
+   `ara_alpha_evolution/evidence/lit_search/paper_search_20260904.txt`.
+5. Scaffolded ARA package `ara_alpha_evolution/` (PAPER, claims, experiments,
+   constraints, exploration tree, NEXT_ACTIONS).
+6. Updated wiki index, references, and thinking note
+   `wiki/factor_ccf_a_three_direction_paper_20260904.md`.
+
+### Verification
+
+- Four external repos present with README and short SHAs recorded.
+- Literature file lists AlphaGen, AlphaAgent, QuantaAlpha, Alpha Jungle MCTS, etc.
+- Working tree research artifact paths exist under `ara_alpha_evolution/`.
+
+### Files Changed
+
+- `ara_alpha_evolution/**` (new)
+- `wiki/factor_ccf_a_three_direction_paper_20260904.md` (new)
+- `wiki/index.md`, `wiki/references.md`
+- `OPERATION_LOG.md`
+
+### Boundary
+
+No Stage-1 code for D1/D2/D3 was implemented yet. External clones are local-only
+(`external/` ignored). Paper novelty is provisional pending scoop hardening.
+
+---
+
+## 2026-09-09 - Stage-1 implement D1/D2/D3 for CCF-A paper track
+
+### Motivation
+
+Continue the three-direction paper track: land implementable Stage-1 modules
+inside `china_a_share_alpha` before a full mining-loop iteration.
+
+### Actions Taken
+
+1. **D2** `evolution/ast_regularizer.py`: subtree Jaccard similarity, depth/node
+   gates, greedy library filter; hooked into `EnhancedFactorMutator` and mining
+   loop post-dedup filter.
+2. **D1** `loop/synergy_objective.py`: equal-weight ensemble pool IC / RankIC;
+   mining loop reports pool IC after combination.
+3. **D3** `evolution/dag_neighborhood.py`: live-library DAG + softmax parent
+   sampling; `EnhancedFactorPopulation` respects `parent_mode: dag_neighbors`.
+4. Enabled flags in `factor_mining_loop_config.yaml` and
+   `factor_mining_loop_evolution_config.yaml`.
+5. Added `tests/test_stage1_three_directions.py`.
+
+### Verification
+
+- `pytest tests/test_stage1_three_directions.py tests/test_factor_loop.py tests/test_factor_promotion.py` — **15 passed**.
+- Live-library smoke on frozen snapshot: AST filter 12→11; pool IC ≈ 0.0171.
+
+### Files Changed
+
+- `china_a_share_alpha/evolution/{ast_regularizer.py,dag_neighborhood.py,enhanced_factor_mutator.py,__init__.py}`
+- `china_a_share_alpha/loop/{synergy_objective.py,enhanced_population.py}`
+- `china_a_share_alpha/scripts/{run_enhanced_factor_loop.py,run_factor_mining_loop.py}`
+- `china_a_share_alpha/examples/{factor_mining_loop_config.yaml,factor_mining_loop_evolution_config.yaml}`
+- `tests/test_stage1_three_directions.py`
+- `ara_alpha_evolution/{NEXT_ACTIONS.md,trace/exploration_tree.yaml}`
+- `OPERATION_LOG.md`
+
+### Boundary
+
+Hold-Sharpe still decides promotion. Pool IC is diagnostic in Stage 1.
+Iter 49 completed 2026-09-11 (hold Sharpe 2.0560). Stage-2 ablations pending.
+
+---
+
+## 2026-09-11 - Recent-regime stock matching and market-gate audit
+
+### Motivation
+
+Refocus factor-to-stock matching on the changed 2025--2026 market rather than
+allowing profitable 2024 observations to mask current degradation.
+
+### Actions Taken
+
+1. Confirmed that the frozen Tushare snapshot covers 2021-06-01 through
+   2026-07-16. No `TUSHARE_TOKEN` is configured, so data could not be refreshed
+   through the current September date.
+2. Split the old combined test by year. The prior matching policy's Sharpe was
+   about 1.437 in 2024, 1.097 in 2025, and -0.724 in 2026 YTD.
+3. Added walk-forward matching that re-estimates utilities from the preceding
+   504 trading days and evaluates temporal lower-tail performance across two
+   deterministic stock-disjoint buckets. Fitness now penalizes drawdown above
+   25%, negative selection windows, and concentrated stock contributions.
+4. Ran two additional eight-round campaigns: first selected on 2025 H1/H2 and
+   diagnosed 2026 YTD; second selected on 2025 H2/2026 Q1 and diagnosed
+   2026-04-01 through 2026-07-16.
+5. Measured the recent regime. Equal-weight annualized return changed from
+   approximately +44.7% in 2025 H2 to -5.0% in 2026 Q1 and -6.0% afterward.
+   The factor-library IC ranking correlation was -0.786 from 2025 H2 to 2026 Q1
+   and +0.888 from 2025 H2 to 2026 Q2--July.
+6. Added a continuous-history market-trend gate audit. It compares MA5/10/20 on
+   selection windows only and then applies the selected gate to the diagnostic
+   window. The gate controls new D+1 entries; existing positions retain the T+1
+   exit policy.
+
+### Results
+
+- The 2025-only campaign reached a minimum half-year Sharpe of 1.420, but its
+  2026 YTD Sharpe was -0.815. It was rejected.
+- The current-regime campaign reached a minimum full-universe selection Sharpe
+  of 1.263, -17.81% worst selection drawdown, and 9.76% maximum contribution
+  concentration. Its ungated April--July diagnostic still failed with Sharpe
+  -1.594 and -37.80% drawdown.
+- MA20 was selected without using diagnostic scores: its 2025 H2/2026 Q1
+  Sharpes were 2.462/2.496. In April--July it produced all-stock Sharpe 1.027,
+  annualized return 17.94%, and -7.13% drawdown.
+- The gated main-board diagnostic remained negative (Sharpe -0.064), while
+  STAR/ChiNext reached 0.899. No live factor library or promotion state changed.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/evolve_recent_regime_matching.py`
+- `china_a_share_alpha/scripts/audit_recent_market_gate.py`
+- `china_a_share_alpha/examples/recent_regime_matching_evolution.yaml`
+- `china_a_share_alpha/examples/current_regime_matching_evolution.yaml`
+- `china_a_share_alpha/examples/recent_market_gate_audit.yaml`
+- `tests/test_recent_regime_matching.py`
+- Root/China A-share READMEs and factor/Wiki records.
+
+### Verification
+
+- Two eight-round campaigns completed all 128 genome evaluations with cached
+  signals and wrote selection histories, diagnostic metrics, trades, and
+  receipts.
+- Recent matching, gate, original matching, T+1, factor-promotion, factor-loop,
+  position-schedule, and A-share regression suite: **44 passed** with 22
+  existing small-sample correlation warnings.
+- Python compilation, all three new YAML configurations, and
+  `git diff --check`: passed.
+
+### Boundary
+
+The April--July diagnostic is not blind because the period was inspected before
+the reproducible gate-selection rule was finalized. Local data end on
+2026-07-16, and the main-board result is not positive. MA20 is therefore a
+research candidate pending a new untouched snapshot, not a promoted strategy.
+
+---
+
+## 2026-09-11 - Factor Mining Loop Iteration 49 (D1/D2/D3)
+
+### Motivation
+
+Run the first full continuous mining iteration with Stage-1 synergy / AST /
+DAG modules enabled on the frozen snapshot.
+
+### Actions Taken
+
+1. Started from iter-48 live library under
+   `factor_mining_loop_config.yaml` (AST filter + pool IC) and
+   `factor_mining_loop_evolution_config.yaml` (`parent_mode: dag_neighbors`).
+2. Completed evolution seed 1049, clean, semantic dedup, AST filter,
+   combination, pool-IC diagnostic, and hold-Sharpe promotion.
+3. Synced `STATE.md`, ARA NEXT_ACTIONS / exploration tree, and wiki note.
+
+### Verification
+
+- Iteration completed in ~29 minutes; all promotion gates passed.
+- AST filter: semantic dedup 13 → AST 12 expressions.
+- Pool IC diagnostic: 0.0149 (RankIC -0.0018).
+- Hold Sharpe **2.0560** vs baseline 1.8444 (+0.212); promoted.
+
+### Results — Iteration 49
+
+| Metric | Value |
+|---|---|
+| Merged / cleaned / deduped | 28 / 22 / 12 |
+| Train Sharpe | 2.0630 |
+| Test Sharpe (diagnostic) | 2.0549 |
+| Pool IC | 0.0149 |
+| Hold Sharpe | **2.0560** |
+| Hold annualized return | 36.92% |
+| Hold max drawdown | -9.12% |
+| Promoted | YES |
+
+### Boundary
+
+Strong hold-Sharpe lift under the frozen contract is research evidence for the
+Stage-1 stack, not production approval. Stage-2 leave-one-out ablations are
+still required before claiming D1/D2/D3 causal credit.
+
+---
+
+## 2026-09-13 - Complete recent audit of all 119 factor expressions
+
+### Motivation
+
+Close the gap between the earlier 54-library audit and the current iteration-49
+catalog by testing every unique expression independently under the complete
+recent T+1 contract matrix.
+
+### Actions Taken
+
+1. Froze 55 current libraries into a content-addressed catalog of 119 unique
+   expressions, including the four expressions added by iteration 49.
+2. Added a resumable per-expression signal cache and three-worker audit runner.
+   Each expression writes an independent 54-row fragment covering 2024/2025/
+   2026 YTD, 5d/10d/20d, ungated/MA20, and all/main/innovation universes.
+3. Calculated within-period daily cross-sectional IC and RankIC without allowing
+   forward labels to cross annual boundaries. Recorded all T+1 trade metrics,
+   exit causes, blocked exits, win rate, and absolute return concentration.
+4. Detected one signal cache containing 631 infinite values, converted all
+   infinities to missing values, removed only that generated cache/fragment,
+   and reran it.
+5. Added hard signal-quality gates: at least 50% coverage and 20 days with
+   cross-sectional variation. Rejected three factor-period combinations rather
+   than retaining portfolios formed from arbitrary tied ranks.
+6. Generated weighted recent rankings that require positive 2025/2026 Sharpe
+   and RankIC, at most -25% recent drawdown, and at most 10% single-stock return
+   concentration. Added explicit BSE/ETF/index unavailable receipts.
+
+### Results
+
+- Completed **6,426 / 6,426** unique stock result rows; every one of the 119
+  expressions has exactly 54 rows.
+- **6,372** rows are valid and finite. **54** rows are explicitly invalid due
+  to three low-variation factor-period combinations across horizons, gates, and
+  universes. Expression evaluation errors: **0**.
+- **38 unique expressions** pass at least one strict recent contract, producing
+  95 effective factor-contract rows.
+- All-stock effective counts for MA20 5d/10d/20d are 13/32/3; ungated counts
+  are 1/3/2. The 10d MA20 contract has the broadest recent effectiveness.
+- Leading all-stock contracts include `cs_rank(ts_zscore(high, 20))` 10d MA20
+  (2025/2026 Sharpe 1.108/2.146) and `ts_delta(rsi_14, 20)` 10d MA20
+  (1.501/1.597).
+- Three of the four iteration-49 expressions pass at least one strict contract.
+  No live library or promotion state changed.
+
+### Files Changed
+
+- `china_a_share_alpha/scripts/run_recent_all_factor_audit.py`
+- `china_a_share_alpha/examples/recent_all_factor_audit.yaml`
+- `tests/test_recent_all_factor_audit.py`
+- Root/China A-share READMEs and factor/Wiki records.
+
+### Verification
+
+- Completion receipt: 119 expressions, 6,426 expected/actual rows, complete true,
+  zero expression errors, 119 fragments, and 54 unavailable-asset receipts.
+- Quality audit: 6,426 unique composite keys, no signal-quality/backtest-status
+  mismatch, and no non-finite metrics among valid rows.
+- Factor-focused regression suite: **54 passed** with 22 existing small-sample
+  correlation warnings.
+- Full repository test directory: **89 passed, 2 skipped**. Both skips are the
+  explicitly token-gated live Tushare tests because `TUSHARE_TOKEN` is not set.
+- Python compilation, four new YAML configurations, configured line-width
+  review, and `git diff --check`: passed.
+
+### Boundary
+
+Completeness applies to the available frozen stock panel through 2026-07-16.
+BSE, ETF, and independent-index data are absent and explicitly recorded as
+unavailable. These dates have already been inspected, so this audit is not a
+new blind promotion test.
+
+## 2026-09-13 - Factor score-bucket and maximum-horizon audit
+
+### Motivation
+
+The user asked to rank factors using their best 5d/10d/20d result while also
+measuring how reliably each 0--100 factor-score band works for individual
+stocks. The audit needed to retain the previously declared T+1 and board-aware
+exit contract and distinguish realized profit from temporary maximum floating
+profit.
+
+### Actions
+
+1. Extended T+1 trade receipts with signal date, entry-time factor percentile,
+   profit-trigger activation, favorable excursion, and adverse excursion.
+2. Added a resumable score-bucket runner over all 119 frozen expressions,
+   2025/2026 YTD, 5d/10d/20d, ungated/MA20, and all/main/innovation universes.
+3. Calculated sample counts, Wilson intervals, individual-stock effective and
+   target-hit rates, return distribution, cohort Sharpe/drawdown, profit factor,
+   payoff, holding time, excursions, and exit-reason rates for ten score bands.
+4. Ranked each comparable factor contract by the maximum of `0.40 * 2025 +
+   0.60 * 2026 YTD` annualized return, while retaining both years and downside
+   metrics. Added a separate MFE-best horizon so floating profit is not confused
+   with executable realized return.
+5. Generated a completion receipt, detailed report, ranking CSV, profile CSV,
+   and Parquet-level bucket evidence. Updated both READMEs and the wiki indexes.
+
+### Results
+
+- Completed **42,840 / 42,840** unique bucket rows; all 119 fragments contain
+  exactly 360 rows. There are 39,944 populated buckets and 2,896 explicit
+  `no_trades` buckets.
+- Generated 2,124 score profiles and 702 contracts with valid 2025 and 2026-YTD
+  comparisons. Of the profiles, 1,783 have positive score/return monotonicity;
+  1,740 of 2,020 profiles with both extreme bands have a positive top-minus-
+  bottom return spread.
+- Among 234 all-stock contracts, the best realized horizons are 5d/10d/20d in
+  31/122/81 cases. The leading contract is `cs_rank(ts_zscore(high, 20))`, MA20,
+  10d: weighted annualized return 37.50%, 2025/2026-YTD Sharpe 1.108/2.146, and
+  worst recent drawdown -9.36%.
+- MFE most often selects 20 days, as expected from the longer opportunity
+  window; it is retained as a diagnostic and not used as the primary ranking.
+- No live library or promotion state changed.
+
+### Files Changed
+
+- `china_a_share_alpha/backtest/t1_exit_policy.py`
+- `china_a_share_alpha/scripts/run_factor_score_bucket_audit.py`
+- `china_a_share_alpha/examples/factor_score_bucket_audit.yaml`
+- `tests/test_t1_exit_policy.py`
+- `tests/test_factor_score_bucket_audit.py`
+- Root/China A-share READMEs and factor/wiki records.
+
+### Verification
+
+- Focused score-bucket and T+1 tests: 8 passed.
+- Full repository test directory first passed 93 local tests with 2 token-gated
+  tests skipped and 22 pre-existing small-sample correlation warnings. Loading
+  `TUSHARE_TOKEN` from the main workspace `.env` then passed both live Tushare
+  tests in 422.22 seconds, for 95/95 combined test coverage.
+- Completion receipt: 119 expressions, 42,840 expected/actual unique rows,
+  2,124 profiles, 702 rankings, and `matrix_complete=true`.
+- Every expression fragment has exactly 360 rows; no infinite values occur
+  in populated core return/rate fields. Undefined Sharpe or payoff values remain
+  null only for mathematically degenerate small buckets.
+
+### Boundary
+
+The frozen stock snapshot ends on 2026-07-16. The ranking compares already
+observed horizons and is therefore diagnostic rather than a new blind test.
+BSE, ETF, and independent-index data remain unavailable in the local snapshot.
+
+---
+
+## 2026-09-17 - RSI methodology + iters 50–52 + Stage-2 ablations
+
+### Motivation
+
+Finish the CCF-A three-direction path exploration, keep iterating the 5d
+mining loop, and introduce modern RSI-family methodology to evolve a better
+A-share factor library under the frozen hold contract.
+
+### Actions Taken
+
+1. Wired RSI modern seed library + RSI-biased mutations
+   (`enhanced_factor_mutator.py`, `rsi_modern_seed_library.csv`,
+   `rsi_hybrid_seed_library.csv`); raised evolution budget to pop 28 × 10 gen.
+2. Ran iters **50 / 51 / 52** (seeds 1050–1052) with D1/D2/D3 + RSI seeds.
+3. Stage-2 ablations (research dirs, `promotion_enabled: false`):
+   - A2 AST off → hold **2.056** (flat vs B0)
+   - A3 DAG off → hold **1.927** (worse by 0.129)
+4. Diagnosed pure RSI seeds as weak (hold 0.13) and loop semantic-dedup as
+   dropping cleaned RSI survivors; force-audited live+RSI grafts.
+5. Promoted distinct RSI graft (+2 factors) after hold audit.
+
+### Verification
+
+- `pytest china_a_share_alpha/tests/test_rsi_family_mutator.py` → 2 passed
+- Force audit `rsi_force_audit_20260917/summary.json`: live+RSI n=16 hold **2.269**
+- Honest distinct graft (+2 RSI): hold **2.1537** vs baseline **2.0560** (Δ+0.098)
+- Promotion receipt: `iter_0052_rsi_promote/hold_summary.json`
+
+### Results
+
+| Step | Hold Sharpe | Notes |
+|---|---:|---|
+| Iter 49 live (B0) | 2.0560 | D1/D2/D3 baseline |
+| Iter 50 | 1.835 | KEPT |
+| Iter 51 | 2.055 | KEPT |
+| Iter 52 loop | 2.056 | KEPT (dedup dropped RSI) |
+| A3 DAG off | 1.927 | ablation |
+| **Iter 52 RSI graft** | **2.1537** | **PROMOTED** (14 factors) |
+
+### Files
+
+- `china_a_share_alpha/evolution/enhanced_factor_mutator.py`
+- `china_a_share_alpha/examples/rsi_*.csv`, loop/ablation YAMLs
+- `wiki/factor_rsi_modern_seeds_20260917.md`
+- `wiki/factor_ablation_a2_ast_20260917.md`
+- `wiki/factor_ablation_a3_dag_20260917.md`
+- `china_a_share_alpha_output/factor_mining_loop/STATE.md` / `live_library.csv`
+
+---
+
+## 2026-09-18 - CORRECTION: RSI = Recursive Self-Improvement
+
+### Motivation
+
+User clarified that “RSI” meant **Recursive Self-Improvement**（递归自我进化）,
+not the Relative Strength Index oscillator. Prior day’s indicator work was a
+terminology failure.
+
+### Actions Taken
+
+1. Wrote correction note:
+   `wiki/factor_rsi_means_recursive_self_improvement_20260918.md`
+2. Implemented true RSI outer loop:
+   - `loop/mining_policy_genome.py` — evolvable mining-policy genome
+   - `loop/recursive_self_improve.py` — diagnose last iter → mutate policy →
+     materialize next loop/evolution YAML
+   - `keep_diversity_slots` wired into semantic dedup
+3. Ran one meta-step on iter-53 receipt → policy v2
+   (`relax_dedup+diversity_slots,expand_search+dag`)
+
+### Verification
+
+- `pytest china_a_share_alpha/tests/test_recursive_self_improve.py` → 2 passed
+- Meta receipt:
+  `china_a_share_alpha_output/factor_mining_loop/rsi_policy/last_meta_receipt.json`
+
+### Next
+
+Inner iter with materialized policy:
+`run_factor_mining_loop .../rsi_policy/active_loop_config.yaml`
+
+---
+
+## 2026-09-18 - Rollback wrong RSI-indicator + restart DGM RSI from iter 49
+
+### Motivation
+
+User: roll back Relative Strength Index mistake, resume from yesterday's
+checkpoint (iter 49), evolve with SOTA Recursive Self-Improvement
+(Darwin Gödel Machine / HyperAgents).
+
+### Actions Taken
+
+1. Stopped mistaken iter 54; restored `live_library.csv` from pre-graft backup
+   (12 factors, no `rsi_14`); reset `state.json` to iteration 49 /
+   `best_hold_sharpe=2.056`; archived mistaken artifacts under
+   `_rollback_wrong_rsi_indicator_20260918/`.
+2. Removed Relative Strength Index mutator bias and `extra_seed_libraries`;
+   restored evolution budget to Stage-1 (pop 25 × 8 gen).
+3. Rewrote `loop/recursive_self_improve.py` as DGM-style **policy archive**
+   (fitness-proportional + underexplored parent sampling, open-ended explore
+   mutations, empirical fitness from hold Sharpe).
+4. Bootstrapped `dgm_rsi/archive.json` with `policy_0000` @ 2.056; proposed
+   `policy_0001` (relax dedup + diversity slots); started **iter 50** under
+   that policy.
+
+### Verification
+
+- `pytest .../test_recursive_self_improve.py` → 3 passed
+- Live n=12, rsi_14 rows=0, best_hold=2.056
+
+### References
+
+- [source: arXiv:2505.22954]
+- [source: arXiv:2603.19461]
+- [source: wiki/factor_dgm_rsi_factor_mining_20260918.md]
+## 2026-09-19 - Tech-subset hold backtest for live library
+
+### Motivation
+
+User asked to backtest the promoted factor library on tech stocks.
+
+### Actions Taken
+
+1. Defined tech industries via Tushare `stock_basic.industry` keywords
+   (半导体/元器件/软件服务/通信设备/IT设备/互联网/电器仪表等).
+2. Filtered frozen CSI300 snapshot to tech subset (76 / 354 symbols).
+3. Ran same promotion contract (5d dynamic-trim hold, 10bps, EMA10) on
+   full CSI300 vs tech subset; wrote per-factor tech Test IC diagnostics.
+4. Script: `china_a_share_alpha/scripts/run_tech_subset_hold_backtest.py`
+5. Outputs: `china_a_share_alpha_output/factor_mining_loop/tech_hold_backtest/`
+
+### Verification
+
+- csi300_full hold Sharpe 2.3609; csi300_tech hold Sharpe 1.9437 (valid=Y)
+- Tech subset n=76; REPORT.md + summary.json written
+
+### Note
+
+This is CSI300 ∩ tech, not full A-share tech (~1188). Broader tech universe
+needs a non-CSI300 panel snapshot.
+
+---
+
+## 2026-09-20 - Path-barrier factor audit (2025+)
+
+### Motivation
+User asked for factor validity under path rules: buy at signal-day close;
+within next 5/10 sessions hit +15% TP before -10% SL; bin by sector/MV/PB/PE;
+validate from 2025-01-01.
+
+### Actions
+1. Added `china_a_share_alpha/scripts/run_path_barrier_factor_audit.py`
+2. Audited live library (16 factors) on frozen CSI300 panel 2025-01-02..2026-07-15
+3. Outputs under `factor_mining_loop/path_barrier_audit_2025/`
+
+### Key results
+- Best 5d TP rate ~8.4% (factor_22 EPS/ocfps); 10d ~17.3%; majority timeout
+- Stronger buckets: high PB/PE, larger MV; sectors 家电/交运/电力设备/非银
+
+---
+
+
+## 2026-09-20 - Optimized path-barrier contract v2
+
+### Motivation
+Legacy +15%/-10% caused 65-93% timeout in 5/10d windows. Recalibrate from
+2025+ MFE/MAE and define expire-at-close.
+
+### Contract (optimized_v2)
+- 5d: TP +6% / SL -5%; 10d: TP +8% / SL -6%
+- Expire: exit at horizon close (realized PnL), not pure timeout fail
+
+### Output
+`china_a_share_alpha_output/factor_mining_loop/path_barrier_audit_2025_optimized_v2/`
+Script: `scripts/run_path_barrier_factor_audit_v2.py`
+
+---
+
+
+## 2026-09-20 - RSI anti-collapse: multi-island mutation
+
+### Motivation
+User: RSI evolution must not collapse into a single direction. Archive notes
+had converged to `relax_dedup+diversity,expand_search+dag,shrink_top_n`.
+
+### Actions
+1. `MiningPolicyGenome`: four orthogonal surfaces (`search_budget` /
+   `parent_selection` / `diversity` / `structure`); examiner gates frozen
+2. `mutate_policy`: mutate exactly one field on one surface; no stacked recipe
+3. `sample_parent`: fitness/underexplored/novelty/uniform mixture + island penalty
+4. Archive v2: `eligible_parent` + `--audit-existing` migration; bootstrap auto-audits
+5. Tests: 7 passed; wiki `factor_dgm_rsi_anti_collapse_islands_20260920.md`
+
+### Verification
+- Audit: valid=27 invalid=29 bootstrap=1 → 28 eligible parents
+- Recorded policy_0056 (iter105 hold 2.313) as evaluated_valid
+- Proposed policy_0057: parent=0054, surface=structure,
+  field=ast_regularizer_enabled True→False; promote=0.03 corr_gate=0.7
+
+### Next
+Run iter106 under `dgm_rsi/active/loop_config.yaml`, then
+`--record-fitness policy_0057` and propose again.
+
+---
+
+## 2026-09-22 - Resume after iter109 live promote
+
+### Result
+- Iter108 `policy_0059`: hold 2.221, max_corr fail → invalid
+- Iter109 `policy_0060` (`diversity/top_n`): hold **2.3256**, corr OK → **PROMOTED**
+  (live best 2.2918→2.3256). Archive paired campaign **rejected** parent eligibility.
+- Re-fixed propose diagnosis to use latest history; proposed `policy_0061`
+  (`search_budget/population_size 37→39`, success_keep); started iter110.
+
+---
+
+## 2026-09-20 - RSI phase-1 causal verifier and archive migration
+
+### Motivation
+
+The RSI archive could rank a high raw hold-Sharpe node even when it failed a
+hard gate. Parent diagnosis also depended on the latest global iteration rather
+than the sampled parent's evidence, and policy identity was not carried through
+the inner-loop state. These gaps made evolutionary credit assignment unsafe.
+
+### Actions
+
+1. Added archive-v2 node status, parent eligibility, source iteration,
+   evaluation receipt, verification result, and mutation metadata.
+2. Restricted sampling and best-node selection to verified feasible parents.
+3. Froze examiner fields and required explicit policy identity, finite hold
+   Sharpe, and all seven feasibility gates for new evaluations.
+4. Bound diagnosis to the sampled parent's receipt and limited every child to
+   one functional field on one search surface.
+5. Propagated policy identity, ancestry, mutation, evaluation group, and fixed
+   seed into generated configs and execution receipts.
+6. Backed up the original archive, migrated it against iterations 50--105, and
+   persisted `phase1_audit_receipt.json`.
+7. Added focused tests and updated README, loop state, and wiki/think records.
+
+### Files changed
+
+- `china_a_share_alpha/loop/mining_policy_genome.py`
+- `china_a_share_alpha/loop/recursive_self_improve.py`
+- `china_a_share_alpha/scripts/run_factor_mining_loop.py`
+- `china_a_share_alpha/tests/test_recursive_self_improve.py`
+- `README.md`, `china_a_share_alpha/README.md`
+- `china_a_share_alpha_output/factor_mining_loop/STATE.md`
+- `wiki/factor_rsi_phase1_causal_verifier_20260920.md`
+- `wiki/think/rsi_causal_credit_assignment_20260920.md` and indexes/logs
+
+### Verification and result
+
+- `py -3.14 -m pytest china_a_share_alpha/tests/test_recursive_self_improve.py -q`:
+  13 passed.
+- `py -3.14 -m pytest china_a_share_alpha/tests/test_recursive_self_improve.py
+  tests/test_factor_loop.py tests/test_t1_exit_policy.py
+  tests/test_factor_score_bucket_audit.py -q`: 23 passed.
+- `py -3.14 -m pytest tests china_a_share_alpha/tests -q`: 107 passed,
+  2 skipped, 22 pre-existing numerical warnings.
+- `py -3.14 -m py_compile ...`: passed for the two RSI modules, loop runner,
+  and focused test module.
+- YAML parse, archive invariants, line-length scan, and `git diff --check`:
+  passed. Black was unavailable in the active Python 3.14 environment.
+- Archive: bootstrap 1, valid 27, invalid 29, pending 1; 28 eligible parents.
+- Best eligible node: `policy_0056`, hold Sharpe 2.3129639059.
+- Raw leader `policy_0027` is ineligible because `max_corr_ok` failed.
+- Pending child: `policy_0057`, one-field structure mutation for iteration 106.
+
+### Boundary
+
+Iteration 106 was not started. Phase 1 records deterministic evaluation groups
+and seeds but does not yet perform replicated paired-seed selection.
+
+---

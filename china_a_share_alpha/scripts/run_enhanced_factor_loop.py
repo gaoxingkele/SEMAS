@@ -15,6 +15,7 @@ import pandas as pd
 import yaml
 
 from china_a_share_alpha.data.tushare_loader import load_tushare_data
+from china_a_share_alpha.evolution.ast_regularizer import RegularizerConfig
 from china_a_share_alpha.evolution.enhanced_factor_mutator import EnhancedFactorMutator
 from china_a_share_alpha.executor import create_factor_executor
 from china_a_share_alpha.loop.enhanced_population import EnhancedFactorPopulation
@@ -42,11 +43,27 @@ def run_enhanced_config(cfg: dict) -> dict:
 
     train, test = load_tushare_data(cfg)
     repo = GenomeRepository(str(repo_dir))
-    mutator = EnhancedFactorMutator(seed=cfg.get("seed", 42), mode="gp")
+    seed_library = cfg.get("seed_library", [])
+    if isinstance(seed_library, str):
+        seed_library = _load_seed_library(Path(seed_library))
+
+    regularizer = None
+    if cfg.get("ast_regularizer_enabled", False):
+        regularizer = RegularizerConfig(
+            enabled=True,
+            similarity_tau=float(cfg.get("ast_similarity_tau", 0.85)),
+            max_depth=int(cfg.get("ast_max_depth", 6)),
+            max_nodes=int(cfg.get("ast_max_nodes", 40)),
+        )
+
+    mutator = EnhancedFactorMutator(
+        seed=cfg.get("seed", 42),
+        mode=cfg.get("mutator_mode", "gp"),
+        library_expressions=list(seed_library) if seed_library else None,
+        regularizer=regularizer,
+    )
     evaluator = Evaluator(threshold=cfg.get("threshold", 0.1))
     evaluator.register_metric("combined_factor_score", combined_factor_score)
-
-    seed_library = cfg.get("seed_library", [])
 
     population = EnhancedFactorPopulation(
         repo=repo,
@@ -77,7 +94,7 @@ def run_enhanced_config(cfg: dict) -> dict:
             {
                 "best": leaderboard.iloc[0].to_dict(),
                 "history": population.history,
-                "config": cfg,
+                "config": {k: v for k, v in cfg.items() if k != "seed_library"},
             },
             f,
             indent=2,

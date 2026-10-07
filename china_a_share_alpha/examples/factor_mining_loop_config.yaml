@@ -57,3 +57,16 @@ min_factor_coverage: 0.5
 # Dynamic trim: cut long positions if their cross-sectional rank deteriorates
 # during the holding window. The no-lookahead frozen audit selects it for 5d.
 use_dynamic_trim_hold: true
+
+# D2 AST originality / complexity gates (AlphaAgent-inspired)
+ast_regularizer_enabled: true
+ast_similarity_tau: 0.85
+ast_max_depth: 6
+ast_max_nodes: 40
+
+# D1 pool-IC diagnostics (AlphaGen-inspired; hold gate still decides promotion)
+report_pool_ic: true
+
+# True RSI = Recursive Self-Improvement via loop/recursive_self_improve.py
+# (Darwin Gödel Machine / HyperAgents style policy archive). Do NOT add
+# Relative Strength Index seed CSVs here.

@@ -17,6 +17,20 @@ chronological log.
 
 | Page | Summary | Last Updated |
 |---|---|---|
+| [RSI Phase-2 Paired Selection](factor_rsi_phase2_paired_selection_20260921.md) | Three-seed parent/child controls gate reproductive eligibility. | 2026-09-21 |
+| [RSI Phase-1 Causal Verifier](factor_rsi_phase1_causal_verifier_20260920.md) | Hard-gated parent eligibility, identity-bound receipts, and one-field causal credit. | 2026-09-20 |
+| [DGM RSI for Factor Mining](factor_dgm_rsi_factor_mining_20260918.md) | True Recursive Self-Improvement: policy archive + empirical hold eval. | 2026-09-18 |
+| [RSI anti-collapse islands](factor_dgm_rsi_anti_collapse_islands_20260920.md) | Four orthogonal surfaces + single-field mutate; frozen examiner; archive v2 eligibility. | 2026-09-20 |
+| [RSI = Recursive Self-Improvement (correction)](factor_rsi_means_recursive_self_improvement_20260918.md) | Terminology correction: not Relative Strength Index. | 2026-09-18 |
+| [Modern RSI Seeds + Graft Promotion](factor_rsi_modern_seeds_20260917.md) | *(misnamed / rolled back)* Relative Strength Index collateral. | 2026-09-17 |
+| [Ablation A2 AST Off](factor_ablation_a2_ast_20260917.md) | Single-seed AST-off ablation matched B0 hold (2.056). | 2026-09-17 |
+| [Ablation A3 DAG Off](factor_ablation_a3_dag_20260917.md) | Single-seed DAG-off ablation underperformed (1.927). | 2026-09-17 |
+| [Factor Score-Bucket and Maximum-Horizon Audit](factor_score_bucket_max_horizon_audit_20260913.md) | Individual-stock 0--100 score calibration plus separate realized-return and maximum-favorable-excursion horizon rankings. | 2026-09-13 |
+| [Recent All-Expression Audit](factor_recent_all_expression_audit_20260913.md) | Complete 119-expression, 6,426-row T+1 matrix with strict 2025--2026 validity gates. | 2026-09-13 |
+| [Recent-Regime Factor Matching](factor_recent_regime_matching_20260911.md) | 2025--2026 walk-forward matching, factor-rank reversal diagnosis, and research-only MA20 entry gate. | 2026-09-11 |
+| [CCF-A Three-Direction Paper Track](factor_ccf_a_three_direction_paper_20260904.md) | KDD-targeted ARA: synergy objective + AST gates + DAG neighborhood evolution. | 2026-09-04 |
+| [Stock-to-Factor Matching Evolution](factor_stock_matching_evolution_20260831.md) | Twelve-round train/validation evolution whose frozen test rejected a concentrated, non-generalizing match policy. | 2026-08-31 |
+| [T+1 Board-Aware Factor Audit](factor_t1_board_exit_full_library_audit_20260831.md) | Full-library 5d/10d/20d audit with T+1, board thresholds, queued limit exits, and forced expiry. | 2026-08-31 |
 | [Factor Repository Hygiene](factor_repository_hygiene_20260828.md) | Reconcile machine state, compact receipts, and externally valid factor rankings. | 2026-08-28 |
 | [Factor Mining Loop Index](factor_mining_loop_index.md) | Continuous alpha-factor discovery loop for China A-shares. | 2026-07-06 |
 | [Iteration 10 Live-Library Audit](factor_mining_loop_audit_iter10.md) | Coverage and sector-neutrality analysis of the promoted 12-factor ensemble. | 2026-07-05 |

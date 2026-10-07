@@ -307,6 +307,149 @@ fixed short cohorts, and a combined long union tagged as 5d/10d consensus,
 5d-primary, or 10d-secondary. It does not invent an unaudited cross-strategy
 capital weight.
 
+## T+1 board-aware full-library audit
+
+Audit every canonical live/combined/research factor library under a long-only
+T+1 execution contract:
+
+```bash
+python -m china_a_share_alpha.scripts.run_t1_full_library_audit \
+  china_a_share_alpha/examples/t1_full_library_audit.yaml
+```
+
+Signals formed at D enter at D+1 open. The purchase day is excluded from the
+holding count, so 5d/10d/20d expiry occurs at D+6/D+11/D+21 close. Close-based
+stop and trailing-profit signals execute at the next sellable open; locked
+limit-down securities remain queued. ST names are excluded. Main-board,
+STAR/ChiNext, and BSE policies use progressively wider loss, profit-activation,
+trailing-drawdown, and price-limit thresholds. The runner deduplicates identical
+libraries, evaluates every unique expression once on continuous history, and
+reports unavailable universes instead of fabricating index or ETF results.
+
+## Stock-to-factor-library matching evolution
+
+Evolve a per-stock factor-library mixture while keeping the final test fold
+closed during selection:
+
+```bash
+python -m china_a_share_alpha.scripts.evolve_stock_factor_matching \
+  china_a_share_alpha/examples/stock_factor_matching_evolution.yaml
+```
+
+The matching genome searches the number of selected libraries, stock/industry/
+market/global shrinkage weights, utility temperature, minimum observations,
+and portfolio selection fraction. Forward labels are calculated separately
+inside each temporal fold. Train data estimate matching utilities, the 2023
+validation fold selects the genome, and the 2024--2026 test fold is opened once
+after evolution. The first 12-round campaign improved validation Sharpe to
+1.722 but achieved only 0.374 test Sharpe with -48.55% maximum drawdown. Removing
+the five largest test contributors made annualized return negative, so this
+candidate was rejected and no live library was changed.
+
+For the changed 2025--2026 regime, run walk-forward matching and the separate
+market-gate audit:
+
+```bash
+python -m china_a_share_alpha.scripts.evolve_recent_regime_matching \
+  china_a_share_alpha/examples/current_regime_matching_evolution.yaml
+python -m china_a_share_alpha.scripts.audit_recent_market_gate \
+  china_a_share_alpha/examples/recent_market_gate_audit.yaml
+```
+
+Each evaluation window estimates matching utility from the preceding 504
+trading days. Evolution uses 2025 H2 and 2026 Q1 plus two deterministic,
+stock-disjoint cohorts; April--16 July 2026 is diagnostic only. The ungated
+candidate failed that recent window (Sharpe -1.594, drawdown -37.80%). A
+continuous-history MA20 market gate, selected on the earlier windows, improved
+the all-stock diagnostic to Sharpe 1.027 and drawdown -7.13%. Main-board Sharpe
+remained -0.064 while STAR/ChiNext reached 0.899, so the gate is not promoted.
+The snapshot ends on 2026-07-16 and the diagnostic is not blind.
+
+## Recent all-expression audit
+
+Audit every currently discovered expression independently rather than treating
+each multi-factor library as one averaged signal:
+
+```bash
+python -m china_a_share_alpha.scripts.run_recent_all_factor_audit \
+  china_a_share_alpha/examples/recent_all_factor_audit.yaml
+```
+
+The resumable runner freezes a 55-library/119-expression catalog, caches each
+expression separately, and evaluates 2024, 2025, and 2026 YTD across 5d/10d/20d
+T+1 exits, ungated/MA20 entries, and all-stock/main-board/STAR-ChiNext universes.
+The completed matrix contains 6,426 unique rows: 6,372 valid rows and 54 rows
+explicitly invalidated for insufficient cross-sectional variation. Thirty-eight
+unique expressions pass at least one strict contract requiring positive 2025
+and 2026 Sharpe and RankIC, no worse than -25% recent drawdown, and no more than
+10% single-stock return concentration. BSE, ETF, and independent-index gaps are
+recorded as unavailable rather than imputed.
+
+## Factor score-bucket and maximum-horizon audit
+
+Profile individual-stock efficacy by the factor score available on the signal
+day and rank each factor by its best realized 5d/10d/20d contract:
+
+```bash
+python -m china_a_share_alpha.scripts.run_factor_score_bucket_audit \
+  china_a_share_alpha/examples/factor_score_bucket_audit.yaml
+```
+
+The audit preserves D-signal/D+1-open execution and all board-aware stop,
+trailing-profit, limit-down queue, and forced-expiry rules. Each daily
+cross-section is converted to a 0--100 percentile and summarized in ten score
+buckets. Outputs include trade effectiveness and target-hit rates with sample
+counts, average/median realized return, cohort Sharpe and drawdown, profit
+factor, payoff ratio, favorable/adverse excursion, holding time, and exit-reason
+rates. The best realized horizon maximizes `0.40 * 2025 annualized return + 0.60
+* 2026 YTD annualized return`; maximum floating profit and its horizon are
+reported separately. Because three horizons are compared on already observed
+data, this is a diagnostic ranking and not a blind estimate of future return.
+
+## Recursive Self-Improvement policy archive
+
+The DGM-style outer loop evolves factor-mining policy rather than model weights.
+Its archive uses four orthogonal mutation surfaces: search budget, parent
+selection, diversity, and structure. A proposal changes exactly one functional
+field; the hold-Sharpe threshold and maximum-correlation gate are frozen
+examiner fields and are never mutated.
+
+Parent eligibility is a hard contract. A node may reproduce only when its own
+execution receipt has the expected policy identity, a finite hold Sharpe, the
+same frozen evaluator, and every required gate set to true. Failed evaluations
+retain their receipts but receive zero archive fitness. The loop also refuses a
+new proposal while another child is pending.
+
+Audit or migrate an existing archive before continuing:
+
+```bash
+python -m china_a_share_alpha.loop.recursive_self_improve \
+  --audit-existing --baseline-iteration 49
+```
+
+The migrated phase-1 archive contains 28 eligible parents, 29 invalid nodes,
+and one pending child (`policy_0057`). Iteration 106 has intentionally not been
+run yet. Proposal metadata records the policy/parent IDs, mutation field,
+evaluation group, seed, and config hashes. This phase fixes causal attribution;
+new children must also pass a resumable paired-seed campaign before becoming
+eligible parents:
+
+```bash
+python -m china_a_share_alpha.scripts.run_paired_policy_evaluation \
+  --child-id policy_XXXX \
+  --seeds N N+1 N+2 \
+  --baseline-library \
+  china_a_share_alpha_output/factor_mining_loop/iter_NNNN/seed_library.csv
+```
+
+The paired campaign isolates every arm from production state, disables
+promotion writes, and freezes the pre-child seed library by checksum. Selection
+requires at least three valid pairs, positive mean and median paired hold-Sharpe
+deltas, a win rate of at least two thirds, and no single-seed regression worse
+than 0.10 Sharpe. A single-run-valid child remains ineligible while this receipt
+is pending. Do not launch a paired campaign for a child that already failed its
+single-run hard gates.
+
 ## Downloading real Qlib data
 
 A helper script downloads and extracts the community Qlib A-share dataset:

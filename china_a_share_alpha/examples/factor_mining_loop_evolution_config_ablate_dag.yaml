@@ -1,0 +1,33 @@
+# Ablation A3 — disable DAG neighborhood (parent_mode: global)
+# Use with the same data/loop config as production, but evolution parents
+# sample from elites only (no live-library DAG bias).
+
+data_source: tushare
+snapshot_dir: "china_a_share_alpha_output/tushare_snapshot_20260717"
+start_date: "20210601"
+end_date: "20260601"
+split_date: "20240101"
+universe: csi300
+cache_dir: "china_a_share_alpha_output/tushare_backtest/tushare_cache"
+forward_period: 1
+population_size: 25
+max_generations: 8
+patience: 3
+elite_fraction: 0.2
+crossover_fraction: 0.3
+leaderboard_size: 30
+threshold: 0.005
+transaction_cost: 0.001
+neutralize_sector: true
+neutralize_market_cap: true
+sector_csv: null
+
+ast_regularizer_enabled: true
+ast_similarity_tau: 0.85
+ast_max_depth: 6
+ast_max_nodes: 40
+mutator_mode: mutate
+parent_mode: global
+dag_edge_similarity: 0.35
+dag_temperature: 1.0
+global_epsilon: 0.15

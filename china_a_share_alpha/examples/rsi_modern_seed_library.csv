@@ -1,0 +1,11 @@
+rank,expression,train_ic,test_ic,test_sharpe,factor,note
+1,"cs_rank(rsi_14)",0.0,0.0,0.0,rsi_level_cs,"RSI level cross-section"
+2,"cs_zscore(rsi_14)",0.0,0.0,0.0,rsi_level_z,"RSI level zscore"
+3,"cs_rank(sub(100, rsi_14))",0.0,0.0,0.0,rsi_reversion,"RSI mean-reversion (100-RSI)"
+4,"cs_rank(ts_delta(rsi_14, 14))",0.0,0.0,0.0,rsi_momentum_14,"RSI momentum / delta-14"
+5,"cs_rank(ts_delta(rsi_14, 5))",0.0,0.0,0.0,rsi_momentum_5,"RSI short momentum"
+6,"cs_rank(ts_zscore(rsi_14, 20))",0.0,0.0,0.0,rsi_ts_z20,"RSI time-series zscore"
+7,"cs_rank(sub(rsi_14, ts_mean(rsi_14, 20)))",0.0,0.0,0.0,rsi_demean_20,"RSI vs own MA20"
+8,"cs_zscore(ts_rank(rsi_14, 60))",0.0,0.0,0.0,rsi_ts_rank_60,"RSI rolling rank"
+9,"cs_rank(mul(sign(ts_delta(rsi_14, 5)), ts_std(rsi_14, 20)))",0.0,0.0,0.0,rsi_signed_vol,"signed RSI change x vol"
+10,"cs_rank(if_else(greater(rsi_14, 70), neg(1), if_else(less(rsi_14, 30), 1, 0)))",0.0,0.0,0.0,rsi_band_reversal,"classic overbought/oversold band"

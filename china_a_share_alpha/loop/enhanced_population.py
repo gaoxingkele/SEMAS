@@ -63,10 +63,43 @@ class EnhancedFactorPopulation(FactorPopulation):
 
         next_pop = [agent.model_copy() for agent in elites]
 
-        for _ in range(n_mutate):
-            parent = np.random.choice(elites)
-            child = self.mutator.mutate_prompt(parent, failure_logs=["loop"])
-            next_pop.append(child)
+        parent_mode = self.config.get("parent_mode", "global")
+        dag_parents: list[str] = []
+        if parent_mode == "dag_neighbors" and self.seed_library:
+            from china_a_share_alpha.evolution.dag_neighborhood import build_dag_from_library
+
+            fitness_by_expr = {
+                c.expression: self._fitness(c)
+                for c in evaluated_sorted
+                if getattr(c, "expression", None)
+            }
+            fitnesses = [float(fitness_by_expr.get(text, 0.0)) for text in self.seed_library]
+            dag = build_dag_from_library(
+                self.seed_library,
+                fitnesses=fitnesses,
+                edge_similarity=float(self.config.get("dag_edge_similarity", 0.35)),
+            )
+            dag_parents = dag.sample_parents(
+                k=max(n_mutate, 1),
+                temperature=float(self.config.get("dag_temperature", 1.0)),
+                global_epsilon=float(self.config.get("global_epsilon", 0.15)),
+            )
+            if hasattr(self.mutator, "set_library"):
+                self.mutator.set_library(self.seed_library)
+
+        for i in range(n_mutate):
+            if (
+                parent_mode == "dag_neighbors"
+                and dag_parents
+                and hasattr(self.mutator, "mutate_from_parent_string")
+            ):
+                parent_text = dag_parents[i % len(dag_parents)]
+                child_expr = self.mutator.mutate_from_parent_string(parent_text)
+                next_pop.append(self._make_agent(child_expr, generation=self._generation + 1))
+            else:
+                parent = np.random.choice(elites)
+                child = self.mutator.mutate_prompt(parent, failure_logs=["loop"])
+                next_pop.append(child)
 
         for _ in range(n_crossover):
             if len(elites) >= 2:

@@ -12,6 +12,8 @@ Catalog of chain-of-thought, methodology evolution, and absorbed ideas.
 
 | Page | Summary | Last Updated |
 |---|---|---|
+| [RSI Paired Evidence Before Reproduction](rsi_paired_evidence_before_reproduction_20260921.md) | Separate authentic single-run evidence from repeatable parent-relative improvement. | 2026-09-21 |
+| [RSI Causal Credit Assignment](rsi_causal_credit_assignment_20260920.md) | Why feasibility, ancestry-bound receipts, and one-field mutations precede wider search. | 2026-09-20 |
 | [Factor Mining Methodology Evolution](methodology_evolution_factor_mining.md) | From empty seed to 20d horizon library: hypotheses, failures, gates. | 2026-07-07 |
 | [Multi-Horizon Design](multi_horizon_design.md) | Why `forward_period` matters and how hold backtests changed evaluation. | 2026-07-07 |
 | [Cost vs. Turnover Tradeoff](cost_turnover_tradeoff.md) | Cost-aware evolution, transaction cost as a fitness knob. | 2026-07-07 |

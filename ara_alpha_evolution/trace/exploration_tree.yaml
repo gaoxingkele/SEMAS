@@ -1,0 +1,70 @@
+schema_version: 1
+title: Contract-Aware Synergistic Alpha Evolution
+updated: 2026-09-04
+root:
+  id: n0_kickoff
+  status: active
+  summary: User requested all three directions + CCF-A paper prep; pull GitHub baselines first.
+nodes:
+  - id: n0_kickoff
+    type: decision
+    provenance: user
+    children: [n1_clone, n2_lit, n3_ara]
+  - id: n1_clone
+    type: action
+    status: done
+    summary: Cloned alphagen, AlphaAgent, AlphaPROBE, QuantaAlpha into external/
+    evidence: evidence/baselines/external_repos.txt
+    children: [n4_d1, n5_d2, n6_d3]
+  - id: n2_lit
+    type: action
+    status: done
+    summary: paper_search multi-query 2022-2026; S2 partial 429; arXiv/OpenAlex OK
+    evidence: evidence/lit_search/paper_search_20260904.txt
+    children: [n7_scoop]
+  - id: n3_ara
+    type: action
+    status: done
+    summary: Scaffolded ara_alpha_evolution PAPER/logic/trace/evidence
+    children: [n8_stage1]
+  - id: n7_scoop
+    type: analysis
+    status: active
+    summary: Tentative novelty Level 3-4 if joint triad+hold contract delivered
+    children: [n8_stage1]
+  - id: n4_d1
+    type: experiment
+    status: done_stage1
+    claim: C1
+    summary: synergy_objective.py + report_pool_ic in mining loop
+  - id: n5_d2
+    type: experiment
+    status: done_stage1
+    claim: C2
+    summary: ast_regularizer.py + EnhancedFactorMutator gates
+  - id: n6_d3
+    type: experiment
+    status: done_stage1
+    claim: C3
+    summary: dag_neighborhood.py + parent_mode dag_neighbors
+  - id: n8_stage1
+    type: experiment
+    status: done
+    summary: Modules + unit tests + iter 49 promoted hold Sharpe 2.0560
+    evidence: china_a_share_alpha_output/factor_mining_loop/loop_report_20260911_052600.md
+    children: [n9_stage2]
+  - id: n9_stage2
+    type: experiment
+    status: pending
+    summary: Baseline tuning / leave-one-out ablations vs B0-B3
+    children: [n10_stage3]
+  - id: n10_stage3
+    type: experiment
+    status: pending
+    summary: Joint system + transfer + cost stress
+    children: [n11_ablation]
+  - id: n11_ablation
+    type: experiment
+    status: pending
+    summary: Leave-one-out ablations A1-A4 for KDD tables
+dead_ends: []

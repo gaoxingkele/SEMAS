@@ -58,6 +58,38 @@
   - Kakushadze, "101 Formulaic Alphas", 2016
   - arXiv:1601.00991, https://arxiv.org/abs/1601.00991
 
+- **AlphaGen — Generating Synergistic Formulaic Alpha Collections via RL**
+  - Yu et al., KDD 2023 [CCF-A]
+  - arXiv:2306.12964, https://doi.org/10.1145/3580305.3599831
+  - Code: https://github.com/ICT-FinD-Lab/alphagen (local `external/alphagen`)
+
+- **AlphaAgent — LLM-Driven Alpha Mining with Regularized Exploration**
+  - Tang et al., KDD 2025 [CCF-A]
+  - arXiv:2502.16789, https://doi.org/10.1145/3711896.3736838
+  - Code: https://github.com/RndmVariableQ/AlphaAgent (local `external/AlphaAgent`)
+
+- **AlphaPROBE — Principled Retrieval and On-graph Biased Evolution**
+  - Guo et al., 2026
+  - Code: https://github.com/gta0804/AlphaPROBE (local `external/AlphaPROBE`)
+
+- **Automate Strategy Finding with LLM in Quant Investment**
+  - Kou et al., 2024
+  - arXiv:2409.06289
+  - Used as inspiration for RSI-family seed / mutation priors in the China
+    A-share factor loop (`wiki/factor_rsi_modern_seeds_20260917.md`).
+
+- **QuantaAlpha — Evolutionary Framework for LLM-Driven Alpha Mining**
+  - Han et al., 2026
+  - arXiv:2602.07085
+  - Code: https://github.com/QuantaAlpha/QuantaAlpha (local `external/QuantaAlpha`)
+
+- **QuantFactor REINFORCE**
+  - Zhao et al., IEEE TSP 2025
+  - arXiv:2409.05144
+
+- **Navigating the Alpha Jungle (LLM-MCTS)**
+  - Shi, Duan, Li; AAAI 2026 / arXiv:2505.11122
+
 - **TA-Lib — Technical Analysis Library**
   - https://ta-lib.org/
 
@@ -158,7 +190,14 @@
 - **Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents**
   - Zhang et al., 2025
   - arXiv:2505.22954, https://arxiv.org/abs/2505.22954
-  - Key: open-ended self-improving agents.
+  - Key: open-ended self-improving agents; archive + empirical validation.
+  - Applied here as the outer mining-policy archive
+    (`wiki/factor_dgm_rsi_factor_mining_20260918.md`).
+
+- **HyperAgents (DGM-Hyperagents)**
+  - Meta / Clune et al., 2026
+  - arXiv:2603.19461
+  - Key: editable meta-level self-modification beyond coding domains.
 
 - **Hyperagents**
   - Zhang et al., 2026
