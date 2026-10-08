@@ -12,6 +12,7 @@ Catalog of chain-of-thought, methodology evolution, and absorbed ideas.
 
 | Page | Summary | Last Updated |
 |---|---|---|
+| [Factor Evolution State Reconciliation](factor_evolution_state_reconciliation_20261008.md) | Reconcile machine state, runtime evidence, Git branches/worktrees, and paired eligibility into a verifiable 1–114 ledger. | 2026-10-08 |
 | [RSI Paired Evidence Before Reproduction](rsi_paired_evidence_before_reproduction_20260921.md) | Separate authentic single-run evidence from repeatable parent-relative improvement. | 2026-09-21 |
 | [RSI Causal Credit Assignment](rsi_causal_credit_assignment_20260920.md) | Why feasibility, ancestry-bound receipts, and one-field mutations precede wider search. | 2026-09-20 |
 | [Factor Mining Methodology Evolution](methodology_evolution_factor_mining.md) | From empty seed to 20d horizon library: hypotheses, failures, gates. | 2026-07-07 |

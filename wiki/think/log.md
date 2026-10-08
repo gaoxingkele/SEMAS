@@ -136,3 +136,14 @@ absorbed ideas.
 - Single-run validity authenticates evidence; paired validity grants
   reproductive eligibility.
 - Borderline mutations should receive more matched seeds, not softer gates.
+
+## [2026-10-08] reconciled factor evolution across state and Git layers
+
+- Treated machine state, runtime receipts, research notes, and Git refs as
+  independent evidence branches before synthesis.
+- Distinguished 114 outer iterations, at least 796 recoverable internal
+  generations, and 119 audited expressions.
+- Preserved production live state separately from paired reproductive
+  eligibility and made the final ledger mechanically verifiable.
+- Recorded an idempotent daemon-recovery rule: inspect commits, refs, index,
+  and every worktree before retrying a mutation or push.

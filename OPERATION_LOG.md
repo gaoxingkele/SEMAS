@@ -17013,6 +17013,9 @@ dirty factor worktree, whose machine state had already reached iteration 114.
    the alpha README, and the human state receipt.
 7. Added `.env` patterns to `.gitignore` after detecting a local untracked
    `TUSHARE_TOKEN` file; no value was printed or committed.
+8. Added an independent thinking-process note that captures the evidence-fan-in
+   method, logical verifier roles, recovery policy, and selection gates used to
+   reconcile machine state, runtime receipts, and Git worktrees.
 
 ### Files changed
 
@@ -17025,6 +17028,9 @@ dirty factor worktree, whose machine state had already reached iteration 114.
 - `wiki/index.md`
 - `wiki/log.md`
 - `wiki/references.md`
+- `wiki/think/factor_evolution_state_reconciliation_20261008.md` (new)
+- `wiki/think/index.md`
+- `wiki/think/log.md`
 - `OPERATION_LOG.md`
 
 ### Verification
